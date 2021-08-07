@@ -1,0 +1,61 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31515.178
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataSourceTemplate", "DataSourceTemplate.csproj", "{AE2F1449-C83B-441A-8DBA-53125EB6A60F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TxtXlsCSVFileSource", "..\CSVDataSource\TxtXlsCSVFileSource.csproj", "{98E2E483-7D30-495E-88F4-69B2797434AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelDataSource", "..\ExcelDataSource\ExcelDataSource.csproj", "{5994631D-2F06-4418-BA36-2081582B7CCD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MySqlDataSource", "..\MySql\MySqlDataSource.csproj", "{67F69151-D6E0-41FF-BF84-60E397BA8D4C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlCompactDatasource", "..\SqlCompact\SqlCompactDatasource.csproj", "{6FD1CCA1-994B-4DA1-B104-8FB71CE0E3A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqliteDatasource", "..\Sqlite\SqliteDatasource.csproj", "{55B7EC79-3B2C-4D34-9050-E021D45BAA2C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLServerDataSource", "..\SQLServerDataSource\SQLServerDataSource.csproj", "{ACB7F443-F4F7-42A6-8211-507996F6D1B0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AE2F1449-C83B-441A-8DBA-53125EB6A60F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE2F1449-C83B-441A-8DBA-53125EB6A60F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE2F1449-C83B-441A-8DBA-53125EB6A60F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE2F1449-C83B-441A-8DBA-53125EB6A60F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98E2E483-7D30-495E-88F4-69B2797434AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98E2E483-7D30-495E-88F4-69B2797434AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98E2E483-7D30-495E-88F4-69B2797434AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98E2E483-7D30-495E-88F4-69B2797434AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5994631D-2F06-4418-BA36-2081582B7CCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5994631D-2F06-4418-BA36-2081582B7CCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5994631D-2F06-4418-BA36-2081582B7CCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5994631D-2F06-4418-BA36-2081582B7CCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67F69151-D6E0-41FF-BF84-60E397BA8D4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67F69151-D6E0-41FF-BF84-60E397BA8D4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67F69151-D6E0-41FF-BF84-60E397BA8D4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67F69151-D6E0-41FF-BF84-60E397BA8D4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FD1CCA1-994B-4DA1-B104-8FB71CE0E3A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FD1CCA1-994B-4DA1-B104-8FB71CE0E3A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FD1CCA1-994B-4DA1-B104-8FB71CE0E3A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FD1CCA1-994B-4DA1-B104-8FB71CE0E3A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55B7EC79-3B2C-4D34-9050-E021D45BAA2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55B7EC79-3B2C-4D34-9050-E021D45BAA2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55B7EC79-3B2C-4D34-9050-E021D45BAA2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55B7EC79-3B2C-4D34-9050-E021D45BAA2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACB7F443-F4F7-42A6-8211-507996F6D1B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACB7F443-F4F7-42A6-8211-507996F6D1B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACB7F443-F4F7-42A6-8211-507996F6D1B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACB7F443-F4F7-42A6-8211-507996F6D1B0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E79A488A-AD9C-4971-90A9-2A17E8785EF5}
+	EndGlobalSection
+EndGlobal
