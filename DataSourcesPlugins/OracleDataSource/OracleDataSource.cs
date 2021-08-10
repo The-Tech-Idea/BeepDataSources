@@ -513,66 +513,7 @@ namespace TheTechIdea.Beep.DataBase
 
             return adp;
         }
-        public override  DataTable GetTableSchema(string TableName)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            DataTable tb = new DataTable();
-            OracleDataReader reader;
-            OracleCommand cmd =(OracleCommand) GetDataCommandForOracle();
-            try
-            {
-
-                if (!string.IsNullOrEmpty(Dataconnection.ConnectionProp.SchemaName) && !string.IsNullOrWhiteSpace(Dataconnection.ConnectionProp.SchemaName))
-                {
-                    TableName = Dataconnection.ConnectionProp.SchemaName + "." + TableName;
-                }
-                cmd.CommandText = "Select * from " + TableName.ToLower();// + " where 1=2";
-                reader = cmd.ExecuteReader(CommandBehavior.KeyInfo);
-
-                tb = reader.GetSchemaTable();
-                reader.Close();
-                cmd.Dispose();
-
-
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Fail", $"unsuccessfully Executed Sql ({ex.Message})", DateTime.Now, 0, TableName, Errors.Failed);
-
-            }
-
-            //}
-
-            return tb;
-        }
-        public override  List<ChildRelation> GetTablesFKColumnList(string tablename, string SchemaName, string Filterparamters)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            DataSet ds = new DataSet();
-            try
-            {
-                string sql = DMEEditor.ConfigEditor.GetSql(Sqlcommandtype.getFKforTable, tablename, SchemaName, Filterparamters, DMEEditor.ConfigEditor.QueryList, DatasourceType);
-                if (!string.IsNullOrEmpty(sql) && !string.IsNullOrWhiteSpace(sql))
-                {
-                    return GetData<ChildRelation>(sql);
-                }
-                else
-                    return null;
-
-
-
-            }
-            catch (Exception ex)
-            {
-
-                //   DMEEditor.AddLogMessage("Fail", $"Unsuccessfully Retrieve Child tables list {ex.Message}", DateTime.Now, -1, ex.Message, Errors.Failed);
-                return null;
-            }
-
-
-
-        }
-        #endregion
+       #endregion
 
     }
 }
