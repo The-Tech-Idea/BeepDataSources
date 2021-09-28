@@ -29,3 +29,7 @@ C:\Users\f_ald\source\repos\BeepEnterprize\DataSourcesPlugins\SqlCompact\obj\Deb
 C:\Users\f_ald\source\repos\BeepEnterprize\DataSourcesPlugins\SqlCompact\obj\Debug\SqlCompactDatasource.csproj.CopyComplete
 C:\Users\f_ald\source\repos\BeepEnterprize\DataSourcesPlugins\SqlCompact\obj\Debug\SqlCompactDataSource.dll
 C:\Users\f_ald\source\repos\BeepEnterprize\DataSourcesPlugins\SqlCompact\obj\Debug\SqlCompactDataSource.pdb
+C:\Users\f_ald\source\repos\The-Tech-Idea\BeepDataSources\SqlCompact\obj\Debug\SqlCompactDatasource.csproj.AssemblyReference.cache
+C:\Users\f_ald\source\repos\The-Tech-Idea\BeepDataSources\SqlCompact\obj\Debug\SqlCompactDatasource.csproj.CoreCompileInputs.cache
+C:\Users\f_ald\source\repos\The-Tech-Idea\BeepDataSources\SqlCompact\obj\Debug\SqlCompactDataSource.dll
+C:\Users\f_ald\source\repos\The-Tech-Idea\BeepDataSources\SqlCompact\obj\Debug\SqlCompactDataSource.pdb

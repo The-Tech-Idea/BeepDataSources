@@ -51,3 +51,7 @@ C:\Users\f_ald\source\repos\BeepEnterprize\DataSourcesPlugins\CSVDataSource\bin\
 C:\Users\f_ald\source\repos\BeepEnterprize\DataSourcesPlugins\CSVDataSource\obj\Debug\TxtXlsCSVFileSource.csproj.CopyComplete
 C:\Users\f_ald\source\repos\BeepEnterprize\DataSourcesPlugins\CSVDataSource\obj\Debug\TxtXlsCSVFileSource.dll
 C:\Users\f_ald\source\repos\BeepEnterprize\DataSourcesPlugins\CSVDataSource\obj\Debug\TxtXlsCSVFileSource.pdb
+C:\Users\f_ald\source\repos\The-Tech-Idea\BeepDataSources\CSVDataSource\obj\Debug\TxtXlsCSVFileSource.csproj.AssemblyReference.cache
+C:\Users\f_ald\source\repos\The-Tech-Idea\BeepDataSources\CSVDataSource\obj\Debug\TxtXlsCSVFileSource.csproj.CoreCompileInputs.cache
+C:\Users\f_ald\source\repos\The-Tech-Idea\BeepDataSources\CSVDataSource\obj\Debug\TxtXlsCSVFileSource.dll
+C:\Users\f_ald\source\repos\The-Tech-Idea\BeepDataSources\CSVDataSource\obj\Debug\TxtXlsCSVFileSource.pdb

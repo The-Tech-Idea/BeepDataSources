@@ -14,8 +14,7 @@ using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using System.IO;
 using TheTechIdea.Beep.Report;
-using TheTechIdea.DataManagment_Engine.Vis;
-using TheTechIdea.DataManagment_Engine.Vis;
+using TheTechIdea.Beep.Vis;
 
 namespace TheTechIdea.Beep.FileManager
 {
