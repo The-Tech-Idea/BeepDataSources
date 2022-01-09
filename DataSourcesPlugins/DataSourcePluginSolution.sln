@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31515.178
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataSourcePluginTemplate", "DataSourcePluginTemplate\DataSourcePluginTemplate.csproj", "{28DA348A-8BC8-475D-AE4E-0B7A7BFCA404}"
 EndProject
@@ -73,24 +73,24 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDBDataSource", "MongoD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RavenDBDataSource", "RavenDbDataSource\RavenDBDataSource.csproj", "{1A01A77C-C332-452E-988C-888D75F45F96}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataManagmentModels", "..\..\BeepDM\DataManagmentModels\DataManagmentModels.csproj", "{7697EBDC-A4F2-49B1-AF91-79031516E679}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataManagmentModels", "..\..\..\The-Tech-Idea\BeepDM\DataManagmentModels\DataManagmentModels.csproj", "{7697EBDC-A4F2-49B1-AF91-79031516E679}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataManagmentEngine", "..\..\BeepDM\DataManagment_Engine\DataManagmentEngine.csproj", "{45983087-5E0E-4BFB-86C1-A5BC54D2A86F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataManagmentEngine", "..\..\..\The-Tech-Idea\BeepDM\DataManagment_Engine\DataManagmentEngine.csproj", "{45983087-5E0E-4BFB-86C1-A5BC54D2A86F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisDataSource", "RedisDataSource\RedisDataSource.csproj", "{A6440C21-7C53-4855-A40A-ADE04F1289C5}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "DataManagmentModelsShared", "..\..\BeepDM\DataManagementModelsShared\DataManagmentModelsShared.shproj", "{2F745B0A-B2F4-4EB8-9A8E-5A87B2988F99}"
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "DataManagmentModelsShared", "..\..\..\The-Tech-Idea\BeepDM\DataManagementModelsShared\DataManagmentModelsShared.shproj", "{2F745B0A-B2F4-4EB8-9A8E-5A87B2988F99}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "DataManagmentEngineShared", "..\..\BeepDM\DataManagmentEngineShared\DataManagmentEngineShared.shproj", "{B5D91583-1EB4-4B3C-8288-88FD13E35556}"
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "DataManagmentEngineShared", "..\..\..\The-Tech-Idea\BeepDM\DataManagmentEngineShared\DataManagmentEngineShared.shproj", "{B5D91583-1EB4-4B3C-8288-88FD13E35556}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly_helpers", "..\..\BeepDM\Assembly_helpers\Assembly_helpers.csproj", "{E987EC5E-563C-48D9-932F-1DFBC545752D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly_helpers", "..\..\..\The-Tech-Idea\BeepDM\Assembly_helpers\Assembly_helpers.csproj", "{E987EC5E-563C-48D9-932F-1DFBC545752D}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		..\..\BeepDM\DataManagementModelsShared\DataManagementModelsShared.projitems*{2f745b0a-b2f4-4eb8-9a8e-5a87b2988f99}*SharedItemsImports = 13
-		..\..\BeepDM\DataManagmentEngineShared\DataManagmentEngineShared.projitems*{45983087-5e0e-4bfb-86c1-a5bc54d2a86f}*SharedItemsImports = 4
-		..\..\BeepDM\DataManagementModelsShared\DataManagementModelsShared.projitems*{7697ebdc-a4f2-49b1-af91-79031516e679}*SharedItemsImports = 4
-		..\..\BeepDM\DataManagmentEngineShared\DataManagmentEngineShared.projitems*{b5d91583-1eb4-4b3c-8288-88fd13e35556}*SharedItemsImports = 13
+		..\..\..\The-Tech-Idea\BeepDM\DataManagementModelsShared\DataManagementModelsShared.projitems*{2f745b0a-b2f4-4eb8-9a8e-5a87b2988f99}*SharedItemsImports = 13
+		..\..\..\The-Tech-Idea\BeepDM\DataManagmentEngineShared\DataManagmentEngineShared.projitems*{45983087-5e0e-4bfb-86c1-a5bc54d2a86f}*SharedItemsImports = 4
+		..\..\..\The-Tech-Idea\BeepDM\DataManagementModelsShared\DataManagementModelsShared.projitems*{7697ebdc-a4f2-49b1-af91-79031516e679}*SharedItemsImports = 4
+		..\..\..\The-Tech-Idea\BeepDM\DataManagmentEngineShared\DataManagmentEngineShared.projitems*{b5d91583-1eb4-4b3c-8288-88fd13e35556}*SharedItemsImports = 13
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
