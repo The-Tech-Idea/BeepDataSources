@@ -189,7 +189,7 @@
     <Error Condition="!Exists('..\packages\Microsoft.Azure.Cosmos.3.16.0\build\netstandard2.0\Microsoft.Azure.Cosmos.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Azure.Cosmos.3.16.0\build\netstandard2.0\Microsoft.Azure.Cosmos.targets'))" />
   </Target>
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetName).dll  $(SolutionDir)\Release\$(TargetName).dll</PostBuildEvent>
+    <PostBuildEvent>copy $(TargetName).dll  $(SolutionDir)\OutputDLL\$(TargetName).dll</PostBuildEvent>
   </PropertyGroup>
   <Import Project="..\packages\Microsoft.Azure.Cosmos.3.16.0\build\netstandard2.0\Microsoft.Azure.Cosmos.targets" Condition="Exists('..\packages\Microsoft.Azure.Cosmos.3.16.0\build\netstandard2.0\Microsoft.Azure.Cosmos.targets')" />
 </Project>

@@ -63,6 +63,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetName).dll  $(SolutionDir)\Release\$(TargetName).dll</PostBuildEvent>
+    <PostBuildEvent>copy $(TargetName).dll  $(SolutionDir)\OutputDLL\$(TargetName).dll</PostBuildEvent>
   </PropertyGroup>
 </Project>

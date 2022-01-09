@@ -155,7 +155,7 @@
     <Error Condition="!Exists('..\packages\MongoDB.Driver.Core.2.11.6\build\MongoDB.Driver.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MongoDB.Driver.Core.2.11.6\build\MongoDB.Driver.Core.targets'))" />
   </Target>
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetName).dll  $(SolutionDir)\Release\$(TargetName).dll</PostBuildEvent>
+    <PostBuildEvent>copy $(TargetName).dll  $(SolutionDir)\OutputDLL\$(TargetName).dll</PostBuildEvent>
   </PropertyGroup>
   <Import Project="..\packages\MongoDB.Driver.Core.2.11.6\build\MongoDB.Driver.Core.targets" Condition="Exists('..\packages\MongoDB.Driver.Core.2.11.6\build\MongoDB.Driver.Core.targets')" />
 </Project>

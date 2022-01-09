@@ -144,6 +144,6 @@
     <Error Condition="!Exists('..\packages\Grpc.Core.2.38.0\build\net45\Grpc.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Grpc.Core.2.38.0\build\net45\Grpc.Core.targets'))" />
   </Target>
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetName).dll  $(SolutionDir)\Release\$(TargetName).dll</PostBuildEvent>
+    <PostBuildEvent>copy $(TargetName).dll  $(SolutionDir)\OutputDLL\$(TargetName).dll</PostBuildEvent>
   </PropertyGroup>
 </Project>

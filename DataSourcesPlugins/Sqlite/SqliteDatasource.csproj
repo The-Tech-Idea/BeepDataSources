@@ -88,7 +88,7 @@
   </Target>
   <Import Project="..\packages\Stub.System.Data.SQLite.Core.NetFramework.1.0.113.3\build\net46\Stub.System.Data.SQLite.Core.NetFramework.targets" Condition="Exists('..\packages\Stub.System.Data.SQLite.Core.NetFramework.1.0.113.3\build\net46\Stub.System.Data.SQLite.Core.NetFramework.targets')" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetName).dll  $(SolutionDir)\Release\$(TargetName).dll</PostBuildEvent>
+    <PostBuildEvent>copy $(TargetName).dll  $(SolutionDir)\OutputDLL\$(TargetName).dll</PostBuildEvent>
   </PropertyGroup>
   <Import Project="..\packages\EntityFramework.6.4.4\build\EntityFramework.targets" Condition="Exists('..\packages\EntityFramework.6.4.4\build\EntityFramework.targets')" />
 </Project>
