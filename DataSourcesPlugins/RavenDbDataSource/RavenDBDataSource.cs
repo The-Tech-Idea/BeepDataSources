@@ -27,6 +27,8 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Workflow;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
+using System.Net.Http;
+using System.Security.Policy;
 
 namespace TheTechIdea.Beep.NOSQL.RavenDB
 {
@@ -78,12 +80,23 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
                 if (string.IsNullOrWhiteSpace(CurrentDatabase) == false)
                 {
                     Store = OpenStore(Dataconnection.ConnectionProp.Url, 10, true);
+                    if (Store != null)
+                    {
+                        
+                        CurrentDatabase = Store.Database;
+                        if (CurrentDatabase.Length > 0)
+                        {
+                            GetEntitesList();
+                        }
+
+                    }
+                    else
+                    {
+                        ConnectionStatus = ConnectionState.Closed;
+                    }
 
                 }
-                if (CurrentDatabase.Length > 0)
-                {
-                    GetEntitesList();
-                }
+                
             }
           
 
@@ -104,12 +117,27 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
         }
         public ConnectionState Openconnection()
         {
-            throw new NotImplementedException();
+            Store = OpenStore(Dataconnection.ConnectionProp.Url, 10, true);
+            if (Store != null)
+            {
+
+                CurrentDatabase = Store.Database;
+                if (CurrentDatabase.Length > 0)
+                {
+                    GetEntitesList();
+                }
+                ConnectionStatus = ConnectionState.Open;
+            }
+            else
+            {
+                ConnectionStatus = ConnectionState.Closed;
+            }
+            return ConnectionStatus;
         }
 
         public ConnectionState Closeconnection()
         {
-            throw new NotImplementedException();
+            return ConnectionStatus;
         }
 
         public bool CheckEntityExist(string EntityName)
@@ -268,37 +296,36 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
                 Session = GetSession(CurrentDatabase);
                 var command = new GetDocumentsCommand(DocName, null, metadataOnly: true);
                 Session.Advanced.RequestExecutor.Execute(command, Session.Advanced.Context);
-                var result = (BlittableJsonReaderObject)command.Result.Results[0];
-                var documentMetadata = (BlittableJsonReaderObject)result["@metadata"];
-
-                // Print out all the metadata properties.
-                EntityStructure entityData = new EntityStructure();
-
-                string sheetname;
-                sheetname = DocName;
-                entityData.EntityName = DocName;
-                entityData.DataSourceID = Dataconnection.ConnectionProp.ConnectionName;
-                entityData.SchemaOrOwnerOrDatabase = CurrentDatabase;
-                List<EntityField> Fields = new List<EntityField>();
-                int y = 0;
-                foreach (var propertyName in documentMetadata.GetPropertyNames())
+                if(command.Result != null)
                 {
-                    documentMetadata.TryGet<object>(propertyName, out var metaPropValue);
+                    var result = (BlittableJsonReaderObject)command.Result.Results[0];
+                    var documentMetadata = (BlittableJsonReaderObject)result["@metadata"];
 
-                    EntityField f = new EntityField();
-                    f.fieldname = propertyName;
-                    f.fieldtype = "System.String";
-                    f.ValueRetrievedFromParent = false;
-                    f.EntityName = sheetname;
-                    f.FieldIndex = y;
-                    Fields.Add(f);
-                    y += 1;
+                    // Print out all the metadata properties.
+                    EntityStructure entityData = new EntityStructure();
 
+                    string sheetname;
+                    sheetname = DocName;
+                    entityData.EntityName = DocName;
+                    entityData.DataSourceID = Dataconnection.ConnectionProp.ConnectionName;
+                    entityData.SchemaOrOwnerOrDatabase = CurrentDatabase;
+                    List<EntityField> Fields = new List<EntityField>();
+                    int y = 0;
+                    foreach (var propertyName in documentMetadata.GetPropertyNames())
+                    {
+                        documentMetadata.TryGet<object>(propertyName, out var metaPropValue);
 
-
-
-
+                        EntityField f = new EntityField();
+                        f.fieldname = propertyName;
+                        f.fieldtype = "System.String";
+                        f.ValueRetrievedFromParent = false;
+                        f.EntityName = sheetname;
+                        f.FieldIndex = y;
+                        Fields.Add(f);
+                        y += 1;
+                    }
                 }
+                
                 return retval;
             }
             catch (Exception ex)
