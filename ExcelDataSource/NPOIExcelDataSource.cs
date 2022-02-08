@@ -15,6 +15,7 @@ using NPOI.SS.UserModel;
 using System.IO;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.Vis;
 
 namespace TheTechIdea.Beep.FileManager
 {
@@ -106,7 +107,7 @@ namespace TheTechIdea.Beep.FileManager
             throw new NotImplementedException();
         }
 
-        public List<SyncEntity> GetCreateEntityScript(List<EntityStructure> entities = null)
+        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
             throw new NotImplementedException();
         }
@@ -151,7 +152,7 @@ namespace TheTechIdea.Beep.FileManager
             throw new NotImplementedException();
         }
 
-        public IErrorsInfo RunScript(SyncEntity dDLScripts)
+        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
         {
             throw new NotImplementedException();
         }
