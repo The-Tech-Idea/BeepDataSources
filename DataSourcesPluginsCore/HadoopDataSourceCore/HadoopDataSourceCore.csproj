@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>TheTechIdea.Beep.Database</RootNamespace>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\DataSourcesPlugins\HadoopDataSource\*.cs" />
+    <EmbeddedResource Include="..\..\DataSourcesPlugins\HadoopDataSource\**\*.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentEngineNet6\DataManagmentEngineNet6.csproj" />
+    <ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentModelsNet6\DataManagmentModelsNet6.csproj" />
+  </ItemGroup>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy $(ProjectDir)\bin\Debug\net6.0\$(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll" />
+  </Target>
+
+</Project>

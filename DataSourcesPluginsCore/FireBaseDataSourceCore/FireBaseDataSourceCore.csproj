@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>TheTechIdea.Beep.Database</RootNamespace>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\DataSourcesPlugins\FireBaseDataSourceCore\*.cs" />
+    <EmbeddedResource Include="..\..\DataSourcesPlugins\FireBaseDataSourceCore\**\*.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Google.Cloud.Firestore" Version="2.5.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentModelsNet6\DataManagmentModelsNet6.csproj" />
+    <ProjectReference Include="..\DataSourcePluginTemplateNet6\DataSourcePluginTemplateNet6.csproj" />
+  </ItemGroup>
+ 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy $(ProjectDir)\bin\Debug\net6.0\$(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll" />
+  </Target>
+
+</Project>

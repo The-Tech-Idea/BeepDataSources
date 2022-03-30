@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+	<ItemGroup>
+		<Compile Include="..\..\DataSourcesPlugins\WebApiDataSource\*.cs" />
+		<EmbeddedResource Include="..\..\DataSourcesPlugins\WebApiDataSource\**\*.resx" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Remove="..\..\DataSourcesPlugins\WebApiDataSource\WebAPIDataSource.cs" />
+	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentEngineNet6\DataManagmentEngineNet6.csproj" />
+		<ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentModelsNet6\DataManagmentModelsNet6.csproj" />
+	</ItemGroup>
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="copy  $(ProjectDir)bin\Debug\net6.0\$(TargetName).dll  $(SolutionDir)OutputDLL\$(TargetName).dll" />
+	</Target>
+</Project>

@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>TheTechIdea.Beep.Database</RootNamespace>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CouchbaseNetClient" Version="3.2.6" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Include="..\..\DataSourcesPlugins\CouchBaseDataSource\*.cs" />
+    <EmbeddedResource Include="..\..\DataSourcesPlugins\CouchBaseDataSource\**\*.resx" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentEngineNet6\DataManagmentEngineNet6.csproj" />
+    <ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentModelsNet6\DataManagmentModelsNet6.csproj" />
+  </ItemGroup>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy $(ProjectDir)\bin\Debug\net6.0\$(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll" />
+  </Target>
+</Project>
