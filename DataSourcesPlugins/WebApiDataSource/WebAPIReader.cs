@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using TheTechIdea.Beep;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.WebAPI;
 using TheTechIdea.Tools;
 using TheTechIdea.Util;
 

@@ -17,7 +17,4 @@
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.3" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.3" />
 	</ItemGroup>
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="copy  $(ProjectDir)bin\Debug\net6.0\$(TargetName).dll  $(SolutionDir)OutputDLL\$(TargetName).dll" />
-	</Target>
 </Project>
