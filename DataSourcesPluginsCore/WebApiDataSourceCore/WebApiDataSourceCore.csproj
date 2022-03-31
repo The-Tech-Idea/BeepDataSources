@@ -14,10 +14,8 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-	</ItemGroup>
-	<ItemGroup>
-		<ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentEngineNet6\DataManagmentEngineNet6.csproj" />
-		<ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentModelsNet6\DataManagmentModelsNet6.csproj" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.3" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.3" />
 	</ItemGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Exec Command="copy  $(ProjectDir)bin\Debug\net6.0\$(TargetName).dll  $(SolutionDir)OutputDLL\$(TargetName).dll" />

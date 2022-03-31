@@ -67,16 +67,6 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentModels\DataManagmentModels.csproj">
-      <Project>{7697ebdc-a4f2-49b1-af91-79031516e679}</Project>
-      <Name>DataManagmentModels</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagment_Engine\DataManagmentEngine.csproj">
-      <Project>{45983087-5e0e-4bfb-86c1-a5bc54d2a86f}</Project>
-      <Name>DataManagmentEngine</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Stub.System.Data.SQLite.Core.NetFramework.1.0.113.3\build\net46\Stub.System.Data.SQLite.Core.NetFramework.targets" Condition="Exists('..\packages\Stub.System.Data.SQLite.Core.NetFramework.1.0.113.3\build\net46\Stub.System.Data.SQLite.Core.NetFramework.targets')" />
   <PropertyGroup>

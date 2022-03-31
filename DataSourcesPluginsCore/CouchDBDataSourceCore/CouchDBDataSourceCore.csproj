@@ -17,8 +17,6 @@
     <PackageReference Include="CouchDB.NET" Version="3.1.1" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentEngineNet6\DataManagmentEngineNet6.csproj" />
-    <ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentModelsNet6\DataManagmentModelsNet6.csproj" />
     <ProjectReference Include="..\WebApiDataSourceCore\WebApiDataSourceCore.csproj" />
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

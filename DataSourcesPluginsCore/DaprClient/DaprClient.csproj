@@ -33,12 +33,9 @@
   <ItemGroup>
     <PackageReference Include="Dapr.Actors" Version="1.0.0" />
     <PackageReference Include="Dapr.Client" Version="1.0.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.3" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.3" />
     <PackageReference Include="YamlDotNet" Version="11.1.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\DataManagmentModels\DataManagmentModels.csproj" />
-    <ProjectReference Include="..\DataManagment_Engine\DataManagmentEngine.csproj" />
   </ItemGroup>
 
 </Project>

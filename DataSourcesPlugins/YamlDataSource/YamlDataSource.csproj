@@ -47,16 +47,6 @@
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagmentModels\DataManagmentModels.csproj">
-      <Project>{7697ebdc-a4f2-49b1-af91-79031516e679}</Project>
-      <Name>DataManagmentModels</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\The-Tech-Idea\BeepDM\DataManagment_Engine\DataManagmentEngine.csproj">
-      <Project>{45983087-5e0e-4bfb-86c1-a5bc54d2a86f}</Project>
-      <Name>DataManagmentEngine</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy $(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll</PostBuildEvent>
