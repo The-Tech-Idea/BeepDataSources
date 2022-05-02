@@ -11,9 +11,9 @@
     <EmbeddedResource Include="..\..\DataSourcesPlugins\FireBirdDataSource\**\*.resx" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="8.5.4" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.12" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.5" />
+    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="9.0.1" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.16" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.7" />
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="copy $(ProjectDir)\bin\Debug\net6.0\$(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll" />

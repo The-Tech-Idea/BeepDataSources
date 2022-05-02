@@ -7,7 +7,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CouchbaseNetClient" Version="3.2.8" />
+    <PackageReference Include="CouchbaseNetClient" Version="3.2.9" />
   </ItemGroup>
   
   <ItemGroup>

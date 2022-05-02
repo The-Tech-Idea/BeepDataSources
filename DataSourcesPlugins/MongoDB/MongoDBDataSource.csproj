@@ -36,11 +36,11 @@
     <Reference Include="Dapper, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Dapper.2.0.123\lib\net461\Dapper.dll</HintPath>
     </Reference>
-    <Reference Include="DataManagementModelsStandard, Version=1.0.0.5, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementModels2.0.1.0.0.5\lib\netstandard2.0\DataManagementModelsStandard.dll</HintPath>
+    <Reference Include="DataManagementModelsStandard, Version=1.0.0.7, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementModels2.0.1.0.0.7\lib\netstandard2.0\DataManagementModelsStandard.dll</HintPath>
     </Reference>
-    <Reference Include="DataManagmentEngineStandard, Version=1.0.0.12, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementEngine2.0.1.0.0.12\lib\netstandard2.0\DataManagmentEngineStandard.dll</HintPath>
+    <Reference Include="DataManagmentEngineStandard, Version=1.0.0.16, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementEngine2.0.1.0.0.16\lib\netstandard2.0\DataManagmentEngineStandard.dll</HintPath>
     </Reference>
     <Reference Include="DnsClient, Version=1.6.0.0, Culture=neutral, PublicKeyToken=4574bb5573c51424, processorArchitecture=MSIL">
       <HintPath>..\..\packages\DnsClient.1.6.0\lib\net471\DnsClient.dll</HintPath>
@@ -166,7 +166,6 @@
     <Content Include="Core\Compression\Snappy\lib\win\snappy32.dll" />
     <Content Include="Core\Compression\Snappy\lib\win\snappy64.dll" />
     <Content Include="Core\Compression\Zstandard\lib\win\libzstd.dll" />
-    <Content Include="dummy.txt" />
     <Content Include="mongocrypt.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

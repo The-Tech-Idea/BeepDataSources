@@ -34,14 +34,14 @@
     <Reference Include="Dapper, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Dapper.2.0.123\lib\net461\Dapper.dll</HintPath>
     </Reference>
-    <Reference Include="DataManagementModelsStandard, Version=1.0.0.5, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementModels2.0.1.0.0.5\lib\netstandard2.0\DataManagementModelsStandard.dll</HintPath>
+    <Reference Include="DataManagementModelsStandard, Version=1.0.0.7, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementModels2.0.1.0.0.7\lib\netstandard2.0\DataManagementModelsStandard.dll</HintPath>
     </Reference>
-    <Reference Include="DataManagmentEngineStandard, Version=1.0.0.12, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementEngine2.0.1.0.0.12\lib\netstandard2.0\DataManagmentEngineStandard.dll</HintPath>
+    <Reference Include="DataManagmentEngineStandard, Version=1.0.0.16, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementEngine2.0.1.0.0.16\lib\netstandard2.0\DataManagmentEngineStandard.dll</HintPath>
     </Reference>
-    <Reference Include="GraphQL, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\GraphQL.5.0.0\lib\netstandard2.0\GraphQL.dll</HintPath>
+    <Reference Include="GraphQL, Version=5.1.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\GraphQL.5.1.1\lib\netstandard2.0\GraphQL.dll</HintPath>
     </Reference>
     <Reference Include="GraphQLParser, Version=8.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\GraphQL-Parser.8.0.0\lib\netstandard2.0\GraphQLParser.dll</HintPath>
@@ -89,9 +89,6 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="dummy.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
