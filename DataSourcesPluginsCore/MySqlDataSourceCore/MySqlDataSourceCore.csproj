@@ -11,8 +11,8 @@
 </ItemGroup>
 <ItemGroup>
   <PackageReference Include="MySql.Data" Version="8.0.29" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.16" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.7" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.19" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.10" />
 </ItemGroup>
 <Target Name="PostBuild" AfterTargets="PostBuildEvent">
   <Exec Command="copy $(ProjectDir)\bin\Debug\net6.0\$(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll" />

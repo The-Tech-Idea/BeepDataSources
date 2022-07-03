@@ -281,74 +281,74 @@ namespace TheTechIdea.Beep.DataBase
 
 
         }
-        //public override IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
-        //{
-        //    if (recEntity != EntityName)
-        //    {
-        //        recNumber = 1;
-        //        recEntity = EntityName;
-        //    }
-        //    else
-        //        recNumber += 1;
-        //    // DataRow tb = object UploadDataRow;
-        //    ErrorObject.Flag = Errors.Ok;
-        //    EntityStructure DataStruct = GetEntityStructure(EntityName, true);
-        //    DataRowView dv;
-        //    DataTable tb;
-        //    DataRow dr;
-        //    string msg = "";
-        //    //   var sqlTran = Dataconnection.DbConn.BeginTransaction();
-        //    OracleCommand command = GetDataCommandForOracle();
-        //    Type enttype = GetEntityType(EntityName);
-        //    var ti = Activator.CreateInstance(enttype);
-   
-        //    dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, UploadDataRow, DataStruct);
-        //    try
-        //    {
-        //        string updatestring = GetUpdateString(EntityName, DataStruct);
-        //        command.CommandText = updatestring;
-        //        command = CreateCommandParameters(command, dr, DataStruct);
-        //        int rowsUpdated = command.ExecuteNonQuery();
-        //        if (rowsUpdated > 0)
-        //        {
-        //            msg = $"Successfully Updated  Record  to {EntityName} : {updatestring}";
-        //            // DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
-        //        }
-        //        else
-        //        {
-        //            msg = $"Fail to Updated  Record  to {EntityName} : {updatestring}";
-        //            DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-        //        }
+        public override IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
+        {
+            if (recEntity != EntityName)
+            {
+                recNumber = 1;
+                recEntity = EntityName;
+            }
+            else
+                recNumber += 1;
+            // DataRow tb = object UploadDataRow;
+            ErrorObject.Flag = Errors.Ok;
+            EntityStructure DataStruct = GetEntityStructure(EntityName, true);
+            DataRowView dv;
+            DataTable tb;
+            DataRow dr;
+            string msg = "";
+            //   var sqlTran = Dataconnection.DbConn.BeginTransaction();
+            OracleCommand command = GetDataCommandForOracle();
+            Type enttype = GetEntityType(EntityName);
+            var ti = Activator.CreateInstance(enttype);
+
+            dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, UploadDataRow, DataStruct);
+            try
+            {
+                string updatestring = GetUpdateString(EntityName, DataStruct);
+                command.CommandText = updatestring;
+                command = CreateCommandParameters(command, dr, DataStruct);
+                int rowsUpdated = command.ExecuteNonQuery();
+                if (rowsUpdated > 0)
+                {
+                    msg = $"Successfully Updated  Record  to {EntityName} : {updatestring}";
+                    // DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
+                }
+                else
+                {
+                    msg = $"Fail to Updated  Record  to {EntityName} : {updatestring}";
+                    DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
+                }
 
 
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        ErrorObject.Ex = ex;
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Ex = ex;
 
-        //        command.Dispose();
-        //        try
-        //        {
-        //            // Attempt to roll back the transaction.
-        //            //     sqlTran.Rollback();
-        //            msg = "Unsuccessfully no Data has been written to Data Source,Rollback Complete";
-        //        }
-        //        catch (Exception exRollback)
-        //        {
-        //            // Throws an InvalidOperationException if the connection
-        //            // is closed or the transaction has already been rolled
-        //            // back on the server.
-        //            // Console.WriteLine(exRollback.Message);
-        //            msg = "Unsuccessfully no Data has been written to Data Source,Rollback InComplete";
-        //            ErrorObject.Ex = exRollback;
-        //        }
-        //        msg = "Unsuccessfully no Data has been written to Data Source";
-        //        DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
+                command.Dispose();
+                try
+                {
+                    // Attempt to roll back the transaction.
+                    //     sqlTran.Rollback();
+                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback Complete";
+                }
+                catch (Exception exRollback)
+                {
+                    // Throws an InvalidOperationException if the connection
+                    // is closed or the transaction has already been rolled
+                    // back on the server.
+                    // Console.WriteLine(exRollback.Message);
+                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback InComplete";
+                    ErrorObject.Ex = exRollback;
+                }
+                msg = "Unsuccessfully no Data has been written to Data Source";
+                DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
 
-        //    }
+            }
 
-        //    return ErrorObject;
-        //}
+            return ErrorObject;
+        }
         //public override IErrorsInfo DeleteEntity(string EntityName, object DeletedDataRow)
         //{
 
@@ -369,7 +369,7 @@ namespace TheTechIdea.Beep.DataBase
         //    }
         //    else
         //        recNumber += 1;
-          
+
         //    dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, DeletedDataRow, DataStruct);
         //    try
         //    {
@@ -442,7 +442,7 @@ namespace TheTechIdea.Beep.DataBase
         //    }
         //    else
         //        recNumber += 1;
-           
+
         //    dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, InsertedData, DataStruct);
         //    try
         //    {
@@ -505,7 +505,7 @@ namespace TheTechIdea.Beep.DataBase
 
         //        Insertstr += " " + item.fieldname + "],";
         //        Valuestr += ":p_" + Regex.Replace(item.fieldname, @"\s+", "_") + ",";
-               
+
         //        t += 1;
         //    }
         //    Insertstr = Insertstr.Remove(Insertstr.Length - 1);
@@ -841,12 +841,13 @@ namespace TheTechIdea.Beep.DataBase
         private OracleCommand CreateCommandParameters(OracleCommand command, DataRow r, EntityStructure DataStruct)
         {
             command.Parameters.Clear();
-            foreach (EntityField item in DataStruct.Fields)
+            command.BindByName = true;
+            foreach (EntityField item in DataStruct.Fields.OrderBy(o => o.fieldname))
             {
 
                 if (!command.Parameters.Contains("p_" + Regex.Replace(item.fieldname, @"\s+", "_")))
                 {
-                    IDbDataParameter parameter = command.CreateParameter();
+                    OracleParameter parameter = command.CreateParameter();
                     if (!item.fieldtype.Equals("System.String", StringComparison.OrdinalIgnoreCase) && !item.fieldtype.Equals("System.DateTime", StringComparison.OrdinalIgnoreCase))
                     {
                         if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")

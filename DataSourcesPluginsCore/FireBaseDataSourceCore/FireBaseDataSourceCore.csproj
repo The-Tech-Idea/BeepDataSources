@@ -10,9 +10,9 @@
     <EmbeddedResource Include="..\..\DataSourcesPlugins\FireBaseDataSourceCore\**\*.resx" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Google.Cloud.Firestore" Version="2.5.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.16" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.7" />
+    <PackageReference Include="Google.Cloud.Firestore" Version="3.0.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.19" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.10" />
   </ItemGroup>
  
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
