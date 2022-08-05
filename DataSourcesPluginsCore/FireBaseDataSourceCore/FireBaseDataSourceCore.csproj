@@ -11,7 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Google.Cloud.Firestore" Version="3.0.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.26" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.27" />
     <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.14" />
   </ItemGroup>
  

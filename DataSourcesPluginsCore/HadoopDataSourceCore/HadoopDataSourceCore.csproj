@@ -11,7 +11,7 @@
     <EmbeddedResource Include="..\..\DataSourcesPlugins\HadoopDataSource\**\*.resx" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.26" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.27" />
     <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.14" />
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
