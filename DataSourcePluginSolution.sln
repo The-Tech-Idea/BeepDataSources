@@ -107,6 +107,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlServerDataSourceCore", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiDataSourceCore", "DataSourcesPluginsCore\WebApiDataSourceCore\WebApiDataSourceCore.csproj", "{7D07AB55-35CC-4903-8189-0B63053625DF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SnowFlakeDataSource", "DataSourcesPlugins\SnowFlakeDataSource\SnowFlakeDataSource.csproj", "{1861A517-BEE7-447B-A63F-FF2D1F28ED64}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -289,6 +291,10 @@ Global
 		{7D07AB55-35CC-4903-8189-0B63053625DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D07AB55-35CC-4903-8189-0B63053625DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D07AB55-35CC-4903-8189-0B63053625DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1861A517-BEE7-447B-A63F-FF2D1F28ED64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1861A517-BEE7-447B-A63F-FF2D1F28ED64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1861A517-BEE7-447B-A63F-FF2D1F28ED64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1861A517-BEE7-447B-A63F-FF2D1F28ED64}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -344,6 +350,7 @@ Global
 		{FB1E573C-FAF7-4B19-8136-A6DBFB5A07DA} = {BD2E7D46-44AF-47AD-8485-FFF2D77CD488}
 		{C35CA536-6DB1-48C3-92B4-4308C51EAB97} = {BD2E7D46-44AF-47AD-8485-FFF2D77CD488}
 		{7D07AB55-35CC-4903-8189-0B63053625DF} = {BD2E7D46-44AF-47AD-8485-FFF2D77CD488}
+		{1861A517-BEE7-447B-A63F-FF2D1F28ED64} = {4A7DDB73-362B-4B06-93B8-94C0CC8E51B2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3A2D75E5-8D72-477B-9ABD-5FE471363BE2}
