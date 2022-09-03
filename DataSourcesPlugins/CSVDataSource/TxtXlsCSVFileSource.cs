@@ -189,12 +189,29 @@ namespace TheTechIdea.Beep.FileManager
             {
                 DataTable dt=null;
                 string qrystr="";
-             
 
+                int fromline = 0;
+                int toline = 0;
                 if (GetFileState() == ConnectionState.Open)
                 {
+                    if (filter != null)
+                    {
+                        if(filter.Count > 0)
+                        {
+                            AppFilter fromlinefilter = filter.FirstOrDefault(p => p.FieldName.Equals("FromLine", StringComparison.InvariantCultureIgnoreCase));
+                            if (fromlinefilter != null)
+                            {
+                                fromline =Convert.ToInt32(fromlinefilter.FilterValue);
+                            }
+                            AppFilter Tolinefilter = filter.FirstOrDefault(p => p.FieldName.Equals("ToLine", StringComparison.InvariantCultureIgnoreCase));
+                            if (fromlinefilter != null)
+                            {
+                                 toline = Convert.ToInt32(fromlinefilter.FilterValue);
+                            }
+                        }
+                    }
 
-                    dt = ReadDataTable(EntityName, HeaderExist, 0, 0);
+                    dt = ReadDataTable(EntityName, HeaderExist, fromline, toline);
                     SyncFieldTypes(ref dt,EntityName);
                     if (filter != null)
                     {
@@ -662,6 +679,110 @@ namespace TheTechIdea.Beep.FileManager
             };
 
         }
+        private ExcelReaderConfiguration GetReaderConfiguration()
+        {
+            ExcelReaderConfiguration ReaderConfig = new ExcelReaderConfiguration()
+            {
+                // Gets or sets the encoding to use when the input XLS lacks a CodePage
+                // record, or when the input CSV lacks a BOM and does not parse as UTF8. 
+                // Default: cp1252 (XLS BIFF2-5 and CSV only)
+                FallbackEncoding = Encoding.GetEncoding(1252),
+
+                //// Gets or sets the password used to open password protected workbooks.
+                //Password = "password",
+
+                // Gets or sets an array of CSV separator candidates. The reader 
+                // autodetects which best fits the input data. Default: , ; TAB | # 
+                // (CSV only)
+                AutodetectSeparators = new char[] { ',', ';', '\t', '|', '#' },
+
+                // Gets or sets a value indicating whether to leave the stream open after
+                // the IExcelDataReader object is disposed. Default: false
+                LeaveOpen = false,
+
+                // Gets or sets a value indicating the number of rows to analyze for
+                // encoding, separator and field count in a CSV. When set, this option
+                // causes the IExcelDataReader.RowCount property to throw an exception.
+                // Default: 0 - analyzes the entire file (CSV only, has no effect on other
+                // formats)
+                AnalyzeInitialCsvRows = 0,
+            };
+          
+            return ReaderConfig;
+
+        }
+        private ExcelDataSetConfiguration GetDataSetConfiguration(int startrow)
+        {
+
+            ExcelDataSetConfiguration  ExcelDataSetConfig = new ExcelDataSetConfiguration()
+            {
+                // Gets or sets a value indicating whether to set the DataColumn.DataType 
+                // property in a second pass.
+                UseColumnDataType = true,
+
+                // Gets or sets a callback to determine whether to include the current sheet
+                // in the DataSet. Called once per sheet before ConfigureDataTable.
+                FilterSheet = (tableReader, sheetIndex) => true,
+
+                // Gets or sets a callback to obtain configuration options for a DataTable. 
+                ConfigureDataTable = (tableReader) => new ExcelDataTableConfiguration()
+                {
+                    // Gets or sets a value indicating the prefix of generated column names.
+                    //EmptyColumnNamePrefix = "Column",
+
+                    // Gets or sets a value indicating whether to use a row from the 
+                    // data as column names.
+                    UseHeaderRow = true,
+
+
+                    // Gets or sets a callback to determine which row is the header row. 
+                    // Only called when UseHeaderRow = true.
+                    ReadHeaderRow = (rowReader) =>
+                    {
+                        // F.ex skip the first row and use the 2nd row as column headers:
+                        for (int i = 0; i < startrow; i++)
+                        {
+                            rowReader.Read();
+                        }
+                      
+                    },
+
+                    // Gets or sets a callback to determine whether to include the 
+                    // current row in the DataTable.
+                    FilterRow = (rowReader) =>
+                    {
+                        //return true;
+                        var hasData = false;
+                        for (var u = 0; u < rowReader.FieldCount; u++)
+                        {
+                            if (rowReader[u] == null || string.IsNullOrEmpty(rowReader[u].ToString()))
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                hasData = true;
+                                break;
+                            }
+
+
+                        }
+
+                        return hasData;
+                    },
+
+                    // Gets or sets a callback to determine whether to include the specific
+                    // column in the DataTable. Called once per column after reading the 
+                    // headers.
+                    FilterColumn = (rowReader, columnIndex) =>
+                    {
+                        return true;
+                    }
+                }
+            };
+            return ExcelDataSetConfig;
+
+        }
         private DataSet GetExcelDataSet()
         {
             DataSet ds = new DataSet();
@@ -695,9 +816,11 @@ namespace TheTechIdea.Beep.FileManager
         private void Getfields()
         {
             DataSet ds;
-            Entities = new List<EntityStructure>();
-            
-
+            if (Entities == null)
+            {
+                Entities = new List<EntityStructure>();
+            }
+          
             if (GetFileState() == ConnectionState.Open)
             {
                 try
@@ -707,30 +830,49 @@ namespace TheTechIdea.Beep.FileManager
                     int i = 0;
                     foreach (DataTable tb in ds.Tables)
                     {
+                        EntityStructure entityData = null;
                         if (!Entities.Where(p => p.OriginalEntityName.Equals(tb.TableName, StringComparison.OrdinalIgnoreCase)).Any())
                         {
-                            EntityStructure entityData = new EntityStructure();
                             string sheetname;
-                            sheetname = tb.TableName;
-                            entityData.Viewtype = ViewType.File;
-                            entityData.DatabaseType = DataSourceType.Text;
-                            entityData.DataSourceID = FileName;
-                            entityData.DatasourceEntityName = tb.TableName;
-                            entityData.Caption = tb.TableName;
-                            entityData.EntityName = sheetname;
-                            entityData.Id = i;
-                            i++;
-                            entityData.OriginalEntityName = sheetname;
+
+                            if (Entities != null)
+                            {
+                                int idx = Entities.FindIndex(p => p.EntityName.Equals(tb.TableName, StringComparison.InvariantCultureIgnoreCase));
+                                if (idx > -1)
+                                {
+                                    entityData = Entities[idx];
+                                }
+
+                            }
+                        
+                           if(entityData == null)
+                           {
+                                entityData = new EntityStructure();
+                                sheetname = tb.TableName;
+                                entityData.Viewtype = ViewType.File;
+                                entityData.DatabaseType = DataSourceType.Text;
+                                entityData.DataSourceID = FileName;
+                                entityData.DatasourceEntityName = tb.TableName;
+                                entityData.Caption = tb.TableName;
+                                entityData.EntityName = sheetname;
+                                entityData.Id = i;
+                                i++;
+                                entityData.OriginalEntityName = sheetname;
+                                Entities.Add(entityData);
+                            }
+                               
+                        }
+                          
+                           
                             List<EntityField> Fields = new List<EntityField>();
                             entityData.Fields = new List<EntityField>();
                             entityData.Fields.AddRange(GetFieldsbyTableScan(tb.TableName, tb.Columns));
-                            // entityData.Fields = GetStringSizeFromTable(entityData.Fields, tb);
-                            Entities.Add(entityData);
-                        }
+                          
+                          
+                       
                        
                     }
-
-
+               
 
                 }
                 catch (Exception ex)
@@ -747,7 +889,15 @@ namespace TheTechIdea.Beep.FileManager
         private EntityStructure GetSheetEntity(string EntityName)
         {
             DataSet ds;
-            EntityStructure retval  = new EntityStructure();
+            
+            EntityStructure entityData = new EntityStructure();
+            if (Entities != null)
+            {
+                int idx = Entities.FindIndex(p => p.EntityName.Equals(EntityName, StringComparison.InvariantCultureIgnoreCase));
+                if(idx>-1)
+                    entityData = Entities[idx];
+            }
+           
             if (GetFileState() == ConnectionState.Open)
             {
                 try
@@ -758,7 +908,7 @@ namespace TheTechIdea.Beep.FileManager
                     {
                         if (tb.TableName.Equals(EntityName, StringComparison.OrdinalIgnoreCase))
                         {
-                            EntityStructure entityData = new EntityStructure();
+                           
                             string sheetname;
                             sheetname = tb.TableName;
                             entityData.Viewtype = ViewType.File;
@@ -774,7 +924,7 @@ namespace TheTechIdea.Beep.FileManager
                             entityData.Fields = new List<EntityField>();
                             entityData.Fields.AddRange(GetFieldsbyTableScan(tb.TableName, tb.Columns));
                             // entityData.Fields = GetStringSizeFromTable(entityData.Fields, tb);
-                            retval = entityData;
+                        
                         }
 
                     }
@@ -784,13 +934,13 @@ namespace TheTechIdea.Beep.FileManager
                 }
                 catch (Exception ex)
                 {
-                    retval = null;
+                    entityData = null;
                     DMEEditor.AddLogMessage("Fail", $"Error in getting Entity from File  {ex.Message}", DateTime.Now, 0, FileName, Errors.Failed);
 
                 }
             }
 
-            return retval;
+            return entityData;
 
 
         }
@@ -873,7 +1023,7 @@ namespace TheTechIdea.Beep.FileManager
             return retval;
 
         }
-        public DataTable ReadDataTable(string sheetname, bool HeaderExist = true, int fromline = 0, int toline = 100)
+        public DataTable ReadDataTable(string sheetname, bool HeaderExist = true, int fromline = 0, int toline = 10000)
         {
 
             if (FileData == null)
