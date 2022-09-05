@@ -11,8 +11,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Google.Cloud.Firestore" Version="3.0.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.28" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.15" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.41" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.22" />
   </ItemGroup>
  
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

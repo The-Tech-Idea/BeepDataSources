@@ -44,7 +44,7 @@ namespace TheTechIdea.Beep.FileManager
         char Delimiter;
         ExcelReaderConfiguration ReaderConfig;
         ExcelDataSetConfiguration ExcelDataSetConfig;
-        public DataSet FileData { get; set; }
+        public DataTable FileData { get; set; }
         IExcelDataReader reader;
         
         public TxtXlsCSVFileSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType pDatasourceType ,  IErrorsInfo per)
@@ -189,7 +189,7 @@ namespace TheTechIdea.Beep.FileManager
             {
                 DataTable dt=null;
                 string qrystr="";
-
+                EntityStructure entity=null;
                 int fromline = 0;
                 int toline = 0;
                 if (GetFileState() == ConnectionState.Open)
@@ -210,62 +210,63 @@ namespace TheTechIdea.Beep.FileManager
                             }
                         }
                     }
-
-                    dt = ReadDataTable(EntityName, HeaderExist, fromline, toline);
-                    SyncFieldTypes(ref dt,EntityName);
-                    if (filter != null)
+                    int idx = -1;
+                    if(Entities.Count > 0)
                     {
-                        if (filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator)).Any())
+                        idx = Entities.FindIndex(p => p.EntityName.Equals(EntityName, StringComparison.InvariantCultureIgnoreCase));
+                     
+                    }
+                   
+                    if (idx > -1)
+                    {
+                        entity = Entities[idx];
+                        dt = ReadDataTable(idx, HeaderExist, fromline, toline);
+                        SyncFieldTypes(ref dt, EntityName);
+                        if (filter != null)
                         {
-
-                            foreach (AppFilter item in filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator)))
+                            if (filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator)).Any())
                             {
-                                if (!string.IsNullOrEmpty(item.FilterValue) && !string.IsNullOrWhiteSpace(item.FilterValue))
+
+                                foreach (AppFilter item in filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator) && !p.FieldName.Equals("ToLine", StringComparison.InvariantCultureIgnoreCase) && !p.FieldName.Equals("FromLine", StringComparison.InvariantCultureIgnoreCase)))
                                 {
-                                    //  EntityField f = ent.Fields.Where(i => i.fieldname == item.FieldName).FirstOrDefault();
-                                    if (item.Operator.ToLower() == "between")
+                                    if (!string.IsNullOrEmpty(item.FilterValue) && !string.IsNullOrWhiteSpace(item.FilterValue))
                                     {
-                                        if (item.valueType == "System.DateTime")
+                                        //  EntityField f = ent.Fields.Where(i => i.fieldname == item.FieldName).FirstOrDefault();
+                                        if (item.Operator.ToLower() == "between")
                                         {
-                                            qrystr += "[" + item.FieldName + "] " + item.Operator + " '" + DateTime.Parse(item.FilterValue) + "' and  '" + DateTime.Parse(item.FilterValue1) + "'" + Environment.NewLine;
+                                            if (item.valueType == "System.DateTime")
+                                            {
+                                                qrystr += "[" + item.FieldName + "] " + item.Operator + " '" + DateTime.Parse(item.FilterValue) + "' and  '" + DateTime.Parse(item.FilterValue1) + "'" + Environment.NewLine;
+                                            }
+                                            else
+                                            {
+                                                qrystr += "[" + item.FieldName + "] " + item.Operator + " " + item.FilterValue + " and  " + item.FilterValue1 + " " + Environment.NewLine;
+                                            }
                                         }
                                         else
                                         {
-                                            qrystr += "[" + item.FieldName + "] " + item.Operator + " " + item.FilterValue + " and  " + item.FilterValue1 + " " + Environment.NewLine;
-                                        }
+                                            if (item.valueType == "System.String")
+                                            {
+                                                qrystr += "[" + item.FieldName + "] " + item.Operator + " '" + item.FilterValue + "' " + Environment.NewLine;
+                                            }
+                                            else
+                                            {
+                                                qrystr += "[" + item.FieldName + "] " + item.Operator + " " + item.FilterValue + " " + Environment.NewLine;
+                                            }
 
+                                        }
                                     }
-                                    else
-                                    {
-                                        if (item.valueType == "System.String")
-                                        {
-                                            qrystr += "[" + item.FieldName + "] " + item.Operator + " '" + item.FilterValue + "' " + Environment.NewLine;
-                                        }
-                                        else
-                                        {
-                                            qrystr += "[" + item.FieldName + "] " + item.Operator + " " + item.FilterValue + " " + Environment.NewLine;
-                                        }
-
-                                    }
-
                                 }
-
-
-
+                            }
+                            if (!string.IsNullOrEmpty(qrystr))
+                            {
+                                dt = dt.Select(qrystr).CopyToDataTable();
                             }
                         }
-
-                        if (!string.IsNullOrEmpty(qrystr))
-                        {
-                            dt = dt.Select(qrystr).CopyToDataTable();
-                        }
-
                     }
+                  
                 }
-              
-                
                 return dt;
-
             }
             catch (Exception ex)
             {
@@ -711,7 +712,7 @@ namespace TheTechIdea.Beep.FileManager
             return ReaderConfig;
 
         }
-        private ExcelDataSetConfiguration GetDataSetConfiguration(int startrow)
+        private ExcelDataSetConfiguration GetDataSetConfiguration(int sheetidx,int startrow)
         {
 
             ExcelDataSetConfiguration  ExcelDataSetConfig = new ExcelDataSetConfiguration()
@@ -722,7 +723,10 @@ namespace TheTechIdea.Beep.FileManager
 
                 // Gets or sets a callback to determine whether to include the current sheet
                 // in the DataSet. Called once per sheet before ConfigureDataTable.
-                FilterSheet = (tableReader, sheetIndex) => true,
+                FilterSheet = (tableReader, sheetIndex) =>
+                {
+                   return sheetidx == sheetIndex;
+                },
 
                 // Gets or sets a callback to obtain configuration options for a DataTable. 
                 ConfigureDataTable = (tableReader) => new ExcelDataTableConfiguration()
@@ -782,6 +786,37 @@ namespace TheTechIdea.Beep.FileManager
             };
             return ExcelDataSetConfig;
 
+        }
+        private DataTable GetDataTableforSheet(int sheetidx, int startrow)
+        {
+            DataSet ds = new DataSet();
+            using (var stream = File.Open(Path.Combine(FilePath, FileName), FileMode.Open, FileAccess.Read))
+            {
+                switch (Dataconnection.ConnectionProp.Ext.Replace(".", "").ToLower())
+                {
+                    case "csv":
+                        reader = ExcelReaderFactory.CreateCsvReader(stream, GetReaderConfiguration());
+                        break;
+                    case "xls":
+                        reader = ExcelReaderFactory.CreateBinaryReader(stream, GetReaderConfiguration());
+                        break;
+                    case "xlsx":
+                        reader = ExcelReaderFactory.CreateOpenXmlReader(stream, GetReaderConfiguration());
+                        break;
+                    default:
+                        throw new Exception("ExcelDataReaderFactory() - unknown/unsupported file extension");
+                        // break;
+                }
+
+
+                // 2. Use the AsDataSet extension method
+                
+                ds = reader.AsDataSet(GetDataSetConfiguration(sheetidx,startrow));
+                // The result of each spreadsheet is in result.Tables
+
+                stream.Close();
+            }
+            return ds.Tables[sheetidx];
         }
         private DataSet GetExcelDataSet()
         {
@@ -856,6 +891,7 @@ namespace TheTechIdea.Beep.FileManager
                                 entityData.Caption = tb.TableName;
                                 entityData.EntityName = sheetname;
                                 entityData.Id = i;
+                             
                                 i++;
                                 entityData.OriginalEntityName = sheetname;
                                 Entities.Add(entityData);
@@ -959,10 +995,10 @@ namespace TheTechIdea.Beep.FileManager
             if (GetFileState() == ConnectionState.Open)
             {
                 DataTable dataRows = new DataTable();
-                FileData = GetExcelDataSet();
-                dataRows = FileData.Tables[sheetno];
+                FileData = GetDataTableforSheet(sheetno,fromline);
+                dataRows = FileData;
                 toline = dataRows.Rows.Count;
-                List<EntityField> flds = GetSheetColumns(FileData.Tables[sheetno].TableName);
+                List<EntityField> flds = GetSheetColumns(FileData.TableName);
                 string classpath = DMEEditor.ConfigEditor.Config.Folders.Where(c => c.FolderFilesType == FolderFileTypes.ProjectClass).Select(x => x.FolderPath).FirstOrDefault();
                 // DMEEditor.classCreator.CreateClass(FileData.Tables[sheetno].TableName, flds, classpath);
                 //GetTypeForSheetsFile(dataRows.TableName);
@@ -1026,11 +1062,19 @@ namespace TheTechIdea.Beep.FileManager
         public DataTable ReadDataTable(string sheetname, bool HeaderExist = true, int fromline = 0, int toline = 10000)
         {
 
-            if (FileData == null)
+            int idx = -1;
+            if (Entities.Count > 0)
             {
-                FileData = GetExcelDataSet();
+                idx = Entities.FindIndex(p => p.EntityName.Equals(sheetname, StringComparison.InvariantCultureIgnoreCase));
+
+
             }
-            return ReadDataTable(GetSheetNumber(FileData, sheetname), HeaderExist, fromline, toline); ;
+
+            if (idx > -1)
+            {
+                FileData = GetDataTableforSheet(idx, fromline);
+            }
+            return ReadDataTable(idx, HeaderExist, fromline, toline); ;
         }
         private EntityStructure GetEntityDataType(int sheetno)
         {
@@ -1076,12 +1120,12 @@ namespace TheTechIdea.Beep.FileManager
             //reader.AsDataSet(ExcelDataSetConfig);
             if (GetFileState() == ConnectionState.Open)
             {
-                if (FileData == null)
-                {
-                    FileData = GetExcelDataSet();
-                }
-                var workSheet = FileData.Tables[sheet];
-                var rows = from DataRow a in workSheet.Rows select a;
+               
+                
+                    FileData = ReadDataTable(sheet,true);
+                
+              //  var workSheet = FileData;
+                var rows = from DataRow a in FileData.Rows select a;
                 return rows;
             }
             else
@@ -1090,152 +1134,9 @@ namespace TheTechIdea.Beep.FileManager
             }
 
         }
-        public IEnumerable<DataRow> GetFirstSheetData(bool firstRowIsColumnNames = false)
-        {
-            //var reader = this.getExcelReader();
-            //reader.AsDataSet(ExcelDataSetConfig);
-            if (GetFileState() == ConnectionState.Open)
-            {
-                return getData(getWorksheetNames().First());
-            }
-            else
-            {
-                return null;
-            }
-
-        }
-        public DataTable GetFirstSheetData(bool firstRowIsColumnNames = false, int sheetno = 0)
-        {
-            //var reader = this.getExcelReader();
-            //reader.AsDataSet(ExcelDataSetConfig);
-            //var workSheet = reader.AsDataSet().Tables[sheet];
-            //var rows = from DataRow a in workSheet.Rows select a;
-            return FileData.Tables[sheetno];
-        }
-        private List<EntityField> GetFieldTypes(string sheetname,DataColumnCollection datac)
-        {
-            List<DataRow> dt = getData(sheetname).ToList();
-            List<EntityField> flds = new List<EntityField>();
-            try
-            {
-               
-                int y = 0;
-
-                //----------------------------------------
-                foreach (DataColumn field in datac)
-                {
-                    EntityField f = new EntityField();
-
-
-                    //  f.tablename = sheetname;
-                    f.fieldname = field.ColumnName;
-                    f.fieldtype = field.DataType.ToString();
-                    f.ValueRetrievedFromParent = false;
-                    f.EntityName = sheetname;
-                    f.FieldIndex = y;
-                    f.Checked = false;
-                    f.AllowDBNull = true;
-                    f.IsAutoIncrement = false;
-                    f.IsCheck = false;
-                    f.IsKey = false;
-                    f.IsUnique = false;
-
-                    flds.Add(f);
-                    if (f.fieldname.ToLower().Contains("date") || f.fieldname.ToLower().Contains("_dt"))
-                    {
-                        f.fieldtype = "System.DateTime";
-                        f.Checked = true;
-                    }
-                    y += 1;
-                    if (f.Checked == false)
-                    {
-                        bool foundval = true;
-                      
-                        int i = 0;
-                        while (foundval)
-                        {
-                            DataRow dr = dt[i];
-                            if (dr[f.fieldname] != DBNull.Value)
-                            {
-                                string valstring = dr[f.fieldname].ToString();
-                                decimal dval;
-                                double dblval;
-                                long longval;
-                                bool boolval;
-                                int intval;
-                                short shortval;
-                                float floatval;
-                                DateTime dateval=DateTime.Now;
-
-
-                                if (decimal.TryParse(valstring,out dval))
-                                {
-                                    f.fieldtype = "System.Decimal";
-
-                                }else
-                                if (double.TryParse(valstring, out dblval))
-                                {
-                                    f.fieldtype = "System.Double";
-                                }
-                                else
-                                if (DateTime.TryParse(valstring, out dateval))
-                                {
-                                    f.fieldtype = "System.DateTime";
-
-                                }
-                                else
-                                    if (long.TryParse(valstring, out longval))
-                                {
-                                    f.fieldtype = "System.Long";
-
-                                }
-                                else
-                                    if (bool.TryParse(valstring, out boolval))
-                                {
-                                    f.fieldtype = "System.Bool";
-
-                                }
-                                else
-                                    if (float.TryParse(valstring, out floatval))
-                                {
-                                    f.fieldtype = "System.Float";
-
-                                }
-                                else
-                                if(int.TryParse(valstring, out intval))
-                                {
-                                    f.fieldtype = "System.Int";
-
-                                }
-                                else
-                                    if(short.TryParse(valstring, out shortval))
-                                {
-                                    f.fieldtype = "System.Short";
-
-                                }
-                                else                                 
-                                    f.fieldtype = "System.String";
-                              
-                                foundval = false    ;
-                            }
-                            i += 1;
-                            if (i >= dt.Count)
-                            {
-                                foundval = false;
-                            }
-                        }
-                    }
-                   
-                    
-                }
-                return flds;
-            }
-            catch (Exception ex)
-            {
-
-                return null;
-            }
-        }
+      
+     
+       
         private List<EntityField> GetFieldsbyTableScan(string sheetname, DataColumnCollection datac)
         {
             List<DataRow> tb = getData(sheetname).ToList();
