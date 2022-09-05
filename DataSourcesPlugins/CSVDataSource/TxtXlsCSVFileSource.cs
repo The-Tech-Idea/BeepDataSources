@@ -16,6 +16,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.ConfigUtil;
+using System.Xml;
 
 namespace TheTechIdea.Beep.FileManager
 {
@@ -97,7 +98,7 @@ namespace TheTechIdea.Beep.FileManager
             {
                 if (DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(FileName) == null)
                 {
-                    GetEntityStructures(true);
+                    GetSheets();
                 }
                 else
                 {
@@ -123,25 +124,22 @@ namespace TheTechIdea.Beep.FileManager
                
                 if (GetFileState() == ConnectionState.Open)
                 {
-                    EntitiesNames = new List<string>();
-                    EntitiesNames = getWorksheetNames().ToList();
-                 
-                   
-                    if (Entities.Count > 0)
-                    {
-                        List<string> ename = Entities.Select(p => p.EntityName.ToUpper()).ToList();
-                        List<string> diffnames = ename.Except(EntitiesNames.Select(o=>o.ToUpper())).ToList();
-                        if (diffnames.Count > 0)
-                        {
-                            foreach (string item in diffnames)
-                            {
-                                Entities.Add(GetEntityStructure(item, true));
-                                //int idx = Entities.FindIndex(p => p.EntityName.Equals(item, StringComparison.OrdinalIgnoreCase) || p.DatasourceEntityName.Equals(item, StringComparison.OrdinalIgnoreCase));
-                                //Entities[idx].Created = false;
+                    GetSheets();
+                    //if (Entities.Count > 0)
+                    //{
+                    //    List<string> ename = Entities.Select(p => p.EntityName.ToUpper()).ToList();
+                    //    List<string> diffnames = ename.Except(EntitiesNames.Select(o=>o.ToUpper())).ToList();
+                    //    if (diffnames.Count > 0)
+                    //    {
+                    //        foreach (string item in diffnames)
+                    //        {
+                    //            Entities.Add(GetEntityStructure(item, true));
+                    //            //int idx = Entities.FindIndex(p => p.EntityName.Equals(item, StringComparison.OrdinalIgnoreCase) || p.DatasourceEntityName.Equals(item, StringComparison.OrdinalIgnoreCase));
+                    //            //Entities[idx].Created = false;
                                 
-                            }
-                        }
-                    }
+                    //        }
+                    //    }
+                    //}
                 }
                
                
@@ -165,9 +163,18 @@ namespace TheTechIdea.Beep.FileManager
         }
         public EntityStructure GetEntityDataType(string EntityName)
         {
+            EntityStructure ent = null;
+            if (Entities != null)
+            {
+                if (Entities.Count() == 0)
+                {
+                    GetEntitesList();
+                }
+                
+                ent=Entities[Entities.FindIndex(x => x.EntityName == EntityName)];
+            }
 
-            GetEntitesList();
-            return Entities.Where(x => x.EntityName == EntityName).FirstOrDefault();
+            return ent;
         }
         public Type GetEntityType(string EntityName)
         {
@@ -175,9 +182,19 @@ namespace TheTechIdea.Beep.FileManager
 
             if (GetFileState() == ConnectionState.Open)
             {
-                GetEntitesList();
-                string filenamenoext = EntityName;
-                DMTypeBuilder.CreateNewObject(EntityName, EntityName, Entities.Where(x => x.EntityName == EntityName).FirstOrDefault().Fields);
+                EntityStructure ent = null;
+                if (Entities != null)
+                {
+                    if (Entities.Count() == 0)
+                    {
+                        GetEntitesList();
+                    }
+
+                    ent = Entities[Entities.FindIndex(x => x.EntityName == EntityName)];
+                    string filenamenoext = EntityName;
+                    DMTypeBuilder.CreateNewObject(EntityName, EntityName, Entities.Where(x => x.EntityName == EntityName).FirstOrDefault().Fields);
+                }
+             
                 return DMTypeBuilder.myType;
             }
             return null;
@@ -194,6 +211,15 @@ namespace TheTechIdea.Beep.FileManager
                 int toline = 0;
                 if (GetFileState() == ConnectionState.Open)
                 {
+                    if (Entities != null)
+                    {
+                        if (Entities.Count() == 0)
+                        {
+                            GetEntitesList();
+                        }
+                       
+                    }
+
                     if (filter != null)
                     {
                         if(filter.Count > 0)
@@ -444,7 +470,15 @@ namespace TheTechIdea.Beep.FileManager
             
             if (GetFileState() == ConnectionState.Open)
             {
-                    Entities = DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(DatasourceName).Entities;
+                 if(Entities!= null)
+                {
+                    if (Entities.Count == 0) 
+                    {
+                        GetSheets();
+                      
+                    }
+                }
+                    
                     retval = Entities.Where(x => string.Equals(x.OriginalEntityName, EntityName, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
                     if (retval == null || refresh)
                     {
@@ -456,13 +490,13 @@ namespace TheTechIdea.Beep.FileManager
                         }
                         else
                         {
-                        ;
+                        
                             Entities[GetEntityIdx(EntityName)] = fndval;
                         }
                     }
                     if (Entities.Count() == 0)
                     {
-                        GetEntityStructures(refresh);
+                         GetSheets();
                     }
                     DMEEditor.ConfigEditor.SaveDataSourceEntitiesValues(new DatasourceEntities { datasourcename = DatasourceName, Entities = Entities });
             }
@@ -474,8 +508,15 @@ namespace TheTechIdea.Beep.FileManager
 
             if (GetFileState() == ConnectionState.Open)
             {
-                    Entities = DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(DatasourceName).Entities;
-                    retval = Entities.Where(x => string.Equals(x.OriginalEntityName, fnd.EntityName, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
+                if (Entities != null)
+                {
+                    if (Entities.Count == 0)
+                    {
+                        GetSheets();
+                      
+                    }
+                }
+                retval = Entities.Where(x => string.Equals(x.OriginalEntityName, fnd.EntityName, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
                     if (retval == null || refresh)
                     {
                         EntityStructure fndval = GetSheetEntity(fnd.EntityName);
@@ -491,7 +532,7 @@ namespace TheTechIdea.Beep.FileManager
                     }
                     if (Entities.Count() == 0)
                     {
-                        GetEntityStructures(refresh);
+                         GetSheets();
                        
                     }
                 DMEEditor.ConfigEditor.SaveDataSourceEntitiesValues(new DatasourceEntities { datasourcename = DatasourceName, Entities = Entities });
@@ -560,18 +601,27 @@ namespace TheTechIdea.Beep.FileManager
                     if ((Entities == null) || (Entities.Count == 0) || (refresh))
                     {
                         Entities = new List<EntityStructure>();
-                        Getfields();
+                        GetSheets();
                         Dataconnection.ConnectionProp.Delimiter = Delimiter;
-                        DMEEditor.ConfigEditor.SaveDataSourceEntitiesValues(new DatasourceEntities { datasourcename = FileName, Entities = Entities });
-                        //  ConnProp.Entities = Entities;
-                        DMEEditor.ConfigEditor.SaveDataconnectionsValues();
+                       
 
                     }
                     else
                     {
+                        if(Entities.Count == 0)
+                        {
+                            if (Entities != null)
+                            {
+                                if (Entities.Count == 0)
+                                {
+                                    GetSheets();
 
-                        Entities = DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(FileName).Entities;
-                        Delimiter = Dataconnection.ConnectionProp.Delimiter;
+                                }
+                            }
+                        }
+                        DMEEditor.ConfigEditor.SaveDataSourceEntitiesValues(new DatasourceEntities { datasourcename = FileName, Entities = Entities });
+                        //  ConnProp.Entities = Entities;
+                        DMEEditor.ConfigEditor.SaveDataconnectionsValues();
 
                     }
 
@@ -848,6 +898,66 @@ namespace TheTechIdea.Beep.FileManager
             }
             return ds;
         }
+        private void GetSheets()
+        {
+            DataSet ds;
+           
+            if (GetFileState() == ConnectionState.Open)
+            {
+                try
+                {
+                    string sheetname;
+                    ds = GetExcelDataSet();
+                    EntitiesNames = new List<string>();
+                    int i = 0;
+                    foreach (DataTable tb in ds.Tables)
+                    {
+                        EntitiesNames.Add(tb.TableName);    
+                        EntityStructure ent = null;
+                        
+                        int idx = Entities.FindIndex(p => p.EntityName.Equals(tb.TableName, StringComparison.InvariantCultureIgnoreCase));
+                        if (idx > -1)
+                        {
+                                ent = Entities[idx];
+                        }
+                        if (ent == null)
+                        {
+                                EntityStructure entityData = new EntityStructure();
+                                entityData = new EntityStructure();
+                                sheetname = tb.TableName;
+                                entityData.Viewtype = ViewType.File;
+                                entityData.DatabaseType = DataSourceType.Text;
+                                entityData.DataSourceID = FileName;
+                                entityData.DatasourceEntityName = tb.TableName;
+                                entityData.Caption = tb.TableName;
+                                entityData.EntityName = sheetname;
+                                entityData.Id = i;
+                                i++;
+                                entityData.OriginalEntityName = sheetname;
+                                Entities.Add(entityData);
+                                entityData.Drawn = true;
+                        }
+                        else
+                        {
+                            ent.Fields = new List<EntityField>();
+                            DataTable tbdata = GetDataTableforSheet(i, ent.StartRow);
+                            ent.Fields.AddRange(GetFieldsbyTableScan(tbdata.TableName, tbdata.Columns));
+                            ent.Drawn = true;
+                        }
+
+                    }
+                    for (int y = 0; y < Entities.Count(); y++)
+                    {
+                        
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DMEEditor.AddLogMessage("Fail", $"Error in getting File format {ex.Message}", DateTime.Now, 0, FileName, Errors.Failed);
+
+                }
+            }
+        }
         private void Getfields()
         {
             DataSet ds;
@@ -855,7 +965,6 @@ namespace TheTechIdea.Beep.FileManager
             {
                 Entities = new List<EntityStructure>();
             }
-          
             if (GetFileState() == ConnectionState.Open)
             {
                 try
@@ -865,23 +974,18 @@ namespace TheTechIdea.Beep.FileManager
                     int i = 0;
                     foreach (DataTable tb in ds.Tables)
                     {
-                        EntityStructure entityData = null;
+                        EntityStructure ent = null;
                         if (!Entities.Where(p => p.OriginalEntityName.Equals(tb.TableName, StringComparison.OrdinalIgnoreCase)).Any())
                         {
                             string sheetname;
-
-                            if (Entities != null)
+                            int idx = Entities.FindIndex(p => p.EntityName.Equals(tb.TableName, StringComparison.InvariantCultureIgnoreCase));
+                            if (idx > -1)
                             {
-                                int idx = Entities.FindIndex(p => p.EntityName.Equals(tb.TableName, StringComparison.InvariantCultureIgnoreCase));
-                                if (idx > -1)
-                                {
-                                    entityData = Entities[idx];
-                                }
-
+                               ent = Entities[idx];
                             }
-                        
-                           if(entityData == null)
+                           if(ent == null)
                            {
+                                EntityStructure entityData = new EntityStructure();
                                 entityData = new EntityStructure();
                                 sheetname = tb.TableName;
                                 entityData.Viewtype = ViewType.File;
@@ -894,21 +998,20 @@ namespace TheTechIdea.Beep.FileManager
                              
                                 i++;
                                 entityData.OriginalEntityName = sheetname;
+                                List<EntityField> Fields = new List<EntityField>();
+                                entityData.Fields = new List<EntityField>();
+                                entityData.Fields.AddRange(GetFieldsbyTableScan(tb.TableName, tb.Columns));
                                 Entities.Add(entityData);
                             }
-                               
+                            else
+                            {
+
+                            }
+                       
+
                         }
                           
-                           
-                            List<EntityField> Fields = new List<EntityField>();
-                            entityData.Fields = new List<EntityField>();
-                            entityData.Fields.AddRange(GetFieldsbyTableScan(tb.TableName, tb.Columns));
-                          
-                          
-                       
-                       
                     }
-               
 
                 }
                 catch (Exception ex)
@@ -917,56 +1020,21 @@ namespace TheTechIdea.Beep.FileManager
 
                 }
             }
-
-        
-
-
         }
         private EntityStructure GetSheetEntity(string EntityName)
         {
-            DataSet ds;
-            
             EntityStructure entityData = new EntityStructure();
-            if (Entities != null)
-            {
-                int idx = Entities.FindIndex(p => p.EntityName.Equals(EntityName, StringComparison.InvariantCultureIgnoreCase));
-                if(idx>-1)
-                    entityData = Entities[idx];
-            }
-           
             if (GetFileState() == ConnectionState.Open)
             {
                 try
                 {
-                    ds = GetExcelDataSet();
-                    int i = 0;
-                    foreach (DataTable tb in ds.Tables)
+                    GetSheets();
+                    if (Entities != null)
                     {
-                        if (tb.TableName.Equals(EntityName, StringComparison.OrdinalIgnoreCase))
-                        {
-                           
-                            string sheetname;
-                            sheetname = tb.TableName;
-                            entityData.Viewtype = ViewType.File;
-                            entityData.DatabaseType = DataSourceType.Text;
-                            entityData.DataSourceID = FileName;
-                            entityData.DatasourceEntityName = tb.TableName;
-                            entityData.Caption = tb.TableName;
-                            entityData.EntityName = sheetname;
-                            entityData.Id = i;
-                            i++;
-                            entityData.OriginalEntityName = sheetname;
-                            List<EntityField> Fields = new List<EntityField>();
-                            entityData.Fields = new List<EntityField>();
-                            entityData.Fields.AddRange(GetFieldsbyTableScan(tb.TableName, tb.Columns));
-                            // entityData.Fields = GetStringSizeFromTable(entityData.Fields, tb);
-                        
-                        }
-
+                        int idx = Entities.FindIndex(p => p.EntityName.Equals(EntityName, StringComparison.InvariantCultureIgnoreCase));
+                        if (idx > -1)
+                            entityData = Entities[idx];
                     }
-
-
-
                 }
                 catch (Exception ex)
                 {
@@ -1134,9 +1202,6 @@ namespace TheTechIdea.Beep.FileManager
             }
 
         }
-      
-     
-       
         private List<EntityField> GetFieldsbyTableScan(string sheetname, DataColumnCollection datac)
         {
             List<DataRow> tb = getData(sheetname).ToList();
