@@ -7,15 +7,15 @@ using System.Threading.Tasks;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Workflow;
-using TheTechIdea.Logger;
+
 using TheTechIdea.Util;
 using NPOI.XSSF.UserModel;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using System.IO;
 using TheTechIdea.Beep.Report;
+using TheTechIdea.Logger;
 using TheTechIdea.Beep.Vis;
-
 
 namespace TheTechIdea.Beep.FileManager
 {
@@ -79,6 +79,8 @@ namespace TheTechIdea.Beep.FileManager
         public event EventHandler<PassedArgs> PassEvent;
         public virtual string ColumnDelimiter { get; set; } = "''";
         public virtual string ParameterDelimiter { get; set; } = ":";
+        IDMLogger IDataSource.Logger { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public bool CheckEntityExist(string EntityName)
         {
             throw new NotImplementedException();
