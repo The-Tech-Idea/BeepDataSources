@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using TheTechIdea.Beep;
@@ -240,7 +241,38 @@ namespace TheTechIdea.Datasources
 
         public EntityStructure GetEntityStructure(string EntityName, bool refresh)
         {
-            throw new NotImplementedException();
+            try
+            {
+                DMEEditor.ErrorObject.Ex = null;
+                DMEEditor.ErrorObject.Flag = Errors.Ok;
+                DMEEditor.ErrorObject.Message = "";
+                EntityStructure entstrc = null;
+                var col = db.GetCollection(EntityName);
+                if (Entities.Count > 0)
+                {
+                    int idx = Entities.FindIndex(p => p.EntityName.Equals(EntityName, StringComparison.CurrentCultureIgnoreCase));
+                    if (idx > -1)
+                    {
+                        entstrc = Entities[idx];
+                    }
+                    else
+                    {
+                        DMEEditor.ErrorObject.Flag = Errors.Failed;
+                        DMEEditor.ErrorObject.Message = $"Entity {EntityName} not found";
+                        return null;
+                    }
+                }
+                return entstrc;
+
+
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Message = ex.Message;
+                return null;
+            }
         }
 
         public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
@@ -255,7 +287,41 @@ namespace TheTechIdea.Datasources
 
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
         {
-            throw new NotImplementedException();
+            try
+            {
+                DMEEditor.ErrorObject.Ex = null;
+                DMEEditor.ErrorObject.Flag = Errors.Ok;
+                DMEEditor.ErrorObject.Message = "";
+                EntityStructure entstrc = null;
+                var col = db.GetCollection(EntityName);
+                if (Entities.Count > 0)
+                {
+                    int idx = Entities.FindIndex(p => p.EntityName.Equals(EntityName, StringComparison.CurrentCultureIgnoreCase));
+                    if (idx > -1)
+                    {
+                        entstrc = Entities[idx];
+                    }
+                    else
+                    {
+                        List<EntityField> fields = DMEEditor.Utilfunction.GetFieldFromGeneratedObject(InsertedData);
+                        entstrc = new EntityStructure();
+                        entstrc.EntityName = EntityName;
+                        entstrc.Fields = fields;
+                        Entities.Add(entstrc);
+                        EntitiesNames.Add(EntityName);
+                    }
+                }
+                col.Insert(ConvertObjectToBsonDoc(InsertedData));
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Message = ex.Message;
+            }
+            return DMEEditor.ErrorObject;
+
+         
         }
 
         public ConnectionState Openconnection()
@@ -310,7 +376,39 @@ namespace TheTechIdea.Datasources
 
         public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
+            try
+            {
+                DMEEditor.ErrorObject.Ex = null;
+                DMEEditor.ErrorObject.Flag = Errors.Ok;
+                DMEEditor.ErrorObject.Message = "";
+                EntityStructure entstrc = null;
+                var col = db.GetCollection(EntityName);
+                if (Entities.Count > 0)
+                {
+                    int idx = Entities.FindIndex(p => p.EntityName.Equals(EntityName, StringComparison.CurrentCultureIgnoreCase));
+                    if (idx > -1)
+                    {
+                        entstrc = Entities[idx];
+                    }
+                    else
+                    {
+                        List<EntityField> fields= DMEEditor.Utilfunction.GetFieldFromGeneratedObject(UploadDataRow);
+                        entstrc = new EntityStructure();
+                        entstrc.EntityName=EntityName;
+                        entstrc.Fields=fields;
+                        Entities.Add(entstrc);
+                        EntitiesNames.Add(EntityName);
+                    }
+                }
+                col.Update(ConvertObjectToBsonDoc(UploadDataRow));
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Message = ex.Message;
+            }
+            return DMEEditor.ErrorObject;
         }
         #region "Support Methods"
         private async Task<LiteDatabase> AsyncConnect(ConnectionString connectionString)
@@ -325,21 +423,51 @@ namespace TheTechIdea.Datasources
             if (db != null)
             {
                 IEnumerable<string> ls=db.GetCollectionNames();
-                foreach (string colname in ls)
+                if(Entities.Count <= 0)
                 {
-                    var col = db.GetCollection(colname);
-                    if (col != null)
+                    foreach (string colname in ls)
                     {
-                        var t = col.Query().Limit(1).ToList();
-                        if (t.Count>0)
+                        var col = db.GetCollection(colname);
+                        if (col != null)
                         {
-                          Type type=  DMEEditor.Utilfunction.GetListType(t);
+                            var t = col.Query().Limit(1).FirstOrDefault();
+                            if (t != null)
+                            {
+                                
 
+                            }
                         }
                     }
                 }
+               
               
             }
+        }
+        private BsonDocument ConvertObjectToBsonDoc(object obj)
+        {
+            var bs=new BsonDocument();
+            PropertyInfo[] properties=obj.GetType().GetProperties();    
+            foreach (PropertyInfo pi in properties)
+            {
+                PropertyInfo SrcPropAInfo = obj.GetType().GetProperty(pi.Name);
+                dynamic result = SrcPropAInfo.GetValue(obj);
+                bs[pi.Name]=result;
+            }
+            bs["_id"] = ObjectId.NewObjectId();
+            return bs;
+        }
+        private object ConvertBsonDocTOObject(BsonDocument obj)
+        {
+            var bs = new BsonDocument();
+            PropertyInfo[] properties = obj.GetType().GetProperties();
+            foreach (PropertyInfo pi in properties)
+            {
+                PropertyInfo SrcPropAInfo = obj.GetType().GetProperty(pi.Name);
+                dynamic result = SrcPropAInfo.GetValue(obj);
+                bs[pi.Name] = result;
+            }
+            bs["_id"] = ObjectId.NewObjectId();
+            return bs;
         }
         #endregion
     }
