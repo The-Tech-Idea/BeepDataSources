@@ -277,7 +277,38 @@ namespace TheTechIdea.Datasources
 
         public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
         {
-            throw new NotImplementedException();
+            try
+            {
+                DMEEditor.ErrorObject.Ex = null;
+                DMEEditor.ErrorObject.Flag = Errors.Ok;
+                DMEEditor.ErrorObject.Message = "";
+                EntityStructure entstrc = null;
+                var col = db.GetCollection(fnd.EntityName);
+                if (Entities.Count > 0)
+                {
+                    int idx = Entities.FindIndex(p => p.EntityName.Equals(fnd.EntityName, StringComparison.CurrentCultureIgnoreCase));
+                    if (idx > -1)
+                    {
+                        entstrc = Entities[idx];
+                    }
+                    else
+                    {
+                        DMEEditor.ErrorObject.Flag = Errors.Failed;
+                        DMEEditor.ErrorObject.Message = $"Entity {fnd.EntityName} not found";
+                        return null;
+                    }
+                }
+                return entstrc;
+
+
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Message = ex.Message;
+                return null;
+            }
         }
 
         public Type GetEntityType(string EntityName)
