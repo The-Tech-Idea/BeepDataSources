@@ -70,4 +70,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy $(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll</PostBuildEvent>
+  </PropertyGroup>
 </Project>

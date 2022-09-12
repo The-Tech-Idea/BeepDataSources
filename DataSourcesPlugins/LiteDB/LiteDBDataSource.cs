@@ -236,7 +236,39 @@ namespace TheTechIdea.Datasources
 
         public int GetEntityIdx(string entityName)
         {
-            throw new NotImplementedException();
+            int idx = -1;
+            try
+            {
+                DMEEditor.ErrorObject.Ex = null;
+                DMEEditor.ErrorObject.Flag = Errors.Ok;
+                DMEEditor.ErrorObject.Message ="";
+                EntityStructure entstrc = null;
+                //var col = db.GetCollection(entityName);
+                if (Entities.Count > 0)
+                {
+                     idx = Entities.FindIndex(p => p.EntityName.Equals(entityName, StringComparison.CurrentCultureIgnoreCase));
+                    if (idx > -1)
+                    {
+                        entstrc = Entities[idx];
+                    }
+                    else
+                    {
+                        DMEEditor.ErrorObject.Flag = Errors.Failed;
+                        DMEEditor.ErrorObject.Message = $"Entity {entityName} not found";
+                        
+                    }
+                }
+                return idx;
+
+
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Message = ex.Message;
+                return -1;
+            }
         }
 
         public EntityStructure GetEntityStructure(string EntityName, bool refresh)
@@ -488,6 +520,19 @@ namespace TheTechIdea.Datasources
             return bs;
         }
         private object ConvertBsonDocTOObject(BsonDocument obj)
+        {
+            var bs = new BsonDocument();
+            PropertyInfo[] properties = obj.GetType().GetProperties();
+            foreach (PropertyInfo pi in properties)
+            {
+                PropertyInfo SrcPropAInfo = obj.GetType().GetProperty(pi.Name);
+                dynamic result = SrcPropAInfo.GetValue(obj);
+                bs[pi.Name] = result;
+            }
+            bs["_id"] = ObjectId.NewObjectId();
+            return bs;
+        }
+        private object ConvertBsonDocTOEntityStructure(BsonDocument obj)
         {
             var bs = new BsonDocument();
             PropertyInfo[] properties = obj.GetType().GetProperties();
