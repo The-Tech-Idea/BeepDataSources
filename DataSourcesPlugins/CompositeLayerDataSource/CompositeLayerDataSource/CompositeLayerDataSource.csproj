@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine2.0" Version="1.0.0.44" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels2.0" Version="1.0.0.24" />
+  </ItemGroup>
+
+</Project>
