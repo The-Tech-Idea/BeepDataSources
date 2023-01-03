@@ -40,8 +40,8 @@
     <Reference Include="DataManagmentEngineStandard, Version=1.0.0.44, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\BeepWinFormAppNet\packages\TheTechIdea.Beep.DataManagementEngine2.0.1.0.0.44\lib\netstandard2.0\DataManagmentEngineStandard.dll</HintPath>
     </Reference>
-    <Reference Include="LiteDB, Version=5.0.12.0, Culture=neutral, PublicKeyToken=4ee40123013c9f27, processorArchitecture=MSIL">
-      <HintPath>..\..\..\BeepWinFormAppNet\packages\LiteDB.5.0.12\lib\net45\LiteDB.dll</HintPath>
+    <Reference Include="LiteDB, Version=5.0.15.0, Culture=neutral, PublicKeyToken=4ee40123013c9f27, processorArchitecture=MSIL">
+      <HintPath>..\..\..\BeepWinFormAppNet\packages\LiteDB.5.0.15\lib\net45\LiteDB.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.CodeDom, Version=7.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
