@@ -111,6 +111,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SnowFlakeDataSource", "Data
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CompositeLayerDataSource", "DataSourcesPlugins\CompositeLayerDataSource\CompositeLayerDataSource\CompositeLayerDataSource.csproj", "{A1CF3230-A964-45C9-8616-02CEA9A10137}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompositeLayerDataSource6", "DataSourcesPluginsCore\CompositeLayerDataSource6\CompositeLayerDataSource6.csproj", "{65B3448F-96F9-4986-AA52-B1F72ADD2D60}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -301,6 +303,10 @@ Global
 		{A1CF3230-A964-45C9-8616-02CEA9A10137}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1CF3230-A964-45C9-8616-02CEA9A10137}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1CF3230-A964-45C9-8616-02CEA9A10137}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65B3448F-96F9-4986-AA52-B1F72ADD2D60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65B3448F-96F9-4986-AA52-B1F72ADD2D60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65B3448F-96F9-4986-AA52-B1F72ADD2D60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65B3448F-96F9-4986-AA52-B1F72ADD2D60}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -358,6 +364,7 @@ Global
 		{7D07AB55-35CC-4903-8189-0B63053625DF} = {BD2E7D46-44AF-47AD-8485-FFF2D77CD488}
 		{1861A517-BEE7-447B-A63F-FF2D1F28ED64} = {4A7DDB73-362B-4B06-93B8-94C0CC8E51B2}
 		{A1CF3230-A964-45C9-8616-02CEA9A10137} = {458FA131-489C-4E96-9BC8-DE5F41E60CCB}
+		{65B3448F-96F9-4986-AA52-B1F72ADD2D60} = {BD2E7D46-44AF-47AD-8485-FFF2D77CD488}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3A2D75E5-8D72-477B-9ABD-5FE471363BE2}
