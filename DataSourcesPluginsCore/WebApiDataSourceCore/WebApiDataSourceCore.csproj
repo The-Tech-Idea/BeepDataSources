@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<TargetFrameworks>netstandard2.0;net6.0;net7.0</TargetFrameworks>
+		<RootNamespace>TheTechIdea.Beep.WebAPI</RootNamespace>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
 	<ItemGroup>
 		<Compile Include="..\..\DataSourcesPlugins\WebApiDataSource\*.cs" />
 		<EmbeddedResource Include="..\..\DataSourcesPlugins\WebApiDataSource\**\*.resx" />
@@ -13,8 +14,9 @@
 	  <Compile Remove="..\..\DataSourcesPlugins\WebApiDataSource\WebAPIDataSource.cs" />
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.41" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.22" />
+	  <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.9" />
+	  <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.0" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.0" />
 	</ItemGroup>
 </Project>

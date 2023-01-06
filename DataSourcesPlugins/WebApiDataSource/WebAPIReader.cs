@@ -14,7 +14,7 @@ using TheTechIdea.Beep.WebAPI;
 using TheTechIdea.Tools;
 using TheTechIdea.Util;
 
-namespace DataManagmentEngineShared.WebAPI
+namespace TheTechIdea.Beep.WebAPI.WebAPI
 {
     public class WebAPIReader
     {
