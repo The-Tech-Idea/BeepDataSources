@@ -11,7 +11,7 @@ using TheTechIdea.Beep.Vis;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
 
-namespace DataManagmentEngineShared.DataBase
+namespace  TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType =  DataSourceType.FireBird)]
     public class FireBirdEmbeddedDataSource : RDBSource, ILocalDB

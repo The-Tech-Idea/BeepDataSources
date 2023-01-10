@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-   <TargetFrameworks>netstandard2.1;net6.0;net7.0</TargetFrameworks>
+	  <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <RootNamespace>TheTechIdea.Beep.Database</RootNamespace>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
@@ -21,6 +21,6 @@
     <ProjectReference Include="..\WebApiDataSourceCore\WebApiDataSourceCore.csproj" />
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy $(ProjectDir)\bin\Debug\net6.0\$(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll" />
+    <Exec Command="copy $(OutPutPath)$(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll" />
   </Target>
 </Project>

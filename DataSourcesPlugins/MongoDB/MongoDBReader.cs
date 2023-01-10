@@ -1,4 +1,4 @@
-﻿using DataManagmentEngineShared.WebAPI;
+﻿
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +13,9 @@ using TheTechIdea.Beep.NOSQL;
 using TheTechIdea.Beep;
 using TheTechIdea.Beep.DataBase;
 using Newtonsoft.Json;
+using TheTechIdea.Beep.WebAPI.WebAPI;
 
-namespace TheTechIdea.DataManagment_Engine.NOSQL.MongoDB
+namespace  TheTechIdea.Beep.NOSQL.MongoDB
 {
     public class MongoDBReader : WebAPIReader
     {

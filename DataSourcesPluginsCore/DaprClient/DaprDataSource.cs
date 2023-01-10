@@ -81,6 +81,8 @@ namespace DaprClient
         public List<EntityStructure> Entities { get ; set ; }
         public IDMEEditor DMEEditor { get ; set ; }
         public ConnectionState ConnectionStatus { get ; set ; }
+        public string ColumnDelimiter { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ParameterDelimiter { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public event EventHandler<PassedArgs> PassEvent;
 
@@ -207,6 +209,26 @@ namespace DaprClient
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
+        {
+            throw new NotImplementedException();
+        }
+
+        List<ETLScriptDet> IDataSource.GetCreateEntityScript(List<EntityStructure> entities)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        {
+            throw new NotImplementedException();
         }
         #endregion
     }

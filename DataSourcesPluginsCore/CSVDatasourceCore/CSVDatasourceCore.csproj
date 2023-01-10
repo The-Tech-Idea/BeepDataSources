@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 <PropertyGroup>
     <OutputType>Library</OutputType>
-   <TargetFrameworks>netstandard2.0;net6.0;net7.0</TargetFrameworks>
+   <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <RootNamespace>TheTechIdea.Beep.FileManager</RootNamespace>
   <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
  </PropertyGroup>
@@ -17,6 +17,6 @@
   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.0" />
 </ItemGroup>
 <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-  <Exec Command="copy $(ProjectDir)\bin\Debug\net6.0\$(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll" />
+  <Exec Command="copy $(OutPutPath)$(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll" />
 </Target>
 </Project>

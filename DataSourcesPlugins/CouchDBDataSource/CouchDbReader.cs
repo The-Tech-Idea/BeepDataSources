@@ -1,4 +1,4 @@
-﻿using DataManagmentEngineShared.WebAPI;
+﻿
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using TheTechIdea.Beep;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Util;
 
-namespace TheTechIdea.DataManagment_Engine.NOSQL.CouchDB
+namespace  TheTechIdea.Beep.NOSQL.CouchDB
 {
     public class CouchDBReader : WebApiHeader
     {

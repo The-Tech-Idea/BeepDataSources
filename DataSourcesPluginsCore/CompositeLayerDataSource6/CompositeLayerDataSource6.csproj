@@ -1,9 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-   <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+	  <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +13,6 @@
     <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.0" />
   </ItemGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="copy $(ProjectDir)\bin\Debug\net6.0\$(TargetName).dll  $(ProjectDir)..\..\..\OutputDLL\$(TargetName).dll" />
+		<Exec Command="copy $(OutputPath)$(TargetName).dll  $(ProjectDir)..\..\..\OutputDLL\$(TargetName).dll" />
 	</Target>
 </Project>
