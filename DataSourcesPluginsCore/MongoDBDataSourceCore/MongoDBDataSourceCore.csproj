@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-	  <TargetFrameworks>netstandard2.0</TargetFrameworks>
+	<TargetFramework>net6.0</TargetFramework>
     <RootNamespace>TheTechIdea.Beep.Database</RootNamespace>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
@@ -12,16 +12,16 @@
     <EmbeddedResource Include="..\..\DataSourcesPlugins\MongoDB\**\*.resx" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MongoDB.Driver" Version="2.17.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.18.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WebApiDataSourceCore\WebApiDataSourceCore.csproj" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy $(OutPutPath)$(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll" />
+	  <copy SourceFiles="$(ProjectDir)$(OutputPath)$(TargetName).dll" DestinationFolder="$(ProjectDir)..\OutputDLL\$(TargetFramework)\" />
   </Target>
 
 </Project>

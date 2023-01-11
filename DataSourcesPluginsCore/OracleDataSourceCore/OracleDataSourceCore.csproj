@@ -1,20 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 <PropertyGroup>
     <OutputType>Library</OutputType>
-	<TargetFrameworks>netstandard2.1</TargetFrameworks>
+	<TargetFrameworks>net6.0</TargetFrameworks>
     <RootNamespace>TheTechIdea.Beep.Database</RootNamespace>
-  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+ 
  </PropertyGroup>
 <ItemGroup>
 		<Compile Include="..\..\DataSourcesPlugins\OracleDataSource\*.cs" />
 		<EmbeddedResource Include="..\..\DataSourcesPlugins\OracleDataSource\**\*.resx" />
 </ItemGroup>
 <ItemGroup>
-  <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.70" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.0" />
+  <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.80" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.1" />
 </ItemGroup>
 
 <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-  <Exec Command="copy $(OutPutPath)$(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll" />
+	<copy SourceFiles="$(ProjectDir)$(OutputPath)$(TargetName).dll" DestinationFolder="$(ProjectDir)..\OutputDLL\$(TargetFramework)\" />
 </Target>
 </Project>

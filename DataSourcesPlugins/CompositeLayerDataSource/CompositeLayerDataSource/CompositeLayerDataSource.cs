@@ -5,11 +5,13 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.DataView;
+using TheTechIdea.Beep.Vis;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
 
 namespace TheTechIdea.Beep.CompositeLayer
 {
+    [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.SqlLite)]
     public class CompositeLayerDataSource : RDBSource, ICompositeLayerDataSource
     {
 

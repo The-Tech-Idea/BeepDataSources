@@ -4,23 +4,28 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
+
 using System.Threading.Tasks;
-using TheTechIdea;
-using TheTechIdea.Beep;
-using TheTechIdea.Beep.ConfigUtil;
-using TheTechIdea.Beep.DataBase;
-using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
+
+
+using TheTechIdea;
+using TheTechIdea.Beep;
+
+using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
+
+using TheTechIdea.Beep.WebAPI;
+
 using YamlDotNet.Core.Tokens;
 using static Dapr.Client.Autogen.Grpc.v1.Dapr;
 
 namespace DaprClient
 {
-    [ClassProperties(Category = DatasourceCategory.WEBAPI, DatasourceType = DataSourceType.WebService)]
+    [AddinAttribute(Category = DatasourceCategory.WEBAPI, DatasourceType = DataSourceType.WebService)]
     public class DaprDataSource : IDataSource
     {
         public Dapr.Client.DaprClient Client { get; set; }
@@ -116,26 +121,14 @@ namespace DaprClient
             throw new NotImplementedException();
         }
 
-        public List<SyncEntity> GetCreateEntityScript(List<EntityStructure> entities = null)
-        {
-            throw new NotImplementedException();
-        }
+      
 
         public List<string> GetEntitesList()
         {
             throw new NotImplementedException();
         }
 
-        public object GetEntity(string EntityName, List<ReportFilter> filter)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<object> GetEntityAsync(string EntityName, List<ReportFilter> Filter)
-        {
-            throw new NotImplementedException();
-        }
-
+      
         public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
             throw new NotImplementedException();
@@ -166,10 +159,7 @@ namespace DaprClient
             throw new NotImplementedException();
         }
 
-        public IErrorsInfo RunScript(SyncEntity dDLScripts)
-        {
-            throw new NotImplementedException();
-        }
+       
 
         public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
         {

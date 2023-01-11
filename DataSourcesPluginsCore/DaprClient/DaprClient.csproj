@@ -1,7 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+	  <TargetFramework>net6.0</TargetFramework>
+	  <UserSecretsId>f07f4aa5-1f0f-4b37-8b2d-8c7de63120dc</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,11 +32,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.Actors" Version="1.0.0" />
-    <PackageReference Include="Dapr.Client" Version="1.0.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngineNet6" Version="1.0.0.3" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModelsNet6" Version="1.0.0.3" />
-    <PackageReference Include="YamlDotNet" Version="11.1.1" />
+    <PackageReference Include="Dapr.Actors" Version="1.9.0" />
+    <PackageReference Include="Dapr.Client" Version="1.9.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.1" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.1" />
+    <PackageReference Include="YamlDotNet" Version="12.3.1" />
   </ItemGroup>
-
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	<copy SourceFiles="$(ProjectDir)$(OutputPath)$(TargetName).dll" DestinationFolder="$(ProjectDir)..\OutputDLL\$(TargetFramework)\" />
+	</Target>
 </Project>

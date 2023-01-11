@@ -2,19 +2,19 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+  <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>TheTechIdea.Beep.Database</RootNamespace>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+   
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\DataSourcesPlugins\FireBirdDataSource\*.cs" />
     <EmbeddedResource Include="..\..\DataSourcesPlugins\FireBirdDataSource\**\*.resx" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="9.0.2" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.0" />
+    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="9.1.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.1" />
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy $(OutPutPath)$(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll" />
+	  <copy SourceFiles="$(ProjectDir)$(OutputPath)$(TargetName).dll" DestinationFolder="$(ProjectDir)..\OutputDLL\$(TargetFramework)\" />
   </Target>
 </Project>
