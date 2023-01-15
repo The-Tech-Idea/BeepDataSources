@@ -35,8 +35,8 @@
     <PackageReference Include="Dapr.Actors" Version="1.9.0" />
     <PackageReference Include="Dapr.Client" Version="1.9.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.1" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.1" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.2" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.2" />
     <PackageReference Include="YamlDotNet" Version="12.3.1" />
   </ItemGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">

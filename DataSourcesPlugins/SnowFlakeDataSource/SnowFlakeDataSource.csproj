@@ -54,11 +54,11 @@
     <Reference Include="Dapper, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Dapper.2.0.123\lib\net461\Dapper.dll</HintPath>
     </Reference>
-    <Reference Include="DataManagementModels, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementModels.1.0.1\lib\netstandard2.0\DataManagementModels.dll</HintPath>
+    <Reference Include="DataManagementModels, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementModels.1.0.2\lib\netstandard2.0\DataManagementModels.dll</HintPath>
     </Reference>
-    <Reference Include="DataManagmentEngine, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementEngine.1.0.1\lib\netstandard2.0\DataManagmentEngine.dll</HintPath>
+    <Reference Include="DataManagmentEngine, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementEngine.1.0.2\lib\netstandard2.0\DataManagmentEngine.dll</HintPath>
     </Reference>
     <Reference Include="Google.Api.Gax, Version=4.3.0.0, Culture=neutral, PublicKeyToken=3ec5ea7f18953e47, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Google.Api.Gax.4.3.0\lib\net462\Google.Api.Gax.dll</HintPath>
