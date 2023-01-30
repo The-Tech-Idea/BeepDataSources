@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.2" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.3" />
   </ItemGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Copy SourceFiles="$(TargetDir)$(PackageId).dll" DestinationFolder="$(ProjectDir)..\..\outputDLL\" SkipUnchangedFiles="false" />
