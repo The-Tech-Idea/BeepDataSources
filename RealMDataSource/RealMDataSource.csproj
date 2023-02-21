@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net6.0;net7.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	  <LangVersion>Latest</LangVersion>
+	  <RootNamespace>TheTechIdea.Beep.DataBase.RealM</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Realm" Version="10.20.0" />
+    <PackageReference Include="Realm.Fody" Version="10.20.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Realm.SourceGenerator" Version="10.20.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.3" />
+  </ItemGroup>
+
+</Project>
