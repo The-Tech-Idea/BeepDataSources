@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HDF.PInvoke.1.10" Version="1.10.612" />
+    <PackageReference Include="SciSharp.Keras.HDF5" Version="1.1.10.500" />
+  </ItemGroup>
+
+</Project>
