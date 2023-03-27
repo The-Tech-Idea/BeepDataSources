@@ -15,7 +15,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Realm.SourceGenerator" Version="10.21.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.8" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.9" />
   </ItemGroup>
 
 </Project>
