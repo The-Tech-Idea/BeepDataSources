@@ -61,6 +61,50 @@ namespace TheTechIdea.Beep.FileManager
           //  GetEntitesList();
         }
         #region "DataSource Methods"
+        public virtual IErrorsInfo BeginTransaction(PassedArgs args)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+
+                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+
+        public virtual IErrorsInfo EndTransaction(PassedArgs args)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+
+                DMEEditor.AddLogMessage("Beep", $"Error in end Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+
+        public virtual IErrorsInfo Commit(PassedArgs args)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+
+                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
         public int GetEntityIdx(string entityName)
         {
             int i = -1;
@@ -760,8 +804,7 @@ namespace TheTechIdea.Beep.FileManager
                         if (idx > -1)
                         {
                             entityData = Entities[idx];
-                        }
-                        if (entityData == null)
+                        }else
                         {
                            
                             entityData = new EntityStructure();
@@ -777,9 +820,6 @@ namespace TheTechIdea.Beep.FileManager
                             entityData.OriginalEntityName = sheetname;
                             Entities.Add(entityData);
                             entityData.Drawn = true;
-                        }
-                        else
-                        {
                             entityData.Fields = new List<EntityField>();
                             DataTable tbdata = ReadDataTable(tb.TableName,true, entityData.StartRow);
                             entityData.Fields.AddRange(GetFieldsbyTableScan(tbdata, tbdata.TableName, tbdata.Columns));

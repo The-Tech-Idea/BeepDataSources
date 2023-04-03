@@ -10,7 +10,7 @@
     <EmbeddedResource Include="..\..\DataSourcesPlugins\FireBaseDataSourceCore\**\*.resx" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.2" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.19" />
   </ItemGroup>
  
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

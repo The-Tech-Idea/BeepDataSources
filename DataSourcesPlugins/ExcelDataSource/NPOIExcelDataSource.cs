@@ -80,7 +80,50 @@ namespace TheTechIdea.Beep.FileManager
         public virtual string ColumnDelimiter { get; set; } = "''";
         public virtual string ParameterDelimiter { get; set; } = ":";
         IDMLogger IDataSource.Logger { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public virtual IErrorsInfo BeginTransaction(PassedArgs args)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
 
+            }
+            catch (Exception ex)
+            {
+
+                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+
+        public virtual IErrorsInfo EndTransaction(PassedArgs args)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+
+                DMEEditor.AddLogMessage("Beep", $"Error in end Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+
+        public virtual IErrorsInfo Commit(PassedArgs args)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+
+                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
         public bool CheckEntityExist(string EntityName)
         {
             throw new NotImplementedException();
@@ -217,7 +260,7 @@ namespace TheTechIdea.Beep.FileManager
             {
                 using (FileStream stream = new FileStream(path, FileMode.Create, FileAccess.Write))
                 {
-                    book.Write(stream);
+                //    book.Write(stream);
                 }
                 DMEEditor.AddLogMessage("Success", "Saved Workbook", DateTime.Now, 0, path, Errors.Ok);
             }
