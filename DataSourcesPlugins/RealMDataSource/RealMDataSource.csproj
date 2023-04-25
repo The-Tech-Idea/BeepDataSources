@@ -10,12 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Realm" Version="10.21.0" />
-    <PackageReference Include="Realm.Fody" Version="10.21.0">
+    <PackageReference Include="Realm" Version="10.21.1" />
+    <PackageReference Include="Realm.Fody" Version="10.21.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Realm.SourceGenerator" Version="10.21.0" />
+    <PackageReference Include="Realm.SourceGenerator" Version="10.21.1" />
     <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.14" />
   </ItemGroup>
 
