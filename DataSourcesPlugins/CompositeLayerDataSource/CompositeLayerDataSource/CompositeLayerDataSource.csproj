@@ -1,14 +1,34 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <TargetFramework>netstandard2.0</TargetFramework>
-	  <Platforms>AnyCPU;x64</Platforms>
+	  <TargetFrameworks>netstandard2.0;net6.0;net7.0</TargetFrameworks>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <LangVersion>Latest</LangVersion>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <LangVersion>Latest</LangVersion>
+	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	  <Authors>The Tech Idea</Authors>
+	  <Company>The Tech Idea</Company>
+	  <Copyright>2022</Copyright>
+	  <PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
+	  <PackageIcon>SimpleODM.png</PackageIcon>
+	  <RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
+  <ItemGroup>
+	  <None Include="..\..\..\..\..\..\..\OneDrive\SimpleInfoapps\LogoGFx\128\SimpleODM.png">
+		  <Pack>True</Pack>
+		  <PackagePath>\</PackagePath>
+	  </None>
+  </ItemGroup>
+  <Target Name="CopyPackage" AfterTargets="Pack">
+	  <Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\Nuget.Local" />
+  </Target>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	  <Copy SourceFiles="$(TargetDir)$(PackageId).dll" DestinationFolder="$(ProjectDir)..\..\..\outputDLL\$(PackageId)\$(TargetFramework)" SkipUnchangedFiles="false" />
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.20" />
   </ItemGroup>
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Copy SourceFiles="$(TargetDir)$(PackageId).dll" DestinationFolder="$(ProjectDir)..\..\outputDLL\" SkipUnchangedFiles="false" />
-	</Target>
 </Project>
