@@ -220,6 +220,21 @@ namespace DaprClient
         {
             throw new NotImplementedException();
         }
+
+        public IErrorsInfo BeginTransaction(PassedArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo EndTransaction(PassedArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo Commit(PassedArgs args)
+        {
+            throw new NotImplementedException();
+        }
         #endregion
     }
 }

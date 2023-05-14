@@ -1,10 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-<PropertyGroup>
-    <OutputType>Library</OutputType>
-	<TargetFrameworks>net6.0</TargetFrameworks>
-    <RootNamespace>TheTechIdea.Beep.FileManager</RootNamespace>
-  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
- </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net6.0;net7.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<LangVersion>Latest</LangVersion>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Authors>The Tech Idea</Authors>
+		<Company>The Tech Idea</Company>
+		<Copyright>2022</Copyright>
+		<PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
+		<PackageIcon>SimpleODM.png</PackageIcon>
+		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+	</PropertyGroup>
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetDir)$(PackageId).dll" DestinationFolder="$(ProjectDir)..\..\..\outputDLL\DataSources\$(PackageId)\$(TargetFramework)" SkipUnchangedFiles="false" />
+	</Target>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\Nuget.Local\DataSources" />
+	</Target>
+	<ItemGroup>
+		<None Include="..\..\..\..\..\..\OneDrive\SimpleInfoapps\LogoGFx\128\SimpleODM.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 <ItemGroup>
 		<Compile Include="..\..\DataSourcesPlugins\CSVDataSource\*.cs" />
 		<EmbeddedResource Include="..\..\DataSourcesPlugins\CSVDataSource\**\*.resx" />
@@ -13,11 +33,8 @@
   <PackageReference Include="ExcelDataReader" Version="3.6.0" />
   <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
   <PackageReference Include="System.Text.Encoding.CodePages" Version="7.0.0" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.19" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.13" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.20" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.17" />
 </ItemGroup>
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 
-		<copy SourceFiles="$(ProjectDir)$(OutputPath)$(TargetName).dll" DestinationFolder="$(ProjectDir)..\OutputDLL\$(TargetFramework)\" />
-	</Target>
 </Project>

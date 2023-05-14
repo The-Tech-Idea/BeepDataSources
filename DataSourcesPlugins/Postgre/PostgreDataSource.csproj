@@ -55,16 +55,16 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Npgsql">
-      <Version>7.0.1</Version>
+      <Version>7.0.4</Version>
     </PackageReference>
     <PackageReference Include="System.Memory">
       <Version>4.5.5</Version>
     </PackageReference>
     <PackageReference Include="System.Text.Json">
-      <Version>7.0.1</Version>
+      <Version>7.0.2</Version>
     </PackageReference>
     <PackageReference Include="TheTechIdea.Beep.DataManagementEngine">
-      <Version>1.0.19</Version>
+      <Version>1.0.20</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
