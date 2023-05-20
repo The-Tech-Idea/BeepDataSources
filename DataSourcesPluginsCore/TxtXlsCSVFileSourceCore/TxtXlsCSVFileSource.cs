@@ -411,43 +411,47 @@ namespace TheTechIdea.Beep.FileManager
                     newdt.Columns.Add(cl);
                     //dt.Columns[item.fieldname].DataType = Type.GetType(item.fieldtype);
                 }
-                foreach (DataRow dr in dt.Rows)
+                if (dt != null)
                 {
-                    try
+                    foreach (DataRow dr in dt.Rows)
                     {
-                        DataRow r = newdt.NewRow();
-                        foreach (var item in ent.Fields)
-                        {
-                            if (dr[item.fieldname] != DBNull.Value )
-                            {
-                                string st = dr[item.fieldname].ToString().Trim();
-                                if(!string.IsNullOrEmpty(st) && !string.IsNullOrWhiteSpace(st))
-                                {
-                                    r[item.fieldname] = Convert.ChangeType(dr[item.fieldname], ToConvert(Type.GetType(item.fieldtype)));
-                                }
-                               
-                            }
-                         
-                       
-                        }
                         try
                         {
-                            newdt.Rows.Add(r);
+                            DataRow r = newdt.NewRow();
+                            foreach (var item in ent.Fields)
+                            {
+                                if (dr[item.fieldname] != DBNull.Value)
+                                {
+                                    string st = dr[item.fieldname].ToString().Trim();
+                                    if (!string.IsNullOrEmpty(st) && !string.IsNullOrWhiteSpace(st))
+                                    {
+                                        r[item.fieldname] = Convert.ChangeType(dr[item.fieldname], ToConvert(Type.GetType(item.fieldtype)));
+                                    }
+
+                                }
+
+
+                            }
+                            try
+                            {
+                                newdt.Rows.Add(r);
+                            }
+                            catch (Exception aa)
+                            {
+
+
+                            }
+
                         }
-                        catch (Exception aa)
+                        catch (Exception ex)
                         {
 
-                           
+                            // throw;
                         }
-                      
-                    }
-                    catch (Exception ex)
-                    {
 
-                       // throw;
                     }
-            
                 }
+               
             }
             dt = newdt;
         }

@@ -60,6 +60,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll</PostBuildEvent>
+    <PostBuildEvent>mkdir  $(ProjectDir)..\..\..\outputdll\DataSources\$(TargetName)\
+
+copy $(TargetName).dll  $(ProjectDir)..\..\..\outputdll\DataSources\$(TargetName)\$(TargetName).dll</PostBuildEvent>
   </PropertyGroup>
 </Project>
