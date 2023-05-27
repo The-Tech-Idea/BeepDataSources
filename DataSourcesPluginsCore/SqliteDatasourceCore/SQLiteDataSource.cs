@@ -27,6 +27,8 @@ namespace TheTechIdea.Beep.DataBase
         }
         public override string ColumnDelimiter { get; set; } = "[]";
         public override string ParameterDelimiter { get; set; } = "$";
+        public bool InMemory { get; set; } = false;
+
         public  bool CopyDB( string DestDbName, string DesPath)
         {
             try
@@ -71,6 +73,15 @@ namespace TheTechIdea.Beep.DataBase
                 DMEEditor.AddLogMessage(ex.Message, mes, DateTime.Now, -1, mes, Errors.Failed);
                 return false;
             };
+        }
+        public bool CreateDB(bool inMemory)
+        {
+            return false;
+        }
+
+        public bool CreateDB(string filepathandname)
+        {
+            return false;
         }
         public  bool DeleteDB()
         {
@@ -226,6 +237,8 @@ namespace TheTechIdea.Beep.DataBase
             }
             return DMEEditor.ErrorObject;
         }
+
+    
     }
    
 }

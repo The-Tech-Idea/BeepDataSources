@@ -40,7 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="9.1.1" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.30" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.35" />
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
 	  <copy SourceFiles="$(ProjectDir)$(OutputPath)$(TargetName).dll" DestinationFolder="$(ProjectDir)..\OutputDLL\$(TargetFramework)\" />

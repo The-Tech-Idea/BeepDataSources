@@ -52,11 +52,13 @@
       <Version>13.0.3</Version>
     </PackageReference>
     <PackageReference Include="TheTechIdea.Beep.DataManagementEngine">
-      <Version>1.0.30</Version>
+      <Version>1.0.35</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetName).dll  $(ProjectDir)\..\OutputDLL\$(TargetName).dll</PostBuildEvent>
+    <PostBuildEvent>mkdir  $(ProjectDir)..\..\..\outputdll\DataSources\$(TargetName)\
+
+copy $(TargetName).dll  $(ProjectDir)..\..\..\outputdll\DataSources\$(TargetName)\$(TargetName).dll</PostBuildEvent>
   </PropertyGroup>
 </Project>

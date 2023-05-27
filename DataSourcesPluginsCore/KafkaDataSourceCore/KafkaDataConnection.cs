@@ -22,6 +22,8 @@ namespace TheTechIdea.Beep.EventStream.Kafka
         public IDbConnection DbConn { get; set; }
         public ProducerConfig ProdConfig { get; set; }
         public ConsumerConfig ConsConfig { get; set; }
+        public string GuidID { get  ; set  ; }
+        public bool InMemory { get  ; set  ; }
 
         public ConnectionState CloseConn()
         {

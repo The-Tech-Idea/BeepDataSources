@@ -18,6 +18,8 @@ namespace TheTechIdea.Beep.DataBase
     public class SQLCompactDataSource : RDBSource, ILocalDB
     {
         public bool CanCreateLocal { get ; set; }
+        public bool InMemory { get ; set; }
+
         public SQLCompactDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
         {
             Dataconnection.ConnectionProp.DatabaseType = DataSourceType.SqlCompact;
@@ -39,6 +41,15 @@ namespace TheTechIdea.Beep.DataBase
                 DMEEditor.AddLogMessage(ex.Message, mes, DateTime.Now, -1, mes, Errors.Failed);
                 return false;
             };
+        }
+        public bool CreateDB(bool inMemory)
+        {
+            return false;
+        }
+
+        public bool CreateDB(string filepathandname)
+        {
+            return false;
         }
         public  bool CreateDB()
         {

@@ -17,6 +17,7 @@ namespace  TheTechIdea.Beep.DataBase
     public class FireBirdEmbeddedDataSource : RDBSource, ILocalDB
     {
         public bool CanCreateLocal { get ; set ; }
+        public bool InMemory { get ; set ; }
 
         public FireBirdEmbeddedDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, pDMEEditor, databasetype, per)
         {
@@ -205,6 +206,16 @@ namespace  TheTechIdea.Beep.DataBase
                 DMEEditor.AddLogMessage("Fail", $"{errmsg}:{ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
+        }
+
+        public bool CreateDB(bool inMemory)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool CreateDB(string filepathandname)
+        {
+            throw new NotImplementedException();
         }
     }
 }
