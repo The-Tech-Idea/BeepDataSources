@@ -29,7 +29,7 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.38" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.34" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.40" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.35" />
   </ItemGroup>
 </Project>
