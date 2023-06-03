@@ -17,7 +17,7 @@ namespace  TheTechIdea.Beep.DataBase
     public class FireBirdEmbeddedDataSource : RDBSource, ILocalDB
     {
         public bool CanCreateLocal { get ; set ; }
-        public bool InMemory { get ; set ; }
+        public bool InMemory { get; set; } = false;
 
         public FireBirdEmbeddedDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, pDMEEditor, databasetype, per)
         {

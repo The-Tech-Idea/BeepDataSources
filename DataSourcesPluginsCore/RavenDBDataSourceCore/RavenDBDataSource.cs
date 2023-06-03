@@ -26,14 +26,14 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Workflow;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
-using System.Net.Http;
-//using System.Security.Policy;
 using TheTechIdea.Beep.WebAPI;
+using DataManagementModels.DataBase;
+using Raven.Embedded;
 
 namespace TheTechIdea.Beep.NOSQL.RavenDB
 {
     [AddinAttribute(Category = DatasourceCategory.NOSQL, DatasourceType =  DataSourceType.RavenDB)]
-    public class RavenDBDataSource :  IDataSource
+    public class RavenDBDataSource : IDataSource, IInMemoryDB
     {
         public event EventHandler<PassedArgs> PassEvent;
         public BindingList<string> Databases { get ; set ; }
@@ -259,7 +259,12 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
 
         public object GetEntity(string EntityName, List<AppFilter> filter)
         {
-            throw new NotImplementedException();
+            object entity;
+            using (var session = Store.OpenSession())
+            {
+                entity = session.Load<object>(EntityName);
+            }
+            return entity;
         }
 
         public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
@@ -324,14 +329,45 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
 
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                using (var session = Store.OpenSession())
+                {
+                    session.Store(InsertedData, EntityName);
+                    session.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Beep", $"Error in InsertEntity {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                ErrorObject.Flag = Errors.Failed;
+            }
+            return ErrorObject;
         }
         public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
             throw new NotImplementedException();
         }
+        public IErrorsInfo OpenDatabaseInMemory(string databasename)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                EmbeddedServer.Instance.StartServer();
+                Store = (IDocumentStore)EmbeddedServer.Instance.GetDocumentStoreAsync("Embedded");
+              
+                Store.Initialize();
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Beep", $"Error in OpenDatabaseInMemory {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                ErrorObject.Flag = Errors.Failed;
+            }
+            return ErrorObject;
+        }
         #region "RavenDB Client Methods"
-       
+
         public EntityStructure GetEntityStructure(string DocName)
         {
             EntityStructure retval = new EntityStructure();
@@ -614,6 +650,8 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+
+       
         #endregion
     }
 }

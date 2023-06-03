@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DataManagementModels.DataBase;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
@@ -13,11 +14,12 @@ using TheTechIdea.Util;
 namespace TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.SqlLite)]
-    public class SQLiteDataSource : RDBSource, ILocalDB
+    public class SQLiteDataSource : RDBSource, ILocalDB,IInMemoryDB
 
     {
         private string dateformat = "yyyy-MM-dd HH:mm:ss";
         public bool CanCreateLocal { get ; set; }
+        SQLiteConnection sQLiteConnection;
         public SQLiteDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
         {
 
@@ -27,8 +29,39 @@ namespace TheTechIdea.Beep.DataBase
         }
         public override string ColumnDelimiter { get; set; } = "[]";
         public override string ParameterDelimiter { get; set; } = "$";
-        public bool InMemory { get; set; } = false;
+        public override ConnectionState Openconnection()
+        {
+             
+            if (ConnectionStatus == ConnectionState.Open)
+            {
+                DMEEditor.AddLogMessage("Beep", $"Connection is already open", DateTime.Now, -1, "", Errors.Ok);
+                return ConnectionState.Open;
+            }
+            if (Dataconnection.ConnectionProp.IsInMemory)
+            {
+                 OpenDatabaseInMemory(Dataconnection.ConnectionProp.Database);
+                 base.Openconnection();
+                    if (DMEEditor.ErrorObject.Flag == Errors.Ok)
+                    {
 
+                        ConnectionStatus = ConnectionState.Open;
+                        return ConnectionState.Open;
+                    }
+
+               
+
+            }else
+                {
+                    ConnectionStatus = ConnectionState.Closed;
+                    return ConnectionState.Closed;
+                }
+         
+             base.Openconnection();
+            
+            return ConnectionStatus;
+        }
+       
+        public bool InMemory { get; set; } = false;
         public  bool CopyDB( string DestDbName, string DesPath)
         {
             try
@@ -78,7 +111,6 @@ namespace TheTechIdea.Beep.DataBase
         {
             return false;
         }
-
         public bool CreateDB(string filepathandname)
         {
             return false;
@@ -237,8 +269,37 @@ namespace TheTechIdea.Beep.DataBase
             }
             return DMEEditor.ErrorObject;
         }
+        public IErrorsInfo OpenDatabaseInMemory(string databasename)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
 
-    
+                base.Dataconnection.InMemory = true;
+                base.Dataconnection.ConnectionProp.FileName = string.Empty;
+                // Dataconnection.ConnectionProp.FilePath = ".";
+                 base.Dataconnection.ConnectionProp.ConnectionString = @$"Data Source=Inmemory;Mode=Memory;Cache=Shared";
+               // base.Dataconnection.ConnectionProp.ConnectionString=$@"file=:memory:;cache=shared";
+                base.Dataconnection.ConnectionProp.Database = databasename;
+                base.Dataconnection.ConnectionProp.ConnectionName = databasename;
+               //RDBMSConnection.DbConn = sQLiteConnection;
+
+               // base.Dataconnection.ConnectionProp.ConnectionString= "Data Source=:memory:";
+                base.Dataconnection.ConnectionProp.Database = databasename;
+
+              
+
+            }
+            catch (Exception ex)
+            {
+
+                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+
+
+        }
+
     }
    
 }

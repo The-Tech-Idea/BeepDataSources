@@ -11,11 +11,12 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Workflow;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
+using DataManagementModels.DataBase;
 
 namespace TheTechIdea.Beep.Redis
 {
     [AddinAttribute(Category = DatasourceCategory.NOSQL, DatasourceType =  DataSourceType.Redis)]
-    public class RedisDataSource : IDataSource
+    public class RedisDataSource : IDataSource, IInMemoryDB
     {
         public DataSourceType DatasourceType { get ; set ; }
         public DatasourceCategory Category { get ; set ; }
@@ -226,6 +227,11 @@ namespace TheTechIdea.Beep.Redis
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        public IErrorsInfo OpenDatabaseInMemory(string databasename)
+        {
+            throw new NotImplementedException();
         }
         #endregion
     }

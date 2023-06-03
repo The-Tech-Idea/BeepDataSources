@@ -18,7 +18,7 @@ namespace TheTechIdea.Beep.DataBase
     public class SQLCompactDataSource : RDBSource, ILocalDB
     {
         public bool CanCreateLocal { get ; set; }
-        public bool InMemory { get ; set; }
+        public bool InMemory { get; set; } = false;
 
         public SQLCompactDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
         {

@@ -12,6 +12,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Workflow;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
+using DataManagementModels.DataBase;
 
 namespace TheTechIdea.Beep.DataBase
 {
@@ -110,6 +111,8 @@ namespace TheTechIdea.Beep.DataBase
                                        $"    WHERE rn >= (({pagenumber} * {pagesize}) + 1) and rn >= (({pagenumber} - 1) * {pagesize}) + 1)";
             return pagedquery;
         }
+
+      
         //private string BuildQuery(string originalquery, List<ReportFilter> Filter)
         //{
         //    string retval;
