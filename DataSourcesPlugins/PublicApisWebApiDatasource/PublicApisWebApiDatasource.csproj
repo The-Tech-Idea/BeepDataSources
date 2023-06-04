@@ -37,8 +37,8 @@
     <Reference Include="DataManagementModels, Version=1.0.43.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementModels.1.0.43\lib\netstandard2.0\DataManagementModels.dll</HintPath>
     </Reference>
-    <Reference Include="DataManagmentEngine, Version=1.0.41.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementEngine.1.0.41\lib\netstandard2.0\DataManagmentEngine.dll</HintPath>
+    <Reference Include="DataManagmentEngine, Version=1.0.46.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementEngine.1.0.46\lib\netstandard2.0\DataManagmentEngine.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
