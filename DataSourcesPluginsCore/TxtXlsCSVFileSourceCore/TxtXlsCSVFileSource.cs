@@ -164,33 +164,12 @@ namespace TheTechIdea.Beep.FileManager
 
             try
             {
-              
-               
+
+
                 if (GetFileState() == ConnectionState.Open)
                 {
                     GetSheets();
-                    //if (Entities.Count > 0)
-                    //{
-                    //    List<string> ename = Entities.Select(p => p.EntityName.ToUpper()).ToList();
-                    //    List<string> diffnames = ename.Except(EntitiesNames.Select(o=>o.ToUpper())).ToList();
-                    //    if (diffnames.Count > 0)
-                    //    {
-                    //        foreach (string item in diffnames)
-                    //        {
-                    //            Entities.Add(GetEntityStructure(item, true));
-                    //            //int idx = Entities.FindIndex(p => p.EntityName.Equals(item, StringComparison.OrdinalIgnoreCase) || p.DatasourceEntityName.Equals(item, StringComparison.OrdinalIgnoreCase));
-                    //            //Entities[idx].Created = false;
-                                
-                    //        }
-                    //    }
-                    //}
                 }
-               
-               
-                
-
-                //  DMEEditor.ConfigEditor.DataConnections.Where(c => c.FileName == DatasourceName).FirstOrDefault().Entities =entlist ;
-            //    Logger.WriteLog("Successfully Retrieve Entites list ");
 
             }
             catch (Exception ex)
@@ -1087,7 +1066,8 @@ namespace TheTechIdea.Beep.FileManager
                             entityData.DataSourceID = FileName;
                             entityData.DatasourceEntityName = tb.TableName;
                             entityData.Caption = tb.TableName;
-                            entityData.EntityName = sheetname;
+                            entityData.EntityName = Regex.Replace(tb.TableName, @"\s+", "_");
+                            //entityData.EntityName = sheetname;
                             entityData.Id = i;
                             i++;
                             entityData.OriginalEntityName = sheetname;

@@ -233,6 +233,11 @@ namespace TheTechIdea.Beep.Redis
         {
             throw new NotImplementedException();
         }
+
+        public string GetConnectionString()
+        {
+            throw new NotImplementedException();
+        }
         #endregion
     }
 }

@@ -52,11 +52,11 @@ namespace TheTechIdea.Beep.DataBase
 
             }else
                 {
-                    ConnectionStatus = ConnectionState.Closed;
-                    return ConnectionState.Closed;
+                base.Openconnection();
+               
                 }
          
-             base.Openconnection();
+            
             
             return ConnectionStatus;
         }
@@ -278,14 +278,14 @@ namespace TheTechIdea.Beep.DataBase
                 base.Dataconnection.InMemory = true;
                 base.Dataconnection.ConnectionProp.FileName = string.Empty;
                 // Dataconnection.ConnectionProp.FilePath = ".";
-                 base.Dataconnection.ConnectionProp.ConnectionString = @$"Data Source=Inmemory;Mode=Memory;Cache=Shared";
-               // base.Dataconnection.ConnectionProp.ConnectionString=$@"file=:memory:;cache=shared";
+               //  base.Dataconnection.ConnectionProp.ConnectionString = @$"Data Source={databasename};Mode=Memory;Cache=Shared";
+                base.Dataconnection.ConnectionProp.ConnectionString=$@"Data Source=:memory:;Version=3;New=True;";
                 base.Dataconnection.ConnectionProp.Database = databasename;
                 base.Dataconnection.ConnectionProp.ConnectionName = databasename;
                //RDBMSConnection.DbConn = sQLiteConnection;
 
                // base.Dataconnection.ConnectionProp.ConnectionString= "Data Source=:memory:";
-                base.Dataconnection.ConnectionProp.Database = databasename;
+               // base.Dataconnection.ConnectionProp.Database = databasename;
 
               
 
@@ -300,6 +300,10 @@ namespace TheTechIdea.Beep.DataBase
 
         }
 
+        public string GetConnectionString()
+        {
+            throw new NotImplementedException();
+        }
     }
    
 }

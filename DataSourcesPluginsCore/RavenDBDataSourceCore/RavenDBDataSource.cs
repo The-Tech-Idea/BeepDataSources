@@ -651,7 +651,12 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
             GC.SuppressFinalize(this);
         }
 
-       
+        public string GetConnectionString()
+        {
+            throw new NotImplementedException();
+        }
+
+
         #endregion
     }
 }
