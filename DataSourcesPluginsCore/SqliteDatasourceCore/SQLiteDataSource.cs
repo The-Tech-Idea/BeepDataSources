@@ -5,8 +5,11 @@ using System.Data;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
@@ -31,7 +34,10 @@ namespace TheTechIdea.Beep.DataBase
         public override string ParameterDelimiter { get; set; } = "$";
         public override ConnectionState Openconnection()
         {
-             
+            ETLScriptHDR scriptHDR = new ETLScriptHDR();
+            scriptHDR.ScriptDTL = new List<ETLScriptDet>();
+            CancellationTokenSource token = new CancellationTokenSource();
+
             if (ConnectionStatus == ConnectionState.Open)
             {
                 DMEEditor.AddLogMessage("Beep", $"Connection is already open", DateTime.Now, -1, "", Errors.Ok);
@@ -56,11 +62,43 @@ namespace TheTechIdea.Beep.DataBase
                
                 }
          
-            
+            if(InMemory && ConnectionStatus== ConnectionState.Open)
+            {
+                //var ret = DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(Dataconnection.ConnectionProp.Database);
+                //if (ret != null)
+                //{
+                //    Entities = ret.Entities;
+                //}
+                //else
+                //{
+                    Entities = new List<EntityStructure>();
+                //}
+                if (Entities != null)
+                {
+                    if (Entities.Count > 0)
+                    {
+                       string filepath = DMEEditor.ConfigEditor.ConfigPath + "\\Scripts\\" + Dataconnection.ConnectionProp.Database + ".json";
+                       if (File.Exists(filepath))
+                       {
+                            scriptHDR= DMEEditor.ConfigEditor.JsonLoader.DeserializeSingleObject<ETLScriptHDR>(filepath); ;
+                       }
+                       else
+                       {
+                            scriptHDR.scriptName = Dataconnection.ConnectionProp.Database;
+                            scriptHDR.scriptStatus = "New"; 
+                            scriptHDR.ScriptDTL.AddRange(DMEEditor.ETL.GetCreateEntityScript(this, Entities, DMEEditor.progress, token.Token));
+                            scriptHDR.ScriptDTL.AddRange(DMEEditor.ETL.GetCopyDataEntityScript(this, Entities, DMEEditor.progress, token.Token));
+                        }
+                      
+                        DMEEditor.ETL.Script = scriptHDR;
+                        DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
+                        DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token.Token);
+                    }
+                }
+            }
             
             return ConnectionStatus;
         }
-       
         public bool InMemory { get; set; } = false;
         public  bool CopyDB( string DestDbName, string DesPath)
         {
@@ -173,7 +211,12 @@ namespace TheTechIdea.Beep.DataBase
                 {
                     base.RDBMSConnection.DbConn.Close();
                 }
-
+                if (DMEEditor.ETL.Script.ScriptDTL.Count > 0)
+                {
+                    string filepath = DMEEditor.ConfigEditor.ConfigPath + "\\Scripts\\" + DatasourceName + ".json";
+                    DMEEditor.ConfigEditor.JsonLoader.Serialize(filepath, DMEEditor.ETL.Script); ;
+                }
+                DMEEditor.ConfigEditor.SaveDataSourceEntitiesValues(new ConfigUtil.DatasourceEntities() { datasourcename=DatasourceName, Entities=Entities, GuidID=Dataconnection.GuidID, ID=Dataconnection.ID});
 
                 DMEEditor.AddLogMessage("Success", $"Closing connection to Sqlite Database", DateTime.Now, 0, null, Errors.Ok);
             }
@@ -274,21 +317,13 @@ namespace TheTechIdea.Beep.DataBase
             ErrorObject.Flag = Errors.Ok;
             try
             {
-
                 base.Dataconnection.InMemory = true;
                 base.Dataconnection.ConnectionProp.FileName = string.Empty;
-                // Dataconnection.ConnectionProp.FilePath = ".";
-               //  base.Dataconnection.ConnectionProp.ConnectionString = @$"Data Source={databasename};Mode=Memory;Cache=Shared";
                 base.Dataconnection.ConnectionProp.ConnectionString=$@"Data Source=:memory:;Version=3;New=True;";
                 base.Dataconnection.ConnectionProp.Database = databasename;
                 base.Dataconnection.ConnectionProp.ConnectionName = databasename;
-               //RDBMSConnection.DbConn = sQLiteConnection;
-
-               // base.Dataconnection.ConnectionProp.ConnectionString= "Data Source=:memory:";
-               // base.Dataconnection.ConnectionProp.Database = databasename;
-
+                //base.Dataconnection.ConnectionStatus = ConnectionState.Open;
               
-
             }
             catch (Exception ex)
             {
@@ -296,13 +331,11 @@ namespace TheTechIdea.Beep.DataBase
                 DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
-
-
         }
 
         public string GetConnectionString()
         {
-            throw new NotImplementedException();
+            return base.Dataconnection.ConnectionProp.ConnectionString;
         }
     }
    
