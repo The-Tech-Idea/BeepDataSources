@@ -1,5 +1,4 @@
-﻿
-using TheTechIdea.Logger;
+﻿using TheTechIdea.Logger;
 using System.Data;
 using TheTechIdea.Util;
 
@@ -47,6 +46,7 @@ namespace TheTechIdea.Beep.FileManager
         ExcelDataSetConfiguration ExcelDataSetConfig;
         public DataTable FileData { get; set; }
         IExcelDataReader reader;
+        bool IsFileRead = false;
         
         public TxtXlsCSVFileSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType pDatasourceType ,  IErrorsInfo per)
         {
@@ -120,9 +120,9 @@ namespace TheTechIdea.Beep.FileManager
                 if (i < 0)
                 {
                     i=Entities.FindIndex(p => p.DatasourceEntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase));
-                } else
-                    if (i < 0)
-                    {
+                }
+                if (i < 0)
+                {
                     i = Entities.FindIndex(p => p.OriginalEntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase));
                 }
                 return i;
@@ -140,14 +140,15 @@ namespace TheTechIdea.Beep.FileManager
 
             if (ConnectionStatus == ConnectionState.Open)
             {
-                if (DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(FileName) == null)
-                {
-                    GetSheets();
-                }
-                else
-                {
-                    Entities = DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(FileName).Entities;
-                };
+                //if (DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(FileName) == null)
+                //{
+                //    GetSheets();
+                //}
+                //else
+                //{
+                //    Entities = DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(FileName).Entities;
+                //};
+                GetSheets();
                 CombineFilePath = Path.Combine(Dataconnection.ConnectionProp.FilePath, Dataconnection.ConnectionProp.FileName);
             }
 
@@ -166,7 +167,7 @@ namespace TheTechIdea.Beep.FileManager
             {
 
 
-                if (GetFileState() == ConnectionState.Open)
+                if (GetFileState() == ConnectionState.Open && !IsFileRead)
                 {
                     GetSheets();
                 }
@@ -213,7 +214,7 @@ namespace TheTechIdea.Beep.FileManager
                         GetEntitesList();
                     }
 
-                    ent = Entities[Entities.FindIndex(x => x.EntityName == EntityName)];
+                    ent =Entities[GetEntityIdx(EntityName)];
                     string filenamenoext = EntityName;
                     DMTypeBuilder.CreateNewObject(EntityName, EntityName, Entities.Where(x => x.EntityName == EntityName).FirstOrDefault().Fields);
                 }
@@ -260,17 +261,27 @@ namespace TheTechIdea.Beep.FileManager
                             }
                         }
                     }
-                    int idx = -1;
-                    if(Entities.Count > 0)
-                    {
-                        idx = Entities.FindIndex(p => p.EntityName.Equals(EntityName, StringComparison.InvariantCultureIgnoreCase));
+                    int idx = GetEntityIdx(EntityName);
+                    //if(Entities.Count > 0)
+                    //{
+                    //    idx = Entities.FindIndex(p => p.EntityName.Equals(EntityName, StringComparison.InvariantCultureIgnoreCase));
                      
-                    }
-                   
+                    //}
+                    //if (idx == -1)
+                    //{
+                    //    idx = Entities.FindIndex(p => p.OriginalEntityName.Equals(EntityName, StringComparison.InvariantCultureIgnoreCase));
+
+                    //}
+                    //if (idx == -1)
+                    //{
+                    //    idx = Entities.FindIndex(p => p.DatasourceEntityName.Equals(EntityName, StringComparison.InvariantCultureIgnoreCase));
+
+                    //}
+                    
                     if (idx > -1)
                     {
                         entity = Entities[idx];
-                        dt = ReadDataTable(EntityName, HeaderExist, fromline, toline);
+                        dt = ReadDataTable(entity.OriginalEntityName, HeaderExist, fromline, toline);
                         SyncFieldTypes(ref dt, EntityName);
                         if (filter != null)
                         {
@@ -399,12 +410,13 @@ namespace TheTechIdea.Beep.FileManager
                             DataRow r = newdt.NewRow();
                             foreach (var item in ent.Fields)
                             {
-                                if (dr[item.fieldname] != DBNull.Value)
+                                if (dr[item.Originalfieldname] != DBNull.Value)
                                 {
-                                    string st = dr[item.fieldname].ToString().Trim();
+                                    string st = dr[item.Originalfieldname].ToString().Trim();
                                     if (!string.IsNullOrEmpty(st) && !string.IsNullOrWhiteSpace(st))
                                     {
-                                        r[item.fieldname] = Convert.ChangeType(dr[item.fieldname], ToConvert(Type.GetType(item.fieldtype)));
+
+                                        r[item.fieldname] = Convert.ChangeType(dr[item.Originalfieldname], ToConvert(Type.GetType(item.fieldtype)));
                                     }
 
                                 }
@@ -503,13 +515,14 @@ namespace TheTechIdea.Beep.FileManager
                 {
                     if (Entities.Count == 0) 
                     {
+                        IsFileRead = false;
                         GetSheets();
                       
                     }
                 }
-                    
-                    retval = Entities.Where(x => string.Equals(x.OriginalEntityName, EntityName, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
-                    if (retval == null || refresh)
+                int idx = GetEntityIdx(EntityName);
+                retval = Entities[idx];
+                if (retval == null || refresh)
                     {
                         EntityStructure fndval = GetSheetEntity(EntityName);
                         retval = fndval;
@@ -523,11 +536,12 @@ namespace TheTechIdea.Beep.FileManager
                             Entities[GetEntityIdx(EntityName)] = fndval;
                         }
                     }
-                    if (Entities.Count() == 0)
-                    {
+                if (Entities.Count() == 0)
+                {
+                        IsFileRead = false;
                          GetSheets();
-                    }
-                    DMEEditor.ConfigEditor.SaveDataSourceEntitiesValues(new DatasourceEntities { datasourcename = DatasourceName, Entities = Entities });
+                }
+                DMEEditor.ConfigEditor.SaveDataSourceEntitiesValues(new DatasourceEntities { datasourcename = DatasourceName, Entities = Entities });
             }
             return retval;
         }
@@ -541,12 +555,14 @@ namespace TheTechIdea.Beep.FileManager
                 {
                     if (Entities.Count == 0)
                     {
+                        IsFileRead = false;
                         GetSheets();
                       
                     }
                 }
-                retval = Entities.Where(x => string.Equals(x.OriginalEntityName, fnd.EntityName, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
-                    if (retval == null || refresh)
+                int idx = GetEntityIdx(fnd.EntityName);
+                retval = Entities[idx];
+                if (retval == null || refresh)
                     {
                         EntityStructure fndval = GetSheetEntity(fnd.EntityName);
                         retval = fndval;
@@ -561,6 +577,7 @@ namespace TheTechIdea.Beep.FileManager
                     }
                     if (Entities.Count() == 0)
                     {
+                        IsFileRead=false;
                          GetSheets();
                        
                     }
@@ -630,6 +647,7 @@ namespace TheTechIdea.Beep.FileManager
                     if ((Entities == null) || (Entities.Count == 0) || (refresh))
                     {
                         Entities = new List<EntityStructure>();
+                        IsFileRead = false;
                         GetSheets();
                         Dataconnection.ConnectionProp.Delimiter = Delimiter;
                        
@@ -643,6 +661,7 @@ namespace TheTechIdea.Beep.FileManager
                             {
                                 if (Entities.Count == 0)
                                 {
+                                    IsFileRead = false;
                                     GetSheets();
 
                                 }
@@ -1033,61 +1052,52 @@ namespace TheTechIdea.Beep.FileManager
             }
             return ds;
         }
+       
         private void GetSheets()
         {
             DataSet ds;
            
-            if (GetFileState() == ConnectionState.Open)
+            if (GetFileState() == ConnectionState.Open && !IsFileRead)
             {
                 try
                 {
                     string sheetname;
                     ds = GetExcelDataSet();
                     EntitiesNames = new List<string>();
-                   
+                    Entities = new List<EntityStructure>();
                     for (int i = 0; i < ds.Tables.Count; i++)
                     {
                         DataTable tb=ds.Tables[i];
-                        EntitiesNames.Add(tb.TableName);
-                        EntityStructure ent = null;
-
-                        int idx = Entities.FindIndex(p => p.EntityName.Equals(tb.TableName, StringComparison.InvariantCultureIgnoreCase));
-                        if (idx > -1)
-                        {
-                            ent = Entities[idx];
-                        }
-                        if (ent == null)
-                        {
+                        EntityStructure ent = new EntityStructure();
                             EntityStructure entityData = new EntityStructure();
                             entityData = new EntityStructure();
-                            sheetname = tb.TableName;
+                            string filename = Path.GetFileNameWithoutExtension(DatasourceName);
+                            filename = Regex.Replace(filename, @"[\s-]+", "_");
+                            if (tb.TableName.StartsWith("Sheet"))
+                            {
+                                sheetname = filename+i;
+                            }else
+                                sheetname=tb.TableName;
                             entityData.Viewtype = ViewType.File;
                             entityData.DatabaseType = DataSourceType.Text;
                             entityData.DataSourceID = FileName;
                             entityData.DatasourceEntityName = tb.TableName;
                             entityData.Caption = tb.TableName;
-                            entityData.EntityName = Regex.Replace(tb.TableName, @"\s+", "_");
-                            //entityData.EntityName = sheetname;
+                            entityData.EntityName = sheetname;
                             entityData.Id = i;
                             i++;
-                            entityData.OriginalEntityName = sheetname;
+                            entityData.OriginalEntityName = tb.TableName;
                             Entities.Add(entityData);
                             entityData.Drawn = true;
-                        }
-                        else
-                        {
-                            ent.Fields = new List<EntityField>();
-                            DataTable tbdata = GetDataTableforSheet(tb.TableName, ent.StartRow);
-                            ent.Fields.AddRange(GetFieldsbyTableScan( tbdata,tbdata.TableName, tbdata.Columns));
-                            ent.Drawn = true;
-                        }
-
-                    }
-                  
-                    for (int y = 0; y < Entities.Count(); y++)
-                    {
+                            EntitiesNames.Add(sheetname);
+                            entityData.Fields = new List<EntityField>();
+                            entityData.Fields.AddRange(GetFieldsbyTableScan( tb,tb.TableName, tb.Columns));
+                            entityData.Drawn = true;
                         
+                        Entities.Add(entityData);
                     }
+
+                    IsFileRead = true;
                 }
                 catch (Exception ex)
                 {
@@ -1096,69 +1106,69 @@ namespace TheTechIdea.Beep.FileManager
                 }
             }
         }
-        private void Getfields()
-        {
-            DataSet ds;
-            if (Entities == null)
-            {
-                Entities = new List<EntityStructure>();
-            }
-            if (GetFileState() == ConnectionState.Open)
-            {
-                try
-                {
-                    ds = GetExcelDataSet();
+        //private void Getfields()
+        //{
+        //    DataSet ds;
+        //    if (Entities == null)
+        //    {
+        //        Entities = new List<EntityStructure>();
+        //    }
+        //    if (GetFileState() == ConnectionState.Open)
+        //    {
+        //        try
+        //        {
+        //            ds = GetExcelDataSet();
 
-                    int i = 0;
-                    foreach (DataTable tb in ds.Tables)
-                    {
-                        EntityStructure ent = null;
-                        if (!Entities.Where(p => p.OriginalEntityName.Equals(tb.TableName, StringComparison.OrdinalIgnoreCase)).Any())
-                        {
-                            string sheetname;
-                            int idx = Entities.FindIndex(p => p.EntityName.Equals(tb.TableName, StringComparison.InvariantCultureIgnoreCase));
-                            if (idx > -1)
-                            {
-                               ent = Entities[idx];
-                            }
-                           if(ent == null)
-                           {
-                                EntityStructure entityData = new EntityStructure();
-                                entityData = new EntityStructure();
-                                sheetname = tb.TableName;
-                                entityData.Viewtype = ViewType.File;
-                                entityData.DatabaseType = DataSourceType.Text;
-                                entityData.DataSourceID = FileName;
-                                entityData.DatasourceEntityName = tb.TableName;
-                                entityData.Caption = tb.TableName;
-                                entityData.EntityName = sheetname;
-                                entityData.Id = i;
+        //            int i = 0;
+        //            foreach (DataTable tb in ds.Tables)
+        //            {
+        //                EntityStructure ent = null;
+        //                if (!Entities.Where(p => p.OriginalEntityName.Equals(tb.TableName, StringComparison.OrdinalIgnoreCase)).Any())
+        //                {
+        //                    string sheetname;
+        //                    int idx = Entities.FindIndex(p => p.EntityName.Equals(tb.TableName, StringComparison.InvariantCultureIgnoreCase));
+        //                    if (idx > -1)
+        //                    {
+        //                       ent = Entities[idx];
+        //                    }
+        //                   if(ent == null)
+        //                   {
+        //                        EntityStructure entityData = new EntityStructure();
+        //                        entityData = new EntityStructure();
+        //                        sheetname = tb.TableName;
+        //                        entityData.Viewtype = ViewType.File;
+        //                        entityData.DatabaseType = DataSourceType.Text;
+        //                        entityData.DataSourceID = FileName;
+        //                        entityData.DatasourceEntityName = tb.TableName;
+        //                        entityData.Caption = tb.TableName;
+        //                        entityData.EntityName = sheetname;
+        //                        entityData.Id = i;
                              
-                                i++;
-                                entityData.OriginalEntityName = sheetname;
-                                DataTable tbdata = GetDataTableforSheet(tb.TableName, ent.StartRow);
-                                entityData.Fields = new List<EntityField>();
-                                entityData.Fields.AddRange(GetFieldsbyTableScan(tbdata,tb.TableName, tb.Columns));
-                                Entities.Add(entityData);
-                            }
-                            else
-                            {
+        //                        i++;
+        //                        entityData.OriginalEntityName = sheetname;
+        //                        DataTable tbdata = GetDataTableforSheet(tb.TableName, ent.StartRow);
+        //                        entityData.Fields = new List<EntityField>();
+        //                        entityData.Fields.AddRange(GetFieldsbyTableScan(tbdata,tb.TableName, tb.Columns));
+        //                        Entities.Add(entityData);
+        //                    }
+        //                    else
+        //                    {
 
-                            }
+        //                    }
                        
 
-                        }
+        //                }
                           
-                    }
+        //            }
 
-                }
-                catch (Exception ex)
-                {
-                    DMEEditor.AddLogMessage("Fail", $"Error in getting File format {ex.Message}", DateTime.Now, 0, FileName, Errors.Failed);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            DMEEditor.AddLogMessage("Fail", $"Error in getting File format {ex.Message}", DateTime.Now, 0, FileName, Errors.Failed);
 
-                }
-            }
-        }
+        //        }
+        //    }
+        //}
         private EntityStructure GetSheetEntity(string EntityName)
         {
             EntityStructure entityData = new EntityStructure();
@@ -1169,9 +1179,7 @@ namespace TheTechIdea.Beep.FileManager
                     GetSheets();
                     if (Entities != null)
                     {
-                        int idx = Entities.FindIndex(p => p.EntityName.Equals(EntityName, StringComparison.InvariantCultureIgnoreCase));
-                        if (idx > -1)
-                            entityData = Entities[idx];
+                      entityData = Entities[GetEntityIdx(EntityName)];
                     }
                 }
                 catch (Exception ex)
@@ -1196,26 +1204,7 @@ namespace TheTechIdea.Beep.FileManager
             DMTypeBuilder.CreateNewObject(pSheetname, pSheetname, flds);
 
         }
-        public DataTable ReadDataTable(int sheetno = 0, bool HeaderExist = true, int fromline = 0, int toline = 100)
-        {
-            if (GetFileState() == ConnectionState.Open)
-            {
-                DataTable dataRows = new DataTable();
-                FileData = GetDataTableforSheet(sheetno,fromline);
-                dataRows = FileData;
-                toline = dataRows.Rows.Count;
-                List<EntityField> flds = GetSheetColumns(FileData.TableName);
-                string classpath = DMEEditor.ConfigEditor.Config.Folders.Where(c => c.FolderFilesType == FolderFileTypes.ProjectClass).Select(x => x.FolderPath).FirstOrDefault();
-                // DMEEditor.classCreator.CreateClass(FileData.Tables[sheetno].TableName, flds, classpath);
-                //GetTypeForSheetsFile(dataRows.TableName);
-                return dataRows;
-            }
-            else
-            {
-                return null;
-            }
-
-        }
+       
         //public DataTable ReadDataTable(string sheetname, bool HeaderExist = true, int fromline = 0, int toline = 100)
         //{
         //    if (GetFileState() == ConnectionState.Open)
@@ -1258,23 +1247,12 @@ namespace TheTechIdea.Beep.FileManager
                         while (found == "Found" || found == "ExitandNotFound")
                         {
 
-                            if (ls.Tables[i].TableName == sheetname)
+                            if (ls.Tables[i].TableName.Equals(sheetname,StringComparison.InvariantCultureIgnoreCase))
                             {
                                 retval = i;
-
-                                found = "Found";
+                                return retval;
                             }
-                            else
-                            {
-                                if (i == ls.Tables.Count - 1)
-                                {
-                                    found = "ExitandNotFound";
-                                }
-                                else
-                                {
-                                    i += 1;
-                                }
-                            }
+                            i += 1;
                         }
 
 
@@ -1285,17 +1263,20 @@ namespace TheTechIdea.Beep.FileManager
             return retval;
 
         }
+        public DataTable ReadDataTable(int sheetno = 0, bool HeaderExist = true, int fromline = 0, int toline = 100)
+        {
+            if (sheetno > -1)
+            {
+                FileData = GetDataTableforSheet(sheetno, fromline);
+            }
+            return FileData;
+
+        }
         public DataTable ReadDataTable(string sheetname, bool HeaderExist = true, int fromline = 0, int toline = 10000)
         {
 
-            int idx = -1;
-            if (Entities.Count > 0)
-            {
-                idx = Entities.FindIndex(p => p.EntityName.Equals(sheetname, StringComparison.InvariantCultureIgnoreCase));
-
-
-            }
-
+            int idx = GetEntityIdx(sheetname);
+          
             if (idx > -1)
             {
                 FileData = GetDataTableforSheet(sheetname, fromline);
@@ -1380,8 +1361,8 @@ namespace TheTechIdea.Beep.FileManager
             foreach (DataColumn field in datac)
             {
                 EntityField f = new EntityField();
-                string entspace = Regex.Replace(field.ColumnName, @"\s+", "_");
-                f.fieldname = field.ColumnName;
+                string entspace = Regex.Replace(field.ColumnName, @"[\s-]+", "_");
+                f.fieldname = entspace;
                 f.Originalfieldname = field.ColumnName;
                 f.fieldtype = field.DataType.ToString();
                 f.ValueRetrievedFromParent = false;
