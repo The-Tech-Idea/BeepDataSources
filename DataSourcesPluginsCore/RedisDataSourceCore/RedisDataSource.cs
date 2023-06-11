@@ -238,6 +238,11 @@ namespace TheTechIdea.Beep.Redis
         {
             throw new NotImplementedException();
         }
+
+        public IErrorsInfo SaveStructure()
+        {
+            throw new NotImplementedException();
+        }
         #endregion
     }
 }

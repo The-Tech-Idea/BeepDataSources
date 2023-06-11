@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DataManagementModels.DataBase;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -15,7 +16,7 @@ using TheTechIdea.Util;
 namespace TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.DuckDB)]
-    public class DuckDBDataSource : IDataSource, ILocalDB
+    public class DuckDBDataSource : IDataSource, ILocalDB, IInMemoryDB
     {
         private bool disposedValue;
 
@@ -307,6 +308,21 @@ namespace TheTechIdea.Beep.DataBase
         }
 
         public bool CopyDB(string DestDbName, string DesPath)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo OpenDatabaseInMemory(string databasename)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetConnectionString()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo SaveStructure()
         {
             throw new NotImplementedException();
         }

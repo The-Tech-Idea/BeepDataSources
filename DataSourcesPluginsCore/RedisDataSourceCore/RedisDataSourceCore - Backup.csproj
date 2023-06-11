@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;net6.0;net7.0</TargetFrameworks>
+		<TargetFrameworks>netstandard2.1;net6.0;net7.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>Latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -26,19 +26,12 @@
 			<PackagePath>\</PackagePath>
 		</None>
 	</ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\..\DataSourcesPlugins\RavenDbDataSource\*.cs" />
-    <EmbeddedResource Include="..\..\DataSourcesPlugins\RavenDbDataSource\**\*.resx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="..\..\DataSourcesPlugins\RavenDbDataSource\RavenDBDataSource.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="RavenDB.Client" Version="5.4.104" />
-    <PackageReference Include="RavenDB.Embedded" Version="5.4.104" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.80" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.49" />
-  </ItemGroup>
-
+	<ItemGroup>
+	  <PackageReference Include="Azure.ResourceManager.Redis" Version="1.1.1" />
+	  <PackageReference Include="FreeRedis" Version="1.0.11" />
+	  <PackageReference Include="Google.Cloud.Redis.V1" Version="3.2.0" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.52" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.45" />
+	</ItemGroup>
 
 </Project>

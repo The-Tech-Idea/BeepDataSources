@@ -656,6 +656,11 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
             throw new NotImplementedException();
         }
 
+        public IErrorsInfo SaveStructure()
+        {
+            throw new NotImplementedException();
+        }
+
 
         #endregion
     }
