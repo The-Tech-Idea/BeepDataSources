@@ -1,5 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net7.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
@@ -26,17 +25,10 @@
 			<PackagePath>\</PackagePath>
 		</None>
 	</ItemGroup>
- <ItemGroup>
-		<Compile Include="..\..\DataSourcesPlugins\Sqlite\*.cs" />
-		<EmbeddedResource Include="..\..\DataSourcesPlugins\Sqlite\**\*.resx" />
-</ItemGroup>
- <ItemGroup>
-   <Compile Remove="..\..\DataSourcesPlugins\Sqlite\SQLiteDataSource.cs" />
- </ItemGroup>
- <ItemGroup>
-   <PackageReference Include="System.Data.SQLite.Core" Version="1.0.117" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.80" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.50" />
- </ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="System.Data.Odbc" Version="7.0.0" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.80" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.50" />
+	</ItemGroup>
 
 </Project>

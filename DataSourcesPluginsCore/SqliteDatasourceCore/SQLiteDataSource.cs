@@ -31,7 +31,7 @@ namespace TheTechIdea.Beep.DataBase
             ColumnDelimiter = "[]";
             ParameterDelimiter = "$";
         }
-        List<EntityStructure> InMemoryStructures = new List<EntityStructure>();
+        public List<EntityStructure> InMemoryStructures { get; set; } = new List<EntityStructure>();
         public override string ColumnDelimiter { get; set; } = "[]";
         public override string ParameterDelimiter { get; set; } = "$";
         public override ConnectionState Openconnection()
