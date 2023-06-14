@@ -31,7 +31,6 @@ namespace TheTechIdea.Beep.CompositeLayer
                 DMEEditor.ConfigEditor.CompositeQueryLayers[DMEEditor.ConfigEditor.CompositeQueryLayers.FindIndex(x => x.LayerName == DatasourceName)] = value;
             }
         }
-
         public IDataViewDataSource DataViewSource { get; set; }
         public ILocalDB LocalDB { get; set; }
         public string DatabaseType { get => base.Dataconnection.ConnectionProp.DriverName + "." + base.Dataconnection.ConnectionProp.DriverVersion; }
@@ -109,7 +108,7 @@ namespace TheTechIdea.Beep.CompositeLayer
                     {
                         LayerInfo.Entities = new List<EntityStructure>();
                     }
-                    List<string> ents = ls.Except(LayerInfo.Entities.Select(p => p.OriginalEntityName).Distinct()).ToList();
+                    List<string> ents = ls.Except(LayerInfo.Entities.Select(p => p.EntityName).Distinct()).ToList();
                     // 
                     foreach (string item in ents)
                     {
@@ -219,7 +218,6 @@ namespace TheTechIdea.Beep.CompositeLayer
                 a = (EntityStructure)entity.Clone();
                 a.EntityName = a.EntityName;
                 a.Created = false;
-
                 LayerInfo.Entities.Add(a);
                 DMEEditor.ConfigEditor.SaveCompositeLayersValues();
                 return true;
@@ -230,7 +228,6 @@ namespace TheTechIdea.Beep.CompositeLayer
                 return false;
             }
         }
-
         public int GetEntityIdx(string entityName)
         {
             if (Entities.Count > 0)
