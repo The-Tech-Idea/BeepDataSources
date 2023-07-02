@@ -57,6 +57,8 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
         public string CurrentDatabase { get; set; }
         public virtual string ColumnDelimiter { get; set; } = "''";
         public virtual string ParameterDelimiter { get; set; } = ":";
+        public List<EntityStructure> InMemoryStructures { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public RavenDBDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
         {
             DatasourceName = datasourcename;

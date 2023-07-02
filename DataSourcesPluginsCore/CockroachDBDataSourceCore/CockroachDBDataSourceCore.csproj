@@ -25,9 +25,6 @@
 			<PackagePath>\</PackagePath>
 		</None>
 	</ItemGroup>
-	<ItemGroup>
-	  <PackageReference Include="CData.CockroachDB" Version="22.0.8462" />
-	</ItemGroup>
 
 
 </Project>

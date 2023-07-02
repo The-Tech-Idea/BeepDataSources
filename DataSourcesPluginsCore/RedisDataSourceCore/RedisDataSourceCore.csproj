@@ -27,11 +27,11 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="Azure.ResourceManager.Redis" Version="1.1.1" />
-	  <PackageReference Include="FreeRedis" Version="1.1.1" />
+	  <PackageReference Include="Azure.ResourceManager.Redis" Version="1.2.0" />
+	  <PackageReference Include="FreeRedis" Version="1.1.5" />
 	  <PackageReference Include="Google.Cloud.Redis.V1" Version="3.2.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.80" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.49" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.89" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.52" />
 	</ItemGroup>
 
 </Project>

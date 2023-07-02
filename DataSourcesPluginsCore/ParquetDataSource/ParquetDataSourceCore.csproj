@@ -27,10 +27,10 @@
 		</None>
 	</ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Parquet.Net" Version="4.12.0" />
+    <PackageReference Include="Parquet.Net" Version="4.15.0" />
     <PackageReference Include="ParquetSharp" Version="10.0.1" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.80" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.49" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.88" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.51" />
   </ItemGroup>
 
 </Project>

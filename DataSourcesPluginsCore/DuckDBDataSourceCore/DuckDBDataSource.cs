@@ -62,6 +62,8 @@ namespace TheTechIdea.Beep.DataBase
         public  string ColumnDelimiter { get => _ColumnDelimiter; set => _ColumnDelimiter = value; }
         public bool CanCreateLocal { get; set; }
         public bool InMemory { get; set; }
+        public List<EntityStructure> InMemoryStructures { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public bool CreateDB(bool inMemory)
         {
             return false;

@@ -33,6 +33,8 @@ namespace TheTechIdea.Beep.Redis
         public event EventHandler<PassedArgs> PassEvent;
         public virtual string ColumnDelimiter { get; set; } = "''";
         public virtual string ParameterDelimiter { get; set; } = ":";
+        public List<EntityStructure> InMemoryStructures { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public virtual IErrorsInfo BeginTransaction(PassedArgs args)
         {
             ErrorObject.Flag = Errors.Ok;
