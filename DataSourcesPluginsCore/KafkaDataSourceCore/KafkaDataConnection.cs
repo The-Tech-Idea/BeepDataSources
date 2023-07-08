@@ -7,6 +7,7 @@ using TheTechIdea.Logger;
 using TheTechIdea.Util;
 using Confluent.Kafka;
 using System.Net;
+using DataManagementModels.DriversConfigurations;
 
 namespace TheTechIdea.Beep.EventStream.Kafka
 {

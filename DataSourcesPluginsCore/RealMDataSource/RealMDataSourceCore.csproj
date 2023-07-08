@@ -27,8 +27,8 @@
 	  </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Realm" Version="11.1.2" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.52" />
+    <PackageReference Include="Realm" Version="11.2.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.60" />
   </ItemGroup>
 
 </Project>
