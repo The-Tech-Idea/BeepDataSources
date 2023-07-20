@@ -1,14 +1,5 @@
 ﻿using DataManagementModels.DataBase;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
-using System.Data.Odbc;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TheTechIdea.Beep.Editor;
-using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
@@ -16,12 +7,12 @@ using TheTechIdea.Util;
 namespace TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.DuckDB)]
-    public class DuckDBDataSource : IDataSource, ILocalDB, IInMemoryDB
+    public class DuckDBDataSource : RDBSource, ILocalDB, IInMemoryDB
     {
         private bool disposedValue;
 
-        public DataSourceType DatasourceType { get ; set ; }
-        public DatasourceCategory Category { get ; set ; }
+        public DataSourceType DatasourceType { get; set; } = DataSourceType.DuckDB;
+        public DatasourceCategory Category { get; set; } = DatasourceCategory.INMEMORY;
         public IDataConnection Dataconnection { get ; set ; }
         public string DatasourceName { get ; set ; }
         public IErrorsInfo ErrorObject { get ; set ; }
@@ -36,13 +27,13 @@ namespace TheTechIdea.Beep.DataBase
         public event EventHandler<PassedArgs> PassEvent;
 
         private DuckDBManager dBManager;
-        public DuckDBDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType pDatasourceType, IErrorsInfo per) 
+        public DuckDBDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType pdatabasetype, IErrorsInfo per) : base(datasourcename, logger, pDMEEditor, pdatabasetype, per)
         {
             DatasourceName = datasourcename;
             Logger = logger;
             ErrorObject = per;
             DMEEditor = pDMEEditor;
-            DatasourceType = pDatasourceType;
+            DatasourceType = pdatabasetype;
             Dataconnection = new FileManager.FileConnection(DMEEditor)
             {
                 Logger = logger,
@@ -63,39 +54,6 @@ namespace TheTechIdea.Beep.DataBase
         public bool CanCreateLocal { get; set; }
         public bool InMemory { get; set; }
         public List<EntityStructure> InMemoryStructures { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
-        public bool CreateDB(bool inMemory)
-        {
-            return false;
-        }
-
-        public bool CreateDB(string filepathandname)
-        {
-            return false;
-        }
-        public DuckDBDataSource(string dbfile)
-        {
-            if (!string.IsNullOrEmpty(dbfile))
-            {
-                dBManager = new DuckDBManager(dbfile);
-            }
-            
-                
-        }
-        public DuckDBDataSource(bool inMemory = true)
-        {
-            dBManager = new DuckDBManager(true);
-        }
-        public IErrorsInfo BeginTransaction(PassedArgs args)
-        {
-            return DMEEditor.ErrorObject;
-        }
-
-        public bool CheckEntityExist(string EntityName)
-        {
-            throw new NotImplementedException();
-        }
-
         public ConnectionState Openconnection()
         {
             ConnectionStatus = Dataconnection.OpenConnection();
@@ -104,13 +62,13 @@ namespace TheTechIdea.Beep.DataBase
             {
                 if (DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(Dataconnection.ConnectionProp.FileName) == null)
                 {
-                   // GetSheets();
+                    // GetSheets();
                 }
                 else
                 {
                     Entities = DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(Dataconnection.ConnectionProp.FileName).Entities;
                 };
-               // CombineFilePath = Path.Combine(Dataconnection.ConnectionProp.FilePath, Dataconnection.ConnectionProp.FileName);
+                // CombineFilePath = Path.Combine(Dataconnection.ConnectionProp.FilePath, Dataconnection.ConnectionProp.FileName);
             }
 
             return ConnectionStatus;
@@ -120,112 +78,16 @@ namespace TheTechIdea.Beep.DataBase
         {
             return ConnectionStatus = ConnectionState.Closed;
         }
-
-        public IErrorsInfo Commit(PassedArgs args)
+        public bool CreateDB(bool inMemory)
         {
-            return DMEEditor.ErrorObject;
+            return false;
         }
 
-        public IErrorsInfo CreateEntities(List<EntityStructure> entities)
+        public bool CreateDB(string filepathandname)
         {
-            throw new NotImplementedException();
+            return false;
         }
-
-        public bool CreateEntityAs(EntityStructure entity)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo EndTransaction(PassedArgs args)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo ExecuteSql(string sql)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<string> GetEntitesList()
-        {
-            throw new NotImplementedException();
-        }
-
-        public object GetEntity(string EntityName, List<AppFilter> filter)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public int GetEntityIdx(string entityName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public EntityStructure GetEntityStructure(string EntityName, bool refresh)
-        {
-            throw new NotImplementedException();
-        }
-
-        public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Type GetEntityType(string EntityName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
-        {
-            throw new NotImplementedException();
-        }
-
       
-        public object RunQuery(string qrystr)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
-        {
-            throw new NotImplementedException();
-        }
         #region "Other Methods"
         public ConnectionState GetFileState()
         {
@@ -277,7 +139,7 @@ namespace TheTechIdea.Beep.DataBase
             {
                 if (!Path.HasExtension(Dataconnection.ConnectionProp.FileName))
                 {
-                    Dataconnection.ConnectionProp.FileName = Dataconnection.ConnectionProp.FileName + ".s3db";
+                    Dataconnection.ConnectionProp.FileName = Dataconnection.ConnectionProp.FileName + ".db";
                 }
                 if (!System.IO.File.Exists(Path.Combine(Dataconnection.ConnectionProp.FilePath, Dataconnection.ConnectionProp.FileName)))
                 {

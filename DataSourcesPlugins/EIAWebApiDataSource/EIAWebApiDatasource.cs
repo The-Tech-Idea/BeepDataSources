@@ -511,7 +511,7 @@ namespace TheTechIdea.Beep.WebAPI.EIAWebApi
 
             EntityStructure ent = Entities.Where(o => o.EntityName == EntityName).FirstOrDefault();
             string filterstr = ent.CustomBuildQuery;
-            foreach (EntityParameters item in ent.Paramenters)
+            foreach (EntityParameters item in ent.Parameters)
             {
                 filterstr = filterstr.Replace("{" + item.parameterIndex + "}", ent.Filters.Where(u => u.FieldName == item.parameterName).Select(p => p.FilterValue).FirstOrDefault());
             }

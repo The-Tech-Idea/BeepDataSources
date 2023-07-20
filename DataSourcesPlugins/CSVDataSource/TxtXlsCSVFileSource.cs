@@ -236,7 +236,7 @@ namespace TheTechIdea.Beep.FileManager
 
                     ent = Entities[Entities.FindIndex(x => x.EntityName == EntityName)];
                     string filenamenoext = EntityName;
-                    DMTypeBuilder.CreateNewObject(EntityName, EntityName, Entities.Where(x => x.EntityName == EntityName).FirstOrDefault().Fields);
+                    DMTypeBuilder.CreateNewObject(DMEEditor, EntityName, EntityName, Entities.Where(x => x.EntityName == EntityName).FirstOrDefault().Fields);
                 }
              
                 return DMTypeBuilder.myType;
@@ -1209,7 +1209,7 @@ namespace TheTechIdea.Beep.FileManager
         private void GetTypeForSheetsFile(string pSheetname)
         {
             List<EntityField> flds = GetSheetColumns(pSheetname);
-            DMTypeBuilder.CreateNewObject(pSheetname, pSheetname, flds);
+            DMTypeBuilder.CreateNewObject(DMEEditor, pSheetname, pSheetname, flds);
 
         }
         public DataTable ReadDataTable(int sheetno = 0, bool HeaderExist = true, int fromline = 0, int toline = 100)

@@ -155,7 +155,7 @@ namespace TheTechIdea.Beep.WebAPI.PublicApisWebApi
 
             EntityStructure ent = Dataconnection.ConnectionProp.Entities.Where(o => o.EntityName == EntityName).FirstOrDefault();
             string filterstr = ent.CustomBuildQuery;
-            foreach (EntityParameters item in ent.Paramenters)
+            foreach (EntityParameters item in ent.Parameters)
             {
                 filterstr = filterstr.Replace("{" + item.parameterIndex + "}", ent.Filters.Where(u => u.FieldName == item.parameterName).Select(p => p.FilterValue).FirstOrDefault());
             }
@@ -222,7 +222,7 @@ namespace TheTechIdea.Beep.WebAPI.PublicApisWebApi
         public Type GetEntityType(string EntityName)
         {
             EntityStructure x = GetEntityStructure(EntityName, false);
-            DMTypeBuilder.CreateNewObject(EntityName, EntityName, x.Fields);
+            DMTypeBuilder.CreateNewObject(DMEEditor, EntityName, EntityName, x.Fields);
             return DMTypeBuilder.myType;
         }
 

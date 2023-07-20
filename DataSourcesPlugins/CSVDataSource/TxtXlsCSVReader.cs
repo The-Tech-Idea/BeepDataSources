@@ -342,7 +342,7 @@ namespace TheTechIdea.Beep.FileManager
         private void GetTypeForSheetsFile(string pSheetname)
         {
             List<EntityField> flds = GetSheetColumns(pSheetname);
-            DMTypeBuilder.CreateNewObject(pSheetname, pSheetname, flds);
+            DMTypeBuilder.CreateNewObject(DMEEditor, pSheetname, pSheetname, flds);
 
         }
         public DataTable ReadDataTable(int sheetno = 0, bool HeaderExist = true, int fromline = 0, int toline = 100)

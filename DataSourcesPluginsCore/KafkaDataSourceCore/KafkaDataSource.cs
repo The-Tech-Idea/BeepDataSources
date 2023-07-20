@@ -314,7 +314,7 @@ namespace TheTechIdea.Beep.EventStream
         public Type GetEntityType(string EntityName)
         {
             EntityStructure x = GetEntityStructure(EntityName, false);
-            DMTypeBuilder.CreateNewObject(EntityName, EntityName, x.Fields);
+            DMTypeBuilder.CreateNewObject(DMEEditor, EntityName, EntityName, x.Fields);
             return DMTypeBuilder.myType;
         }
 

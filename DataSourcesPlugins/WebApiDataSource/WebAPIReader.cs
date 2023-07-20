@@ -322,7 +322,7 @@ namespace TheTechIdea.Beep.WebAPI.WebAPI
         private object GetTypeForSheetsFile(string pSheetname)
         {
             List<EntityField> flds = GetSheetColumns(pSheetname);
-           return DMTypeBuilder.CreateNewObject(pSheetname, pSheetname, flds);
+           return DMTypeBuilder.CreateNewObject(DMEEditor, pSheetname, pSheetname, flds);
 
 
 
