@@ -13,6 +13,34 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	  <Optimize>False</Optimize>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.1|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	  <Optimize>False</Optimize>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	  <Optimize>False</Optimize>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	  <Optimize>False</Optimize>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.1|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Copy SourceFiles="$(TargetDir)$(PackageId).dll" DestinationFolder="$(ProjectDir)..\..\..\outputDLL\DataSources\$(PackageId)\$(TargetFramework)" SkipUnchangedFiles="false" />
 	</Target>
@@ -26,8 +54,9 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="System.Data.Odbc" Version="7.0.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.162" />
+	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="0.8.1" />
+	  <PackageReference Include="DuckDB.NET.Data.Full" Version="0.8.1" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.163" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.66" />
 	</ItemGroup>
 
