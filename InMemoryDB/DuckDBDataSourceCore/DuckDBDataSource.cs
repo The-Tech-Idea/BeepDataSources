@@ -14,51 +14,45 @@ using TheTechIdea.Util;
 using static DuckDB.NET.NativeMethods;
 using System.Reflection;
 using System.Text;
+using TheTechIdea.Beep.FileManager;
+using System.Xml;
 
 namespace DuckDBDataSourceCore
 {
     [AddinAttribute(Category = DatasourceCategory.INMEMORY, DatasourceType = DataSourceType.DuckDB)]
-    public class DuckDBDataSource : IDataSource, IInMemoryDB
+    public class DuckDBDataSource : RDBSource, IDataSource, IInMemoryDB
     {
         private bool disposedValue;
         string dbpath;
 
         public event EventHandler<PassedArgs> PassEvent;
-        DuckDBConnection DBConnection;
-        public DuckDBDataSource(string pdatasourcename, IDMLogger plogger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) 
+        public DuckDBConnection DuckConn { get; set; }
+      
+        public DuckDBDataSource(string pdatasourcename, IDMLogger plogger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(pdatasourcename, plogger, pDMEEditor, databasetype, per)
         {
+            if(per == null)
+            {
+                per = DMEEditor.ErrorObject;
+            }
+            if (pdatasourcename != null)
+            {
+                if (Dataconnection == null)
+                {
+                    Dataconnection = new RDBDataConnection(DMEEditor);
+                }
+                Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.FirstOrDefault(p => p.ConnectionName.Equals(pdatasourcename, StringComparison.InvariantCultureIgnoreCase)); ;
+            }
             Dataconnection.ConnectionProp.DatabaseType = DataSourceType.DuckDB;
-            Dataconnection.ConnectionProp.IsInMemory=true;
+         //   Dataconnection.ConnectionProp.IsInMemory=true;
             ColumnDelimiter = "[]";
             ParameterDelimiter = "$";
             DMEEditor = pDMEEditor;
             DatasourceName=pdatasourcename;
+            dbpath = Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath, DatasourceName);
         }
         public List<EntityStructure> InMemoryStructures { get; set; } = new List<EntityStructure>();
     
-        public  ConnectionState Openconnection()
-        {
-            dbpath = Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath ,DatasourceName);
-            ETLScriptHDR scriptHDR = new ETLScriptHDR();
-            scriptHDR.ScriptDTL = new List<ETLScriptDet>();
-            CancellationTokenSource token = new CancellationTokenSource();
-            
-            Dataconnection.InMemory = Dataconnection.ConnectionProp.IsInMemory;
-            if (ConnectionStatus == ConnectionState.Open)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Connection is already open", System.DateTime.Now, -1, "", Errors.Ok);
-                return ConnectionState.Open;
-            }
-            OpenDatabaseInMemory(Dataconnection.ConnectionProp.Database);
-              
-                if (DMEEditor.ErrorObject.Flag == Errors.Ok)
-                {
-                    LoadStructure();
-                    return ConnectionState.Open;
-                }
-       
-            return ConnectionStatus;
-        }
+        
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -87,7 +81,7 @@ namespace DuckDBDataSourceCore
         }
         public IErrorsInfo OpenDatabaseInMemory(string databasename)
         {
-            ErrorObject.Flag = Errors.Ok;
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
             {
                 Dataconnection.InMemory = true;
@@ -95,10 +89,11 @@ namespace DuckDBDataSourceCore
                 Dataconnection.ConnectionProp.ConnectionString = "DataSource=:memory:?cache=shared";
                 Dataconnection.ConnectionProp.Database = databasename;
                 Dataconnection.ConnectionProp.ConnectionName = databasename;
+                Dataconnection.ConnectionProp.SchemaName = "main";
                 // connection = new OdbcConnection("Driver={DuckDB};"+$"Database={databasename};");
-                DBConnection = new DuckDBConnection("DataSource=:memory:?cache=shared");
-                DBConnection.Open();
-                if(DBConnection.State== ConnectionState.Open)
+                DuckConn= new DuckDBConnection("DataSource=:memory:?cache=shared");
+                DuckConn.Open();
+                if (DuckConn.State== ConnectionState.Open)
                 {
                     Dataconnection.ConnectionStatus = ConnectionState.Open;
                 }else
@@ -117,32 +112,14 @@ namespace DuckDBDataSourceCore
         {
             return Dataconnection.ConnectionProp.ConnectionString;
         }
-        public  bool CreateEntityAs(EntityStructure entity)
+        public override bool CreateEntityAs(EntityStructure entity)
         {
             string ds = entity.DataSourceID;
-            bool retval =  CreateEntityAs(entity);
+            bool retval =  base.CreateEntityAs(entity);
             entity.DataSourceID = ds;
 
             InMemoryStructures.Add(GetEntity(entity));
             return retval;
-        }
-        public  ConnectionState Closeconnection()
-        {
-            try
-            {
-              
-                SaveStructure();
-                DBConnection.Close();
-                Dataconnection.ConnectionStatus = ConnectionState.Closed;
-                DMEEditor.AddLogMessage("Success", $"Closing connection to Sqlite Database", System.DateTime.Now, 0, null, Errors.Ok);
-            }
-            catch (Exception ex)
-            {
-                string errmsg = "Error Closing connection to Sqlite Database";
-                DMEEditor.AddLogMessage("Fail", $"{errmsg}:{ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
-            }
-            //  return RDBMSConnection.DbConn.State;
-            return  ConnectionStatus;
         }
         private EntityStructure GetEntity(EntityStructure entity)
         {
@@ -251,23 +228,59 @@ namespace DuckDBDataSourceCore
             }
         }
         #region "IDataSource Properties"
-        public DataSourceType DatasourceType { get; set; } = DataSourceType.DuckDB;
-        public DatasourceCategory Category { get; set; } = DatasourceCategory.INMEMORY;
-        public IDataConnection Dataconnection { get  ; set  ; }
-        public string DatasourceName { get  ; set  ; }
-        public IErrorsInfo ErrorObject { get  ; set  ; }
-        public string Id { get  ; set  ; }
-        public IDMLogger Logger { get  ; set  ; }
-        public List<string> EntitiesNames { get  ; set  ; }=new List<string>();
-        public List<EntityStructure> Entities { get  ; set  ; }=new List<EntityStructure>();
-        public IDMEEditor DMEEditor { get  ; set  ; }
-        public ConnectionState ConnectionStatus { get; set; } = ConnectionState.Closed;
-        public string ColumnDelimiter { get  ; set  ; }
-        public string ParameterDelimiter { get  ; set  ; }
+
 
         #endregion "IDataSource Properties"
         #region "IDataSource Methods"
-        public List<string> GetEntitesList()
+        public override ConnectionState Openconnection()
+        {
+            ETLScriptHDR scriptHDR = new ETLScriptHDR();
+            scriptHDR.ScriptDTL = new List<ETLScriptDet>();
+            CancellationTokenSource token = new CancellationTokenSource();
+
+            Dataconnection.InMemory = Dataconnection.ConnectionProp.IsInMemory;
+            if (ConnectionStatus == ConnectionState.Open)
+            {
+                DMEEditor.AddLogMessage("Beep", $"Connection is already open", System.DateTime.Now, -1, "", Errors.Ok);
+                return ConnectionState.Open;
+            }
+            if (Dataconnection.ConnectionProp.IsInMemory)
+            {
+                OpenDatabaseInMemory(Dataconnection.ConnectionProp.Database);
+                base.Openconnection();
+                if (DMEEditor.ErrorObject.Flag == Errors.Ok)
+                {
+                    LoadStructure();
+                    return ConnectionState.Open;
+                }
+            }
+            else
+            {
+                base.Openconnection();
+
+            }
+
+            return ConnectionStatus;
+        }
+        public override ConnectionState Closeconnection()
+        {
+            try
+            {
+                SaveStructure();
+                DuckConn.Close();
+                Dataconnection.ConnectionStatus = ConnectionState.Closed;
+                DMEEditor.AddLogMessage("Success", $"Closing connection to Sqlite Database", System.DateTime.Now, 0, null, Errors.Ok);
+            }
+            catch (Exception ex)
+            {
+                string errmsg = "Error Closing connection to Sqlite Database";
+                DMEEditor.AddLogMessage("Fail", $"{errmsg}:{ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+            }
+            //  return RDBMSConnection.DbConn.State;
+            return DuckConn.State;
+
+        }
+        public override List<string> GetEntitesList()
         {
             if(Entities.Count == 0)
             {
@@ -277,141 +290,9 @@ namespace DuckDBDataSourceCore
             return EntitiesNames;
         }
 
-        public object RunQuery(string qrystr)
-        {
-            DuckDBResult queryResult = null;
-            try
-            {
-              
-
-                    //var command =DBConnection.CreateCommand();
-
-                //command.CommandText = qrystr;
-                //var executeNonQuery = command.ExecuteNonQuery();
-
-                //command.CommandText = "INSERT INTO integers VALUES (3, 4), (5, 6), (7, 8);";
-                //executeNonQuery = command.ExecuteNonQuery();
-
-                //command.CommandText = "Select count(*) from integers";
-                //var executeScalar = command.ExecuteScalar();
-
-                //command.CommandText = "SELECT foo, bar FROM integers";
-                //var reader = command.ExecuteReader();
-
-
-
-
-            }
-            catch (Exception ex)
-            {
-
-               
-            }
-            return queryResult;
-        }
-
-        public IErrorsInfo ExecuteSql(string sql)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Type GetEntityType(string EntityName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool CheckEntityExist(string EntityName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public int GetEntityIdx(string entityName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public EntityStructure GetEntityStructure(string EntityName, bool refresh)
-        {
-            throw new NotImplementedException();
-        }
-
-        public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo CreateEntities(List<EntityStructure> entities)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo BeginTransaction(PassedArgs args)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo EndTransaction(PassedArgs args)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo Commit(PassedArgs args)
-        {
-            throw new NotImplementedException();
-        }
-
-        public object GetEntity(string EntityName, List<AppFilter> filter)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
-        {
-            throw new NotImplementedException();
-        }
         #endregion "IDataSource Methods"
         #region "DuckDB Methods"
-        public static string CreateSql(string tableName, List<EntityField> fields)
+        public  string CreateSql(string tableName, List<EntityField> fields)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append($"CREATE TABLE {tableName} (");
@@ -431,7 +312,7 @@ namespace DuckDBDataSourceCore
             sql.Append(");");
             return sql.ToString();
         }
-        public static string CreateSql<T>()
+        public  string CreateSql<T>()
         {
             StringBuilder sql = new StringBuilder();
             sql.Append($"CREATE TABLE {typeof(T).Name} (");
@@ -458,28 +339,40 @@ namespace DuckDBDataSourceCore
                 return "BOOLEAN";
             else if (netType == typeof(sbyte))
                 return "TINYINT";
+            else if (netType == typeof(byte))
+                return "UTINYINT";
             else if (netType == typeof(short))
                 return "SMALLINT";
+            else if (netType == typeof(ushort))
+                return "USMALLINT";
             else if (netType == typeof(int))
                 return "INTEGER";
+            else if (netType == typeof(uint))
+                return "UINTEGER";
             else if (netType == typeof(long))
                 return "BIGINT";
+            else if (netType == typeof(ulong))
+                return "UBIGINT";
             else if (netType == typeof(decimal))
                 return "DECIMAL";
             else if (netType == typeof(float))
-                return "FLOAT";
+                return "REAL";
             else if (netType == typeof(double))
                 return "DOUBLE";
             else if (netType == typeof(System.DateTime))
                 return "TIMESTAMP";
             else if (netType == typeof(string))
                 return "VARCHAR";
+            else if (netType == typeof(char))
+                return "VARCHAR";
             else if (netType == typeof(byte[]))
                 return "BLOB";
+            else if (netType == typeof(XmlDocument) || netType == typeof(XmlElement) || netType == typeof(XmlNode))
+                return "VARCHAR";
             else
                 throw new ArgumentException("Unsupported .NET data type: " + netType);
         }
-        public static DuckDBType ConvertT(string netTypeName)
+        public DuckDBType ConvertT(string netTypeName)
         {
             Type netType = Type.GetType(netTypeName);
 
@@ -517,35 +410,65 @@ namespace DuckDBDataSourceCore
             Type netType = Type.GetType(netTypeName);
 
             if (netType == null)
-                throw new ArgumentException("Invalid or unknown .NET type name: " + netTypeName);
+                throw new ArgumentException("Unrecognized .NET data type: " + netTypeName);
 
             if (netType == typeof(bool))
                 return "BOOLEAN";
             else if (netType == typeof(sbyte))
                 return "TINYINT";
+            else if (netType == typeof(byte))
+                return "UTINYINT";
             else if (netType == typeof(short))
                 return "SMALLINT";
+            else if (netType == typeof(ushort))
+                return "USMALLINT";
             else if (netType == typeof(int))
                 return "INTEGER";
+            else if (netType == typeof(uint))
+                return "UINTEGER";
             else if (netType == typeof(long))
                 return "BIGINT";
+            else if (netType == typeof(ulong))
+                return "UBIGINT";
             else if (netType == typeof(decimal))
                 return "DECIMAL";
             else if (netType == typeof(float))
-                return "FLOAT";
+                return "REAL";
             else if (netType == typeof(double))
                 return "DOUBLE";
             else if (netType == typeof(System.DateTime))
                 return "TIMESTAMP";
             else if (netType == typeof(string))
                 return "VARCHAR";
+            else if (netType == typeof(char))
+                return "VARCHAR";
             else if (netType == typeof(byte[]))
                 return "BLOB";
+            else if (netType == typeof(XmlDocument) || netType == typeof(XmlElement) || netType == typeof(XmlNode))
+                return "VARCHAR";
             else
                 throw new ArgumentException("Unsupported .NET data type: " + netTypeName);
         }
 
         #endregion
+        #region "Insert or Update or Delete Objects"
+        EntityStructure DataStruct = null;
+        IDbCommand command = null;
+        Type enttype = null;
+        bool ObjectsCreated = false;
+        string lastentityname = null;
+        #endregion
+        private void SetObjects(string Entityname)
+        {
+            if (!ObjectsCreated || Entityname != lastentityname)
+            {
+                DataStruct = GetEntityStructure(Entityname, true);
+                command = RDBMSConnection.DbConn.CreateCommand();
+                enttype = GetEntityType(Entityname);
+                ObjectsCreated = true;
+                lastentityname = Entityname;
+            }
+        }
         //public  Type GetFieldType(int ordinal)
         //{
         //    return NativeMethods.Query.DuckDBColumnType(currentResult, ordinal) switch

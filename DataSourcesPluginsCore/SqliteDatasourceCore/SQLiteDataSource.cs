@@ -23,10 +23,20 @@ namespace TheTechIdea.Beep.DataBase
     {
         private string dateformat = "yyyy-MM-dd HH:mm:ss";
         public bool CanCreateLocal { get ; set; }
-        SQLiteConnection sQLiteConnection;
+       // SQLiteConnection sQLiteConnection;
         string dbpath;
-        public SQLiteDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
+        public SQLiteDataSource(string pdatasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(pdatasourcename, logger, pDMEEditor, databasetype, per)
         {
+            DMEEditor = pDMEEditor;
+            DatasourceName = pdatasourcename;
+            if (pdatasourcename != null)
+            {
+                if (Dataconnection == null)
+                {
+                    Dataconnection = new RDBDataConnection(DMEEditor);
+                }
+                Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.FirstOrDefault(p => p.ConnectionName.Equals(pdatasourcename, StringComparison.InvariantCultureIgnoreCase)); ;
+            }
             Dataconnection.ConnectionProp.DatabaseType = DataSourceType.SqlLite;
             ColumnDelimiter = "[]";
             ParameterDelimiter = "$";
