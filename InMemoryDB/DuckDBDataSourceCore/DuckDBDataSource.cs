@@ -42,6 +42,11 @@ namespace DuckDBDataSourceCore
                     Dataconnection = new RDBDataConnection(DMEEditor);
                 }
                 Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.FirstOrDefault(p => p.ConnectionName.Equals(pdatasourcename, StringComparison.InvariantCultureIgnoreCase)); ;
+                if (Dataconnection.ConnectionProp == null)
+                {
+                    Dataconnection.ConnectionProp = new ConnectionProperties();
+                }
+
             }
             Dataconnection.ConnectionProp.DatabaseType = DataSourceType.DuckDB;
          //   Dataconnection.ConnectionProp.IsInMemory=true;
@@ -302,7 +307,7 @@ namespace DuckDBDataSourceCore
         }
         public override IErrorsInfo EndTransaction(PassedArgs args)
         {
-            Transaction.RollbackAsync();
+            Transaction.Rollback();
             return base.EndTransaction(args);
         }
         #endregion "IDataSource Methods"

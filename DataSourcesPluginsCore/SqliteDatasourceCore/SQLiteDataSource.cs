@@ -36,6 +36,11 @@ namespace TheTechIdea.Beep.DataBase
                     Dataconnection = new RDBDataConnection(DMEEditor);
                 }
                 Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.FirstOrDefault(p => p.ConnectionName.Equals(pdatasourcename, StringComparison.InvariantCultureIgnoreCase)); ;
+                if (Dataconnection.ConnectionProp==null)
+                {
+                    Dataconnection.ConnectionProp = new ConnectionProperties();
+                }
+              
             }
             Dataconnection.ConnectionProp.DatabaseType = DataSourceType.SqlLite;
             ColumnDelimiter = "[]";

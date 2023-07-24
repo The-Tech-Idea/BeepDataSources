@@ -14,6 +14,38 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 
 	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.1|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.1|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0|AnyCPU'">
+	  <DebugType>embedded</DebugType>
+	</PropertyGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Copy SourceFiles="$(TargetDir)$(PackageId).dll" DestinationFolder="$(ProjectDir)..\..\..\outputDLL\DataSources\$(PackageId)\$(TargetFramework)" SkipUnchangedFiles="false" />
 	</Target>
@@ -35,7 +67,7 @@
  </ItemGroup>
  <ItemGroup>
    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.165" />
+   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.167" />
    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.67" />
  </ItemGroup>
 
