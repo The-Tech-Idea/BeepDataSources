@@ -16,6 +16,7 @@ using System.Reflection;
 using System.Text;
 using TheTechIdea.Beep.FileManager;
 using System.Xml;
+using System.Transactions;
 
 namespace DuckDBDataSourceCore
 {
@@ -27,7 +28,7 @@ namespace DuckDBDataSourceCore
 
         public event EventHandler<PassedArgs> PassEvent;
         public DuckDBConnection DuckConn { get; set; }
-      
+       DuckDBTransaction Transaction { get; set; }
         public DuckDBDataSource(string pdatasourcename, IDMLogger plogger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(pdatasourcename, plogger, pDMEEditor, databasetype, per)
         {
             if(per == null)
@@ -289,7 +290,21 @@ namespace DuckDBDataSourceCore
             }
             return EntitiesNames;
         }
-
+        public override IErrorsInfo BeginTransaction(PassedArgs args)
+        {
+            Transaction= DuckConn.BeginTransaction();
+            return base.BeginTransaction(args);
+        }
+        public override IErrorsInfo Commit(PassedArgs args)
+        {
+            Transaction.Commit();
+            return base.Commit(args);   
+        }
+        public override IErrorsInfo EndTransaction(PassedArgs args)
+        {
+            Transaction.RollbackAsync();
+            return base.EndTransaction(args);
+        }
         #endregion "IDataSource Methods"
         #region "DuckDB Methods"
         public  string CreateSql(string tableName, List<EntityField> fields)
@@ -449,8 +464,123 @@ namespace DuckDBDataSourceCore
             else
                 throw new ArgumentException("Unsupported .NET data type: " + netTypeName);
         }
-
         #endregion
+        #region "Data Import Methods"
+        public DataTable ReadParquetFile(string filepath, bool binaryAsString = false, bool filename = false, bool fileRowNumber = false, bool hivePartitioning = false, bool unionByName = false)
+        {
+            using (var cmd = new DuckDbCommand($"SELECT * FROM read_parquet('{filepath}', (binary_as_string={binaryAsString.ToString().ToLower()}, filename={filename.ToString().ToLower()}, file_row_number={fileRowNumber.ToString().ToLower()}, hive_partitioning={hivePartitioning.ToString().ToLower()}, union_by_name={unionByName.ToString().ToLower()}));", DuckConn))
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    DataTable dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
+
+
+        public DataTable ReadMultipleCSVFiles(List<string> filePaths, bool union_by_name = false, bool filename = false)
+        {
+            string files = string.Join(", ", filePaths.Select(x => $"'{x}'"));
+            string sql = $"SELECT * FROM read_csv_auto([{files}]";
+
+            if (union_by_name)
+            {
+                sql += ", union_by_name=True";
+            }
+
+            if (filename)
+            {
+                sql += ", filename=True";
+            }
+
+            sql += ");";
+
+            using (var cmd = new DuckDbCommand(sql, DuckConn))
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    DataTable dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
+
+        public DataTable JSONLoad(string filepath, uint maximum_object_size = 16777216, string format = "array", bool ignore_errors = false,
+             string compression = "auto", string columns = null, string records = "records", bool auto_detect = false,
+             ulong sample_size = 20480, long maximum_depth = -1, string dateformat = "iso", string timestampformat = "iso",
+             bool filename = false, bool hive_partitioning = false, bool union_by_name = false)
+        {
+            string sql = $"SELECT * FROM json_read('{filepath}', FORMAT='{format}', COMPRESSION='{compression}', RECORDS='{records}'";
+
+            sql += $", MAXIMUM_OBJECT_SIZE={maximum_object_size}, IGNORE_ERRORS={ignore_errors.ToString().ToUpper()}, AUTO_DETECT={auto_detect.ToString().ToUpper()}, SAMPLE_SIZE={sample_size}";
+            sql += $", MAXIMUM_DEPTH={maximum_depth}, DATEFORMAT='{dateformat}', TIMESTAMPFORMAT='{timestampformat}', FILENAME={filename.ToString().ToUpper()}";
+            sql += $", HIVE_PARTITIONING={hive_partitioning.ToString().ToUpper()}, UNION_BY_NAME={union_by_name.ToString().ToUpper()}";
+
+            if (columns != null)
+            {
+                sql += $", COLUMNS='{columns}'";
+            }
+
+            sql += ");";
+
+            using (var cmd = new DuckDbCommand(sql, DuckConn))
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    DataTable dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
+
+        public DataTable CSVLoad(string filepath, bool all_varchar = false, bool auto_detect = true, string columns = null,
+            compressiontype compression = compressiontype.auto, string dateformat = null, char decimal_separator = '.', char delim = ',',
+            char escape = '"', bool filename = false, string[] force_not_null = null, bool header = false, bool hive_partitioning = false,
+            bool ignore_errors = false, long max_line_size = 2097152, string[] names = null, string new_line = null,
+            bool normalize_names = false, string nullstr = null, bool parallel = false, char quote = '"', long sample_size = 20480,
+            long skip = 0, string timestampformat = null, string[] types = null, bool union_by_name = false)
+        {
+            string sql = $"SELECT * FROM read_csv_auto('{filepath}', HEADER={header.ToString().ToUpper()}, DELIM='{delim}', ESCAPE='{escape}', QUOTE='{quote}'";
+
+            sql += $", ALL_VARCHAR={all_varchar.ToString().ToUpper()}, AUTO_DETECT={auto_detect.ToString().ToUpper()}, COMPRESSION='{compression.ToString().ToUpper()}'";
+            sql += $", DATEFORMAT='{dateformat}', DECIMAL='{decimal_separator}', FILENAME={filename.ToString().ToUpper()}, HEADER={header.ToString().ToUpper()}, HIVE_PARTITIONING={hive_partitioning.ToString().ToUpper()}";
+            sql += $", IGNORE_ERRORS={ignore_errors.ToString().ToUpper()}, MAX_LINE_SIZE={max_line_size}, NEW_LINE='{new_line}', NORMALIZE_NAMES={normalize_names.ToString().ToUpper()}, NULLSTR='{nullstr}'";
+            sql += $", PARALLEL={parallel.ToString().ToUpper()}, SAMPLE_SIZE={sample_size}, SKIP={skip}, TIMESTAMPFORMAT='{timestampformat}', UNION_BY_NAME={union_by_name.ToString().ToUpper()}";
+
+            if (force_not_null != null)
+            {
+                sql += $", FORCE_NOT_NULL=ARRAY['{string.Join("','", force_not_null)}']";
+            }
+
+            if (names != null)
+            {
+                sql += $", NAMES=ARRAY['{string.Join("','", names)}']";
+            }
+
+            if (types != null)
+            {
+                sql += $", TYPES=ARRAY['{string.Join("','", types)}']";
+            }
+
+            sql += ");";
+
+            using (var cmd = new DuckDbCommand(sql, DuckConn))
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    DataTable dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
+
+
+        #endregion "Data Import Methods"
         #region "Insert or Update or Delete Objects"
         EntityStructure DataStruct = null;
         IDbCommand command = null;
@@ -463,7 +593,7 @@ namespace DuckDBDataSourceCore
             if (!ObjectsCreated || Entityname != lastentityname)
             {
                 DataStruct = GetEntityStructure(Entityname, true);
-                command = RDBMSConnection.DbConn.CreateCommand();
+                command = DuckConn.CreateCommand();
                 enttype = GetEntityType(Entityname);
                 ObjectsCreated = true;
                 lastentityname = Entityname;
@@ -497,4 +627,9 @@ namespace DuckDBDataSourceCore
         //    };
         //}
     }
+    public enum compressiontype
+    {
+        none,gzip,zstd,auto
+    }
+
 }

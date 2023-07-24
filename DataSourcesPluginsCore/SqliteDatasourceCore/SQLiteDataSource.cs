@@ -40,13 +40,14 @@ namespace TheTechIdea.Beep.DataBase
             Dataconnection.ConnectionProp.DatabaseType = DataSourceType.SqlLite;
             ColumnDelimiter = "[]";
             ParameterDelimiter = "$";
+            dbpath =Path.Combine(DMEEditor.ConfigEditor.ExePath , "Scripts" , DatasourceName);
         }
         public List<EntityStructure> InMemoryStructures { get; set; } = new List<EntityStructure>();
         public override string ColumnDelimiter { get; set; } = "[]";
         public override string ParameterDelimiter { get; set; } = "$";
         public override ConnectionState Openconnection()
         {
-            dbpath = DMEEditor.ConfigEditor.ExePath + "\\Scripts\\" + DatasourceName;
+           
             ETLScriptHDR scriptHDR = new ETLScriptHDR();
             scriptHDR.ScriptDTL = new List<ETLScriptDet>();
             CancellationTokenSource token = new CancellationTokenSource();
