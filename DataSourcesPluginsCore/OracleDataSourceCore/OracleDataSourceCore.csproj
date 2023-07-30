@@ -30,7 +30,7 @@
 		<EmbeddedResource Include="..\..\DataSourcesPlugins\OracleDataSource\**\*.resx" />
 </ItemGroup>
 <ItemGroup>
-  <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.100" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.167" />
+  <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.110" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.173" />
 </ItemGroup>
 </Project>
