@@ -67,7 +67,7 @@
  </ItemGroup>
  <ItemGroup>
    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.174" />
+   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.175" />
    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.68" />
  </ItemGroup>
 
