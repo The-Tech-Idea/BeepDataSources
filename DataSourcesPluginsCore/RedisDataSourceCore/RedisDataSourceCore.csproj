@@ -30,8 +30,8 @@
 	  <PackageReference Include="Azure.ResourceManager.Redis" Version="1.2.0" />
 	  <PackageReference Include="FreeRedis" Version="1.1.5" />
 	  <PackageReference Include="Google.Cloud.Redis.V1" Version="3.2.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.161" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.66" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.175" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.68" />
 	</ItemGroup>
 
 </Project>
