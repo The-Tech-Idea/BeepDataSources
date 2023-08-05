@@ -1044,7 +1044,7 @@ namespace TheTechIdea.Beep.FileManager
                 }
 
 
-                // 2. Use the AsDataSet extension method
+                // 2. Use the c extension method
                 ds = reader.AsDataSet(ExcelDataSetConfig);
                 // The result of each spreadsheet is in result.Tables
 
@@ -1065,10 +1065,10 @@ namespace TheTechIdea.Beep.FileManager
                     ds = GetExcelDataSet();
                     EntitiesNames = new List<string>();
                     Entities = new List<EntityStructure>();
-                    for (int i = 0; i < ds.Tables.Count; i++)
+                    for (int i = 0; i <= ds.Tables.Count-1; i++)
                     {
                         DataTable tb=ds.Tables[i];
-                        EntityStructure ent = new EntityStructure();
+                      
                             EntityStructure entityData = new EntityStructure();
                             entityData = new EntityStructure();
                             string filename = Path.GetFileNameWithoutExtension(DatasourceName);
@@ -1081,13 +1081,13 @@ namespace TheTechIdea.Beep.FileManager
                             entityData.Viewtype = ViewType.File;
                             entityData.DatabaseType = DataSourceType.Text;
                             entityData.DataSourceID = FileName;
-                            entityData.DatasourceEntityName = tb.TableName;
-                            entityData.Caption = tb.TableName;
+                            entityData.DatasourceEntityName = sheetname;
+                            entityData.Caption = sheetname;
                             entityData.EntityName = sheetname;
                             entityData.Id = i;
                             i++;
-                            entityData.OriginalEntityName = tb.TableName;
-                            Entities.Add(entityData);
+                            entityData.OriginalEntityName = sheetname;
+                    //        Entities.Add(entityData);
                             entityData.Drawn = true;
                             EntitiesNames.Add(sheetname);
                             entityData.Fields = new List<EntityField>();
@@ -1106,69 +1106,6 @@ namespace TheTechIdea.Beep.FileManager
                 }
             }
         }
-        //private void Getfields()
-        //{
-        //    DataSet ds;
-        //    if (Entities == null)
-        //    {
-        //        Entities = new List<EntityStructure>();
-        //    }
-        //    if (GetFileState() == ConnectionState.Open)
-        //    {
-        //        try
-        //        {
-        //            ds = GetExcelDataSet();
-
-        //            int i = 0;
-        //            foreach (DataTable tb in ds.Tables)
-        //            {
-        //                EntityStructure ent = null;
-        //                if (!Entities.Where(p => p.OriginalEntityName.Equals(tb.TableName, StringComparison.OrdinalIgnoreCase)).Any())
-        //                {
-        //                    string sheetname;
-        //                    int idx = Entities.FindIndex(p => p.EntityName.Equals(tb.TableName, StringComparison.InvariantCultureIgnoreCase));
-        //                    if (idx > -1)
-        //                    {
-        //                       ent = Entities[idx];
-        //                    }
-        //                   if(ent == null)
-        //                   {
-        //                        EntityStructure entityData = new EntityStructure();
-        //                        entityData = new EntityStructure();
-        //                        sheetname = tb.TableName;
-        //                        entityData.Viewtype = ViewType.File;
-        //                        entityData.DatabaseType = DataSourceType.Text;
-        //                        entityData.DataSourceID = FileName;
-        //                        entityData.DatasourceEntityName = tb.TableName;
-        //                        entityData.Caption = tb.TableName;
-        //                        entityData.EntityName = sheetname;
-        //                        entityData.Id = i;
-                             
-        //                        i++;
-        //                        entityData.OriginalEntityName = sheetname;
-        //                        DataTable tbdata = GetDataTableforSheet(tb.TableName, ent.StartRow);
-        //                        entityData.Fields = new List<EntityField>();
-        //                        entityData.Fields.AddRange(GetFieldsbyTableScan(tbdata,tb.TableName, tb.Columns));
-        //                        Entities.Add(entityData);
-        //                    }
-        //                    else
-        //                    {
-
-        //                    }
-                       
-
-        //                }
-                          
-        //            }
-
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            DMEEditor.AddLogMessage("Fail", $"Error in getting File format {ex.Message}", DateTime.Now, 0, FileName, Errors.Failed);
-
-        //        }
-        //    }
-        //}
         private EntityStructure GetSheetEntity(string EntityName)
         {
             EntityStructure entityData = new EntityStructure();
