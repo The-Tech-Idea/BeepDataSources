@@ -23,6 +23,7 @@ namespace TheTechIdea.Beep.FileManager
     [AddinAttribute(Category = DatasourceCategory.FILE, DatasourceType = DataSourceType.CSV|DataSourceType.Xls,FileType = "xls,xlsx") ]
     public class TxtXlsCSVFileSource : IDataSource
     {
+        public string GuidID { get; set; }
         public event EventHandler<PassedArgs> PassEvent;
         public string Id { get; set; }
         public string DatasourceName { get; set; }

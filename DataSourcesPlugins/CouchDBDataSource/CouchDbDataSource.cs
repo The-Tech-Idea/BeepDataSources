@@ -18,6 +18,7 @@ namespace TheTechIdea.Beep.NOSQL.CouchDB
     [AddinAttribute(Category = DatasourceCategory.NOSQL, DatasourceType = DataSourceType.CouchDB)]
     public class CouchDBDataSource : IDataSource
     {
+        public string GuidID { get; set; }
         public event EventHandler<PassedArgs> PassEvent;
         public DataSourceType DatasourceType { get ; set ; }
         public DatasourceCategory Category { get ; set ; }

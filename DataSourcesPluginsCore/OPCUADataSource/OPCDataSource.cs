@@ -15,6 +15,7 @@ namespace OPCUADataSource
 {
     public class OPCDataSource : IDataSource
     {
+        public string GuidID { get; set; }
         public DataSourceType DatasourceType { get  ; set  ; }
         public DatasourceCategory Category { get  ; set  ; }
         public IDataConnection Dataconnection { get  ; set  ; }

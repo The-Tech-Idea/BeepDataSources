@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
@@ -16,6 +13,7 @@ namespace TheTechIdea.Beep.Cloud
     [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.WebService)]
     public class AzureCloudCosmosDataSource : IDataSource
     {
+        public string GuidID { get; set; }
         public event EventHandler<PassedArgs> PassEvent;
         public DataSourceType DatasourceType { get ; set ; }
         public DatasourceCategory Category { get ; set ; }

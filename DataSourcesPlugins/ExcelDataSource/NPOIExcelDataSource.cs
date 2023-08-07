@@ -22,7 +22,7 @@ namespace TheTechIdea.Beep.FileManager
     [AddinAttribute(Category = DatasourceCategory.FILE,DatasourceType =  DataSourceType.Xls, FileType = "xls,xlsx")]
     public class NPOIExcelDataSource : IDataSource
     {
-
+        public string GuidID { get; set; }
         IWorkbook book;
         public NPOIExcelDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType pDatasourceType, IErrorsInfo per)
         {

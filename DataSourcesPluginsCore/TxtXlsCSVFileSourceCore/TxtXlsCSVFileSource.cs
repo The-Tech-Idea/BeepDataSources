@@ -2,11 +2,6 @@
 using System.Data;
 using TheTechIdea.Util;
 
-using System.IO;
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Vis;
@@ -21,7 +16,9 @@ namespace TheTechIdea.Beep.FileManager
 {
     [AddinAttribute(Category = DatasourceCategory.FILE, DatasourceType = DataSourceType.CSV|DataSourceType.Xls,FileType = "xls,xlsx") ]
     public class TxtXlsCSVFileSource : IDataSource
+
     {
+        public string GuidID { get; set; } 
         public event EventHandler<PassedArgs> PassEvent;
         public string Id { get; set; }
         public string DatasourceName { get; set; }

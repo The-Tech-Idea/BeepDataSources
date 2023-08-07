@@ -28,6 +28,7 @@ namespace DaprClient
     [AddinAttribute(Category = DatasourceCategory.WEBAPI, DatasourceType = DataSourceType.WebService)]
     public class DaprDataSource : IDataSource
     {
+        public string GuidID { get; set; }
         public Dapr.Client.DaprClient Client { get; set; }
         public DaprDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType pDatasourceType, IErrorsInfo per)
         {

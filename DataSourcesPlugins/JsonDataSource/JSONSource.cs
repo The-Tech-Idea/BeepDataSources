@@ -23,6 +23,7 @@ namespace TheTechIdea.Beep.FileManager
     [AddinAttribute(Category = DatasourceCategory.FILE, DatasourceType =  DataSourceType.Json,FileType ="json")]
     public class JSONSource : IDataSource
     {
+        public string GuidID { get; set; }
         public event EventHandler<PassedArgs> PassEvent;
         public DataSourceType DatasourceType { get ; set ; }
         public DatasourceCategory Category { get ; set ; }

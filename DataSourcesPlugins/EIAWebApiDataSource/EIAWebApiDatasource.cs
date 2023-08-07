@@ -24,6 +24,7 @@ namespace TheTechIdea.Beep.WebAPI.EIAWebApi
     [AddinAttribute(Category = DatasourceCategory.WEBAPI, DatasourceType = DataSourceType.WebService)]
     public class EIAWebApiDatasource :IDataSource
     {
+        public string GuidID { get; set; }
         public event EventHandler<PassedArgs> PassEvent;
         public HttpClient client { get; set; } = new HttpClient();
 

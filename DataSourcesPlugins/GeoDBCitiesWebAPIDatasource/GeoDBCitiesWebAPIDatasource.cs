@@ -20,6 +20,7 @@ namespace TheTechIdea.Beep.WebAPI.GeoDBCitiesWebAPI
     [AddinAttribute(Category = DatasourceCategory.WEBAPI, DatasourceType = DataSourceType.WebService)]
     public class GeoDBCitiesWebAPIDatasource : WebAPIDataSource
     {
+
         public override IErrorsInfo BeginTransaction(PassedArgs args)
         {
             ErrorObject.Flag = Errors.Ok;

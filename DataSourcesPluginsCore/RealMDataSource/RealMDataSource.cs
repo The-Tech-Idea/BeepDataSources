@@ -28,7 +28,7 @@ namespace RealMDataSource
         }
 
 
-
+        public string GuidID { get; set; }
 
         public DataSourceType DatasourceType { get; set; }
         public DatasourceCategory Category { get; set; }

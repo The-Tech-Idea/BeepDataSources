@@ -23,6 +23,7 @@ namespace TheTechIdea.Beep.WebAPI.FDAWebApi
     [AddinAttribute(Category = DatasourceCategory.WEBAPI, DatasourceType = DataSourceType.WebService)]
     public class FDAWebApiDatasource : IDataSource
     {
+        public string GuidID { get; set; }
         public event EventHandler<PassedArgs> PassEvent;
         public HttpClient client { get; set; } = new HttpClient();
 

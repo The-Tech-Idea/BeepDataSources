@@ -35,6 +35,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
     [AddinAttribute(Category = DatasourceCategory.NOSQL, DatasourceType =  DataSourceType.RavenDB)]
     public class RavenDBDataSource : IDataSource, IInMemoryDB
     {
+        public string GuidID { get; set; }  
         public event EventHandler<PassedArgs> PassEvent;
         public BindingList<string> Databases { get ; set ; }
         public List<DatabaseCollection> RavenDatabases { get; set; }

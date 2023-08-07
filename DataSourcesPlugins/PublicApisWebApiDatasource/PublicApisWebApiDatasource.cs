@@ -18,6 +18,7 @@ namespace TheTechIdea.Beep.WebAPI.PublicApisWebApi
    public class PublicApisWebApiDatasource : IDataSource
 
     {
+        public string GuidID { get; set; }
         public event EventHandler<PassedArgs> PassEvent;
         public HttpClient client { get; set; } = new HttpClient();
 

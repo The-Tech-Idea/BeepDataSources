@@ -18,6 +18,7 @@ namespace TheTechIdea.Beep.Redis
     [AddinAttribute(Category = DatasourceCategory.NOSQL, DatasourceType =  DataSourceType.Redis)]
     public class RedisDataSource : IDataSource, IInMemoryDB
     {
+        public string GuidID { get; set; }
         public DataSourceType DatasourceType { get ; set ; }
         public DatasourceCategory Category { get ; set ; }
         public IDataConnection Dataconnection { get ; set ; }

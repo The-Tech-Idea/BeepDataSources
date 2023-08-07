@@ -19,6 +19,7 @@ namespace TheTechIdea.Beep.NOSQL
     [AddinAttribute(Category = DatasourceCategory.NOSQL, DatasourceType =  DataSourceType.MongoDB)]
     public class MongoDBDataSource : IDataSource
     {
+        public string GuidID { get; set; }
         public event EventHandler<PassedArgs> PassEvent;
         public DataSourceType DatasourceType { get ; set ; }
         public DatasourceCategory Category { get ; set ; }

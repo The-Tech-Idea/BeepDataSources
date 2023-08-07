@@ -26,9 +26,9 @@
 		</None>
 	</ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CouchbaseNetClient" Version="3.4.9" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.175" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.68" />
+    <PackageReference Include="CouchbaseNetClient" Version="3.4.10" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.192" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.75" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\DataSourcesPlugins\CouchBaseDataSource\*.cs" />

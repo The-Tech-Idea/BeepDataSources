@@ -22,7 +22,7 @@ namespace TheTechIdea.Beep.EventStream
     [AddinAttribute(Category = DatasourceCategory.STREAM, DatasourceType = DataSourceType.Kafka)]
     public class KafkaDataSource : IDataSource
     {
-
+        public string GuidID { get; set; }
         public KafkaDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
         {
             DatasourceName = datasourcename;
