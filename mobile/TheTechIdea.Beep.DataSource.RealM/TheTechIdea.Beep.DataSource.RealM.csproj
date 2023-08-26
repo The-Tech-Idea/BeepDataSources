@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net7.0;net7.0-android;net7.0-ios;net7.0-maccatalyst</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net7.0-windows10.0.19041.0</TargetFrameworks>
+		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
+		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-tizen</TargetFrameworks> -->
+		<UseMaui>true</UseMaui>
+		<SingleProject>true</SingleProject>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Authors>The Tech Idea</Authors>
+		<Company>The Tech Idea</Company>
+		<Copyright>2022</Copyright>
+		<PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
+		<PackageIcon>SimpleODM.png</PackageIcon>
+		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<Title>TheTechIdea.Beep.Maui.DataSource.RealM</Title>
+		<PackageId>TheTechIdea.Beep.Maui.DataSource.RealM</PackageId>
+		<Description>RealM Maui DataSource </Description>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">14.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
+	</PropertyGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetDir)$(PackageId).dll" DestinationFolder="$(ProjectDir)..\..\..\outputDLL\DataSources\$(PackageId)\$(TargetFramework)" SkipUnchangedFiles="false" />
+	</Target>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\LocalNugetFiles\DataSources" />
+	</Target>
+	<ItemGroup>
+		<None Include="..\..\..\InstallationScripts\LogoGFx\128\SimpleODM.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="Realm" Version="11.4.0" />
+	</ItemGroup>
+</Project>

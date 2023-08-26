@@ -1,12 +1,14 @@
 ﻿using DataManagementModels.DataBase;
+using Microsoft.VisualBasic;
+using SQLite;
 using System.Data;
-using System.Data.SQLite;
+using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
 
-namespace TheTechIdea.Beep.DataBase
+namespace TheTechIdea.Beep.Maui.DataSource.Sqlite
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.SqlLite)]
     public class SQLiteDataSource : RDBSource, ILocalDB,IInMemoryDB
@@ -14,7 +16,7 @@ namespace TheTechIdea.Beep.DataBase
     {
         private string dateformat = "yyyy-MM-dd HH:mm:ss";
         public bool CanCreateLocal { get ; set; }
-       // SQLiteConnection sQLiteConnection;
+        SQLiteAsyncConnection sQLiteConnection;
         string dbpath;
         public SQLiteDataSource(string pdatasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(pdatasourcename, logger, pDMEEditor, databasetype, per)
         {
@@ -43,6 +45,8 @@ namespace TheTechIdea.Beep.DataBase
         public override string ParameterDelimiter { get; set; } = "$";
         public override ConnectionState Openconnection()
         {
+            
+         
            
             ETLScriptHDR scriptHDR = new ETLScriptHDR();
             scriptHDR.ScriptDTL = new List<ETLScriptDet>();
@@ -99,7 +103,8 @@ namespace TheTechIdea.Beep.DataBase
                 }
                 if (!System.IO.File.Exists(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName)))
                 {
-                    SQLiteConnection.CreateFile( Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName ));
+                    sQLiteConnection= new SQLiteAsyncConnection(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName), SQLiteOpenFlags.Create);
+                    //SQLiteConnection.CreateFile( Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName ));
                     enablefk();
                     DMEEditor.AddLogMessage("Success", "Create Sqlite Database", DateTime.Now, 0, null, Errors.Ok);
                 }
@@ -177,7 +182,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             try
             {
-                SQLiteConnection.ClearAllPools();
+                sQLiteConnection.CloseAsync();
                 if (base.RDBMSConnection.DbConn != null)
                 {
                     base.RDBMSConnection.DbConn.Close();
