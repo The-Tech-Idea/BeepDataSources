@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Realms;
+using Realms.Sync;
 using System.Data;
-using System.Text;
-using TheTechIdea;
-using TheTechIdea.Beep;
+using System.Reflection;
+using TheTechIdea.Beep.Connections;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
 
-namespace RealMDataSource
+namespace TheTechIdea.Beep.DataSource
 {
     public class RealMDataSource : IDataSource
     {
@@ -22,25 +21,119 @@ namespace RealMDataSource
             DMEEditor = pDMEEditor;
             DatasourceType = databasetype;
             Category = DatasourceCategory.NOSQL;
-           
-            Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
+            Dataconnection = new DefaulDataConnection();
+
+
+           // Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
 
         }
+        public Realm RealMInstance { get; set; } 
+        public Realms.Sync.App App { get; set; }
+        public Realms.Sync.AppConfiguration AppConfiguration { get; set; }
+        public Realms.Sync.User User { get; set; }
 
+        public bool IsConnected { get; set; } = false;
+        public async Task<IErrorsInfo> CreateAsync()
+        {
+            try
+            {
+                  if (App == null)
+                    {
+                        App.Create(AppConfiguration);
+                    }
+             
 
+            }
+            catch (Exception ex)
+            {
+                IsConnected = false;
+                DMEEditor.AddLogMessage("Beep", $"Could not login in Realm Database {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+        public async Task<IErrorsInfo> LoginAsync(string username, string password)
+        {
+            try
+            {
+                // Login with existing user
+                if(App == null)
+                {
+                    CreateAsync();
+                }
+                Dataconnection.ConnectionProp.UserID = username;
+                Dataconnection.ConnectionProp.Password = password;
+                User = await App.LogInAsync(Credentials.EmailPassword(username, password));
+                IsConnected=true;
+            }
+            catch (Exception ex)
+            {
+                IsConnected = false;
+                DMEEditor.AddLogMessage("Beep", $"Could not login in Realm Database {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+        public async Task<IErrorsInfo> LogoutAsync()
+        {
+            try
+            {
+                // Login with existing user
+                await User.LogOutAsync();
+
+                IsConnected = false;
+            }
+            catch (Exception ex)
+            {
+                IsConnected = false;
+                DMEEditor.AddLogMessage("Beep", $"Could not logout in Realm Database {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+        public async Task<IErrorsInfo> DataAsync<T>() where T : RealmObject
+        {
+            try
+            {
+                if (IsConnected)
+                {
+                    var config = new FlexibleSyncConfiguration(App.CurrentUser)
+                    {
+                        PopulateInitialSubscriptions = (realm) =>
+                        {
+
+                         //   var myItems = realm.All<T>().Where(n => n.OwnerId == Dataconnection.ConnectionProp.UserID);
+                         //   realm.Subscriptions.Add(myItems);
+                        }
+                    };
+
+                    // The process will complete when all the user's items have been downloaded.
+                    var realm = await Realm.GetInstanceAsync(config);
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                IsConnected = false;
+                DMEEditor.AddLogMessage("Beep", $"Could not login in Realm Database {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+
+        Transaction transaction;
+        public List<RealmObject> RealMObjects { get; set; } = new List<RealmObject>();
+        public List<Type> RealTypeMObjects { get; set; } = new List<Type>();
         public string GuidID { get; set; }
 
-        public DataSourceType DatasourceType { get; set; }
-        public DatasourceCategory Category { get; set; }
+        public DataSourceType DatasourceType { get; set; } = DataSourceType.RealIM;
+        public DatasourceCategory Category { get; set; } = DatasourceCategory.NOSQL;   
         public IDataConnection Dataconnection { get; set; }
         public string DatasourceName { get; set; }
         public IErrorsInfo ErrorObject { get; set; }
         public string Id { get; set; }
         public IDMLogger Logger { get; set; }
-        public List<string> EntitiesNames { get; set; }
-        public List<EntityStructure> Entities { get; set; }
+        public List<string> EntitiesNames { get; set; }=new List<string>();
+        public List<EntityStructure> Entities { get; set; }=new List<EntityStructure>();
         public IDMEEditor DMEEditor { get; set; }
-        public ConnectionState ConnectionStatus { get; set; }
+        public System.Data.ConnectionState ConnectionStatus { get; set; } = System.Data.ConnectionState.Closed;
         public string ColumnDelimiter { get; set; }
         public string ParameterDelimiter { get; set; }
 
@@ -50,7 +143,18 @@ namespace RealMDataSource
             ErrorObject.Flag = Errors.Ok;
             try
             {
-
+                if (transaction != null)
+                {
+                    if (transaction.State == TransactionState.Running)
+                    {
+                        return DMEEditor.ErrorObject;
+                    }
+                }
+               
+                if(transaction == null)
+                {
+                    transaction = RealMInstance.BeginWrite();
+                }
             }
             catch (Exception ex)
             {
@@ -65,6 +169,13 @@ namespace RealMDataSource
             ErrorObject.Flag = Errors.Ok;
             try
             {
+                if (transaction != null)
+                {
+                    if (transaction.State == TransactionState.Running)
+                    {
+                       transaction.Commit();
+                    }
+                }
 
             }
             catch (Exception ex)
@@ -80,7 +191,7 @@ namespace RealMDataSource
             ErrorObject.Flag = Errors.Ok;
             try
             {
-
+                EndTransaction(args);
             }
             catch (Exception ex)
             {
@@ -91,12 +202,33 @@ namespace RealMDataSource
         }
         public bool CheckEntityExist(string EntityName)
         {
-            throw new NotImplementedException();
+            return EntitiesNames.Contains(EntityName);
         }
-
-        public ConnectionState Closeconnection()
+        public void GetAllReamlMObjects()
         {
-            throw new NotImplementedException();
+            RealTypeMObjects = AppDomain.CurrentDomain.GetAssemblies()
+                           .SelectMany(assembly => assembly.GetTypes())
+                           .Where(type =>
+                           {
+                               return type.IsSubclassOf(typeof(RealmObject));
+                           }).ToList();
+        }
+        public System.Data.ConnectionState Closeconnection()
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                
+                RealMInstance.Dispose();
+                ConnectionStatus = System.Data.ConnectionState.Open;
+            }
+            catch (Exception ex)
+            {
+                ConnectionStatus = System.Data.ConnectionState.Broken;
+                DMEEditor.AddLogMessage("Beep", $"Error in Opening RealM : {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ConnectionStatus;
+          
         }
 
         public IErrorsInfo CreateEntities(List<EntityStructure> entities)
@@ -111,7 +243,33 @@ namespace RealMDataSource
 
         public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
+            IErrorsInfo errorsInfo = DMEEditor.ErrorObject;
+            try
+            {
+                if (UploadDataRow is RealmObject realmObject)
+                {
+                    //var realm = Realm.GetInstance(); // Get the default Realm instance
+
+                    RealMInstance.Write(() =>
+                    {
+                        RealMInstance.Remove(realmObject);
+                    });
+
+                    errorsInfo.Flag = Errors.Ok; // Assuming Errors is an enum and Success is one of its members
+                }
+                else
+                {
+                    errorsInfo.Flag = Errors.Failed; // Assuming Errors is an enum and Failed is one of its members
+                    errorsInfo.Message = "UploadDataRow is not a RealmObject";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorsInfo.Flag = Errors.Failed;
+                errorsInfo.Ex = ex;
+            }
+
+            return errorsInfo;
         }
 
         public void Dispose()
@@ -136,7 +294,36 @@ namespace RealMDataSource
 
         public List<string> GetEntitesList()
         {
-            throw new NotImplementedException();
+            //var realmObjectTypes = AppDomain.CurrentDomain.GetAssemblies()
+            //               .SelectMany(assembly => assembly.GetTypes())
+            //               .Where(type => type.IsSubclassOf(typeof(RealmObject)))
+            //               .Select(type => type.Name)
+            //               .ToList();
+            //RealTypeMObjects = AppDomain.CurrentDomain.GetAssemblies()
+            //               .SelectMany(assembly => assembly.GetTypes())
+            //               .Where(type =>
+            //               {
+            //                   return type.IsSubclassOf(typeof(RealmObject));
+            //               }).ToList();
+            //EntitiesNames.Clear();
+            //EntitiesNames.AddRange(realmObjectTypes);
+            //Entities.Clear();
+            GetAllReamlMObjects();
+            if (RealTypeMObjects.Count != EntitiesNames.Count)
+            {
+                
+                foreach (var item in RealTypeMObjects)
+                {
+                    if (!EntitiesNames.Contains(item.Name))
+                    {
+                        RealmObject obj = (RealmObject)Activator.CreateInstance(item);
+                        EntityStructure ent=GetEntityStructureFromRealmObject(obj);
+                        EntitiesNames.Add(item.Name);
+                    }
+                    
+                }
+            }
+            return EntitiesNames;
         }
 
         public object GetEntity(string EntityName, List<AppFilter> filter)
@@ -176,12 +363,78 @@ namespace RealMDataSource
 
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
         {
-            throw new NotImplementedException();
+            IErrorsInfo errorsInfo = DMEEditor.ErrorObject;
+            EntityStructure ent = Entities.FirstOrDefault(p => p.EntityName == EntityName);
+            try
+            {
+                if (InsertedData is RealmObject realmObject)
+                {
+                    dynamic existingObject = null;
+
+                    var idProperty = InsertedData.GetType().GetProperty(ent.PrimaryKeys.FirstOrDefault().fieldname);
+                    if (idProperty != null)
+                    {
+                        var idValue = idProperty.GetValue(InsertedData);
+                        var method = typeof(Realm).GetMethod("Find");
+                        var generic = method.MakeGenericMethod(InsertedData.GetType());
+                        existingObject = generic.Invoke(RealMInstance, new[] { idValue });
+                    }
+
+                   
+                    if (idProperty != null)
+                    {
+                        var primaryKey = idProperty.GetValue(realmObject);
+                        var idValue = idProperty.GetValue(InsertedData);
+                        var method = typeof(Realm).GetMethod("Find");
+                        var generic = method.MakeGenericMethod(InsertedData.GetType());
+                        existingObject = generic.Invoke(RealMInstance, new[] { idValue });
+
+                        if (existingObject != null)
+                        {
+                            errorsInfo.Flag = Errors.Failed;
+                            errorsInfo.Message = "Record already exists";
+                            return errorsInfo;
+                        }
+                    }
+
+                    RealMInstance.Write(() =>
+                    {
+                        RealMInstance.Add(realmObject);
+                    });
+
+                    errorsInfo.Flag = Errors.Ok; // Assuming Errors is an enum and Success is one of its members
+                }
+                else
+                {
+                    errorsInfo.Flag = Errors.Failed; // Assuming Errors is an enum and Failed is one of its members
+                    errorsInfo.Message = "InsertedData is not a RealmObject";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorsInfo.Flag = Errors.Failed;
+                errorsInfo.Ex = ex;
+            }
+
+            return errorsInfo;
         }
 
-        public ConnectionState Openconnection()
+        public System.Data.ConnectionState Openconnection()
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                 RealMInstance = Realm.GetInstance(); // Get a reference to the Realm instance
+                ConnectionStatus = System.Data.ConnectionState.Open;
+            }
+            catch (Exception ex)
+            {
+                ConnectionStatus = System.Data.ConnectionState.Broken;
+                DMEEditor.AddLogMessage("Beep", $"Error in Opening RealM : {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ConnectionStatus;
+           
+
         }
 
         public object RunQuery(string qrystr)
@@ -201,7 +454,135 @@ namespace RealMDataSource
 
         public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
+
+            IErrorsInfo errorsInfo = new ErrorsInfo();
+            EntityStructure ent=Entities.FirstOrDefault(p=>p.EntityName==EntityName);
+            try
+            {
+                if (UploadDataRow is RealmObject uploadRealmObject)
+                {
+                   
+
+                    RealMInstance.Write(() =>
+                    {
+                        dynamic existingObject = null;
+
+                        var idProperty = uploadRealmObject.GetType().GetProperty(ent.PrimaryKeys.FirstOrDefault().fieldname);
+                        if (idProperty != null)
+                        {
+                            var idValue = idProperty.GetValue(uploadRealmObject);
+                            var method = typeof(Realm).GetMethod("Find");
+                            var generic = method.MakeGenericMethod(uploadRealmObject.GetType());
+                            existingObject = generic.Invoke(RealMInstance, new[] { idValue });
+                        }
+
+
+                        if (existingObject != null)
+                        {
+                            // Here you would set each property you wish to update.
+                            // For example, if your RealmObject has a field named "Name":
+                            foreach (var property in existingObject.GetType().GetProperties())
+                            {
+                                if (property.CanWrite && property.Name != ent.PrimaryKeys.FirstOrDefault().fieldname)  // Assuming "Id" is the primary key and should not be changed
+                                {
+                                    var newValue = property.GetValue(uploadRealmObject);
+                                    property.SetValue(existingObject, newValue);
+                                }
+                            }
+
+                            // Repeat this for all fields you wish to update.
+
+                            // Optionally, if you want to update all properties, you can loop through properties using reflection.
+                            foreach (var property in existingObject.GetType().GetProperties())
+                            {
+                                if (property.CanWrite && property.Name != ent.PrimaryKeys.FirstOrDefault().fieldname) // Assuming "Id" is the primary key and should not be changed.
+                                {
+                                    var newValue = property.GetValue(uploadRealmObject);
+                                    property.SetValue(existingObject, newValue);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Handle the case where the object does not exist in the database.
+                            errorsInfo.Flag = Errors.Failed;
+                            errorsInfo.Ex = new Exception("Entity not found");
+                        }
+                    });
+
+                    errorsInfo.Flag = Errors.Ok;
+                }
+                else
+                {
+                    errorsInfo.Flag = Errors.Failed;
+                    errorsInfo.Ex = new Exception("UploadDataRow is not a RealmObject");
+                }
+            }
+            catch (Exception ex)
+            {
+                errorsInfo.Flag = Errors.Failed;
+                errorsInfo.Ex = ex;
+            }
+
+            return errorsInfo;
         }
+
+
+        #region "RealM "
+        public EntityStructure GetEntityStructureFromRealmObject(RealmObject realmObject)
+        {
+            EntityStructure entity = new EntityStructure();
+            Type tp = realmObject.GetType();
+
+            if (entity.Fields.Count == 0)
+            {
+                var properties = tp.GetProperties();
+
+                foreach (var property in properties)
+                {
+                    EntityField x = new EntityField();
+                    try
+                    {
+                        x.fieldname = property.Name;
+                        x.fieldtype = property.PropertyType.ToString();
+
+                        // Check for primary key
+                        x.IsKey = property.GetCustomAttributes(typeof(PrimaryKeyAttribute), false).Any();
+
+                        // Check for indexed field
+                        //x.is = property.GetCustomAttributes(typeof(IndexedAttribute), false).Any();
+
+                        // Check for custom mapped name
+                        if (property.GetCustomAttributes<MapToAttribute>(false).Any())
+                        {
+                          x.Originalfieldname=  property.GetCustomAttributes<MapToAttribute>(false).FirstOrDefault()?.Mapping ?? property.Name;
+                        }
+
+                        // Check for required field
+                        x.AllowDBNull = property.GetCustomAttributes(typeof(RequiredAttribute), false).Any();
+
+                     
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.WriteLog("Error in Creating Field Type");
+                        ErrorObject.Flag = Errors.Failed;
+                        ErrorObject.Ex = ex;
+                    }
+
+                    if (x.IsKey)
+                    {
+                        entity.PrimaryKeys.Add(x);
+                    }
+
+                    entity.Fields.Add(x);
+                }
+            }
+
+            return entity;
+        }
+
+        #endregion "Real M"
+
     }
 }
