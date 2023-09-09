@@ -129,13 +129,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqliteDatasourceCore", "Dat
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mobile", "Mobile", "{8E3DED4A-C18F-4047-BFE5-23C30D175929}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheTechIdea.Beep.Maui.DataSource.Sqlite", "mobile\TheTechIdea.Beep.Maui.Sqlite\TheTechIdea.Beep.Maui.DataSource.Sqlite.csproj", "{55762A49-5D5E-45BC-B5BC-C0498D07F41D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheTechIdea.Beep.Maui.DataSource.Sqlite", "mobile\TheTechIdea.Beep.Maui.Sqlite\TheTechIdea.Beep.Maui.DataSource.Sqlite.csproj", "{55762A49-5D5E-45BC-B5BC-C0498D07F41D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheTechIdea.Beep.Maui.Datasource.CouchBase", "mobile\TheTechIdea.Beep.Maui.Datasource.CouchBase\TheTechIdea.Beep.Maui.Datasource.CouchBase.csproj", "{0D3D6DAC-2D06-473F-8AA7-F33FA3946FE4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheTechIdea.Beep.Maui.Datasource.CouchBase", "mobile\TheTechIdea.Beep.Maui.Datasource.CouchBase\TheTechIdea.Beep.Maui.Datasource.CouchBase.csproj", "{0D3D6DAC-2D06-473F-8AA7-F33FA3946FE4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheTechIdea.Beep.Maui.DataSource.LiteDB", "mobile\TheTechIdea.Beep.Maui.DataSource.LiteDB\TheTechIdea.Beep.Maui.DataSource.LiteDB.csproj", "{3A9489F6-DFF0-404A-807C-B19FC10502E3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheTechIdea.Beep.Maui.DataSource.LiteDB", "mobile\TheTechIdea.Beep.Maui.DataSource.LiteDB\TheTechIdea.Beep.Maui.DataSource.LiteDB.csproj", "{3A9489F6-DFF0-404A-807C-B19FC10502E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheTechIdea.Beep.DataSource.RealM", "mobile\TheTechIdea.Beep.DataSource.RealM\TheTechIdea.Beep.DataSource.RealM.csproj", "{8CC10215-0339-44AD-97C1-803579BDCDF9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheTechIdea.Beep.Maui.DataSource.RealM", "mobile\TheTechIdea.Beep.DataSource.RealM\TheTechIdea.Beep.Maui.DataSource.RealM.csproj", "{6E90A473-48BB-48DE-B26D-7846CD883711}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -601,14 +601,14 @@ Global
 		{3A9489F6-DFF0-404A-807C-B19FC10502E3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3A9489F6-DFF0-404A-807C-B19FC10502E3}.Release|x64.ActiveCfg = Release|Any CPU
 		{3A9489F6-DFF0-404A-807C-B19FC10502E3}.Release|x64.Build.0 = Release|Any CPU
-		{8CC10215-0339-44AD-97C1-803579BDCDF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8CC10215-0339-44AD-97C1-803579BDCDF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8CC10215-0339-44AD-97C1-803579BDCDF9}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{8CC10215-0339-44AD-97C1-803579BDCDF9}.Debug|x64.Build.0 = Debug|Any CPU
-		{8CC10215-0339-44AD-97C1-803579BDCDF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8CC10215-0339-44AD-97C1-803579BDCDF9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8CC10215-0339-44AD-97C1-803579BDCDF9}.Release|x64.ActiveCfg = Release|Any CPU
-		{8CC10215-0339-44AD-97C1-803579BDCDF9}.Release|x64.Build.0 = Release|Any CPU
+		{6E90A473-48BB-48DE-B26D-7846CD883711}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E90A473-48BB-48DE-B26D-7846CD883711}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E90A473-48BB-48DE-B26D-7846CD883711}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6E90A473-48BB-48DE-B26D-7846CD883711}.Debug|x64.Build.0 = Debug|Any CPU
+		{6E90A473-48BB-48DE-B26D-7846CD883711}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E90A473-48BB-48DE-B26D-7846CD883711}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E90A473-48BB-48DE-B26D-7846CD883711}.Release|x64.ActiveCfg = Release|Any CPU
+		{6E90A473-48BB-48DE-B26D-7846CD883711}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -676,7 +676,7 @@ Global
 		{55762A49-5D5E-45BC-B5BC-C0498D07F41D} = {8E3DED4A-C18F-4047-BFE5-23C30D175929}
 		{0D3D6DAC-2D06-473F-8AA7-F33FA3946FE4} = {8E3DED4A-C18F-4047-BFE5-23C30D175929}
 		{3A9489F6-DFF0-404A-807C-B19FC10502E3} = {8E3DED4A-C18F-4047-BFE5-23C30D175929}
-		{8CC10215-0339-44AD-97C1-803579BDCDF9} = {8E3DED4A-C18F-4047-BFE5-23C30D175929}
+		{6E90A473-48BB-48DE-B26D-7846CD883711} = {8E3DED4A-C18F-4047-BFE5-23C30D175929}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3A2D75E5-8D72-477B-9ABD-5FE471363BE2}

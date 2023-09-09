@@ -33,8 +33,8 @@
   <PackageReference Include="ExcelDataReader" Version="3.6.0" />
   <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
   <PackageReference Include="System.Text.Encoding.CodePages" Version="7.0.0" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.192" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.75" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.209" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.81" />
 </ItemGroup>
 
 </Project>
