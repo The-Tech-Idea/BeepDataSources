@@ -34,10 +34,10 @@
     <Compile Remove="..\..\DataSourcesPlugins\RavenDbDataSource\RavenDBDataSource.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="RavenDB.Client" Version="5.4.109" />
-    <PackageReference Include="RavenDB.Embedded" Version="5.4.109" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.209" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.81" />
+    <PackageReference Include="RavenDB.Client" Version="5.4.110" />
+    <PackageReference Include="RavenDB.Embedded" Version="5.4.110" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.217" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.83" />
   </ItemGroup>
 
 

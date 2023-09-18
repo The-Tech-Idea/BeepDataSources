@@ -46,10 +46,10 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="Realm" Version="11.4.0" />
+	  <PackageReference Include="Realm" Version="11.5.0" />
 	  <PackageReference Include="System.Text.Json" Version="7.0.3" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.212" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.81" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.217" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.83" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\..\..\Mobile\TheTechIdea.Beep.Maui\TheTechIdea.Beep.Maui.csproj" />
