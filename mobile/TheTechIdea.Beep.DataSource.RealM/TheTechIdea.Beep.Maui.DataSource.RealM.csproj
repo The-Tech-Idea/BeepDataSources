@@ -48,7 +48,7 @@
 	<ItemGroup>
 	  <PackageReference Include="Realm" Version="11.4.0" />
 	  <PackageReference Include="System.Text.Json" Version="7.0.3" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.209" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.212" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.81" />
 	</ItemGroup>
 	<ItemGroup>
