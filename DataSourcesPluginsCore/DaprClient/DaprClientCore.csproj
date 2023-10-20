@@ -56,7 +56,7 @@
     <PackageReference Include="Dapr.Actors" Version="1.12.0" />
     <PackageReference Include="Dapr.Client" Version="1.12.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.265" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.276" />
     <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.93" />
     <PackageReference Include="YamlDotNet" Version="13.7.1" />
   </ItemGroup>

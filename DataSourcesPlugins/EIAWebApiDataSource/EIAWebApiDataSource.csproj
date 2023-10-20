@@ -34,8 +34,8 @@
     <Reference Include="Dapper, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Dapper.2.1.15\lib\net461\Dapper.dll</HintPath>
     </Reference>
-    <Reference Include="DataManagementEngine, Version=1.0.265.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementEngine.1.0.265\lib\netstandard2.0\DataManagementEngine.dll</HintPath>
+    <Reference Include="DataManagementEngine, Version=1.0.276.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementEngine.1.0.276\lib\netstandard2.0\DataManagementEngine.dll</HintPath>
     </Reference>
     <Reference Include="DataManagementModels, Version=1.0.93.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementModels.1.0.93\lib\netstandard2.0\DataManagementModels.dll</HintPath>
