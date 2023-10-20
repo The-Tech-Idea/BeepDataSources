@@ -36,8 +36,8 @@
 	  <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.9" />
 	  <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
 	  <PackageReference Include="System.Net.Http.Json" Version="7.0.1" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.224" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.86" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.265" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.93" />
 	</ItemGroup>
 
 

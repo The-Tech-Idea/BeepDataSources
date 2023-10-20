@@ -29,6 +29,8 @@ using TheTechIdea.Util;
 using TheTechIdea.Beep.WebAPI;
 using DataManagementModels.DataBase;
 using Raven.Embedded;
+using Raven.Client;
+using Raven.Client.Documents.Conventions;
 
 namespace TheTechIdea.Beep.NOSQL.RavenDB
 {
@@ -59,7 +61,42 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
         public virtual string ColumnDelimiter { get; set; } = "''";
         public virtual string ParameterDelimiter { get; set; } = ":";
         public List<EntityStructure> InMemoryStructures { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public virtual Task<double> GetScalarAsync(string query)
+        {
+            return Task.Run(() => GetScalar(query));
+        }
+        public virtual double GetScalar(string query)
+        {
+            ErrorObject.Flag = Errors.Ok;
 
+            try
+            {
+                // Assuming you have a database connection and command objects.
+
+                //using (var command = GetDataCommand())
+                //{
+                //    command.CommandText = query;
+                //    var result = command.ExecuteScalar();
+
+                //    // Check if the result is not null and can be converted to a double.
+                //    if (result != null && double.TryParse(result.ToString(), out double value))
+                //    {
+                //        return value;
+                //    }
+                //}
+
+
+                // If the query executed successfully but didn't return a valid double, you can handle it here.
+                // You might want to log an error or throw an exception as needed.
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+            }
+
+            // Return a default value or throw an exception if the query failed.
+            return 0.0; // You can change this default value as needed.
+        }
         public RavenDBDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
         {
             DatasourceName = datasourcename;
@@ -378,7 +415,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
             {
 
                 Session = GetSession(CurrentDatabase);
-                var command = new GetDocumentsCommand(DocName, null, metadataOnly: true);
+                var command = null; //new GetDocumentsCommand(new DocumentConventions(){ FindClrType=   }, null,null, metadataOnly: true);
                 Session.Advanced.RequestExecutor.Execute(command, Session.Advanced.Context);
                 if(command.Result != null)
                 {
