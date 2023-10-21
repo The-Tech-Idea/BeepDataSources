@@ -12,10 +12,10 @@ using System.Threading.Tasks;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Report;
-using TheTechIdea.Beep.Workflow;
+
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
-using static TheTechIdea.Beep.Util;
+
 using System.Text.RegularExpressions;
 
 namespace TheTechIdea.Beep.DataBase
@@ -148,12 +148,12 @@ namespace TheTechIdea.Beep.DataBase
                                         qrystr += item.FieldName + " " + item.Operator + " :p_" + item.FieldName + " " + Environment.NewLine;
                                     }
                                 }
-                                i++;
+                            
                                 if (i < FilterwoPaging.Count - 1)
                                 {
                                     qrystr += " and ";
                                 }
-
+                                i++;
                             }
                         }
 
