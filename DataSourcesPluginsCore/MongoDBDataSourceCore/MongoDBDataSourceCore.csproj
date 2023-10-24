@@ -37,7 +37,7 @@
   <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.22.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.276" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.284" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WebApiDataSourceCore\WebApiDataSourceCore.csproj" />

@@ -33,10 +33,10 @@
 	  <Compile Remove="..\..\DataSourcesPlugins\WebApiDataSource\WebAPIDataSource.cs" />
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.9" />
+	  <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
 	  <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
 	  <PackageReference Include="System.Net.Http.Json" Version="7.0.1" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.276" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.284" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.93" />
 	</ItemGroup>
 
