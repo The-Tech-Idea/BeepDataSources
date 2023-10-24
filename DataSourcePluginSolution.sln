@@ -137,6 +137,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheTechIdea.Beep.Maui.DataS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheTechIdea.Beep.Maui.DataSource.RealM", "mobile\TheTechIdea.Beep.DataSource.RealM\TheTechIdea.Beep.Maui.DataSource.RealM.csproj", "{6E90A473-48BB-48DE-B26D-7846CD883711}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RDBDataSource", "DataSourcesPlugins\RDBMSDataSource\RDBDataSource.csproj", "{405BD32F-8EC0-49D4-A0E3-162B5F3355F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -609,6 +611,14 @@ Global
 		{6E90A473-48BB-48DE-B26D-7846CD883711}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6E90A473-48BB-48DE-B26D-7846CD883711}.Release|x64.ActiveCfg = Release|Any CPU
 		{6E90A473-48BB-48DE-B26D-7846CD883711}.Release|x64.Build.0 = Release|Any CPU
+		{405BD32F-8EC0-49D4-A0E3-162B5F3355F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{405BD32F-8EC0-49D4-A0E3-162B5F3355F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{405BD32F-8EC0-49D4-A0E3-162B5F3355F2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{405BD32F-8EC0-49D4-A0E3-162B5F3355F2}.Debug|x64.Build.0 = Debug|Any CPU
+		{405BD32F-8EC0-49D4-A0E3-162B5F3355F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{405BD32F-8EC0-49D4-A0E3-162B5F3355F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{405BD32F-8EC0-49D4-A0E3-162B5F3355F2}.Release|x64.ActiveCfg = Release|Any CPU
+		{405BD32F-8EC0-49D4-A0E3-162B5F3355F2}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

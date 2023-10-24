@@ -35,7 +35,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CouchDB.NET" Version="3.4.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.284" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.285" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WebApiDataSourceCore\WebApiDataSourceCore.csproj" />

@@ -6,13 +6,10 @@ using System.Data;
 using System.Linq;
 using System.Reflection;
 using DataManagementModels.DriversConfigurations;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TheTechIdea.Beep.Vis;
-using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Report;
-
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
 
@@ -21,7 +18,7 @@ using System.Text.RegularExpressions;
 namespace TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType =  DataSourceType.Oracle)]
-    class OracleDataSource : RDBSource
+    class OracleDataSource :RDBSource
     {
         public OracleDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
         {

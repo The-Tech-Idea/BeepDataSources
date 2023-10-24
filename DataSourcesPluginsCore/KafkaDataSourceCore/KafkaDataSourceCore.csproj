@@ -33,7 +33,7 @@
 	  <PackageReference Include="Confluent.Kafka" Version="2.2.0" />
 	  <PackageReference Include="Confluent.SchemaRegistry" Version="2.2.0" />
 	  <PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.284" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.285" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.93" />
 	</ItemGroup>
 
