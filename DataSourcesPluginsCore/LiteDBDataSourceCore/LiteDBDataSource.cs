@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TheTechIdea;
 using TheTechIdea.Beep;
-using TheTechIdea.Beep.Connections;
+
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.FileManager;
@@ -200,6 +196,16 @@ namespace LiteDBDataSourceCore
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        public Task<double> GetScalarAsync(string query)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double GetScalar(string query)
+        {
+            throw new NotImplementedException();
         }
     }
 }

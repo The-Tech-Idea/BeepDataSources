@@ -31,6 +31,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="RDBDataSource" Version="1.0.0" />
 	  <PackageReference Include="sqlite-net-pcl" Version="1.8.116" />
 	  <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.6" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.285" />
