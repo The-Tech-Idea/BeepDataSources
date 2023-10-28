@@ -211,21 +211,21 @@ namespace DuckDBDataSourceCore
         }
         private static void PrintQueryResults(DuckDBResult queryResult)
         {
-            var columnCount = Query.DuckDBColumnCount(queryResult);
+            long columnCount = Query.DuckDBColumnCount(ref queryResult);
             for (var index = 0; index < columnCount; index++)
             {
-                var columnName = Query.DuckDBColumnName(queryResult, index).ToManagedString(false);
+                var columnName = Query.DuckDBColumnName(ref queryResult, index).ToManagedString(false);
                 Console.Write($"{columnName} ");
             }
 
             Console.WriteLine();
 
-            var rowCount = Query.DuckDBRowCount(queryResult);
+            var rowCount = Query.DuckDBRowCount(ref queryResult);
             for (long row = 0; row < rowCount; row++)
             {
                 for (long column = 0; column < columnCount; column++)
                 {
-                    var val = Types.DuckDBValueInt32(queryResult, column, row);
+                    var val = Types.DuckDBValueInt32(ref queryResult, column, row);
                     Console.Write(val);
                     Console.Write(" ");
                 }
@@ -392,39 +392,7 @@ namespace DuckDBDataSourceCore
             else
                 throw new ArgumentException("Unsupported .NET data type: " + netType);
         }
-        public DuckDBType ConvertT(string netTypeName)
-        {
-            Type netType = Type.GetType(netTypeName);
-
-            if (netType == null)
-                throw new ArgumentException("Invalid or unknown .NET type name: " + netTypeName);
-
-            if (netType == typeof(bool))
-                return DuckDBType.DuckdbTypeBoolean;
-            else if (netType == typeof(sbyte))
-                return DuckDBType.DuckdbTypeTinyInt;
-            else if (netType == typeof(short))
-                return DuckDBType.DuckdbTypeSmallInt;
-            else if (netType == typeof(int))
-                return DuckDBType.DuckdbTypeInteger;
-            else if (netType == typeof(long))
-                return DuckDBType.DuckdbTypeBigInt;
-            else if (netType == typeof(decimal))
-                return DuckDBType.DuckdbTypeDecimal;
-            else if (netType == typeof(float))
-                return DuckDBType.DuckdbTypeFloat;
-            else if (netType == typeof(double))
-                return DuckDBType.DuckdbTypeDouble;
-            else if (netType == typeof(System.DateTime))
-                return DuckDBType.DuckdbTypeTimestamp; // or DUCKDB_TYPE_DATE, based on precision needs
-            else if (netType == typeof(string))
-                return DuckDBType.DuckdbTypeVarchar; // or DUCKDB_TYPE_VARCHAR, based on needs
-            else if (netType == typeof(byte[]))
-                return DuckDBType.DuckdbTypeBlob;
-            // Add more cases if you have more data types
-            else
-                throw new ArgumentException("Unsupported .NET data type: " + netTypeName);
-        }
+      
         public static string Convert(string netTypeName)
         {
             Type netType = Type.GetType(netTypeName);

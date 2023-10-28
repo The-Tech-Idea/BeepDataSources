@@ -56,8 +56,9 @@
 	<ItemGroup>
 	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="0.9.1" />
 	  <PackageReference Include="DuckDB.NET.Data.Full" Version="0.9.1" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.276" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.93" />
+	  <PackageReference Include="RDBDataSource" Version="1.0.0" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.287" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.95" />
 	</ItemGroup>
 
 </Project>
