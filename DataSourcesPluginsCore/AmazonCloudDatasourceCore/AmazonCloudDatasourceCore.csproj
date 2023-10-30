@@ -31,8 +31,8 @@
 	  <PackageReference Include="AWSSDK.Core" Version="3.7.204.7" />
 	  <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.203.8" />
 	  <PackageReference Include="AWSSDK.S3" Version="3.7.205.16" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.285" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.93" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.289" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.96" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
 	  <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson">
