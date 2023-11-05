@@ -34,11 +34,11 @@
     <Reference Include="Dapper, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Dapper.2.1.15\lib\net461\Dapper.dll</HintPath>
     </Reference>
-    <Reference Include="DataManagementEngine, Version=1.0.289.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementEngine.1.0.289\lib\netstandard2.0\DataManagementEngine.dll</HintPath>
+    <Reference Include="DataManagementEngine, Version=1.0.301.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementEngine.1.0.301\lib\netstandard2.0\DataManagementEngine.dll</HintPath>
     </Reference>
-    <Reference Include="DataManagementModels, Version=1.0.96.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementModels.1.0.96\lib\netstandard2.0\DataManagementModels.dll</HintPath>
+    <Reference Include="DataManagementModels, Version=1.0.98.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\TheTechIdea.Beep.DataManagementModels.1.0.98\lib\netstandard2.0\DataManagementModels.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=4.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.CodeAnalysis.Common.4.7.0\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
