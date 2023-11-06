@@ -966,12 +966,12 @@ namespace TheTechIdea.Beep.DataBase
                     //  fnd.EntityName = EntityName;
                     if (fnd.Viewtype == ViewType.Query)
                     {
-                        tb = GetTableSchema(fnd.CustomBuildQuery);
+                        tb = GetTableSchema(fnd.CustomBuildQuery,true);
                     }
                     else
                     {
                        
-                        tb = GetTableSchema(entname);
+                        tb = GetTableSchema(entname,false);
                     }
                     if (tb.Rows.Count > 0)
                     {
@@ -2096,7 +2096,7 @@ namespace TheTechIdea.Beep.DataBase
 
             return adp;
         }
-        public virtual DataTable GetTableSchema(string TableName)
+        public virtual DataTable GetTableSchema(string TableName,bool Isquery=false)
         {
             ErrorObject.Flag = Errors.Ok;
             DataTable tb = new DataTable();
@@ -2105,11 +2105,20 @@ namespace TheTechIdea.Beep.DataBase
           //  EntityStructure entityStructure = GetEntityStructure(TableName, false);
             try
             {
-                if (!string.IsNullOrEmpty(Dataconnection.ConnectionProp.SchemaName) && !string.IsNullOrWhiteSpace(Dataconnection.ConnectionProp.SchemaName))
+                string cmdtxt = "";
+                if (!Isquery)
                 {
-                    TableName = Dataconnection.ConnectionProp.SchemaName + "." + TableName;
+                    if (!string.IsNullOrEmpty(Dataconnection.ConnectionProp.SchemaName) && !string.IsNullOrWhiteSpace(Dataconnection.ConnectionProp.SchemaName))
+                    {
+                        TableName = Dataconnection.ConnectionProp.SchemaName + "." + TableName;
+                    }
+                    cmdtxt = "Select * from " + TableName.ToLower() + " where 1=2";
                 }
-                cmd.CommandText = "Select * from " + TableName.ToLower();// + " where 1=2";
+                else
+                {
+                    cmdtxt = TableName;
+                }
+                cmd.CommandText = cmdtxt;
                 reader = cmd.ExecuteReader(CommandBehavior.KeyInfo);
 
                 tb = reader.GetSchemaTable();
