@@ -27,10 +27,10 @@
 	  </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Realm" Version="11.5.0" />
-    <PackageReference Include="System.Text.Json" Version="7.0.3" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.301" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.98" />
+    <PackageReference Include="Realm" Version="11.6.1" />
+    <PackageReference Include="System.Text.Json" Version="8.0.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.302" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.103" />
   </ItemGroup>
 
 </Project>

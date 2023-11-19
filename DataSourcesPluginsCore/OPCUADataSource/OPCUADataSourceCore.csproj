@@ -27,8 +27,8 @@
 		</None>
 	</ItemGroup>
   <ItemGroup>
-    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.4.372.56" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.98" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.4.372.76" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.103" />
   </ItemGroup>
 
 </Project>
