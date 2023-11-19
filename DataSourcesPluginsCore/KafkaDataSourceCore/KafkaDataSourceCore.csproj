@@ -27,14 +27,14 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="Amazon.Lambda.KafkaEvents" Version="2.0.0" />
-	  <PackageReference Include="AWSSDK.Kafka" Version="3.7.202.4" />
-	  <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.9.3" />
-	  <PackageReference Include="Confluent.Kafka" Version="2.2.0" />
-	  <PackageReference Include="Confluent.SchemaRegistry" Version="2.2.0" />
-	  <PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
+	  <PackageReference Include="Amazon.Lambda.KafkaEvents" Version="2.1.0" />
+	  <PackageReference Include="AWSSDK.Kafka" Version="3.7.301.1" />
+	  <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.10.0" />
+	  <PackageReference Include="Confluent.Kafka" Version="2.3.0" />
+	  <PackageReference Include="Confluent.SchemaRegistry" Version="2.3.0" />
+	  <PackageReference Include="System.IO.Pipelines" Version="8.0.0" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.301" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.98" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.99" />
 	</ItemGroup>
 
 </Project>
