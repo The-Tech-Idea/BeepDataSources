@@ -29,8 +29,8 @@
   <ItemGroup>
     <PackageReference Include="Parquet.Net" Version="4.17.0" />
     <PackageReference Include="ParquetSharp" Version="12.0.1" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.301" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.99" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.302" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.103" />
   </ItemGroup>
 
 </Project>
