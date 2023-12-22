@@ -896,7 +896,7 @@ namespace TheTechIdea.Beep.DataBase
             {
                 GetEntitesList();
             }
-            retval = Entities.Where(d => d.EntityName.Equals(EntityName,StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+            retval = Entities.FirstOrDefault(d => d.EntityName.Equals(EntityName,StringComparison.InvariantCultureIgnoreCase));
             //if (retval == null)
             //{
             //    List<EntityStructure> ls = Entities.Where(d => !string.IsNullOrEmpty(d.OriginalEntityName)).ToList();
@@ -922,12 +922,9 @@ namespace TheTechIdea.Beep.DataBase
                     retval.Viewtype = ViewType.Table;
                     retval.CustomBuildQuery = null;
                 }
-
+                refresh = true;
             }
-            else
-            {
-                refresh = false;
-            }
+           
 
 
             return GetEntityStructure(retval, refresh);
