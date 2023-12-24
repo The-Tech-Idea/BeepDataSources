@@ -21,24 +21,101 @@ namespace TheTechIdea.Beep.DataBase
     public class RDBSource : IRDBSource
     {
         public event EventHandler<PassedArgs> PassEvent;
+        // Static random number generator used for various purposes within the class.
         static Random r = new Random();
-        public string GuidID { get; set; }=Guid.NewGuid().ToString();
+
+        /// <summary>
+        /// Unique identifier for the RDBSource instance, generated using Guid.
+        /// </summary>
+        public string GuidID { get; set; } = Guid.NewGuid().ToString();
+
+        /// <summary>
+        /// General identifier of the RDBSource instance.
+        /// </summary>
         public string Id { get; set; }
+
+        /// <summary>
+        /// Name of the data source.
+        /// </summary>
         public string DatasourceName { get; set; }
+
+        /// <summary>
+        /// Type of the data source, indicating the specific relational database system (e.g., SQL Server, MySQL).
+        /// </summary>
         public DataSourceType DatasourceType { get; set; }
+
+        /// <summary>
+        /// Current state of the database connection.
+        /// </summary>
         public ConnectionState ConnectionStatus { get => Dataconnection.ConnectionStatus; set { } }
+
+        /// <summary>
+        /// Category of the data source, typically RDBMS for relational databases.
+        /// </summary>
         public DatasourceCategory Category { get; set; } = DatasourceCategory.RDBMS;
+
+        /// <summary>
+        /// Object to handle error information.
+        /// </summary>
         public IErrorsInfo ErrorObject { get; set; }
+
+        /// <summary>
+        /// Logger instance for logging activities and events.
+        /// </summary>
         public IDMLogger Logger { get; set; }
+
+        /// <summary>
+        /// List of names of entities (e.g., tables) available in the database.
+        /// </summary>
         public List<string> EntitiesNames { get; set; } = new List<string>();
+
+        /// <summary>
+        /// Editor instance for managing various database operations.
+        /// </summary>
         public IDMEEditor DMEEditor { get; set; }
+
+        /// <summary>
+        /// List of entity structures representing database schemas.
+        /// </summary>
         public List<EntityStructure> Entities { get; set; } = new List<EntityStructure>();
+
+        /// <summary>
+        /// Connection object to interact with the database.
+        /// </summary>
         public IDataConnection Dataconnection { get; set; }
+
+        /// <summary>
+        /// Specialized connection object for relational databases.
+        /// </summary>
         public RDBDataConnection RDBMSConnection { get { return (RDBDataConnection)Dataconnection; } }
+
+        /// <summary>
+        /// Delimiter used for columns in queries, specific to the database syntax.
+        /// </summary>
         public virtual string ColumnDelimiter { get; set; } = "''";
+
+        /// <summary>
+        /// Delimiter used for parameters in queries, specific to the database syntax.
+        /// </summary>
         public virtual string ParameterDelimiter { get; set; } = "@";
+
+        /// <summary>
+        /// Initializes a new instance of the RDBSource class.
+        /// </summary>
+        /// <param name="datasourcename">Name of the data source.</param>
+        /// <param name="logger">Logger instance.</param>
+        /// <param name="pDMEEditor">DMEEditor instance for database operations.</param>
+        /// <param name="databasetype">Type of the database.</param>
+        /// <param name="per">Error information object.</param>
         protected static int recNumber = 0;
         protected string recEntity = "";
+        #region "Insert or Update or Delete Objects"
+        EntityStructure DataStruct = null;
+        IDbCommand command = null;
+        Type enttype = null;
+        bool ObjectsCreated = false;
+        string lastentityname = null;
+        #endregion
         public RDBSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
         {
             DatasourceName = datasourcename;
@@ -77,10 +154,23 @@ namespace TheTechIdea.Beep.DataBase
             return ConnectionStatus;
         }
         #region "Repo Methods"
+        /// <summary>
+        /// Executes a SQL query and retrieves the first column of the first row in the result set.
+        /// </summary>
+        /// <param name="query">The SQL query to execute.</param>
+        /// <returns>The scalar value as a double. Returns 0.0 if the query fails or doesn't return a valid double.</returns>
+        /// <remarks>
+        /// This method is used to retrieve a single value, such as an aggregate or a count, from the database.
+        /// </remarks>
         public virtual Task<double> GetScalarAsync(string query)
         {
             return Task.Run(()=>GetScalar(query));
         }
+        /// <summary>
+        /// Asynchronously retrieves a single scalar value from the database.
+        /// </summary>
+        /// <param name="query">The SQL query to be executed.</param>
+        /// <returns>A task representing the asynchronous operation, resulting in the scalar value.</returns>
         public virtual double GetScalar(string query)
         {
             ErrorObject.Flag = Errors.Ok;
@@ -114,7 +204,14 @@ namespace TheTechIdea.Beep.DataBase
             // Return a default value or throw an exception if the query failed.
             return 0.0; // You can change this default value as needed.
         }
-
+        /// <summary>
+        /// Executes a SQL command that does not return a result set.
+        /// </summary>
+        /// <param name="sql">The SQL command to execute.</param>
+        /// <returns>An IErrorsInfo object indicating the success or failure of the operation.</returns>
+        /// <remarks>
+        /// Use this method for SQL commands like INSERT, UPDATE, DELETE, etc.
+        /// </remarks>
         public virtual IErrorsInfo ExecuteSql(string sql)
         {
             ErrorObject.Flag = Errors.Ok;
@@ -142,6 +239,14 @@ namespace TheTechIdea.Beep.DataBase
 
             return ErrorObject;
         }
+        /// <summary>
+        /// Executes a SQL query and returns the result set.
+        /// </summary>
+        /// <param name="qrystr">The SQL query string.</param>
+        /// <returns>A DataTable containing the query results or null if an error occurs.</returns>
+        /// <remarks>
+        /// This method is suitable for queries that return multiple rows.
+        /// </remarks>
         public virtual object RunQuery(string qrystr)
         {
             ErrorObject.Flag = Errors.Ok;
@@ -177,7 +282,657 @@ namespace TheTechIdea.Beep.DataBase
             }
 
         }
+        /// <summary>
+        /// Begins a database transaction.
+        /// </summary>
+        /// <param name="args">Optional arguments related to the transaction.</param>
+        /// <returns>An IErrorsInfo object indicating the success or failure of beginning the transaction.</returns>
+        public virtual IErrorsInfo BeginTransaction(PassedArgs args)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                RDBMSConnection.DbConn.BeginTransaction();
+            }
+            catch (Exception ex)
+            {
+
+                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+        /// <summary>
+        /// Ends a database transaction.
+        /// </summary>
+        /// <param name="args">Optional arguments related to the transaction.</param>
+        /// <returns>An IErrorsInfo object indicating the success or failure of ending the transaction.</returns>
+        public virtual IErrorsInfo EndTransaction(PassedArgs args)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+
+                DMEEditor.AddLogMessage("Beep", $"Error in end Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+        /// <summary>
+        /// Creates and adds parameters to a database command based on the provided DataRow and EntityStructure.
+        /// </summary>
+        /// <param name="command">The database command to add parameters to.</param>
+        /// <param name="r">The DataRow containing parameter values.</param>
+        /// <param name="DataStruct">The EntityStructure defining the structure of the entity.</param>
+        /// <returns>The updated IDbCommand with parameters added.</returns>
+        private IDbCommand CreateCommandParameters(IDbCommand command, DataRow r, EntityStructure DataStruct)
+        {
+            command.Parameters.Clear();
+
+            foreach (EntityField item in DataStruct.Fields.OrderBy(o => o.fieldname))
+            {
+
+                if (!command.Parameters.Contains("p_" + Regex.Replace(item.fieldname, @"\s+", "_")))
+                {
+                    IDbDataParameter parameter = command.CreateParameter();
+                    //if (!item.fieldtype.Equals("System.String", StringComparison.InvariantCultureIgnoreCase) && !item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
+                    //{
+                    //    if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                    //    {
+                    //        parameter.Value = Convert.ToDecimal(null);
+                    //    }
+                    //    else
+                    //    {
+                    //        parameter.Value = r[item.fieldname];
+                    //    }
+                    //}
+                    //else
+                    if (item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                        {
+
+                            parameter.Value = DBNull.Value;
+                            parameter.DbType = DbType.DateTime;
+                        }
+                        else
+                        {
+                            parameter.DbType = DbType.DateTime;
+                            try
+                            {
+                                parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
+                            }
+                            catch (FormatException formatex)
+                            {
+
+                                parameter.Value = SqlDateTime.Null;
+                            }
+                        }
+                    }
+                    else
+                        parameter.Value = r[item.fieldname];
+                    parameter.ParameterName = "p_" + Regex.Replace(item.fieldname, @"\s+", "_");
+                    //   parameter.DbType = TypeToDbType(tb.Columns[item.fieldname].DataType);
+                    command.Parameters.Add(parameter);
+                }
+
+            }
+            return command;
+        }
+        /// <summary>
+        /// Creates parameters for a DELETE database command based on the provided DataRow and EntityStructure.
+        /// </summary>
+        /// <param name="command">The DELETE database command to add parameters to.</param>
+        /// <param name="r">The DataRow containing parameter values for the DELETE operation.</param>
+        /// <param name="DataStruct">The EntityStructure defining the primary keys for the DELETE operation.</param>
+        /// <returns>The updated IDbCommand with parameters added.</returns>
+        private IDbCommand CreateDeleteCommandParameters(IDbCommand command, DataRow r, EntityStructure DataStruct)
+        {
+            command.Parameters.Clear();
+
+            foreach (EntityField item in DataStruct.PrimaryKeys.OrderBy(o => o.fieldname))
+            {
+
+                if (!command.Parameters.Contains("p_" + Regex.Replace(item.fieldname, @"\s+", "_")))
+                {
+                    IDbDataParameter parameter = command.CreateParameter();
+                    //if (!item.fieldtype.Equals("System.String", StringComparison.InvariantCultureIgnoreCase) && !item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
+                    //{
+                    //    if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                    //    {
+                    //        parameter.Value = Convert.ToDecimal(null);
+                    //    }
+                    //    else
+                    //    {
+                    //        parameter.Value = r[item.fieldname];
+                    //    }
+                    //}
+                    //else
+                    if (item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                        {
+
+                            parameter.Value = DBNull.Value;
+                            parameter.DbType = DbType.DateTime;
+                        }
+                        else
+                        {
+                            parameter.DbType = DbType.DateTime;
+                            try
+                            {
+                                parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
+                            }
+                            catch (FormatException formatex)
+                            {
+
+                                parameter.Value = SqlDateTime.Null;
+                            }
+                        }
+                    }
+                    else
+                        parameter.Value = r[item.fieldname];
+                    parameter.ParameterName = "p_" + Regex.Replace(item.fieldname, @"\s+", "_");
+                    //   parameter.DbType = TypeToDbType(tb.Columns[item.fieldname].DataType);
+                    command.Parameters.Add(parameter);
+                }
+
+            }
+            return command;
+        }
+        public virtual IErrorsInfo Commit(PassedArgs args)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+
+                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+        /// <summary>
+        /// Updates a specific record in the database for the given entity based on provided data.
+        /// </summary>
+        /// <param name="EntityName">The name of the entity (e.g., table name) in which the record will be updated.</param>
+        /// <param name="UploadDataRow">The data row that contains the updated values for the entity.</param>
+        /// <returns>IErrorsInfo object containing information about the operation's success or failure.</returns>
+        /// <remarks>
+        /// This method constructs and executes an SQL update command based on the provided data row. 
+        /// It also handles transaction management and logs the operation's outcome.
+        /// </remarks>
         
+        public virtual IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
+        {
+            if (recEntity != EntityName)
+            {
+                recNumber = 1;
+                recEntity = EntityName;
+            }
+            else
+                recNumber += 1;
+            SetObjects(EntityName);
+            ErrorObject.Flag = Errors.Ok;
+         
+            DataRowView dv;
+            DataTable tb;
+            DataRow dr;
+            string msg = "";
+            dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, UploadDataRow, DataStruct);
+            try
+            {
+                command = GetDataCommand();
+                string updatestring = GetUpdateString(EntityName,  DataStruct);
+                command.CommandText = updatestring;
+                command = CreateCommandParameters(command,dr, DataStruct);
+                int rowsUpdated = command.ExecuteNonQuery();
+                if (rowsUpdated > 0)
+                {
+                    msg = $"Successfully Updated  Record  to {EntityName} : {updatestring}";
+                   // DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
+                }
+                else
+                {
+                    msg = $"Fail to Updated  Record  to {EntityName} : {updatestring}";
+                    DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
+                }
+                
+
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Ex = ex;
+               
+                command.Dispose();
+                try
+                {
+                    // Attempt to roll back the transaction.
+                    //     sqlTran.Rollback();
+                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback Complete";
+                }
+                catch (Exception exRollback)
+                {
+                    // Throws an InvalidOperationException if the connection
+                    // is closed or the transaction has already been rolled
+                    // back on the server.
+                    // Console.WriteLine(exRollback.Message);
+                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback InComplete";
+                    ErrorObject.Ex = exRollback;
+                }
+                msg = "Unsuccessfully no Data has been written to Data Source";
+                DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
+
+            }
+
+            return ErrorObject;
+        }
+        /// <summary>
+        /// Deletes a specific record from the database for the given entity.
+        /// </summary>
+        /// <param name="EntityName">The name of the entity (e.g., table name) from which the record will be deleted.</param>
+        /// <param name="DeletedDataRow">The data row that identifies the record to be deleted.</param>
+        /// <returns>IErrorsInfo object containing information about the success or failure of the operation.</returns>
+        /// <remarks>
+        /// This method constructs and executes an SQL delete command. It uses transactions to ensure data integrity and logs the outcome of the operation.
+        /// </remarks>
+        public virtual IErrorsInfo DeleteEntity(string EntityName, object DeletedDataRow)
+        {
+            SetObjects(EntityName);
+            ErrorObject.Flag = Errors.Ok;
+         
+            string msg;
+            DataRowView dv;
+            DataTable tb;
+            DataRow dr;
+            var sqlTran = RDBMSConnection.DbConn.BeginTransaction();
+            if (recEntity != EntityName)
+            {
+                recNumber = 1;
+                recEntity = EntityName;
+            }
+            else
+                recNumber += 1;
+           
+            dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, DeletedDataRow, DataStruct);
+            try
+            {
+                string updatestring = GetDeleteString(EntityName, DataStruct);
+                command = GetDataCommand();
+                command.Transaction = sqlTran;
+                command.CommandText = updatestring;
+
+                command = CreateDeleteCommandParameters(command, dr, DataStruct);
+                int rowsUpdated = command.ExecuteNonQuery();
+                if (rowsUpdated > 0)
+                {
+                    msg = $"Successfully Deleted  Record  to {EntityName} : {updatestring}";
+                  //  DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
+                }
+                else
+                {
+                    msg = $"Fail to Delete Record  from {EntityName} : {updatestring}";
+                    DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
+                }
+                sqlTran.Commit();
+                command.Dispose();
+               
+
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Ex = ex;
+               
+                command.Dispose();
+                try
+                {
+                    // Attempt to roll back the transaction.
+                    sqlTran.Rollback();
+                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback Complete";
+                }
+                catch (Exception exRollback)
+                {
+                    // Throws an InvalidOperationException if the connection
+                    // is closed or the transaction has already been rolled
+                    // back on the server.
+                    // Console.WriteLine(exRollback.Message);
+                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback InComplete";
+                    ErrorObject.Ex = exRollback;
+                }
+                msg = "Unsuccessfully no Data has been written to Data Source";
+                DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
+
+            }
+
+            return ErrorObject;
+        }
+        /// <summary>
+        /// Inserts a new record into the database for the specified entity.
+        /// </summary>
+        /// <param name="EntityName">The name of the entity (e.g., table name) in which the new record will be inserted.</param>
+        /// <param name="InsertedData">The data row representing the new record to be inserted.</param>
+        /// <returns>IErrorsInfo object with information about the success or failure of the insert operation.</returns>
+        /// <remarks>
+        /// This method prepares and executes an SQL insert command based on the data provided. It logs the operation's outcome for debugging and error handling purposes.
+        /// </remarks>
+        public virtual IErrorsInfo InsertEntity(string EntityName, object InsertedData)
+        {
+            SetObjects(EntityName);
+            ErrorObject.Flag = Errors.Ok;
+            DataRow dr;
+            string msg = "";
+            string updatestring="";
+            if (recEntity != EntityName)
+            {
+                recNumber = 1;
+                recEntity = EntityName;
+            }
+            else
+                recNumber += 1;
+
+            dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, InsertedData, DataStruct);
+            try
+            {
+                updatestring = GetInsertString(EntityName, DataStruct);
+                command = GetDataCommand();
+
+                command.CommandText = updatestring;
+                command = CreateCommandParameters(command, dr, DataStruct);
+
+                int rowsUpdated = command.ExecuteNonQuery();
+                if (rowsUpdated > 0)
+                {
+                    msg = $"Successfully Inserted  Record  to {EntityName} ";
+                    DMEEditor.ErrorObject.Message = msg;
+                    DMEEditor.ErrorObject.Flag = Errors.Ok;
+                    // DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
+                }
+                else
+                {
+                    msg = $"Fail to Insert  Record  to {EntityName} : {updatestring}";
+                    DMEEditor.ErrorObject.Message = msg;
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    
+
+                  //  DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
+                }
+                // DMEEditor.AddLogMessage("Success",$"Successfully Written Data to {EntityName}",DateTime.Now,0,null, Errors.Ok);
+
+            }
+            catch (Exception ex)
+            {
+                msg = $"Fail to Insert  Record  to {EntityName} : {ex.Message}";
+                ErrorObject.Ex = ex;
+                DMEEditor.ErrorObject.Message = msg;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                command.Dispose();
+               
+                DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, updatestring, Errors.Failed);
+
+            }
+
+            return ErrorObject;
+        }
+        /// <summary>
+        /// Sets up necessary objects and structures for database operations based on the provided entity name.
+        /// </summary>
+        /// <param name="Entityname">The name of the entity for which the database command objects will be set up.</param>
+        /// <remarks>
+        /// This method is essential for initializing and reusing database commands and structures, improving efficiency and maintainability.
+        /// </remarks>
+        private void SetObjects(string Entityname)
+        {
+            if (!ObjectsCreated || Entityname != lastentityname)
+            {
+                DataStruct = GetEntityStructure(Entityname, true);
+                command = RDBMSConnection.DbConn.CreateCommand();
+                enttype = GetEntityType(Entityname);
+                ObjectsCreated = true;
+                lastentityname = Entityname;
+            }
+        }
+        // <summary>
+        /// Dynamically builds an SQL query based on the original query and provided filters.
+        /// </summary>
+        /// <param name="originalquery">The base SQL query string.</param>
+        /// <param name="Filter">List of filters to be applied to the query.</param>
+        /// <returns>The dynamically built SQL query string.</returns>
+        /// <remarks>
+        /// This method enhances flexibility in data retrieval by allowing dynamic query modifications based on runtime conditions and parameters.
+        /// </remarks>
+        private string BuildQuery(string originalquery, List<AppFilter> Filter)
+        {
+            string retval;
+            string[] stringSeparators;
+            string[] sp;
+            string qrystr="Select ";
+            bool FoundWhere = false;
+            QueryBuild queryStructure = new QueryBuild();
+            try
+            {
+                //stringSeparators = new string[] {"select ", " from ", " where ", " group by "," having ", " order by " };
+                // Get Selected Fields
+                originalquery=GetTableName(originalquery.ToLower());  
+                stringSeparators = new string[] { "select", "from" , "where", "group by", "having", "order by" };
+                sp = originalquery.ToLower().Split(stringSeparators, StringSplitOptions.RemoveEmptyEntries);
+                queryStructure.FieldsString = sp[0];
+                string[] Fieldsp = sp[0].Split(',');
+                queryStructure.Fields.AddRange(Fieldsp);
+                // Get From  Tables
+                queryStructure.EntitiesString = sp[1];
+                string[] Tablesdsp = sp[1].Split(',');
+                queryStructure.Entities.AddRange(Tablesdsp);
+
+                if (GetSchemaName() == null)
+                {
+                    qrystr += queryStructure.FieldsString + " " + " from " + queryStructure.EntitiesString;
+                }
+                else
+                    qrystr += queryStructure.FieldsString + $" from {GetSchemaName().ToLower()}." + queryStructure.EntitiesString;
+
+                qrystr += Environment.NewLine;
+
+                if (Filter != null)
+                {
+                    if (Filter.Count > 0)
+                    {
+                        if (Filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator)).Any())
+                        {
+                            qrystr += Environment.NewLine;
+                            if (FoundWhere == false)
+                            {
+                                qrystr += " where " + Environment.NewLine;
+                                FoundWhere = true;
+                            }
+
+                            foreach (AppFilter item in Filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator)))
+                            {
+                                if (!string.IsNullOrEmpty(item.FilterValue) && !string.IsNullOrWhiteSpace(item.FilterValue))
+                                {
+                                    //  EntityField f = ent.Fields.Where(i => i.fieldname == item.FieldName).FirstOrDefault();
+                                    if (item.Operator.ToLower() == "between")
+                                    {
+                                        qrystr += item.FieldName + " " + item.Operator + $" {ParameterDelimiter}p_" + item.FieldName + $" and  {ParameterDelimiter}p_" + item.FieldName + "1 " + Environment.NewLine;
+                                    }
+                                    else
+                                    {
+                                        qrystr += item.FieldName + " " + item.Operator + $" {ParameterDelimiter}p_" + item.FieldName + " " + Environment.NewLine;
+                                    }
+
+                                }
+
+
+
+                            }
+                        }
+                    }
+                 }
+                if (originalquery.ToLower().Contains("where"))
+                {
+                    qrystr += Environment.NewLine;
+
+                    string[] whereSeparators = new string[] { "where", "group by", "having", "order by" };
+
+                    string[] spwhere = originalquery.ToLower().Split(whereSeparators, StringSplitOptions.RemoveEmptyEntries);
+                    queryStructure.WhereCondition = spwhere[0];
+                    if (FoundWhere == false)
+                    {
+                        qrystr += " where " + Environment.NewLine;
+                        FoundWhere = true;
+                    }
+                    qrystr += spwhere[1];
+                    qrystr += Environment.NewLine;
+                 
+                   
+
+                }
+                if (originalquery.ToLower().Contains("group by"))
+                {
+                    string[] groupbySeparators = new string[] { "group by","having", "order by" };
+
+                    string[] groupbywhere = originalquery.ToLower().Split(groupbySeparators, StringSplitOptions.RemoveEmptyEntries);
+                    queryStructure.GroupbyCondition = groupbywhere[1];
+                    qrystr += " group by " + groupbywhere[1];
+                    qrystr += Environment.NewLine;
+                }
+                if (originalquery.ToLower().Contains("having"))
+                {
+                    string[] havingSeparators = new string[] { "having", "order by" };
+
+                    string[] havingywhere = originalquery.ToLower().Split(havingSeparators, StringSplitOptions.RemoveEmptyEntries);
+                    queryStructure.HavingCondition = havingywhere[1];
+                    qrystr += " having " + havingywhere[1];
+                    qrystr += Environment.NewLine;
+                }
+                if (originalquery.ToLower().Contains("order by"))
+                {
+                    string[] orderbySeparators = new string[] { "order by" };
+
+                    string[] orderbywhere = originalquery.ToLower().Split(orderbySeparators, StringSplitOptions.RemoveEmptyEntries);
+                    queryStructure.OrderbyCondition = orderbywhere[1];
+                    qrystr += " order by " + orderbywhere[1];
+
+                }
+
+            }
+            catch (Exception ex )
+            {
+                DMEEditor.AddLogMessage("Fail", $"Unable Build Query Object {originalquery}- {ex.Message}", DateTime.Now, 0, "Error", Errors.Failed);
+            }
+            return qrystr;
+        }
+        /// <summary>
+        /// Retrieves data for a specified entity from the database, with the option to apply filters.
+        /// </summary>
+        /// <param name="EntityName">The name of the entity (table) to retrieve data from.</param>
+        /// <param name="Filter">A list of filters to apply to the query.</param>
+        /// <remarks>
+        /// This method supports both direct table queries and custom queries. It uses dynamic SQL generation and can adapt to different database types. The method also converts the retrieved DataTable to a list of objects based on the entity's structure and type.
+        /// </remarks>
+        /// <returns>An object representing the data retrieved, which could be a list or another type based on the entity structure.</returns>
+        /// <exception cref="Exception">Catches and logs any exceptions that occur during the data retrieval process.</exception>
+        public virtual object GetEntity(string EntityName, List<AppFilter> Filter)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            //  int LoadedRecord;
+           
+            EntityName = EntityName.ToLower();
+            string inname="";
+            string qrystr = "select * from ";
+            
+            if (!string.IsNullOrEmpty(EntityName) && !string.IsNullOrWhiteSpace(EntityName))
+            {
+                if (!EntityName.Contains("select") && !EntityName.Contains("from"))
+                {
+                    qrystr = "select * from " + EntityName;
+                    qrystr = GetTableName(qrystr.ToLower());
+                    inname = EntityName;
+                }else
+                {
+                    EntityName = GetTableName(EntityName);
+                    string[] stringSeparators = new string[] { " from ", " where ", " group by "," order by " };
+                    string[] sp = EntityName.Split(stringSeparators, StringSplitOptions.None);
+                    qrystr = EntityName;
+                    inname = sp[1].Trim();
+                }
+               
+            }
+            EntityStructure ent = GetEntityStructure(inname);
+            if(ent != null)
+            {
+                if (!string.IsNullOrEmpty(ent.CustomBuildQuery))
+                {
+                    qrystr = ent.CustomBuildQuery;
+                }
+
+            }
+           
+            qrystr= BuildQuery(qrystr, Filter);
+          
+            try
+            {
+                IDataAdapter adp = GetDataAdapter(qrystr,Filter);
+                DataSet dataSet = new DataSet();
+                adp.Fill(dataSet);
+                DataTable dt = dataSet.Tables[0];
+
+                return  DMEEditor.Utilfunction.ConvertTableToList(dt,GetEntityStructure(EntityName),GetEntityType(EntityName));
+            }
+
+            catch (Exception ex)
+            {
+                
+                DMEEditor.AddLogMessage("Fail", $"Error in getting entity Data({ ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+             
+                return null;
+            }
+
+
+        }
+        /// <summary>
+        /// Asynchronously retrieves data for a specified entity from the database, with the option to apply filters.
+        /// </summary>
+        /// <param name="EntityName">The name of the entity (table) to retrieve data from.</param>
+        /// <param name="Filter">A list of filters to apply to the query.</param>
+        /// <remarks>
+        /// This method is an asynchronous wrapper around GetEntity, providing the same functionality but in an async manner. It is particularly useful for operations that might take a longer time to complete, ensuring that the application remains responsive.
+        /// </remarks>
+        /// <returns>A task representing the asynchronous operation, which, when completed, will return an object representing the data retrieved.</returns>
+        public virtual Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        {
+            return (Task<object>)GetEntity(EntityName, Filter);
+        }
+        public virtual IErrorsInfo CreateEntities(List<EntityStructure> entities)
+        {
+            try
+            {
+                foreach (var item in entities)
+                {
+                    try
+                    {
+                        CreateEntityAs(item);
+                    }
+                    catch (Exception ex)
+                    {
+                        ErrorObject.Flag = Errors.Failed;
+                        ErrorObject.Message = ex.Message;
+                        DMEEditor.AddLogMessage("Fail", $"Could not Create Entity {item.EntityName}" + ex.Message, DateTime.Now, -1, ex.Message, Errors.Failed);
+                    }
+
+                }
+            }
+            catch (Exception ex1)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex1.Message;
+                DMEEditor.AddLogMessage("Fail", " Could not Complete Create Entities" + ex1.Message, DateTime.Now, -1, ex1.Message, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
         public virtual IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
         {
             if (recEntity != EntityName)
@@ -342,552 +1097,15 @@ namespace TheTechIdea.Beep.DataBase
             }
             return ErrorObject;
         }
-        public virtual IErrorsInfo BeginTransaction(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-                RDBMSConnection.DbConn.BeginTransaction();
-            }
-            catch (Exception ex)
-            {
-
-                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-            }
-            return DMEEditor.ErrorObject;
-        }
-
-        public virtual IErrorsInfo EndTransaction(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-
-                DMEEditor.AddLogMessage("Beep", $"Error in end Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-            }
-            return DMEEditor.ErrorObject;
-        }
-        private IDbCommand CreateCommandParameters(IDbCommand command, DataRow r, EntityStructure DataStruct)
-        {
-            command.Parameters.Clear();
-
-            foreach (EntityField item in DataStruct.Fields.OrderBy(o => o.fieldname))
-            {
-
-                if (!command.Parameters.Contains("p_" + Regex.Replace(item.fieldname, @"\s+", "_")))
-                {
-                    IDbDataParameter parameter = command.CreateParameter();
-                    //if (!item.fieldtype.Equals("System.String", StringComparison.InvariantCultureIgnoreCase) && !item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
-                    //{
-                    //    if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
-                    //    {
-                    //        parameter.Value = Convert.ToDecimal(null);
-                    //    }
-                    //    else
-                    //    {
-                    //        parameter.Value = r[item.fieldname];
-                    //    }
-                    //}
-                    //else
-                    if (item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
-                        {
-
-                            parameter.Value = DBNull.Value;
-                            parameter.DbType = DbType.DateTime;
-                        }
-                        else
-                        {
-                            parameter.DbType = DbType.DateTime;
-                            try
-                            {
-                                parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
-                            }
-                            catch (FormatException formatex)
-                            {
-
-                                parameter.Value = SqlDateTime.Null;
-                            }
-                        }
-                    }
-                    else
-                        parameter.Value = r[item.fieldname];
-                    parameter.ParameterName = "p_" + Regex.Replace(item.fieldname, @"\s+", "_");
-                    //   parameter.DbType = TypeToDbType(tb.Columns[item.fieldname].DataType);
-                    command.Parameters.Add(parameter);
-                }
-
-            }
-            return command;
-        }
-        private IDbCommand CreateDeleteCommandParameters(IDbCommand command, DataRow r, EntityStructure DataStruct)
-        {
-            command.Parameters.Clear();
-
-            foreach (EntityField item in DataStruct.PrimaryKeys.OrderBy(o => o.fieldname))
-            {
-
-                if (!command.Parameters.Contains("p_" + Regex.Replace(item.fieldname, @"\s+", "_")))
-                {
-                    IDbDataParameter parameter = command.CreateParameter();
-                    //if (!item.fieldtype.Equals("System.String", StringComparison.InvariantCultureIgnoreCase) && !item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
-                    //{
-                    //    if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
-                    //    {
-                    //        parameter.Value = Convert.ToDecimal(null);
-                    //    }
-                    //    else
-                    //    {
-                    //        parameter.Value = r[item.fieldname];
-                    //    }
-                    //}
-                    //else
-                    if (item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
-                        {
-
-                            parameter.Value = DBNull.Value;
-                            parameter.DbType = DbType.DateTime;
-                        }
-                        else
-                        {
-                            parameter.DbType = DbType.DateTime;
-                            try
-                            {
-                                parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
-                            }
-                            catch (FormatException formatex)
-                            {
-
-                                parameter.Value = SqlDateTime.Null;
-                            }
-                        }
-                    }
-                    else
-                        parameter.Value = r[item.fieldname];
-                    parameter.ParameterName = "p_" + Regex.Replace(item.fieldname, @"\s+", "_");
-                    //   parameter.DbType = TypeToDbType(tb.Columns[item.fieldname].DataType);
-                    command.Parameters.Add(parameter);
-                }
-
-            }
-            return command;
-        }
-        public virtual IErrorsInfo Commit(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-
-                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-            }
-            return DMEEditor.ErrorObject;
-        }
-        public virtual IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
-        {
-            if (recEntity != EntityName)
-            {
-                recNumber = 1;
-                recEntity = EntityName;
-            }
-            else
-                recNumber += 1;
-            SetObjects(EntityName);
-            ErrorObject.Flag = Errors.Ok;
-         
-            DataRowView dv;
-            DataTable tb;
-            DataRow dr;
-            string msg = "";
-            dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, UploadDataRow, DataStruct);
-            try
-            {
-                command = GetDataCommand();
-                string updatestring = GetUpdateString(EntityName,  DataStruct);
-                command.CommandText = updatestring;
-                command = CreateCommandParameters(command,dr, DataStruct);
-                int rowsUpdated = command.ExecuteNonQuery();
-                if (rowsUpdated > 0)
-                {
-                    msg = $"Successfully Updated  Record  to {EntityName} : {updatestring}";
-                   // DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
-                }
-                else
-                {
-                    msg = $"Fail to Updated  Record  to {EntityName} : {updatestring}";
-                    DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-                }
-                
-
-            }
-            catch (Exception ex)
-            {
-                ErrorObject.Ex = ex;
-               
-                command.Dispose();
-                try
-                {
-                    // Attempt to roll back the transaction.
-                    //     sqlTran.Rollback();
-                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback Complete";
-                }
-                catch (Exception exRollback)
-                {
-                    // Throws an InvalidOperationException if the connection
-                    // is closed or the transaction has already been rolled
-                    // back on the server.
-                    // Console.WriteLine(exRollback.Message);
-                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback InComplete";
-                    ErrorObject.Ex = exRollback;
-                }
-                msg = "Unsuccessfully no Data has been written to Data Source";
-                DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-
-            }
-
-            return ErrorObject;
-        }
-        public virtual IErrorsInfo DeleteEntity(string EntityName, object DeletedDataRow)
-        {
-            SetObjects(EntityName);
-            ErrorObject.Flag = Errors.Ok;
-         
-            string msg;
-            DataRowView dv;
-            DataTable tb;
-            DataRow dr;
-            var sqlTran = RDBMSConnection.DbConn.BeginTransaction();
-            if (recEntity != EntityName)
-            {
-                recNumber = 1;
-                recEntity = EntityName;
-            }
-            else
-                recNumber += 1;
-           
-            dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, DeletedDataRow, DataStruct);
-            try
-            {
-                string updatestring = GetDeleteString(EntityName, DataStruct);
-                command = GetDataCommand();
-                command.Transaction = sqlTran;
-                command.CommandText = updatestring;
-
-                command = CreateDeleteCommandParameters(command, dr, DataStruct);
-                int rowsUpdated = command.ExecuteNonQuery();
-                if (rowsUpdated > 0)
-                {
-                    msg = $"Successfully Deleted  Record  to {EntityName} : {updatestring}";
-                  //  DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
-                }
-                else
-                {
-                    msg = $"Fail to Delete Record  from {EntityName} : {updatestring}";
-                    DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-                }
-                sqlTran.Commit();
-                command.Dispose();
-               
-
-            }
-            catch (Exception ex)
-            {
-                ErrorObject.Ex = ex;
-               
-                command.Dispose();
-                try
-                {
-                    // Attempt to roll back the transaction.
-                    sqlTran.Rollback();
-                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback Complete";
-                }
-                catch (Exception exRollback)
-                {
-                    // Throws an InvalidOperationException if the connection
-                    // is closed or the transaction has already been rolled
-                    // back on the server.
-                    // Console.WriteLine(exRollback.Message);
-                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback InComplete";
-                    ErrorObject.Ex = exRollback;
-                }
-                msg = "Unsuccessfully no Data has been written to Data Source";
-                DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-
-            }
-
-            return ErrorObject;
-        }
-        #region "Insert or Update or Delete Objects"
-        EntityStructure DataStruct = null; 
-        IDbCommand command = null; 
-        Type enttype = null;
-        bool ObjectsCreated = false;
-        string lastentityname = null;
-        #endregion
-        private void SetObjects(string Entityname)
-        {
-            if (!ObjectsCreated || Entityname!=lastentityname)
-            {
-                DataStruct = GetEntityStructure(Entityname, true);
-                command = RDBMSConnection.DbConn.CreateCommand();
-                enttype = GetEntityType(Entityname);
-                ObjectsCreated = true;
-                lastentityname = Entityname;
-            }
-        }
-        public virtual IErrorsInfo InsertEntity(string EntityName, object InsertedData)
-        {
-            SetObjects(EntityName);
-            ErrorObject.Flag = Errors.Ok;
-            DataRow dr;
-            string msg = "";
-            string updatestring="";
-            if (recEntity != EntityName)
-            {
-                recNumber = 1;
-                recEntity = EntityName;
-            }
-            else
-                recNumber += 1;
-
-            dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, InsertedData, DataStruct);
-            try
-            {
-                updatestring = GetInsertString(EntityName, DataStruct);
-                command = GetDataCommand();
-
-                command.CommandText = updatestring;
-                command = CreateCommandParameters(command, dr, DataStruct);
-
-                int rowsUpdated = command.ExecuteNonQuery();
-                if (rowsUpdated > 0)
-                {
-                    msg = $"Successfully Inserted  Record  to {EntityName} ";
-                    DMEEditor.ErrorObject.Message = msg;
-                    DMEEditor.ErrorObject.Flag = Errors.Ok;
-                    // DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
-                }
-                else
-                {
-                    msg = $"Fail to Insert  Record  to {EntityName} : {updatestring}";
-                    DMEEditor.ErrorObject.Message = msg;
-                    DMEEditor.ErrorObject.Flag = Errors.Failed;
-                    
-
-                  //  DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-                }
-                // DMEEditor.AddLogMessage("Success",$"Successfully Written Data to {EntityName}",DateTime.Now,0,null, Errors.Ok);
-
-            }
-            catch (Exception ex)
-            {
-                msg = $"Fail to Insert  Record  to {EntityName} : {ex.Message}";
-                ErrorObject.Ex = ex;
-                DMEEditor.ErrorObject.Message = msg;
-                DMEEditor.ErrorObject.Flag = Errors.Failed;
-                command.Dispose();
-               
-                DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, updatestring, Errors.Failed);
-
-            }
-
-            return ErrorObject;
-        }
-        private string BuildQuery(string originalquery, List<AppFilter> Filter)
-        {
-            string retval;
-            string[] stringSeparators;
-            string[] sp;
-            string qrystr="Select ";
-            bool FoundWhere = false;
-            QueryBuild queryStructure = new QueryBuild();
-            try
-            {
-                //stringSeparators = new string[] {"select ", " from ", " where ", " group by "," having ", " order by " };
-                // Get Selected Fields
-                originalquery=GetTableName(originalquery.ToLower());  
-                stringSeparators = new string[] { "select", "from" , "where", "group by", "having", "order by" };
-                sp = originalquery.ToLower().Split(stringSeparators, StringSplitOptions.RemoveEmptyEntries);
-                queryStructure.FieldsString = sp[0];
-                string[] Fieldsp = sp[0].Split(',');
-                queryStructure.Fields.AddRange(Fieldsp);
-                // Get From  Tables
-                queryStructure.EntitiesString = sp[1];
-                string[] Tablesdsp = sp[1].Split(',');
-                queryStructure.Entities.AddRange(Tablesdsp);
-
-                if (GetSchemaName() == null)
-                {
-                    qrystr += queryStructure.FieldsString + " " + " from " + queryStructure.EntitiesString;
-                }
-                else
-                    qrystr += queryStructure.FieldsString + $" from {GetSchemaName().ToLower()}." + queryStructure.EntitiesString;
-
-                qrystr += Environment.NewLine;
-
-                if (Filter != null)
-                {
-                    if (Filter.Count > 0)
-                    {
-                        if (Filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator)).Any())
-                        {
-                            qrystr += Environment.NewLine;
-                            if (FoundWhere == false)
-                            {
-                                qrystr += " where " + Environment.NewLine;
-                                FoundWhere = true;
-                            }
-
-                            foreach (AppFilter item in Filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator)))
-                            {
-                                if (!string.IsNullOrEmpty(item.FilterValue) && !string.IsNullOrWhiteSpace(item.FilterValue))
-                                {
-                                    //  EntityField f = ent.Fields.Where(i => i.fieldname == item.FieldName).FirstOrDefault();
-                                    if (item.Operator.ToLower() == "between")
-                                    {
-                                        qrystr += item.FieldName + " " + item.Operator + $" {ParameterDelimiter}p_" + item.FieldName + $" and  {ParameterDelimiter}p_" + item.FieldName + "1 " + Environment.NewLine;
-                                    }
-                                    else
-                                    {
-                                        qrystr += item.FieldName + " " + item.Operator + $" {ParameterDelimiter}p_" + item.FieldName + " " + Environment.NewLine;
-                                    }
-
-                                }
-
-
-
-                            }
-                        }
-                    }
-                 }
-                if (originalquery.ToLower().Contains("where"))
-                {
-                    qrystr += Environment.NewLine;
-
-                    string[] whereSeparators = new string[] { "where", "group by", "having", "order by" };
-
-                    string[] spwhere = originalquery.ToLower().Split(whereSeparators, StringSplitOptions.RemoveEmptyEntries);
-                    queryStructure.WhereCondition = spwhere[0];
-                    if (FoundWhere == false)
-                    {
-                        qrystr += " where " + Environment.NewLine;
-                        FoundWhere = true;
-                    }
-                    qrystr += spwhere[1];
-                    qrystr += Environment.NewLine;
-                 
-                   
-
-                }
-                if (originalquery.ToLower().Contains("group by"))
-                {
-                    string[] groupbySeparators = new string[] { "group by","having", "order by" };
-
-                    string[] groupbywhere = originalquery.ToLower().Split(groupbySeparators, StringSplitOptions.RemoveEmptyEntries);
-                    queryStructure.GroupbyCondition = groupbywhere[1];
-                    qrystr += " group by " + groupbywhere[1];
-                    qrystr += Environment.NewLine;
-                }
-                if (originalquery.ToLower().Contains("having"))
-                {
-                    string[] havingSeparators = new string[] { "having", "order by" };
-
-                    string[] havingywhere = originalquery.ToLower().Split(havingSeparators, StringSplitOptions.RemoveEmptyEntries);
-                    queryStructure.HavingCondition = havingywhere[1];
-                    qrystr += " having " + havingywhere[1];
-                    qrystr += Environment.NewLine;
-                }
-                if (originalquery.ToLower().Contains("order by"))
-                {
-                    string[] orderbySeparators = new string[] { "order by" };
-
-                    string[] orderbywhere = originalquery.ToLower().Split(orderbySeparators, StringSplitOptions.RemoveEmptyEntries);
-                    queryStructure.OrderbyCondition = orderbywhere[1];
-                    qrystr += " order by " + orderbywhere[1];
-
-                }
-
-            }
-            catch (Exception ex )
-            {
-                DMEEditor.AddLogMessage("Fail", $"Unable Build Query Object {originalquery}- {ex.Message}", DateTime.Now, 0, "Error", Errors.Failed);
-            }
-            return qrystr;
-        }
-        public virtual object GetEntity(string EntityName, List<AppFilter> Filter)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            //  int LoadedRecord;
-           
-            EntityName = EntityName.ToLower();
-            string inname="";
-            string qrystr = "select * from ";
-            
-            if (!string.IsNullOrEmpty(EntityName) && !string.IsNullOrWhiteSpace(EntityName))
-            {
-                if (!EntityName.Contains("select") && !EntityName.Contains("from"))
-                {
-                    qrystr = "select * from " + EntityName;
-                    qrystr = GetTableName(qrystr.ToLower());
-                    inname = EntityName;
-                }else
-                {
-                    EntityName = GetTableName(EntityName);
-                    string[] stringSeparators = new string[] { " from ", " where ", " group by "," order by " };
-                    string[] sp = EntityName.Split(stringSeparators, StringSplitOptions.None);
-                    qrystr = EntityName;
-                    inname = sp[1].Trim();
-                }
-               
-            }
-            EntityStructure ent = GetEntityStructure(inname);
-            if(ent != null)
-            {
-                if (!string.IsNullOrEmpty(ent.CustomBuildQuery))
-                {
-                    qrystr = ent.CustomBuildQuery;
-                }
-
-            }
-           
-            qrystr= BuildQuery(qrystr, Filter);
-          
-            try
-            {
-                IDataAdapter adp = GetDataAdapter(qrystr,Filter);
-                DataSet dataSet = new DataSet();
-                adp.Fill(dataSet);
-                DataTable dt = dataSet.Tables[0];
-
-                return  DMEEditor.Utilfunction.ConvertTableToList(dt,GetEntityStructure(EntityName),GetEntityType(EntityName));
-            }
-
-            catch (Exception ex)
-            {
-                
-                DMEEditor.AddLogMessage("Fail", $"Error in getting entity Data({ ex.Message})", DateTime.Now, 0, "", Errors.Failed);
-             
-                return null;
-            }
-
-
-        }
-        public virtual Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
-        {
-            return (Task<object>)GetEntity(EntityName, Filter);
-        }
         #endregion
         #region "Get Entity Structure"
+        // <summary>
+        /// Retrieves the detailed structure of an entity, including its fields, primary keys, and relationships.
+        /// It optionally refreshes the entity structure if the 'refresh' parameter is true.
+        /// </summary>
+        /// <param name="fnd">The entity structure to be filled or refreshed.</param>
+        /// <param name="refresh">Boolean flag indicating whether to refresh the entity's metadata.</param>
+        /// <returns>The updated or refreshed EntityStructure object.</returns>
         public virtual EntityStructure GetEntityStructure(string EntityName, bool refresh = false)
         {
             EntityStructure retval = new EntityStructure();
@@ -1089,6 +1307,13 @@ namespace TheTechIdea.Beep.DataBase
             }
           return fnd;
         }
+        /// <summary>
+        /// <summary>
+        /// Retrieves the structure of a specific entity (e.g., a database table) using a database connection.
+        /// </summary>
+        /// <param name="connection">Database connection to access the schema.</param>
+        /// <param name="tableName">The name of the table for which the structure is required.</param>
+        /// <returns>An EntityStructure representing the table's schema.</returns>
         public EntityStructure GetEntityStructureForQuery(DbConnection connection, string query)
         {
             EntityStructure entityStructure = new EntityStructure();
@@ -1109,6 +1334,11 @@ namespace TheTechIdea.Beep.DataBase
            
             return GetEntityStructure(schemaTable);
         }
+        /// <summary>
+        /// Creates an entity structure from a given schema table.
+        /// </summary>
+        /// <param name="schemaTable">A DataTable containing schema information.</param>
+        /// <returns>The constructed EntityStructure based on the schema table.</returns>
         private EntityStructure GetEntityStructure(DataTable schemaTable)
         {
             EntityStructure entityStructure = new EntityStructure();
@@ -1155,39 +1385,21 @@ namespace TheTechIdea.Beep.DataBase
             return GetEntityStructure(schemaTable);
         }
         #endregion "Get Entity Structure"
-        public virtual IErrorsInfo CreateEntities(List<EntityStructure> entities)
-        {
-            try
-            {
-                foreach (var item in entities)
-                {
-                    try
-                    {
-                        CreateEntityAs(item);
-                    }
-                    catch (Exception ex)
-                    {
-                        ErrorObject.Flag = Errors.Failed;
-                        ErrorObject.Message = ex.Message;
-                        DMEEditor.AddLogMessage("Fail", $"Could not Create Entity {item.EntityName}" + ex.Message, DateTime.Now, -1, ex.Message, Errors.Failed);
-                    }
-
-                }
-            }
-            catch (Exception ex1)
-            {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex1.Message;
-                DMEEditor.AddLogMessage("Fail", " Could not Complete Create Entities" + ex1.Message, DateTime.Now, -1, ex1.Message, Errors.Failed);
-            }
-            return DMEEditor.ErrorObject;
-        }
+      
         public virtual Type GetEntityType(string EntityName)
         {
             EntityStructure x = GetEntityStructure(EntityName);
             DMTypeBuilder.CreateNewObject(DMEEditor,"Beep."+DatasourceName, EntityName, x.Fields);
             return DMTypeBuilder.myType;
         }
+        /// <summary>
+        /// Retrieves a list of all entity names (like tables) from the database.
+        /// </summary>
+        /// <remarks>
+        /// This method queries the database to get a list of all tables. It handles different schema configurations
+        /// and adapts to various database types as defined in the Dataconnection's properties.
+        /// </remarks>
+        /// <returns>A List of strings, each representing the name of a table in the database.</returns>
         public virtual List<string> GetEntitesList()
         {
             ErrorObject.Flag = Errors.Ok;
@@ -1235,6 +1447,15 @@ namespace TheTechIdea.Beep.DataBase
 
 
         }
+        // <summary>
+        /// Adds a new entity to the system.
+        /// </summary>
+        /// <param name="entityName">The name of the new entity.</param>
+        /// <param name="schemaname">The database schema name associated with the entity.</param>
+        /// <returns>A string message indicating the result of the operation.</returns>
+        /// <remarks>
+        /// This method validates the input and adds the entity to the collection if it doesn't already exist.
+        /// </remarks>
         public virtual string AddNewEntity(string entityName,string schemaname)
         {
             if (entityName == null)
@@ -1260,6 +1481,13 @@ namespace TheTechIdea.Beep.DataBase
             Entities.Add(entity);
             return null;
         }
+        /// <summary>
+        /// Retrieves the schema name from the connection properties.
+        /// </summary>
+        /// <returns>The schema name as a string.</returns>
+        /// <remarks>
+        /// If the schema name is not explicitly set in the connection properties, defaults are used based on the database type.
+        /// </remarks>
         public virtual string GetSchemaName()
         {
             string schemaname=null;
@@ -1274,6 +1502,14 @@ namespace TheTechIdea.Beep.DataBase
             }
             return schemaname;
         }
+        /// <summary>
+        /// Checks if an entity exists in the system.
+        /// </summary>
+        /// <param name="EntityName">The name of the entity to check.</param>
+        /// <returns>True if the entity exists, otherwise false.</returns>
+        /// <remarks>
+        /// This method checks for the existence of an entity by its name in the Entities collection.
+        /// </remarks>
         public bool CheckEntityExist(string EntityName)
         {
             bool retval = false;
@@ -1288,6 +1524,11 @@ namespace TheTechIdea.Beep.DataBase
            
             return retval;
         }
+        /// <summary>
+        /// Retrieves the index of a specific entity in the Entities collection.
+        /// </summary>
+        /// <param name="entityName">The name of the entity.</param>
+        /// <returns>The index of the entity or -1 if not found.</returns>
         public int GetEntityIdx(string entityName)
         {
             if (Entities.Count > 0)
@@ -1298,6 +1539,14 @@ namespace TheTechIdea.Beep.DataBase
                 return -1;
             }
         }
+        /// <summary>
+        /// Creates an entity in the database as per the specified structure.
+        /// </summary>
+        /// <param name="entity">The entity structure to create in the database.</param>
+        /// <returns>True if creation is successful, otherwise false.</returns>
+        /// <remarks>
+        /// This method attempts to create a new entity in the database if it does not already exist.
+        /// </remarks>
         public virtual bool CreateEntityAs(EntityStructure entity)
         {
             bool retval = false;
@@ -1339,6 +1588,15 @@ namespace TheTechIdea.Beep.DataBase
 
             return retval;
         }
+        /// <summary>
+        /// Retrieves foreign key relationships for a specific entity.
+        /// </summary>
+        /// <param name="entityname">The name of the entity to retrieve foreign keys for.</param>
+        /// <param name="SchemaName">The database schema name.</param>
+        /// <returns>A list of foreign key relationships.</returns>
+        /// <remarks>
+        /// This method fetches foreign key information for the given entity from the database.
+        /// </remarks>
         public virtual List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
             List<RelationShipKeys> fk = new List<RelationShipKeys>();
@@ -1381,6 +1639,16 @@ namespace TheTechIdea.Beep.DataBase
             }
             return fk;
         }
+        /// <summary>
+        /// Retrieves a list of child tables related to the specified table.
+        /// </summary>
+        /// <param name="tablename">The name of the table to find child tables for.</param>
+        /// <param name="SchemaName">The database schema name.</param>
+        /// <param name="Filterparamters">Additional filter parameters.</param>
+        /// <returns>A list of child relations.</returns>
+        /// <remarks>
+        /// This method provides information about child tables related to a specified table.
+        /// </remarks>
         public virtual List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
             ErrorObject.Flag = Errors.Ok;
@@ -1400,6 +1668,14 @@ namespace TheTechIdea.Beep.DataBase
                 return null;
             }
         }
+        /// <summary>
+        /// Executes a provided SQL script.
+        /// </summary>
+        /// <param name="scripts">The script details to execute.</param>
+        /// <returns>IErrorsInfo object with information about the execution outcome.</returns>
+        /// <remarks>
+        /// This method runs an SQL script and provides detailed information about its execution.
+        /// </remarks>
         public virtual IErrorsInfo RunScript(ETLScriptDet scripts)
         {
             var t = Task.Run<IErrorsInfo>(() => { return ExecuteSql(scripts.ddl); });
@@ -1409,6 +1685,14 @@ namespace TheTechIdea.Beep.DataBase
             DMEEditor.ErrorObject = scripts.errorsInfo;
             return DMEEditor.ErrorObject;
         }
+        /// <summary>
+        /// Generates SQL scripts for creating entities based on their structure.
+        /// </summary>
+        /// <param name="entities">A list of entities to generate scripts for.</param>
+        /// <returns>A list of ETLScriptDet containing the SQL create scripts.</returns>
+        /// <remarks>
+        /// This method is useful for generating database creation scripts from entity structures.
+        /// </remarks>
         public virtual List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities)
         {
             return GetDDLScriptfromDatabase(entities);
