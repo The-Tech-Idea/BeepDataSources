@@ -16,6 +16,10 @@ namespace TheTechIdea.Beep.DataBase
         public bool CanCreateLocal { get ; set; }
        // SQLiteConnection sQLiteConnection;
         string dbpath;
+        public bool IsCreated { get; set; } = false;
+        public bool IsLoaded { get; set; } = false;
+        public bool IsSaved { get; set; } = false;
+        public bool IsSynced { get; set; } = false;
         public SQLiteDataSource(string pdatasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(pdatasourcename, logger, pDMEEditor, databasetype, per)
         {
             DMEEditor = pDMEEditor;
@@ -41,6 +45,8 @@ namespace TheTechIdea.Beep.DataBase
         public List<EntityStructure> InMemoryStructures { get; set; } = new List<EntityStructure>();
         public override string ColumnDelimiter { get; set; } = "[]";
         public override string ParameterDelimiter { get; set; } = "$";
+        string filepath;//= Path.Combine(dbpath, "createscripts.json");
+        string InMemoryStructuresfilepath;//= Path.Combine(dbpath, "InMemoryStructures.json");
         public override ConnectionState Openconnection()
         {
            
@@ -338,13 +344,17 @@ namespace TheTechIdea.Beep.DataBase
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
             {
+                if (InMemoryStructures.Count > 0)
+                {
+                    InMemoryStructures.Clear();
+                }
                 string filepath = Path.Combine(dbpath, "createscripts.json");
                 string InMemoryStructuresfilepath = Path.Combine(dbpath, "InMemoryStructures.json");
                 ConnectionStatus = ConnectionState.Open;
                 InMemoryStructures = new List<EntityStructure>();
                 Entities = new List<EntityStructure>();
                 EntitiesNames = new List<string>();
-                CancellationTokenSource token = new CancellationTokenSource();
+              
                 if (File.Exists(InMemoryStructuresfilepath))
                 {
                     InMemoryStructures = DMEEditor.ConfigEditor.JsonLoader.DeserializeObject<EntityStructure>(InMemoryStructuresfilepath);
@@ -354,7 +364,7 @@ namespace TheTechIdea.Beep.DataBase
                     var hdr = DMEEditor.ConfigEditor.JsonLoader.DeserializeSingleObject<ETLScriptHDR>(filepath);
                     DMEEditor.ETL.Script = hdr;
                     DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
-                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token.Token);
+                   // DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token.Token);
 
                 }
               
@@ -392,6 +402,71 @@ namespace TheTechIdea.Beep.DataBase
             catch (Exception ex)
             {
                 DMEEditor.AddLogMessage("Beep", $"Could not save InMemory Structure for {DatasourceName}- {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+        public IErrorsInfo LoadData(Progress<PassedArgs> progress, CancellationToken token)
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if(IsLoaded)
+                {
+                    return DMEEditor.ErrorObject;
+                }
+                ConnectionStatus = ConnectionState.Open;
+                InMemoryStructures = new List<EntityStructure>();
+                Entities = new List<EntityStructure>();
+                EntitiesNames = new List<string>();
+
+                if (File.Exists(InMemoryStructuresfilepath))
+                {
+                    InMemoryStructures = DMEEditor.ConfigEditor.JsonLoader.DeserializeObject<EntityStructure>(InMemoryStructuresfilepath);
+                }
+                if (File.Exists(filepath))
+                {
+                    var hdr = DMEEditor.ConfigEditor.JsonLoader.DeserializeSingleObject<ETLScriptHDR>(filepath);
+                    DMEEditor.ETL.Script = hdr;
+                    DMEEditor.ETL.Script.LastRunDateTime = System.DateTime.Now;
+                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token);
+                }
+                IsLoaded= true;
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Beep", $"Could not Load InMemory Structure for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+        public IErrorsInfo SyncData(Progress<PassedArgs> progress, CancellationToken token)
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+
+
+                ConnectionStatus = ConnectionState.Open;
+                InMemoryStructures = new List<EntityStructure>();
+                Entities = new List<EntityStructure>();
+                EntitiesNames = new List<string>();
+
+                if (File.Exists(InMemoryStructuresfilepath))
+                {
+                    InMemoryStructures = DMEEditor.ConfigEditor.JsonLoader.DeserializeObject<EntityStructure>(InMemoryStructuresfilepath);
+                }
+                if (File.Exists(filepath))
+                {
+                    var hdr = DMEEditor.ConfigEditor.JsonLoader.DeserializeSingleObject<ETLScriptHDR>(filepath);
+                    DMEEditor.ETL.Script = hdr;
+                    DMEEditor.ETL.Script.LastRunDateTime = System.DateTime.Now;
+                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token);
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Beep", $"Could not Load InMemory Structure for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
         }
