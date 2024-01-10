@@ -66,10 +66,10 @@
    <Compile Remove="..\..\DataSourcesPlugins\Sqlite\SQLiteDataSource.cs" />
  </ItemGroup>
  <ItemGroup>
-   <PackageReference Include="RDBDataSource" Version="1.0.6" />
+   <PackageReference Include="RDBDataSource" Version="1.0.9" />
    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.333" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.115" />
+   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.116" />
  </ItemGroup>
 
 </Project>

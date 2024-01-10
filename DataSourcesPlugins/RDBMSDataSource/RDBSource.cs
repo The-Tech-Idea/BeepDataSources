@@ -15,6 +15,7 @@ using DataManagementModels.DriversConfigurations;
 using TheTechIdea.Beep.Report;
 using System.Data.SqlTypes;
 using TheTechIdea.Beep.Helpers;
+using System.Diagnostics;
 
 namespace TheTechIdea.Beep.DataBase
 {
@@ -109,6 +110,12 @@ namespace TheTechIdea.Beep.DataBase
         /// <param name="per">Error information object.</param>
         protected static int recNumber = 0;
         protected string recEntity = "";
+
+        /// <summary>
+        /// Get List of Tables that connection has that is not on that same user
+        /// </summary>
+        ///
+        public string GetListofEntitiesSql { get; set; } = string.Empty;
         #region "Insert or Update or Delete Objects"
         EntityStructure DataStruct = null;
         IDbCommand command = null;
@@ -1419,11 +1426,16 @@ namespace TheTechIdea.Beep.DataBase
                         }
                     }
                 }
-               
-                string sql = DMEEditor.ConfigEditor.GetSql(Sqlcommandtype.getlistoftables, null, Dataconnection.ConnectionProp.SchemaName, null, DMEEditor.ConfigEditor.QueryList, DatasourceType);
+                string sql = GetListofEntitiesSql;
+                if (String.IsNullOrEmpty(sql))
+                {
+                    sql = DMEEditor.ConfigEditor.GetSql(Sqlcommandtype.getlistoftables, null, Dataconnection.ConnectionProp.SchemaName, null, DMEEditor.ConfigEditor.QueryList, DatasourceType);
+                }
+                
                     IDbDataAdapter adp = GetDataAdapter(sql, null);
                     adp.Fill(ds);
-
+                    DMEEditor.AddLogMessage("Beep", $"Get Tables List Query {sql}", DateTime.Now, 0, DatasourceName, Errors.Failed);
+                     Debug.WriteLine($" -- Get Tables List Query {sql}");
                     DataTable tb = new DataTable();
                     tb = ds.Tables[0];
                     EntitiesNames = new List<string>();
