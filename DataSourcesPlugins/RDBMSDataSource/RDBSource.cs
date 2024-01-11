@@ -1218,7 +1218,7 @@ namespace TheTechIdea.Beep.DataBase
                                 }
                                 catch (Exception)
                                 {
-
+                                  x.IsAutoIncrement = false;
                                 }
                                 try
                                 {
@@ -1230,10 +1230,11 @@ namespace TheTechIdea.Beep.DataBase
                                 try
                                 {
                                     x.IsAutoIncrement = r.Field<bool>("IsIdentity");
+                                    x.IsIdentity = x.IsAutoIncrement;
                                 }
                                 catch (Exception)
                                 {
-
+                                    x.IsIdentity = false;
                                 }
                                 try
                                 {
