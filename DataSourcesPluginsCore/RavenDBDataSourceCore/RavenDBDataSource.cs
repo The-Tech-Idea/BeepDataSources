@@ -61,6 +61,11 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
         public virtual string ColumnDelimiter { get; set; } = "''";
         public virtual string ParameterDelimiter { get; set; } = ":";
         public List<EntityStructure> InMemoryStructures { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsCreated { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsLoaded { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsSaved { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsSynced { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         public virtual Task<double> GetScalarAsync(string query)
         {
             return Task.Run(() => GetScalar(query));
@@ -415,7 +420,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
             {
 
                 Session = GetSession(CurrentDatabase);
-                var command = null; //new GetDocumentsCommand(new DocumentConventions(){ FindClrType=   }, null,null, metadataOnly: true);
+                var command =new GetDocumentsCommand(1,2);
                 Session.Advanced.RequestExecutor.Execute(command, Session.Advanced.Context);
                 if(command.Result != null)
                 {
@@ -697,6 +702,21 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
         }
 
         public IErrorsInfo SaveStructure()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo LoadStructure()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo LoadData(Progress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo SyncData(Progress<PassedArgs> progress, CancellationToken token)
         {
             throw new NotImplementedException();
         }

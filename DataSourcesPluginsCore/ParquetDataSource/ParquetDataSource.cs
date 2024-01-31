@@ -60,6 +60,7 @@ namespace ParquetDataSourceCore
         public ConnectionState ConnectionStatus { get { return Dataconnection.ConnectionStatus; } set { pConnectionStatus = value; } }
         public string ColumnDelimiter { get  ; set  ; }
         public string ParameterDelimiter { get  ; set  ; }
+        public string GuidID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public event EventHandler<PassedArgs> PassEvent;
 
@@ -380,6 +381,16 @@ namespace ParquetDataSourceCore
                 return await ParquetSerializer.DeserializeAsync<T>(fs);
             }
                 
+        }
+
+        public Task<double> GetScalarAsync(string query)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double GetScalar(string query)
+        {
+            throw new NotImplementedException();
         }
         #endregion
     }
