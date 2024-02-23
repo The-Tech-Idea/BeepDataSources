@@ -32,6 +32,6 @@
 <ItemGroup>
   <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.130" />
   <PackageReference Include="RDBDataSource" Version="1.0.10" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.345" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.349" />
 </ItemGroup>
 </Project>

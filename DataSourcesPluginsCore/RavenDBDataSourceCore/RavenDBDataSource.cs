@@ -392,7 +392,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
         }
         public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            throw new NotImplementedException();
+           return Task.Run(() => GetEntity(EntityName, Filter));
         }
         public IErrorsInfo OpenDatabaseInMemory(string databasename)
         {

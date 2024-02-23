@@ -28,14 +28,14 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <PackageReference Include="Azure.Core" Version="1.37.0" />
-	  <PackageReference Include="Azure.Data.Tables" Version="12.8.2" />
+	  <PackageReference Include="Azure.Data.Tables" Version="12.8.3" />
 	  <PackageReference Include="Azure.Identity" Version="1.10.4" />
 	  <PackageReference Include="Azure.Search.Documents" Version="11.5.1" />
 	  <PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
 	  <PackageReference Include="Azure.Storage.Files.Shares" Version="12.17.1" />
 	  <PackageReference Include="Azure.Storage.Queues" Version="12.17.1" />
-	  <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.37.1" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.345" />
+	  <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.38.1" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.349" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.119" />
 	</ItemGroup>
 
