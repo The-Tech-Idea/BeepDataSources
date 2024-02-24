@@ -1056,32 +1056,37 @@ namespace TheTechIdea.Beep.FileManager
         }
         private DataSet GetExcelDataSet()
         {
+            string filpath = Path.Combine(FilePath, FileName);
             DataSet ds = new DataSet();
-            using (var stream = File.Open(Path.Combine(FilePath, FileName), FileMode.Open, FileAccess.Read))
+            if (File.Exists(filpath))
             {
-                switch (Dataconnection.ConnectionProp.Ext.Replace(".","").ToLower())
+                using (var stream = File.Open(Path.Combine(FilePath, FileName), FileMode.Open, FileAccess.Read))
                 {
-                    case "csv":
-                        reader = ExcelReaderFactory.CreateCsvReader(stream, ReaderConfig);
-                        break;
-                    case "xls":
-                        reader = ExcelReaderFactory.CreateBinaryReader(stream, ReaderConfig);
-                        break;
-                    case "xlsx":
-                        reader = ExcelReaderFactory.CreateOpenXmlReader(stream, ReaderConfig);
-                        break;
-                    default:
-                        throw new Exception("ExcelDataReaderFactory() - unknown/unsupported file extension");
-                        // break;
+                    switch (Dataconnection.ConnectionProp.Ext.Replace(".", "").ToLower())
+                    {
+                        case "csv":
+                            reader = ExcelReaderFactory.CreateCsvReader(stream, ReaderConfig);
+                            break;
+                        case "xls":
+                            reader = ExcelReaderFactory.CreateBinaryReader(stream, ReaderConfig);
+                            break;
+                        case "xlsx":
+                            reader = ExcelReaderFactory.CreateOpenXmlReader(stream, ReaderConfig);
+                            break;
+                        default:
+                            throw new Exception("ExcelDataReaderFactory() - unknown/unsupported file extension");
+                            // break;
+                    }
+
+
+                    // 2. Use the c extension method
+                    ds = reader.AsDataSet(ExcelDataSetConfig);
+                    // The result of each spreadsheet is in result.Tables
+
+                    stream.Close();
                 }
-
-
-                // 2. Use the c extension method
-                ds = reader.AsDataSet(ExcelDataSetConfig);
-                // The result of each spreadsheet is in result.Tables
-
-                stream.Close();
             }
+         
             return ds;
         }
        
@@ -1095,6 +1100,11 @@ namespace TheTechIdea.Beep.FileManager
                 {
                     string sheetname;
                     ds = GetExcelDataSet();
+                    if(ds.Tables.Count==0)
+                    {
+                        DMEEditor.AddLogMessage("Fail", $"Error in getting File format {FileName}  or missing file", DateTime.Now, 0, FileName, Errors.Failed);
+                        return;
+                    }
                     EntitiesNames = new List<string>();
                     Entities = new List<EntityStructure>();
                     for (int i = 0; i <= ds.Tables.Count-1; i++)
