@@ -53,12 +53,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.Actors" Version="1.12.0" />
-    <PackageReference Include="Dapr.Client" Version="1.12.0" />
+    <PackageReference Include="Dapr.Actors" Version="1.13.0" />
+    <PackageReference Include="Dapr.Client" Version="1.13.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.349" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.119" />
-    <PackageReference Include="YamlDotNet" Version="15.1.1" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.354" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.121" />
+    <PackageReference Include="YamlDotNet" Version="15.1.2" />
   </ItemGroup>
 
 </Project>

@@ -28,6 +28,6 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="RDBDataSource" Version="1.0.10" />
+	  <PackageReference Include="RDBDataSource" Version="1.0.11" />
 	</ItemGroup>
 </Project>

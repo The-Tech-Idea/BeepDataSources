@@ -980,115 +980,119 @@ namespace TheTechIdea.Beep.DataBase
                         tb.TableName = EntityName;
                         // int i = 0;
                         string updatestring = null;
-                        DataTable changes = tb;//.GetChanges();
-                        for (int i = 0; i < tb.Rows.Count; i++)
+                        DataTable changes = tb.GetChanges();
+                        if(changes != null)
                         {
-                            try
+                            for (int i = 0; i < changes.Rows.Count; i++)
                             {
-                                DataRow r = tb.Rows[i];
-                                CurrentRecord = i;
-                                switch (r.RowState)
+                                try
                                 {
-                                    case DataRowState.Unchanged:
-                                    case DataRowState.Added:
-                                        updatestring = GetInsertString(EntityName, DataStruct);
-                                        break;
-                                    case DataRowState.Deleted:
-                                        updatestring = GetDeleteString(EntityName, DataStruct);
-                                        break;
-                                    case DataRowState.Modified:
-                                        updatestring = GetUpdateString(EntityName, DataStruct);
-                                        break;
-                                    default:
-                                        updatestring = GetInsertString(EntityName, DataStruct);
-                                        break;
-                                }
-                                command.CommandText = updatestring;
-                                command = CreateCommandParameters(command, r, DataStruct);
-                                errorstring = updatestring.Clone().ToString();
-                                foreach (EntityField item in DataStruct.Fields)
-                                {
-                                    try
+                                    DataRow r = changes.Rows[i];
+                                    CurrentRecord = i;
+                                    switch (r.RowState)
                                     {
-                                        string s;
-                                        string f;
-                                        if (r[item.fieldname] == DBNull.Value)
-                                        {
-                                            s = "\' \'";
-                                        }
-                                        else
-                                        {
-                                            s = "\'" + r[item.fieldname].ToString() + "\'";
-                                        }
-                                        f = "@p_" + Regex.Replace(item.fieldname, @"\s+", "_");
-                                        errorstring = errorstring.Replace(f, s);
+                                        case DataRowState.Unchanged:
+                                        case DataRowState.Added:
+                                            updatestring = GetInsertString(EntityName, DataStruct);
+                                            break;
+                                        case DataRowState.Deleted:
+                                            updatestring = GetDeleteString(EntityName, DataStruct);
+                                            break;
+                                        case DataRowState.Modified:
+                                            updatestring = GetUpdateString(EntityName, DataStruct);
+                                            break;
+                                        default:
+                                            updatestring = GetInsertString(EntityName, DataStruct);
+                                            break;
                                     }
-                                    catch (Exception ex1)
+                                    command.CommandText = updatestring;
+                                    command = CreateCommandParameters(command, r, DataStruct);
+                                    errorstring = updatestring.Clone().ToString();
+                                    foreach (EntityField item in DataStruct.Fields)
                                     {
+                                        try
+                                        {
+                                            string s;
+                                            string f;
+                                            if (r[item.fieldname] == DBNull.Value)
+                                            {
+                                                s = "\' \'";
+                                            }
+                                            else
+                                            {
+                                                s = "\'" + r[item.fieldname].ToString() + "\'";
+                                            }
+                                            f = "@p_" + Regex.Replace(item.fieldname, @"\s+", "_");
+                                            errorstring = errorstring.Replace(f, s);
+                                        }
+                                        catch (Exception ex1)
+                                        {
+                                        }
                                     }
-                                }
-                                string msg = "";
-                                int rowsUpdated = command.ExecuteNonQuery();
-                                if (rowsUpdated > 0)
-                                {
-                                    msg = $"Successfully I/U/D  Record {i} to {EntityName} : {updatestring}";
-                                }
-                                else
-                                {
-                                    msg = $"Fail to I/U/D  Record {i} to {EntityName} : {updatestring}";
-                                }
-                                int percentComplete = (int)((float)CurrentRecord / (float)numberToCompute * 100);
-                                if (percentComplete > highestPercentageReached)
-                                {
-                                    highestPercentageReached = percentComplete;
+                                    string msg = "";
+                                    int rowsUpdated = command.ExecuteNonQuery();
+                                    if (rowsUpdated > 0)
+                                    {
+                                        msg = $"Successfully I/U/D  Record {i} to {EntityName} : {updatestring}";
+                                    }
+                                    else
+                                    {
+                                        msg = $"Fail to I/U/D  Record {i} to {EntityName} : {updatestring}";
+                                    }
+                                    int percentComplete = (int)((float)CurrentRecord / (float)numberToCompute * 100);
+                                    if (percentComplete > highestPercentageReached)
+                                    {
+                                        highestPercentageReached = percentComplete;
 
-                                }
-                                PassedArgs args = new PassedArgs
-                                {
-                                    CurrentEntity = EntityName,
-                                    DatasourceName = DatasourceName,
-                                    DataSource = this,
-                                    EventType = "UpdateEntity",
-                                };
-                                if (DataStruct.PrimaryKeys != null)
-                                {
-                                    if (DataStruct.PrimaryKeys.Count == 1)
-                                    {
-                                        args.ParameterString1 = r[DataStruct.PrimaryKeys[0].fieldname].ToString();
                                     }
-                                    if (DataStruct.PrimaryKeys.Count == 2)
+                                    PassedArgs args = new PassedArgs
                                     {
-                                        args.ParameterString2 = r[DataStruct.PrimaryKeys[1].fieldname].ToString();
-                                    }
-                                    if (DataStruct.PrimaryKeys.Count == 3)
+                                        CurrentEntity = EntityName,
+                                        DatasourceName = DatasourceName,
+                                        DataSource = this,
+                                        EventType = "UpdateEntity",
+                                    };
+                                    if (DataStruct.PrimaryKeys != null)
                                     {
-                                        args.ParameterString3 = r[DataStruct.PrimaryKeys[2].fieldname].ToString();
+                                        if (DataStruct.PrimaryKeys.Count == 1)
+                                        {
+                                            args.ParameterString1 = r[DataStruct.PrimaryKeys[0].fieldname].ToString();
+                                        }
+                                        if (DataStruct.PrimaryKeys.Count == 2)
+                                        {
+                                            args.ParameterString2 = r[DataStruct.PrimaryKeys[1].fieldname].ToString();
+                                        }
+                                        if (DataStruct.PrimaryKeys.Count == 3)
+                                        {
+                                            args.ParameterString3 = r[DataStruct.PrimaryKeys[2].fieldname].ToString();
+                                        }
                                     }
+                                    args.ParameterInt1 = percentComplete;
+                                    //         UpdateEvents(EntityName, msg, highestPercentageReached, CurrentRecord, numberToCompute, this);
+                                    if (progress != null)
+                                    {
+                                        PassedArgs ps = new PassedArgs { ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = null };
+                                        progress.Report(ps);
+                                    }
+                                    //   PassEvent?.Invoke(this, args);
+                                    //   DMEEditor.RaiseEvent(this, args);
                                 }
-                                args.ParameterInt1 = percentComplete;
-                                //         UpdateEvents(EntityName, msg, highestPercentageReached, CurrentRecord, numberToCompute, this);
-                                if (progress != null)
+                                catch (Exception er)
                                 {
-                                    PassedArgs ps = new PassedArgs { ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = null };
-                                    progress.Report(ps);
+                                    string msg = $"Fail to I/U/D  Record {i} to {EntityName} : {updatestring}";
+                                    if (progress != null)
+                                    {
+                                        PassedArgs ps = new PassedArgs { ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = msg };
+                                        progress.Report(ps);
+                                    }
+                                    DMEEditor.AddLogMessage("Fail", msg, DateTime.Now, i, EntityName, Errors.Failed);
                                 }
-                                //   PassEvent?.Invoke(this, args);
-                                //   DMEEditor.RaiseEvent(this, args);
                             }
-                            catch (Exception er)
-                            {
-                                string msg = $"Fail to I/U/D  Record {i} to {EntityName} : {updatestring}";
-                                if (progress != null)
-                                {
-                                    PassedArgs ps = new PassedArgs { ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = msg };
-                                    progress.Report(ps);
-                                }
-                                DMEEditor.AddLogMessage("Fail", msg, DateTime.Now, i, EntityName, Errors.Failed);
-                            }
+                            DMEEditor.ETL.CurrentScriptRecord = DMEEditor.ETL.ScriptCount;
+                            command.Dispose();
+                            DMEEditor.AddLogMessage("Success", $"Finished Uploading Data to {EntityName}", DateTime.Now, 0, null, Errors.Ok);
                         }
-                        DMEEditor.ETL.CurrentScriptRecord = DMEEditor.ETL.ScriptCount;
-                        command.Dispose();
-                        DMEEditor.AddLogMessage("Success", $"Finished Uploading Data to {EntityName}", DateTime.Now, 0, null, Errors.Ok);
+                       
                     }
 
 

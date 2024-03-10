@@ -27,9 +27,9 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="Couchbase.Lite" Version="3.1.3" />
+	  <PackageReference Include="Couchbase.Lite" Version="3.1.6" />
 	  <PackageReference Include="Couchbase.Lite.Mapping" Version="1.1.0" />
-	  <PackageReference Include="Couchbase.Lite.Support.NetDesktop" Version="3.1.3" />
+	  <PackageReference Include="Couchbase.Lite.Support.NetDesktop" Version="3.1.6" />
 	</ItemGroup>
 
 </Project>
