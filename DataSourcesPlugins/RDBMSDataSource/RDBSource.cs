@@ -1439,9 +1439,11 @@ namespace TheTechIdea.Beep.DataBase
                 
                     IDbDataAdapter adp = GetDataAdapter(sql, null);
                     adp.Fill(ds);
+#if DEBUG
                     DMEEditor.AddLogMessage("Beep", $"Get Tables List Query {sql}", DateTime.Now, 0, DatasourceName, Errors.Failed);
-                     Debug.WriteLine($" -- Get Tables List Query {sql}");
-                    DataTable tb = new DataTable();
+                    Debug.WriteLine($" -- Get Tables List Query {sql}");
+#endif 
+                DataTable tb = new DataTable();
                     tb = ds.Tables[0];
                     EntitiesNames = new List<string>();
                     int i = 0;
