@@ -8,6 +8,7 @@ using TheTechIdea.Logger;
 using TheTechIdea.Util;
 
 using System.Text.RegularExpressions;
+using System.Data.SqlTypes;
 
 namespace TheTechIdea.Beep.DataBase
 {
@@ -1007,42 +1008,107 @@ namespace TheTechIdea.Beep.DataBase
                 if (!command.Parameters.Contains("p_" + Regex.Replace(item.fieldname, @"\s+", "_")))
                 {
                     OracleParameter parameter = command.CreateParameter();
-                    if (!item.fieldtype.Equals("System.String", StringComparison.OrdinalIgnoreCase) && !item.fieldtype.Equals("System.DateTime", StringComparison.OrdinalIgnoreCase))
+                    switch (item.fieldtype)
                     {
-                        if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
-                        {
-                            parameter.Value = Convert.ToDecimal(null);
-                        }
-                        else
-                        {
-                            parameter.Value = r[item.fieldname];
-                        }
-                    }
-                    else
-                        if (item.fieldtype.Equals("System.DateTime", StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
-                        {
-
-                            parameter.Value = DBNull.Value;
+                        case "System.DateTime":
                             parameter.DbType = DbType.DateTime;
-                        }
-                        else
-                        {
-                            parameter.DbType = DbType.DateTime;
-                            try
-                            {
-                                parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
-                            }
-                            catch (FormatException formatex)
+                            if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
                             {
 
-                                parameter.Value = Oracle.ManagedDataAccess.Types.OracleTimeStamp.Null;
+                                parameter.Value = DBNull.Value;
+                                parameter.DbType = DbType.DateTime;
                             }
-                        }
+                            else
+                            {
+                                parameter.DbType = DbType.DateTime;
+                                try
+                                {
+                                    parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
+                                }
+                                catch (FormatException formatex)
+                                {
+
+                                    parameter.Value = Oracle.ManagedDataAccess.Types.OracleTimeStamp.Null;
+                                }
+                            }
+                            break;
+                        case "System.Double":
+                            parameter.DbType = DbType.Double;
+                            parameter.Value = Convert.ToDouble(r[item.fieldname]);
+                            break;
+                        case "System.Single": // Single is equivalent to float in C#
+                            parameter.DbType = DbType.Single;
+                            parameter.Value = Convert.ToSingle(r[item.fieldname]);
+                            break;
+                        case "System.Byte":
+                            parameter.DbType = DbType.Byte;
+                            parameter.Value = Convert.ToByte(r[item.fieldname]);
+                            break;
+                        case "System.Guid":
+                            parameter.DbType = DbType.Guid;
+                            parameter.Value = Guid.Parse(r[item.fieldname].ToString());
+                            break;
+                        case "System.String":  // For VARCHAR2 and NVARCHAR2
+                            parameter.DbType = DbType.String;
+                            parameter.Value = r[item.fieldname] ?? DBNull.Value;
+                            break;
+                        case "System.Decimal":  // For NUMBER without scale
+                            parameter.DbType = DbType.Decimal;
+                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToDecimal(r[item.fieldname]);
+                            break;
+                        case "System.Int32":  // For NUMBER that fits into Int32
+                            parameter.DbType = DbType.Int32;
+                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToInt32(r[item.fieldname]);
+                            break;
+                        case "System.Int64":  // For NUMBER that fits into Int64
+                            parameter.DbType = DbType.Int64;
+                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToInt64(r[item.fieldname]);
+                            break;
+                        case "System.Boolean":  // If you have a boolean in .NET mapped to VARCHAR2(3 CHAR) in Oracle
+                            parameter.DbType = DbType.Boolean;
+                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToBoolean(r[item.fieldname]);
+                            break;
+                        // Add more cases as needed for other types
+                        default:
+                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : r[item.fieldname];
+                            break;
                     }
-                    else
-                        parameter.Value = r[item.fieldname];
+                    //if (!item.fieldtype.Equals("System.String", StringComparison.OrdinalIgnoreCase) && !item.fieldtype.Equals("System.DateTime", StringComparison.OrdinalIgnoreCase))
+                    //{
+                    //    if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                    //    {
+                    //        parameter.Value = Convert.ToDecimal(null);
+                    //    }
+                    //    else
+                    //    {
+                    //        parameter.Value = r[item.fieldname];
+                    //    }
+                    //}
+                    //else
+                    //    if (item.fieldtype.Equals("System.DateTime", StringComparison.OrdinalIgnoreCase))
+                    //{
+                    //    if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                    //    {
+
+                    //        parameter.Value = DBNull.Value;
+                    //        parameter.DbType = DbType.DateTime;
+                    //    }
+                    //    else
+                    //    {
+                    //        parameter.DbType = DbType.DateTime;
+                    //        try
+                    //        {
+                    //            parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
+                    //        }
+                    //        catch (FormatException formatex)
+                    //        {
+
+                    //            parameter.Value = Oracle.ManagedDataAccess.Types.OracleTimeStamp.Null;
+                    //        }
+                    //    }
+                    //}
+                    //else
+                    //    parameter.Value = r[item.fieldname];
                     parameter.ParameterName = "p_" + Regex.Replace(item.fieldname, @"\s+", "_");
                     //   parameter.DbType = TypeToDbType(tb.Columns[item.fieldname].DataType);
                     command.Parameters.Add(parameter);
