@@ -344,42 +344,90 @@ namespace TheTechIdea.Beep.DataBase
                 if (!command.Parameters.Contains("p_" + Regex.Replace(item.fieldname, @"\s+", "_")))
                 {
                     IDbDataParameter parameter = command.CreateParameter();
-                    //if (!item.fieldtype.Equals("System.String", StringComparison.InvariantCultureIgnoreCase) && !item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
+                    switch (item.fieldtype)
+                    {
+                        case "System.DateTime":
+                                parameter.DbType = DbType.DateTime;
+                                try
+                                {
+                                // parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToDateTime(r[item.fieldname]);
+                                //parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
+                                // Assuming r[item.fieldname] is of type DateTime
+                                DateTime dateValue = (DateTime)r[item.fieldname];
+                                // Format the DateTime to a string in Oracle's expected format
+                                parameter.Value = dateValue.ToString("dd-MMM-yyyy");
+                            }
+                                catch (FormatException formatex)
+                                {
+
+                                    parameter.Value = SqlDateTime.Null;
+                                }
+                            break;
+                        case "System.Double":
+                            parameter.DbType = DbType.Double;
+                            parameter.Value = Convert.ToDouble(r[item.fieldname]);
+                            break;
+                        case "System.Single": // Single is equivalent to float in C#
+                            parameter.DbType = DbType.Single;
+                            parameter.Value = Convert.ToSingle(r[item.fieldname]);
+                            break;
+                        case "System.Byte":
+                            parameter.DbType = DbType.Byte;
+                            parameter.Value = Convert.ToByte(r[item.fieldname]);
+                            break;
+                        case "System.Guid":
+                            parameter.DbType = DbType.Guid;
+                            parameter.Value = Guid.Parse(r[item.fieldname].ToString());
+                            break;
+                        case "System.String":  // For VARCHAR2 and NVARCHAR2
+                            parameter.DbType = DbType.String;
+                            parameter.Value = r[item.fieldname] ?? DBNull.Value;
+                            break;
+                        case "System.Decimal":  // For NUMBER without scale
+                            parameter.DbType = DbType.Decimal;
+                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToDecimal(r[item.fieldname]);
+                            break;
+                        case "System.Int32":  // For NUMBER that fits into Int32
+                            parameter.DbType = DbType.Int32;
+                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToInt32(r[item.fieldname]);
+                            break;
+                        case "System.Int64":  // For NUMBER that fits into Int64
+                            parameter.DbType = DbType.Int64;
+                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToInt64(r[item.fieldname]);
+                            break;
+                        case "System.Boolean":  // If you have a boolean in .NET mapped to VARCHAR2(3 CHAR) in Oracle
+                            parameter.DbType = DbType.Boolean;
+                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToBoolean(r[item.fieldname]);
+                            break;
+                        // Add more cases as needed for other types
+                        default:
+                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : r[item.fieldname];
+                            break;
+                    }
+                    //if (item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
                     //{
                     //    if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
                     //    {
-                    //        parameter.Value = Convert.ToDecimal(null);
+
+                    //        parameter.Value = DBNull.Value;
+                    //        parameter.DbType = DbType.DateTime;
                     //    }
                     //    else
                     //    {
-                    //        parameter.Value = r[item.fieldname];
+                    //        parameter.DbType = DbType.DateTime;
+                    //        try
+                    //        {
+                    //            parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
+                    //        }
+                    //        catch (FormatException formatex)
+                    //        {
+
+                    //            parameter.Value = SqlDateTime.Null;
+                    //        }
                     //    }
                     //}
                     //else
-                    if (item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
-                        {
-
-                            parameter.Value = DBNull.Value;
-                            parameter.DbType = DbType.DateTime;
-                        }
-                        else
-                        {
-                            parameter.DbType = DbType.DateTime;
-                            try
-                            {
-                                parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
-                            }
-                            catch (FormatException formatex)
-                            {
-
-                                parameter.Value = SqlDateTime.Null;
-                            }
-                        }
-                    }
-                    else
-                        parameter.Value = r[item.fieldname];
+                    //    parameter.Value = r[item.fieldname];
                     parameter.ParameterName = "p_" + Regex.Replace(item.fieldname, @"\s+", "_");
                     //   parameter.DbType = TypeToDbType(tb.Columns[item.fieldname].DataType);
                     command.Parameters.Add(parameter);
@@ -1215,7 +1263,16 @@ namespace TheTechIdea.Beep.DataBase
 
                                 x.fieldname = r.Field<string>("ColumnName");
                                 x.fieldtype = (r.Field<Type>("DataType")).ToString(); //"ColumnSize"
-                                x.Size1 = r.Field<int>("ColumnSize");
+                                if( DatasourceType == DataSourceType.Oracle)
+                                {
+                                    if (x.fieldtype.Equals("FLOAT", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        int precision = GetFloatPrecision(x.EntityName, x.fieldname); // Implement GetFloatPrecision to retrieve the precision for the field
+                                        x.fieldtype = MapOracleFloatToDotNetType(precision);
+                                    }
+                                }
+                              
+                            x.Size1 = r.Field<int>("ColumnSize");
                                 try
                                 {
                                     x.IsAutoIncrement = r.Field<bool>("IsAutoIncrement");
@@ -2460,6 +2517,52 @@ namespace TheTechIdea.Beep.DataBase
         {
             throw new NotImplementedException();
         }
+        public static string MapOracleFloatToDotNetType(int precision)
+        {
+            if (precision <= 24)
+            {
+                // Fits in .NET float
+                return "System.Single";
+            }
+            else if (precision <= 53)
+            {
+                // Fits in .NET double
+                return "System.Double";
+            }
+            else
+            {
+                // Use .NET decimal for higher precision
+                return "System.Decimal";
+            }
+        }
+        public int GetFloatPrecision(string tableName, string fieldName)
+        {
+            int precision = 0;
+            string query = $"SELECT DATA_PRECISION FROM ALL_TAB_COLUMNS WHERE TABLE_NAME = '{tableName.ToUpper()}' AND COLUMN_NAME = '{fieldName.ToUpper()}'";
+
+
+            IDbCommand command = GetDataCommand(); 
+                try
+                {
+                    command.CommandText = query;
+                    IDataReader reader = command.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        // Assuming the precision is not null, adjust as needed if it could be
+                        precision = reader.GetInt32(0);
+                    }
+                    reader.Close();
+                }
+                catch (Exception ex)
+                {
+                    // Handle exceptions
+                    Console.WriteLine(ex.Message);
+                }
+            
+
+            return precision;
+        }
+
         public virtual string GetTableName(string querystring)
         {
             string schname = Dataconnection.ConnectionProp.SchemaName;
