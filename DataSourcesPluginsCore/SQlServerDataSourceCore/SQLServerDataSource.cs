@@ -17,7 +17,7 @@ using DataManagementModels.DataBase;
 namespace TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType =  DataSourceType.SqlServer)]
-    public class SQLServerDataSource : RDBSource
+    public class SQLServerDataSource : RDBSource, IDataSource
     {
         
         public SQLServerDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)

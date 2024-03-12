@@ -6,14 +6,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TheTechIdea.Beep.Vis;
-using TheTechIdea.Beep.Report;
+
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
 
 namespace TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.Mysql)]
-    public class MySQLDataSource : RDBSource
+    public class MySQLDataSource : RDBSource, IDataSource
     {
 
        

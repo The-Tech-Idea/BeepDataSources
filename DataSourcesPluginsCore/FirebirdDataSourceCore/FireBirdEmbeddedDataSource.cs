@@ -7,14 +7,13 @@ using System.Text;
 using TheTechIdea.Beep;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.DataBase;
-using TheTechIdea.Beep.Vis;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
 
 namespace  TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType =  DataSourceType.FireBird)]
-    public class FireBirdEmbeddedDataSource : RDBSource, ILocalDB
+    public class FireBirdEmbeddedDataSource : RDBSource, ILocalDB, IDataSource
     {
         public bool CanCreateLocal { get ; set ; }
         public bool InMemory { get; set; } = false;

@@ -9,7 +9,7 @@ using TheTechIdea.Util;
 namespace TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.SqlLite)]
-    public class SQLiteDataSource : RDBSource, ILocalDB,IInMemoryDB
+    public class SQLiteDataSource : RDBSource, ILocalDB,IInMemoryDB,IDataSource
 
     {
         private string dateformat = "yyyy-MM-dd HH:mm:ss";

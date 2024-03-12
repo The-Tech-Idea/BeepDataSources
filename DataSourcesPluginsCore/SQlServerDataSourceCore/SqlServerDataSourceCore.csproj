@@ -34,9 +34,9 @@
   <Compile Remove="..\..\DataSourcesPlugins\SQLServerDataSource\SQLServerDataSource.cs" />
 </ItemGroup>
 <ItemGroup>
-  <PackageReference Include="RDBDataSource" Version="1.0.11" />
+  <PackageReference Include="RDBDataSource" Version="1.0.16" />
   <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.355" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.358" />
   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.122" />
 </ItemGroup>
 

@@ -14,7 +14,7 @@ using TheTechIdea.Util;
 
 namespace  TheTechIdea.Beep.DataBase
 {
-    public class PostgreDataSource : RDBSource
+    public class PostgreDataSource : RDBSource, IDataSource
     {
         public PostgreDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
         {

@@ -34,8 +34,8 @@
     <Compile Remove="..\CouchDBDataSource\CouchDbReader.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CouchDB.NET" Version="3.4.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.355" />
+    <PackageReference Include="CouchDB.NET" Version="3.6.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.358" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WebApiDataSourceCore\WebApiDataSourceCore.csproj" />
