@@ -347,21 +347,26 @@ namespace TheTechIdea.Beep.DataBase
                     switch (item.fieldtype)
                     {
                         case "System.DateTime":
-                                parameter.DbType = DbType.DateTime;
-                                try
-                                {
-                                // parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToDateTime(r[item.fieldname]);
-                                //parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
-                                // Assuming r[item.fieldname] is of type DateTime
-                                DateTime dateValue = (DateTime)r[item.fieldname];
-                                // Format the DateTime to a string in Oracle's expected format
-                                parameter.Value = dateValue.ToString("dd-MMM-yyyy");
-                            }
-                                catch (FormatException formatex)
-                                {
+                            parameter.DbType = DbType.DateTime;  // Set this once as it's common for both branches
 
-                                    parameter.Value = SqlDateTime.Null;
+                            if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                            {
+                                parameter.Value = DBNull.Value;
+                            }
+                            else
+                            {
+                                // Use TryParse for safer date parsing without exception handling
+                                if (DateTime.TryParse(r[item.fieldname].ToString(), out DateTime dateValue))
+                                {
+                                    parameter.Value = dateValue;
                                 }
+                                else
+                                {
+                                    // If parsing fails, assign a DBNull.Value
+                                    parameter.Value = DBNull.Value;
+                                }
+                            }
+
                             break;
                         case "System.Double":
                             parameter.DbType = DbType.Double;

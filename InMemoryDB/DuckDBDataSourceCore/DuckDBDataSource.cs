@@ -9,10 +9,11 @@ using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
-using static DuckDB.NET.NativeMethods;
 using System.Reflection;
 using System.Text;
 using System.Xml;
+using static DuckDB.NET.Native.NativeMethods;
+using DuckDB.NET.Native;
 
 
 namespace DuckDBDataSourceCore
@@ -272,10 +273,15 @@ namespace DuckDBDataSourceCore
         }
         public override ConnectionState Closeconnection()
         {
+            ConnectionState retval= ConnectionState.Closed;
             try
             {
                 SaveStructure();
-                DuckConn.Close();
+                if(DuckConn!=null)
+                {
+                    DuckConn.Close();
+                }
+             
                 Dataconnection.ConnectionStatus = ConnectionState.Closed;
                 DMEEditor.AddLogMessage("Success", $"Closing connection to Sqlite Database", System.DateTime.Now, 0, null, Errors.Ok);
             }
@@ -285,7 +291,7 @@ namespace DuckDBDataSourceCore
                 DMEEditor.AddLogMessage("Fail", $"{errmsg}:{ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
             }
             //  return RDBMSConnection.DbConn.State;
-            return DuckConn.State;
+            return retval;
 
         }
         public override List<string> GetEntitesList()
