@@ -1633,8 +1633,8 @@ namespace TheTechIdea.Beep.DataBase
             bool retval = false;
             if (CheckEntityExist(entity.EntityName) == false)
             {
-                string createstring=CreateEntity(entity);
-                DMEEditor.ErrorObject=ExecuteSql(createstring);
+                string createstring = CreateEntity(entity);
+                DMEEditor.ErrorObject = ExecuteSql(createstring);
                 if (DMEEditor.ErrorObject.Flag == Errors.Failed)
                 {
                     retval = false;
@@ -1644,28 +1644,8 @@ namespace TheTechIdea.Beep.DataBase
                     Entities.Add(entity);
                     retval = true;
                 }
-            } else
-            {
-                if (Entities.Count > 0)
-                {
-                    if (Entities.Where(p => p.EntityName.Equals(entity.EntityName, StringComparison.InvariantCultureIgnoreCase) && p.Created == false).Any())
-                    {
-                        string createstring = CreateEntity(entity);
-                        DMEEditor.ErrorObject = ExecuteSql(createstring);
-                        if (DMEEditor.ErrorObject.Flag == Errors.Failed)
-                        {
-                            retval = false;
-                        }
-                        else
-                        {
-                            Entities.Add(entity);
-                            retval = true;
-                        }
-                    }
-                }
-                else
-                    return false;
             }
+            
 
             return retval;
         }
