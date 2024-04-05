@@ -1761,9 +1761,9 @@ namespace TheTechIdea.Beep.DataBase
         {
             var t = Task.Run<IErrorsInfo>(() => { return ExecuteSql(scripts.ddl); });
             t.Wait();
-            scripts.errorsInfo = t.Result;
+            DMEEditor.ErrorObject = t.Result;
             scripts.errormessage = DMEEditor.ErrorObject.Message;
-            DMEEditor.ErrorObject = scripts.errorsInfo;
+           
             return DMEEditor.ErrorObject;
         }
         /// <summary>

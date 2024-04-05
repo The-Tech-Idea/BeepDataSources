@@ -19,16 +19,21 @@ using DuckDB.NET.Native;
 namespace DuckDBDataSourceCore
 {
     [AddinAttribute(Category = DatasourceCategory.INMEMORY, DatasourceType = DataSourceType.DuckDB)]
-    public class DuckDBDataSource : RDBSource, IDataSource, IInMemoryDB
+    public class DuckDBDataSource : InMemoryRDBSource
     {
         private bool disposedValue;
         string dbpath;
-
+        #region "InMemoryDataSource Events"
+        public event EventHandler<PassedArgs> OnLoadData;
+        public event EventHandler<PassedArgs> OnLoadStructure;
+        public event EventHandler<PassedArgs> OnSaveStructure;
+        public event EventHandler<PassedArgs> OnSyncData;
         public event EventHandler<PassedArgs> PassEvent;
+        #endregion
+   
         public DuckDBConnection DuckConn { get; set; }
         DuckDBTransaction Transaction { get; set; }
-        string filepath;//= Path.Combine(dbpath, "createscripts.json");
-        string InMemoryStructuresfilepath;//= Path.Combine(dbpath, "InMemoryStructures.json");
+      
         public DuckDBDataSource(string pdatasourcename, IDMLogger plogger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(pdatasourcename, plogger, pDMEEditor, databasetype, per)
         {
             if(per == null)
@@ -52,8 +57,7 @@ namespace DuckDBDataSourceCore
          //   Dataconnection.ConnectionProp.IsInMemory=true;
             ColumnDelimiter = "[]";
             ParameterDelimiter = "$";
-            DMEEditor = pDMEEditor;
-            DatasourceName=pdatasourcename;
+           
             dbpath = Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath, DatasourceName);
         }
         public List<EntityStructure> InMemoryStructures { get; set; } = new List<EntityStructure>();
@@ -120,15 +124,15 @@ namespace DuckDBDataSourceCore
         {
             return Dataconnection.ConnectionProp.ConnectionString;
         }
-        public override bool CreateEntityAs(EntityStructure entity)
-        {
-            string ds = entity.DataSourceID;
-            bool retval =  base.CreateEntityAs(entity);
-            entity.DataSourceID = ds;
-
-            InMemoryStructures.Add(GetEntity(entity));
-            return retval;
-        }
+        //public override bool CreateEntityAs(EntityStructure entity)
+        //{
+        //    string ds = entity.DataSourceID;
+        //    bool retval =  base.CreateEntityAs(entity);
+        //    entity.DataSourceID = ds;
+        //    InMemoryStructures.Add(base.GetEntityStructure(entity));
+        //    //InMemoryStructures.Add(GetEntity(entity));
+        //    return retval;
+        //}
         private EntityStructure GetEntity(EntityStructure entity)
         {
             EntityStructure ent = new EntityStructure();
@@ -149,69 +153,7 @@ namespace DuckDBDataSourceCore
             ent.SchemaOrOwnerOrDatabase = entity.SchemaOrOwnerOrDatabase;
             return ent;
         }
-        public IErrorsInfo LoadStructure()
-        {
-            DMEEditor.ErrorObject.Flag = Errors.Ok;
-            try
-            {
-               
-                 filepath = Path.Combine(dbpath, "createscripts.json");
-                 InMemoryStructuresfilepath = Path.Combine(dbpath, "InMemoryStructures.json");
-                ConnectionStatus = ConnectionState.Open;
-                InMemoryStructures = new List<EntityStructure>();
-                Entities = new List<EntityStructure>();
-                EntitiesNames = new List<string>();
-             
-                if (File.Exists(InMemoryStructuresfilepath))
-                {
-                    InMemoryStructures = DMEEditor.ConfigEditor.JsonLoader.DeserializeObject<EntityStructure>(InMemoryStructuresfilepath);
-                }
-                if (File.Exists(filepath))
-                {
-                    var hdr = DMEEditor.ConfigEditor.JsonLoader.DeserializeSingleObject<ETLScriptHDR>(filepath);
-                    DMEEditor.ETL.Script = hdr;
-                    DMEEditor.ETL.Script.LastRunDateTime = System.DateTime.Now;
-                 //   DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token.Token);
 
-                }
-
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Could not Load InMemory Structure for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
-            }
-            return DMEEditor.ErrorObject;
-        }
-        public IErrorsInfo SaveStructure()
-        {
-            DMEEditor.ErrorObject.Flag = Errors.Ok;
-            try
-            {
-                if (InMemoryStructures.Count > 0)
-                {
-
-                    Directory.CreateDirectory(dbpath);
-
-                    string filepath = Path.Combine(dbpath, "createscripts.json");
-                    string InMemoryStructuresfilepath = Path.Combine(dbpath, "InMemoryStructures.json");
-                    ETLScriptHDR scriptHDR = new ETLScriptHDR();
-                    scriptHDR.ScriptDTL = new List<ETLScriptDet>();
-                    CancellationTokenSource token = new CancellationTokenSource();
-                    scriptHDR.scriptName = Dataconnection.ConnectionProp.Database;
-                    scriptHDR.scriptStatus = "SAVED";
-                    scriptHDR.ScriptDTL.AddRange(DMEEditor.ETL.GetCreateEntityScript(this, InMemoryStructures, DMEEditor.progress, token.Token));
-                    scriptHDR.ScriptDTL.AddRange(DMEEditor.ETL.GetCopyDataEntityScript(this, InMemoryStructures, DMEEditor.progress, token.Token));
-                    DMEEditor.ConfigEditor.JsonLoader.Serialize(filepath, scriptHDR);
-                    DMEEditor.ConfigEditor.JsonLoader.Serialize(InMemoryStructuresfilepath, InMemoryStructures);
-                }
-
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Could not save InMemory Structure for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
-            }
-            return DMEEditor.ErrorObject;
-        }
         private static void PrintQueryResults(DuckDBResult queryResult)
         {
             long columnCount = Query.DuckDBColumnCount(ref queryResult);
@@ -243,8 +185,7 @@ namespace DuckDBDataSourceCore
         #region "IDataSource Methods"
         public override ConnectionState Openconnection()
         {
-            ETLScriptHDR scriptHDR = new ETLScriptHDR();
-            scriptHDR.ScriptDTL = new List<ETLScriptDet>();
+         
             CancellationTokenSource token = new CancellationTokenSource();
 
             Dataconnection.InMemory = Dataconnection.ConnectionProp.IsInMemory;
@@ -259,7 +200,7 @@ namespace DuckDBDataSourceCore
                 base.Openconnection();
                 if (DMEEditor.ErrorObject.Flag == Errors.Ok)
                 {
-                    LoadStructure();
+                    
                     return ConnectionState.Open;
                 }
             }
@@ -293,15 +234,6 @@ namespace DuckDBDataSourceCore
             //  return RDBMSConnection.DbConn.State;
             return retval;
 
-        }
-        public override List<string> GetEntitesList()
-        {
-            if(Entities.Count == 0)
-            {
-                LoadStructure();
-               
-            }
-            return EntitiesNames;
         }
         public override IErrorsInfo BeginTransaction(PassedArgs args)
         {
@@ -580,73 +512,7 @@ namespace DuckDBDataSourceCore
                 lastentityname = Entityname;
             }
         }
-        public IErrorsInfo LoadData(Progress<PassedArgs> progress, CancellationToken token)
-        {
-            DMEEditor.ErrorObject.Flag = Errors.Ok;
-            try
-            {
-                if(IsLoaded)
-                {
-                    return DMEEditor.ErrorObject;
-                }
-              
-                ConnectionStatus = ConnectionState.Open;
-                InMemoryStructures = new List<EntityStructure>();
-                Entities = new List<EntityStructure>();
-                EntitiesNames = new List<string>();
-                
-                if (File.Exists(InMemoryStructuresfilepath))
-                {
-                    InMemoryStructures = DMEEditor.ConfigEditor.JsonLoader.DeserializeObject<EntityStructure>(InMemoryStructuresfilepath);
-                }
-                if (File.Exists(filepath))
-                {
-                    var hdr = DMEEditor.ConfigEditor.JsonLoader.DeserializeSingleObject<ETLScriptHDR>(filepath);
-                    DMEEditor.ETL.Script = hdr;
-                    DMEEditor.ETL.Script.LastRunDateTime = System.DateTime.Now;
-                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token);
-
-                }
-                IsLoaded=true;
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Could not Load InMemory Structure for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
-            }
-            return DMEEditor.ErrorObject;
-        }
-        public IErrorsInfo SyncData(Progress<PassedArgs> progress, CancellationToken token)
-        {
-            DMEEditor.ErrorObject.Flag = Errors.Ok;
-            try
-            {
-
-
-                ConnectionStatus = ConnectionState.Open;
-                InMemoryStructures = new List<EntityStructure>();
-                Entities = new List<EntityStructure>();
-                EntitiesNames = new List<string>();
-
-                if (File.Exists(InMemoryStructuresfilepath))
-                {
-                    InMemoryStructures = DMEEditor.ConfigEditor.JsonLoader.DeserializeObject<EntityStructure>(InMemoryStructuresfilepath);
-                }
-                if (File.Exists(filepath))
-                {
-                    var hdr = DMEEditor.ConfigEditor.JsonLoader.DeserializeSingleObject<ETLScriptHDR>(filepath);
-                    DMEEditor.ETL.Script = hdr;
-                    DMEEditor.ETL.Script.LastRunDateTime = System.DateTime.Now;
-                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token);
-
-                }
-
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Could not Load InMemory Structure for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
-            }
-            return DMEEditor.ErrorObject;
-        }
+      
         //public  Type GetFieldType(int ordinal)
         //{
         //    return NativeMethods.Query.DuckDBColumnType(currentResult, ordinal) switch
