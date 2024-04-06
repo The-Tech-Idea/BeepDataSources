@@ -434,8 +434,12 @@ namespace TheTechIdea.Beep.DataBase
                 {
                     DMEEditor.ETL.Script = CreateScript;
                     DMEEditor.ETL.Script.LastRunDateTime = System.DateTime.Now;
-                     
-                    DMEEditor.ETL.RunCreateScript(progress, token, true, true); 
+
+                    
+                    Task.Run(() =>
+                    {
+                        DMEEditor.ETL.RunCreateScript(progress, token, true, true);
+                    }).Wait();
                     IsStructureCreated = true;
 
                 }
