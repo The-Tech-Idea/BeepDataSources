@@ -1,7 +1,9 @@
 ﻿using DataManagementModels.DataBase;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -38,6 +40,7 @@ namespace TheTechIdea.Beep
         public bool IsLoaded { get; set; } = false;
         public bool IsSaved { get; set; } = false;
         public bool IsSynced { get; set; } = false;
+        public bool IsStructureCreated { get; set; } = false;
         public ETLScriptHDR CreateScript { get; set; } = new ETLScriptHDR();
         public List<EntityStructure> InMemoryStructures { get; set; } = new List<EntityStructure>();
         public string ColumnDelimiter { get; set; }
@@ -125,12 +128,23 @@ namespace TheTechIdea.Beep
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
             {
-                if (InMemoryStructures.Count > 0 && Isfoldercreated)
-                {
+                CancellationTokenSource token = new CancellationTokenSource();
+                var progress = new Progress<PassedArgs>(percent => { });
+               
+
+                    CreateScript = new ETLScriptHDR();
+                    CreateScript.ScriptDTL.AddRange(DMEEditor.ETL.GetCreateEntityScript(this, Entities, progress, token.Token, true));
+                    foreach (var item in CreateScript.ScriptDTL)
+                    {
+                        item.CopyDataScripts.AddRange(DMEEditor.ETL.GetCopyDataEntityScript(this, new List<EntityStructure>() { item.SourceEntity }, progress, token.Token));
+                    }
+
+
+
                     DMEEditor.ConfigEditor.JsonLoader.Serialize(Filepath, CreateScript);
                     DMEEditor.ConfigEditor.JsonLoader.Serialize(InMemoryStructuresfilepath, InMemoryStructures);
                     OnSaveStructure?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
-                }
+               
 
             }
             catch (Exception ex)
@@ -260,6 +274,32 @@ namespace TheTechIdea.Beep
 
 
 
+        }
+        public IErrorsInfo CreateStructure(Progress<PassedArgs> progress, CancellationToken token)
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (!IsStructureCreated)
+                {
+                    DMEEditor.ETL.Script = CreateScript;
+                    DMEEditor.ETL.Script.LastRunDateTime = System.DateTime.Now;
+
+
+                    Task.Run(() =>
+                    {
+                        DMEEditor.ETL.RunCreateScript(progress, token, true, true);
+                    }).Wait();
+                    IsStructureCreated = true;
+
+                }
+            }
+            catch (Exception ex)
+            {
+                IsStructureCreated = false;
+                DMEEditor.AddLogMessage("Beep", $"Could not Load InMemory Structure for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
         }
         #endregion
     }

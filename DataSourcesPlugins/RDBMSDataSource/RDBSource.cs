@@ -1945,7 +1945,15 @@ namespace TheTechIdea.Beep.DataBase
             string retval = null;
             try
             {
-                retval = @" PRIMARY KEY ( ";
+                if (t1.PrimaryKeys.Count > 0)
+                {
+                    retval = @" PRIMARY KEY ( ";
+                }
+                else
+                {
+                    return string.Empty;
+                }
+                
                 ErrorObject.Flag = Errors.Ok;
                 int i = 0;
                 foreach (EntityField dbf in t1.PrimaryKeys)

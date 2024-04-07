@@ -434,12 +434,10 @@ namespace TheTechIdea.Beep.DataBase
                 {
                     DMEEditor.ETL.Script = CreateScript;
                     DMEEditor.ETL.Script.LastRunDateTime = System.DateTime.Now;
-
-                    
-                    Task.Run(() =>
-                    {
-                        DMEEditor.ETL.RunCreateScript(progress, token, true, true);
-                    }).Wait();
+                    // Running the async method synchronously
+                    var task = Task.Run(() => DMEEditor.ETL.RunCreateScript(progress, token, true, true));
+                    task.Wait(token);  // Pass the cancellation token to Wait.
+                    IsStructureCreated = true;
                     IsStructureCreated = true;
 
                 }
@@ -458,9 +456,10 @@ namespace TheTechIdea.Beep.DataBase
             {
                 if (Isfoldercreated && IsCreated)
                 {
-                    DMEEditor.ETL.Script = CreateScript;
+                   List<ETLScriptDet> retscripts= DMEEditor.ETL.GetCopyDataEntityScript(this, Entities, progress, token);
+                    DMEEditor.ETL.Script.ScriptDTL = retscripts;
                     DMEEditor.ETL.Script.LastRunDateTime = System.DateTime.Now;
-                    DMEEditor.ETL.RunImportScript(DMEEditor.progress, token,true);
+                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token,true);
                     OnLoadData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
                     IsLoaded = true;
                 }
@@ -528,23 +527,20 @@ namespace TheTechIdea.Beep.DataBase
                 var progress = new Progress<PassedArgs>(percent => { });
                // GetEntitesList();
                 InMemoryStructures = Entities;
-                if (InMemoryStructures.Count > 0 && Isfoldercreated)
-                {
-                    if (CreateScript.ScriptDTL.Count == 0)
-                    {
+             
                         CreateScript = new ETLScriptHDR();
                         CreateScript.ScriptDTL.AddRange(DMEEditor.ETL.GetCreateEntityScript(this, Entities, progress, token.Token, true));
                         foreach (var item in CreateScript.ScriptDTL)
                         {
                             item.CopyDataScripts.AddRange(DMEEditor.ETL.GetCopyDataEntityScript(this, new List<EntityStructure>() { item.SourceEntity }, progress, token.Token));
                         }
-                    }
+                   
                    
 
                     DMEEditor.ConfigEditor.JsonLoader.Serialize(Filepath, CreateScript);
                     DMEEditor.ConfigEditor.JsonLoader.Serialize(InMemoryStructuresfilepath, InMemoryStructures);
                     OnSaveStructure?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
-                }
+               
 
             }
             catch (Exception ex)
