@@ -117,6 +117,8 @@ namespace DuckDBDataSourceCore
 
         #region "Methods"
 
+
+
         [CommandAttribute(Caption = "Data Edit", iconimage = "edit_entity.png")]
         public IErrorsInfo DataEdit()
         {

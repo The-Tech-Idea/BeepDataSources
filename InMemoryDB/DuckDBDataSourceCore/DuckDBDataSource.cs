@@ -124,60 +124,7 @@ namespace DuckDBDataSourceCore
         {
             return Dataconnection.ConnectionProp.ConnectionString;
         }
-        //public override bool CreateEntityAs(EntityStructure entity)
-        //{
-        //    string ds = entity.DataSourceID;
-        //    bool retval =  base.CreateEntityAs(entity);
-        //    entity.DataSourceID = ds;
-        //    InMemoryStructures.Add(base.GetEntityStructure(entity));
-        //    //InMemoryStructures.Add(GetEntity(entity));
-        //    return retval;
-        //}
-        private EntityStructure GetEntity(EntityStructure entity)
-        {
-            EntityStructure ent = new EntityStructure();
-            ent.DatasourceEntityName = entity.DatasourceEntityName;
-            ent.DataSourceID = entity.DataSourceID; ;
-            ent.DatabaseType = entity.DatabaseType;
-            ent.Caption = entity.Caption;
-            ent.Category = entity.Category;
-            ent.Fields = entity.Fields;
-            ent.PrimaryKeys = entity.PrimaryKeys;
-            ent.Relations = entity.Relations;
-            ent.OriginalEntityName = entity.OriginalEntityName;
-            ent.GuidID = Guid.NewGuid().ToString();
-            ent.ViewID = entity.ViewID;
-            ent.Viewtype = entity.Viewtype;
-            ent.EntityName = entity.EntityName;
-            ent.OriginalEntityName = entity.OriginalEntityName;
-            ent.SchemaOrOwnerOrDatabase = entity.SchemaOrOwnerOrDatabase;
-            return ent;
-        }
 
-        private static void PrintQueryResults(DuckDBResult queryResult)
-        {
-            long columnCount = Query.DuckDBColumnCount(ref queryResult);
-            for (var index = 0; index < columnCount; index++)
-            {
-                var columnName = Query.DuckDBColumnName(ref queryResult, index).ToManagedString(false);
-                Console.Write($"{columnName} ");
-            }
-
-            Console.WriteLine();
-
-            var rowCount = Query.DuckDBRowCount(ref queryResult);
-            for (long row = 0; row < rowCount; row++)
-            {
-                for (long column = 0; column < columnCount; column++)
-                {
-                    var val = Types.DuckDBValueInt32(ref queryResult, column, row);
-                    Console.Write(val);
-                    Console.Write(" ");
-                }
-
-                Console.WriteLine();
-            }
-        }
         #region "IDataSource Properties"
 
 
@@ -252,122 +199,7 @@ namespace DuckDBDataSourceCore
         }
         #endregion "IDataSource Methods"
         #region "DuckDB Methods"
-        #region "Data Import Methods"
-        public DataTable ReadParquetFile(string filepath, bool binaryAsString = false, bool filename = false, bool fileRowNumber = false, bool hivePartitioning = false, bool unionByName = false)
-        {
-            using (var cmd = new DuckDbCommand($"SELECT * FROM read_parquet('{filepath}', (binary_as_string={binaryAsString.ToString().ToLower()}, filename={filename.ToString().ToLower()}, file_row_number={fileRowNumber.ToString().ToLower()}, hive_partitioning={hivePartitioning.ToString().ToLower()}, union_by_name={unionByName.ToString().ToLower()}));", DuckConn))
-            {
-                using (var reader = cmd.ExecuteReader())
-                {
-                    DataTable dt = new DataTable();
-                    dt.Load(reader);
-                    return dt;
-                }
-            }
-        }
-
-
-        public DataTable ReadMultipleCSVFiles(List<string> filePaths, bool union_by_name = false, bool filename = false)
-        {
-            string files = string.Join(", ", filePaths.Select(x => $"'{x}'"));
-            string sql = $"SELECT * FROM read_csv_auto([{files}]";
-
-            if (union_by_name)
-            {
-                sql += ", union_by_name=True";
-            }
-
-            if (filename)
-            {
-                sql += ", filename=True";
-            }
-
-            sql += ");";
-
-            using (var cmd = new DuckDbCommand(sql, DuckConn))
-            {
-                using (var reader = cmd.ExecuteReader())
-                {
-                    DataTable dt = new DataTable();
-                    dt.Load(reader);
-                    return dt;
-                }
-            }
-        }
-
-        public DataTable JSONLoad(string filepath, uint maximum_object_size = 16777216, string format = "array", bool ignore_errors = false,
-             string compression = "auto", string columns = null, string records = "records", bool auto_detect = false,
-             ulong sample_size = 20480, long maximum_depth = -1, string dateformat = "iso", string timestampformat = "iso",
-             bool filename = false, bool hive_partitioning = false, bool union_by_name = false)
-        {
-            string sql = $"SELECT * FROM json_read('{filepath}', FORMAT='{format}', COMPRESSION='{compression}', RECORDS='{records}'";
-
-            sql += $", MAXIMUM_OBJECT_SIZE={maximum_object_size}, IGNORE_ERRORS={ignore_errors.ToString().ToUpper()}, AUTO_DETECT={auto_detect.ToString().ToUpper()}, SAMPLE_SIZE={sample_size}";
-            sql += $", MAXIMUM_DEPTH={maximum_depth}, DATEFORMAT='{dateformat}', TIMESTAMPFORMAT='{timestampformat}', FILENAME={filename.ToString().ToUpper()}";
-            sql += $", HIVE_PARTITIONING={hive_partitioning.ToString().ToUpper()}, UNION_BY_NAME={union_by_name.ToString().ToUpper()}";
-
-            if (columns != null)
-            {
-                sql += $", COLUMNS='{columns}'";
-            }
-
-            sql += ");";
-
-            using (var cmd = new DuckDbCommand(sql, DuckConn))
-            {
-                using (var reader = cmd.ExecuteReader())
-                {
-                    DataTable dt = new DataTable();
-                    dt.Load(reader);
-                    return dt;
-                }
-            }
-        }
-
-        public DataTable CSVLoad(string filepath, bool all_varchar = false, bool auto_detect = true, string columns = null,
-            compressiontype compression = compressiontype.auto, string dateformat = null, char decimal_separator = '.', char delim = ',',
-            char escape = '"', bool filename = false, string[] force_not_null = null, bool header = false, bool hive_partitioning = false,
-            bool ignore_errors = false, long max_line_size = 2097152, string[] names = null, string new_line = null,
-            bool normalize_names = false, string nullstr = null, bool parallel = false, char quote = '"', long sample_size = 20480,
-            long skip = 0, string timestampformat = null, string[] types = null, bool union_by_name = false)
-        {
-            string sql = $"SELECT * FROM read_csv_auto('{filepath}', HEADER={header.ToString().ToUpper()}, DELIM='{delim}', ESCAPE='{escape}', QUOTE='{quote}'";
-
-            sql += $", ALL_VARCHAR={all_varchar.ToString().ToUpper()}, AUTO_DETECT={auto_detect.ToString().ToUpper()}, COMPRESSION='{compression.ToString().ToUpper()}'";
-            sql += $", DATEFORMAT='{dateformat}', DECIMAL='{decimal_separator}', FILENAME={filename.ToString().ToUpper()}, HEADER={header.ToString().ToUpper()}, HIVE_PARTITIONING={hive_partitioning.ToString().ToUpper()}";
-            sql += $", IGNORE_ERRORS={ignore_errors.ToString().ToUpper()}, MAX_LINE_SIZE={max_line_size}, NEW_LINE='{new_line}', NORMALIZE_NAMES={normalize_names.ToString().ToUpper()}, NULLSTR='{nullstr}'";
-            sql += $", PARALLEL={parallel.ToString().ToUpper()}, SAMPLE_SIZE={sample_size}, SKIP={skip}, TIMESTAMPFORMAT='{timestampformat}', UNION_BY_NAME={union_by_name.ToString().ToUpper()}";
-
-            if (force_not_null != null)
-            {
-                sql += $", FORCE_NOT_NULL=ARRAY['{string.Join("','", force_not_null)}']";
-            }
-
-            if (names != null)
-            {
-                sql += $", NAMES=ARRAY['{string.Join("','", names)}']";
-            }
-
-            if (types != null)
-            {
-                sql += $", TYPES=ARRAY['{string.Join("','", types)}']";
-            }
-
-            sql += ");";
-
-            using (var cmd = new DuckDbCommand(sql, DuckConn))
-            {
-                using (var reader = cmd.ExecuteReader())
-                {
-                    DataTable dt = new DataTable();
-                    dt.Load(reader);
-                    return dt;
-                }
-            }
-        }
-
-
-        #endregion "Data Import Methods"
+      
         public  string DuckDBConvert(Type netType)
         {
             if (netType == typeof(bool))
@@ -453,7 +285,6 @@ namespace DuckDBDataSourceCore
                 throw new ArgumentException("Unsupported .NET data type: " + netTypeName);
         }
         #endregion
-        
         #region "Insert or Update or Delete Objects"
         EntityStructure DataStruct = null;
         IDbCommand command = null;
@@ -472,7 +303,6 @@ namespace DuckDBDataSourceCore
                 lastentityname = Entityname;
             }
         }
-
         #region "Overirden RDBSource Methods"
         public override EntityStructure GetEntityStructure(string EntityName, bool refresh = false)
         {
@@ -506,7 +336,7 @@ namespace DuckDBDataSourceCore
                 refresh = true;
             }
 
-            return GetEntityStructure(entityStructure);
+            return GetEntityStructure(entityStructure, refresh);
           
         }
         public override EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
@@ -564,56 +394,32 @@ namespace DuckDBDataSourceCore
                         try
                         {
 
-                            x.fieldname = r.Field<string>("ColumnName");
-                            x.fieldtype = (r.Field<Type>("DataType")).ToString(); //"ColumnSize"
-                            if (DatasourceType == DataSourceType.Oracle)
-                            {
-                                if (x.fieldtype.Equals("FLOAT", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    int precision = GetFloatPrecision(x.EntityName, x.fieldname); // Implement GetFloatPrecision to retrieve the precision for the field
-                                    x.fieldtype = MapOracleFloatToDotNetType(precision);
-                                }
-                            }
-
-                            x.Size1 = r.Field<int>("ColumnSize");
+                            x.fieldname = r.Field<string>("Column_Name");
+                            x.fieldtype = DataTypeFieldMappingHelper.GetDataType(DatasourceName, r.Field<string>("Data_Type"),DMEEditor);
+                           
                             try
                             {
-                                x.IsAutoIncrement = r.Field<bool>("IsAutoIncrement");
-                            }
-                            catch (Exception)
-                            {
-                                x.IsAutoIncrement = false;
-                            }
-                            try
-                            {
-                                x.AllowDBNull = r.Field<bool>("AllowDBNull");
+                                x.AllowDBNull = r.Field<bool>("is_nullable");
                             }
                             catch (Exception)
                             {
                             }
                             try
                             {
-                                x.IsAutoIncrement = r.Field<bool>("IsIdentity");
+                                x.IsAutoIncrement = r.Field<bool>("is_identity");
                                 x.IsIdentity = x.IsAutoIncrement;
                             }
                             catch (Exception)
                             {
                                 x.IsIdentity = false;
                             }
-                            try
-                            {
-                                x.IsKey = r.Field<bool>("IsKey");
-                            }
-                            catch (Exception)
-                            {
-
-                            }
+                           
                             try
                             {
                                 if (x.fieldtype == "System.Decimal" || x.fieldtype == "System.Float" || x.fieldtype == "System.Double")
                                 {
-                                    var NumericPrecision = r["NumericPrecision"];
-                                    var NumericScale = r["NumericScale"];
+                                    var NumericPrecision = r["Numeric_Precision"];
+                                    var NumericScale = r["Numeric_Scale"];
                                     if (NumericPrecision != System.DBNull.Value && NumericScale != System.DBNull.Value)
                                     {
                                         x.NumericPrecision = (short)NumericPrecision;
@@ -625,14 +431,7 @@ namespace DuckDBDataSourceCore
                             {
 
                             }
-                            try
-                            {
-                                x.IsUnique = r.Field<bool>("IsUnique");
-                            }
-                            catch (Exception)
-                            {
-
-                            }
+                           
                         }
                         catch (Exception ex)
                         {
@@ -1110,46 +909,53 @@ namespace DuckDBDataSourceCore
 
             return EntitiesNames;
         }
-        public override bool CreateEntityAs(EntityStructure entity)
-        {
-            DMEEditor.ErrorObject.Flag = Errors.Ok;
-            bool retval = false;
-            try
-            {
-                string sql = $"CREATE TABLE {entity.EntityName} (";
-                foreach (EntityField fld in entity.Fields)
-                {
-                    sql += $"{fld.fieldname} {DuckDBConvert(fld.fieldtype)},";
-                }
-                sql = sql.TrimEnd(',') + ")";
-                using (var cmd = new DuckDbCommand(sql, DuckConn))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                retval = true;
-                DMEEditor.AddLogMessage("Success", $"Creating Entity {entity.EntityName}", System.DateTime.Now, 0, null, Errors.Ok);
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Fail", $"Error in Creating Entity {entity.EntityName} {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
-            }
-            return retval;
-        }
+        //public override bool CreateEntityAs(EntityStructure entity)
+        //{
+        //    DMEEditor.ErrorObject.Flag = Errors.Ok;
+        //    bool retval = false;
+        //    try
+        //    {
+        //        string sql = $"CREATE TABLE {entity.EntityName} (";
+        //        foreach (EntityField fld in entity.Fields)
+        //        {
+        //            sql += $"{fld.fieldname} {DuckDBConvert(fld.fieldtype)},";
+        //        }
+        //        sql = sql.TrimEnd(',') + ")";
+        //        using (var cmd = new DuckDbCommand(sql, DuckConn))
+        //        {
+        //            cmd.ExecuteNonQuery();
+        //        }
+        //        retval = true;
+        //        DMEEditor.AddLogMessage("Success", $"Creating Entity {entity.EntityName}", System.DateTime.Now, 0, null, Errors.Ok);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        DMEEditor.AddLogMessage("Fail", $"Error in Creating Entity {entity.EntityName} {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+        //    }
+        //    return retval;
+        //}
         public override object RunQuery(string qrystr)
         {
-            return  RunQuery(DuckConn,qrystr);
+            if (RDBMSHelper.IsSqlStatementValid(qrystr)) { return RunQueryOnDuckDb(qrystr); }
+            else
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Message = "Invalid Query";
+                return null;
+            }
+            
         }
         public override IErrorsInfo ExecuteSql(string sql)
         {
             try
             {
-                DuckConn.Open();
+               
                 using (var command = DuckConn.CreateCommand())
                 {
                     command.CommandText = sql;
                     command.ExecuteNonQuery();
                 }
-                DuckConn.Close();
+               
 
                 DMEEditor.ErrorObject.Flag = Errors.Ok;
                 // Return a successful result
@@ -1165,19 +971,26 @@ namespace DuckDBDataSourceCore
                 return DMEEditor.ErrorObject; // Replace with your actual error implementation
             }
         }
-        public DataTable RunQuery(DbConnection connection, string qryStr)
+        public DataTable RunQueryOnDuckDb( string qryStr)
         {
             var dataTable = new DataTable();
+            DuckDbCommand command = GetDataCommand();
 
-            using (var command = new OdbcCommand(qryStr, (OdbcConnection)connection))
+            command.CommandText = qryStr;
+            //command.Parameters.Add(new DuckDBParameter("table_name", tableName));
+            using (var reader = command.ExecuteReader())
             {
-                connection.Open();
-                using (var adapter = new OdbcDataAdapter(command))
-                {
-                    adapter.Fill(dataTable);
-                }
-                connection.Close();
+                dataTable.Load(reader);
             }
+            //using (var command = new DuckDbCommand(qryStr, DuckConn))
+            //{
+               
+            //    using (var adapter = new OdbcDataAdapter(command))
+            //    {
+            //        adapter.Fill(dataTable);
+            //    }
+               
+            //}
 
             return dataTable;
         }
@@ -1581,23 +1394,6 @@ namespace DuckDBDataSourceCore
             }
             return cmd;
         }
-        public virtual OdbcDataAdapter GetDataAdapter(string Sql, List<AppFilter> Filter = null)
-        {
-            OdbcDataAdapter adp = null;
-            try
-            {
-                return new OdbcDataAdapter();
-            }
-            catch (Exception ex)
-            {
-
-                DMEEditor.AddLogMessage("Beep", $"Error in Creating Adapter for {Sql}- {ex.Message}", DateTime.Now, -1, ex.Message, Errors.Failed);
-                adp = null;
-            }
-
-            return adp;
-        }
-      
         private EntityStructure GetEntityStructure(DataTable schemaTable)
         {
             EntityStructure entityStructure = new EntityStructure();
@@ -1662,11 +1458,11 @@ namespace DuckDBDataSourceCore
 
 
             // Using a parameterized query to avoid SQL injection
-            string query = $"SELECT * FROM information_schema.columns WHERE table_name = table_name";
+            string query = $"SELECT * FROM information_schema.columns WHERE table_name = '{tableName}'";
             DuckDbCommand command = GetDataCommand();
 
             command.CommandText = query;
-            command.Parameters.Add(new OdbcParameter("table_name", tableName));
+           // command.Parameters.Add(new DuckDBParameter("table_name", tableName));
             using (var reader = command.ExecuteReader())
             {
                 schemaTable.Load(reader);

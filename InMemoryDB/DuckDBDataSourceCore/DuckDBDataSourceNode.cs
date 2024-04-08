@@ -264,8 +264,85 @@ namespace Beep.InMemory.Nodes
         }
         #endregion Exposed Interface"
         #region "Other Methods"
-    
 
+        [CommandAttribute(Caption = "Import CSV", Hidden = false, iconimage = "csv.png")]
+        public IErrorsInfo ImportCSV()
+        {
+
+            try
+            {
+                bool fileloaded = false;    
+                if (memoryDB == null)
+                {
+                    memoryDB = DMEEditor.GetDataSource(DataSourceName) as IInMemoryDB;
+                }
+                if (memoryDB == null)
+                {
+                    DMEEditor.AddLogMessage("Error", "Could not Get InMemory Database", DateTime.Now, -1, "Error", Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                DuckDBDataSource = memoryDB as DuckDBDataSource;
+                DuckDBDataSource.Openconnection();
+                       PassedArgs args = new PassedArgs();
+                    CancellationToken token = new CancellationToken();
+                  
+                    var progress = new Progress<PassedArgs>(percent =>
+                    {
+
+                        if (!string.IsNullOrEmpty(percent.Messege))
+                        {
+                            Visutil.PasstoWaitForm(percent);
+                        }
+                        if (percent.EventType == "Stop")
+                        {
+                            token.ThrowIfCancellationRequested();
+                        }
+
+                    });
+                    string filepath=Visutil.Controlmanager.LoadFileDialog("CSV Files (*.csv)|*.csv|All files (*.*)|*.*", "Select CSV File",null);
+                    if (!string.IsNullOrEmpty(filepath))
+                    {
+                        string tablename = "";
+                        string filename= System.IO.Path.GetFileName(filepath);
+                        Visutil.Controlmanager.InputBox("Enter Table Name", "Table Name", ref tablename);
+                        if(!string.IsNullOrEmpty(tablename))
+                        {
+                            args.Messege = $"Loadin CSV File {tablename}";
+                            Visutil.ShowWaitForm(args);
+                            Visutil.PasstoWaitForm(args);
+                            try
+                            {
+                                DuckDBDataSource.ImportCSV(filepath, tablename);
+                                fileloaded = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                DMEEditor.AddLogMessage("Beep",$"Error: Could not Load CSV file {filename} {ex.Message}", DateTime.Now, -1, "Error", Errors.Failed);
+
+                            }
+                         
+
+                        }
+                        
+                  
+
+                
+
+
+                }
+                if (fileloaded)
+                {
+                    DataSourceDefaultMethods.GetEntities(this, DMEEditor, Visutil);
+                }
+                Visutil.CloseWaitForm();
+            }
+            catch (Exception ex)
+            {
+                string mes = "Could not Add Database Connection";
+                DMEEditor.AddLogMessage(ex.Message, mes, DateTime.Now, -1, mes, Errors.Failed);
+            };
+            return DMEEditor.ErrorObject;
+        }
         #endregion"Other Methods"
     }
 }

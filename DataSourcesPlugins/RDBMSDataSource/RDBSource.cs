@@ -2504,11 +2504,12 @@ namespace TheTechIdea.Beep.DataBase
         }
         public virtual string DisableFKConstraints(EntityStructure t1)
         {
-            throw new NotImplementedException();
+            // Disable all foreign key constraints
+            return string.Empty;
         }
         public virtual string EnableFKConstraints(EntityStructure t1)
         {
-            throw new NotImplementedException();
+            return string.Empty;
         }
         public static string MapOracleFloatToDotNetType(int precision)
         {
