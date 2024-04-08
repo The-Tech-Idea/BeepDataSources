@@ -940,7 +940,7 @@ namespace TheTechIdea.Beep.DataBase
                 adp.Fill(dataSet);
                 DataTable dt = dataSet.Tables[0];
 
-                return  DMEEditor.Utilfunction.ConvertTableToList(dt,GetEntityStructure(EntityName),GetEntityType(EntityName));
+                return dt;//DMEEditor.Utilfunction.ConvertTableToList(dt,GetEntityStructure(EntityName),GetEntityType(EntityName));
             }
 
             catch (Exception ex)
@@ -1241,7 +1241,7 @@ namespace TheTechIdea.Beep.DataBase
                     {
                         fnd.Caption = entname;
                     }
-                    fnd.DataSourceID = DatasourceName;
+                    //fnd.DataSourceID = DatasourceName;
                     //  fnd.EntityName = EntityName;
                     if (fnd.Viewtype == ViewType.Query)
                     {
@@ -2462,7 +2462,7 @@ namespace TheTechIdea.Beep.DataBase
                     {
                         TableName = Dataconnection.ConnectionProp.SchemaName + "." + TableName;
                     }
-                    cmdtxt = "Select * from " + TableName.ToLower() + " where 1=2";
+                    cmdtxt = "Select * from " + TableName + " where 1=2";
                 }
                 else
                 {

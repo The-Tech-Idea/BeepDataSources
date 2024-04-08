@@ -11,19 +11,20 @@ using static Dapper.SqlMapper;
 namespace TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.SqlLite)]
-    public class SQLiteDataSource : RDBSource, ILocalDB,IInMemoryDB,IDataSource
+    public class SQLiteDataSource : RDBSource, ILocalDB, IInMemoryDB, IDataSource
 
     {
         private string dateformat = "yyyy-MM-dd HH:mm:ss";
-        public bool CanCreateLocal { get ; set; }
-       // SQLiteConnection sQLiteConnection;
+        public bool CanCreateLocal { get; set; }
+        // SQLiteConnection sQLiteConnection;
         string dbpath;
         public bool IsCreated { get; set; } = false;
         public bool IsLoaded { get; set; } = false;
         public bool IsSaved { get; set; } = false;
         public bool IsSynced { get; set; } = false;
-        public bool IsStructureCreated { get; set; }= false;
-        
+        public bool IsStructureLoaded { get; set; } = false;
+        public bool IsStructureCreated { get; set; } = false;
+
         public ETLScriptHDR CreateScript { get; set; } = new ETLScriptHDR();
         public SQLiteDataSource(string pdatasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(pdatasourcename, logger, pDMEEditor, databasetype, per)
         {
@@ -36,28 +37,28 @@ namespace TheTechIdea.Beep.DataBase
                     Dataconnection = new RDBDataConnection(DMEEditor);
                 }
                 Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.FirstOrDefault(p => p.ConnectionName.Equals(pdatasourcename, StringComparison.InvariantCultureIgnoreCase)); ;
-                if (Dataconnection.ConnectionProp==null)
+                if (Dataconnection.ConnectionProp == null)
                 {
                     Dataconnection.ConnectionProp = new ConnectionProperties();
                 }
-              
+
             }
             Dataconnection.ConnectionProp.DatabaseType = DataSourceType.SqlLite;
             ColumnDelimiter = "[]";
             ParameterDelimiter = "$";
-            dbpath =Path.Combine(DMEEditor.ConfigEditor.ExePath , "Scripts" , DatasourceName);
+            dbpath = Path.Combine(DMEEditor.ConfigEditor.ExePath, "Scripts", DatasourceName);
         }
         public List<EntityStructure> InMemoryStructures { get; set; } = new List<EntityStructure>();
         public override string ColumnDelimiter { get; set; } = "[]";
         public override string ParameterDelimiter { get; set; } = "$";
-     
+
         public override ConnectionState Openconnection()
         {
-           
-         
+
+
             CancellationTokenSource token = new CancellationTokenSource();
             var progress = new Progress<PassedArgs>(percent => { });
-                InMemory = Dataconnection.ConnectionProp.IsInMemory;
+            InMemory = Dataconnection.ConnectionProp.IsInMemory;
             Dataconnection.InMemory = Dataconnection.ConnectionProp.IsInMemory;
             if (ConnectionStatus == ConnectionState.Open)
             {
@@ -66,28 +67,29 @@ namespace TheTechIdea.Beep.DataBase
             }
             if (Dataconnection.ConnectionProp.IsInMemory)
             {
-                 OpenDatabaseInMemory(Dataconnection.ConnectionProp.Database);
-                 base.Openconnection();
-                    if (DMEEditor.ErrorObject.Flag == Errors.Ok)
-                    {
-                        LoadStructure(progress, token.Token, false);
-                        return ConnectionState.Open;
-                    }
-            }else
-                {
+                OpenDatabaseInMemory(Dataconnection.ConnectionProp.Database);
                 base.Openconnection();
-               
+                if (DMEEditor.ErrorObject.Flag == Errors.Ok)
+                {
+                    LoadStructure(progress, token.Token, false);
+                    return ConnectionState.Open;
                 }
+            }
+            else
+            {
+                base.Openconnection();
+
+            }
             return ConnectionStatus;
         }
         public bool InMemory { get; set; } = false;
-        public  bool CopyDB( string DestDbName, string DesPath)
+        public bool CopyDB(string DestDbName, string DesPath)
         {
             try
             {
                 if (!System.IO.File.Exists(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName)))
                 {
-                    File.Copy(base.Dataconnection.ConnectionProp.ConnectionString, Path.Combine(DesPath,DestDbName));
+                    File.Copy(base.Dataconnection.ConnectionProp.ConnectionString, Path.Combine(DesPath, DestDbName));
                 }
                 DMEEditor.AddLogMessage("Success", "Copy Sqlite Database", DateTime.Now, 0, null, Errors.Ok);
                 return true;
@@ -99,17 +101,17 @@ namespace TheTechIdea.Beep.DataBase
                 return false;
             };
         }
-        public  bool CreateDB()
+        public bool CreateDB()
         {
             try
             {
-                if (!Path.HasExtension(base.Dataconnection.ConnectionProp.FileName) )
+                if (!Path.HasExtension(base.Dataconnection.ConnectionProp.FileName))
                 {
                     base.Dataconnection.ConnectionProp.FileName = base.Dataconnection.ConnectionProp.FileName + ".s3db";
                 }
                 if (!System.IO.File.Exists(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName)))
                 {
-                    SQLiteConnection.CreateFile( Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName ));
+                    SQLiteConnection.CreateFile(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName));
                     enablefk();
                     DMEEditor.AddLogMessage("Success", "Create Sqlite Database", DateTime.Now, 0, null, Errors.Ok);
                 }
@@ -134,46 +136,48 @@ namespace TheTechIdea.Beep.DataBase
         {
             return false;
         }
-        public  bool DeleteDB()
+        public bool DeleteDB()
         {
             try
             {
                 Closeconnection();
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
-              
-                    if (System.IO.File.Exists(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName)))
-                    {
-                        File.Delete(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName));
-                    }
-                    DMEEditor.AddLogMessage("Success", "Deleted Sqlite Database", DateTime.Now, 0, null, Errors.Ok);
-                    return true;
-               
+
+                if (System.IO.File.Exists(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName)))
+                {
+                    File.Delete(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName));
+                }
+                DMEEditor.AddLogMessage("Success", "Deleted Sqlite Database", DateTime.Now, 0, null, Errors.Ok);
+                return true;
+
             }
             catch (Exception ex)
             {
                 string mes = "Could not Delete Sqlite Database";
-                DMEEditor.AddLogMessage("Fail",ex.Message+ mes, DateTime.Now, -1, mes, Errors.Failed);
+                DMEEditor.AddLogMessage("Fail", ex.Message + mes, DateTime.Now, -1, mes, Errors.Failed);
                 return false;
             };
         }
-        public  IErrorsInfo DropEntity(string EntityName)
-        {  try
+        public IErrorsInfo DropEntity(string EntityName)
+        {
+            try
 
             {
 
                 String cmdText = $"drop table  '{EntityName}'";
-                DMEEditor.ErrorObject=base.ExecuteSql(cmdText);
-              
+                DMEEditor.ErrorObject = base.ExecuteSql(cmdText);
+
                 if (!base.CheckEntityExist(EntityName))
                 {
                     DMEEditor.AddLogMessage("Success", $"Droping Entity {EntityName}", DateTime.Now, 0, null, Errors.Ok);
-                }else
+                }
+                else
                 {
-                    
+
                     DMEEditor.AddLogMessage("Error", $"Droping Entity {EntityName}", DateTime.Now, 0, null, Errors.Failed);
                 }
-               
+
             }
             catch (Exception ex)
             {
@@ -193,7 +197,7 @@ namespace TheTechIdea.Beep.DataBase
                 {
                     base.RDBMSConnection.DbConn.Close();
                 }
-            
+
                 DMEEditor.AddLogMessage("Success", $"Closing connection to Sqlite Database", DateTime.Now, 0, null, Errors.Ok);
             }
             catch (Exception ex)
@@ -201,7 +205,7 @@ namespace TheTechIdea.Beep.DataBase
                 string errmsg = "Error Closing connection to Sqlite Database";
                 DMEEditor.AddLogMessage("Fail", $"{errmsg}:{ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
-          //  return RDBMSConnection.DbConn.State;
+            //  return RDBMSConnection.DbConn.State;
             return base.ConnectionStatus;
         }
         public override void Dispose()
@@ -209,7 +213,7 @@ namespace TheTechIdea.Beep.DataBase
             Closeconnection();
             base.Dispose();
         }
-        public override string DisableFKConstraints( EntityStructure t1)
+        public override string DisableFKConstraints(EntityStructure t1)
         {
             try
             {
@@ -239,9 +243,9 @@ namespace TheTechIdea.Beep.DataBase
             }
             return DMEEditor.ErrorObject.Message;
         }
-        private  List<FkListforSQLlite> GetSqlLiteTableKeysAsync(string tablename)
+        private List<FkListforSQLlite> GetSqlLiteTableKeysAsync(string tablename)
         {
-            var tb =  base.GetData<FkListforSQLlite>("PRAGMA foreign_key_check(" + tablename + ");");
+            var tb = base.GetData<FkListforSQLlite>("PRAGMA foreign_key_check(" + tablename + ");");
             return tb;
         }
         private void enablefk()
@@ -299,11 +303,11 @@ namespace TheTechIdea.Beep.DataBase
                 Createfolder(databasename);
                 base.Dataconnection.InMemory = true;
                 base.Dataconnection.ConnectionProp.FileName = string.Empty;
-                base.Dataconnection.ConnectionProp.ConnectionString=$@"Data Source=:memory:;Version=3;New=True;";
+                base.Dataconnection.ConnectionProp.ConnectionString = $@"Data Source=:memory:;Version=3;New=True;";
                 base.Dataconnection.ConnectionProp.Database = databasename;
                 base.Dataconnection.ConnectionProp.ConnectionName = databasename;
                 //base.Dataconnection.ConnectionStatus = ConnectionState.Open;
-              
+
             }
             catch (Exception ex)
             {
@@ -319,30 +323,42 @@ namespace TheTechIdea.Beep.DataBase
         public override List<string> GetEntitesList()
         {
             base.GetEntitesList();
-           
+
             return EntitiesNames;
 
         }
         public override bool CreateEntityAs(EntityStructure entity)
         {
             string ds = entity.DataSourceID;
-            if(EntitiesNames.Contains(entity.EntityName))
+            if (EntitiesNames.Contains(entity.EntityName))
             {
                 return false;
             }
-            if(Entities.Where(c => c.EntityName == entity.EntityName).Count() > 0)
+            if (Entities.Where(c => c.EntityName == entity.EntityName).Count() > 0)
             {
                 return false;
             }
             bool retval = base.CreateEntityAs(entity);
-            entity.DataSourceID= ds;
+            entity.DataSourceID = ds;
+            if (retval)
+            {
+                if (EntitiesNames.Contains(entity.EntityName) == false)
+                {
+
+                    EntitiesNames.Add(entity.EntityName);
+                }
+                if (Entities.Where(c => c.EntityName == entity.EntityName).Count() == 0)
+                {
+                    Entities.Add(entity);
+                }
+            }
+
             if (InMemory)
             {
                 IsLoaded = true;
                 IsCreated = true;
                 IsStructureCreated = true;
-             
-                InMemoryStructures = Entities;
+                InMemoryStructures.Add(entity);
             }
 
             return retval;
@@ -351,20 +367,20 @@ namespace TheTechIdea.Beep.DataBase
         {
             EntityStructure ent = new EntityStructure();
             ent.DatasourceEntityName = entity.DatasourceEntityName;
-            ent.DataSourceID=entity.DataSourceID; ;
+            ent.DataSourceID = entity.DataSourceID; ;
             ent.DatabaseType = entity.DatabaseType;
-            ent.Caption=entity.Caption;
+            ent.Caption = entity.Caption;
             ent.Category = entity.Category;
             ent.Fields = entity.Fields;
-            ent.PrimaryKeys= entity.PrimaryKeys;
-            ent.Relations= entity.Relations;
+            ent.PrimaryKeys = entity.PrimaryKeys;
+            ent.Relations = entity.Relations;
             ent.OriginalEntityName = entity.OriginalEntityName;
             ent.GuidID = Guid.NewGuid().ToString();
-            ent.ViewID= entity.ViewID;
+            ent.ViewID = entity.ViewID;
             ent.Viewtype = entity.Viewtype;
-            ent.EntityName= entity.EntityName;
-            ent.OriginalEntityName= entity.OriginalEntityName;
-            ent.SchemaOrOwnerOrDatabase=entity.SchemaOrOwnerOrDatabase;
+            ent.EntityName = entity.EntityName;
+            ent.OriginalEntityName = entity.OriginalEntityName;
+            ent.SchemaOrOwnerOrDatabase = entity.SchemaOrOwnerOrDatabase;
             return ent;
         }
         #region "InMemoryDataSource Events"
@@ -373,6 +389,9 @@ namespace TheTechIdea.Beep.DataBase
         public event EventHandler<PassedArgs> OnSaveStructure;
         public event EventHandler<PassedArgs> OnSyncData;
         public event EventHandler<PassedArgs> PassEvent;
+        public event EventHandler<PassedArgs> OnCreateStructure;
+        public event EventHandler<PassedArgs> OnRefreshData;
+        public event EventHandler<PassedArgs> OnRefreshDataEntity;
         #endregion
 
         #region "InMemoryDataSource Methods"
@@ -405,7 +424,7 @@ namespace TheTechIdea.Beep.DataBase
                         Directory.CreateDirectory(Path.Combine(InMemoryPath, datasourcename));
 
                     }
-                    Filepath = Path.Combine(InMemoryPath,datasourcename, "createscripts.json");
+                    Filepath = Path.Combine(InMemoryPath, datasourcename, "createscripts.json");
                     InMemoryStructuresfilepath = Path.Combine(InMemoryPath, datasourcename, "InMemoryStructures.json");
                     Isfoldercreated = true;
                 }
@@ -456,10 +475,10 @@ namespace TheTechIdea.Beep.DataBase
             {
                 if (Isfoldercreated && IsCreated)
                 {
-                   List<ETLScriptDet> retscripts= DMEEditor.ETL.GetCopyDataEntityScript(this, Entities, progress, token);
+                    List<ETLScriptDet> retscripts = DMEEditor.ETL.GetCopyDataEntityScript(this, Entities, progress, token);
                     DMEEditor.ETL.Script.ScriptDTL = retscripts;
                     DMEEditor.ETL.Script.LastRunDateTime = System.DateTime.Now;
-                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token,true);
+                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
                     OnLoadData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
                     IsLoaded = true;
                 }
@@ -476,8 +495,9 @@ namespace TheTechIdea.Beep.DataBase
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
-            {  
-                if(IsLoaded==false && IsCreated==false && IsStructureCreated == false &&  Entities.Count==0)
+            {
+              
+                if (IsLoaded == false && IsCreated == false && IsStructureCreated == false && Entities.Count == 0)
                 {
                     if (Isfoldercreated)
                     {
@@ -485,31 +505,36 @@ namespace TheTechIdea.Beep.DataBase
                         InMemoryStructures = new List<EntityStructure>();
                         Entities = new List<EntityStructure>();
                         EntitiesNames = new List<string>();
-
-
-                        if (File.Exists(Filepath))
+                        if (File.Exists(InMemoryStructuresfilepath))
                         {
-                            CreateScript = DMEEditor.ConfigEditor.JsonLoader.DeserializeSingleObject<ETLScriptHDR>(Filepath);
-                            if (CreateScript == null)
+                            InMemoryStructures = DMEEditor.ConfigEditor.JsonLoader.DeserializeSingleObject<List<EntityStructure>>(InMemoryStructuresfilepath);
+                            CreateScript = new ETLScriptHDR();
+                            CreateScript.ScriptDTL.AddRange(DMEEditor.ETL.GetCreateEntityScript(this, InMemoryStructures, progress, token, true));
+                            foreach (var item in CreateScript.ScriptDTL)
                             {
-                                CreateScript = new ETLScriptHDR();
-                            }
-                            else
-                            {
-
-                                IsStructureCreated = false;
+                                item.CopyDataScripts.AddRange(DMEEditor.ETL.GetCopyDataEntityScript(this, new List<EntityStructure>() { item.SourceEntity }, progress, token));
                             }
                         }
-                        else
+                        if (!IsStructureLoaded)
                         {
-
+                            if (File.Exists(Filepath))
+                            {
+                                CreateScript = DMEEditor.ConfigEditor.JsonLoader.DeserializeSingleObject<ETLScriptHDR>(Filepath);
+                                if (CreateScript == null)
+                                {
+                                    CreateScript = new ETLScriptHDR();
+                                }
+                                else
+                                {
+                                    IsStructureCreated = false;
+                                }
+                            }
                         }
-
                         //    SaveStructure();
                         OnLoadStructure?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
                     }
                 }
-              
+
             }
             catch (Exception ex)
             {
@@ -525,23 +550,19 @@ namespace TheTechIdea.Beep.DataBase
             {
                 CancellationTokenSource token = new CancellationTokenSource();
                 var progress = new Progress<PassedArgs>(percent => { });
-               // GetEntitesList();
-                InMemoryStructures = Entities;
-             
-                        CreateScript = new ETLScriptHDR();
-                        CreateScript.ScriptDTL.AddRange(DMEEditor.ETL.GetCreateEntityScript(this, Entities, progress, token.Token, true));
-                        foreach (var item in CreateScript.ScriptDTL)
-                        {
-                            item.CopyDataScripts.AddRange(DMEEditor.ETL.GetCopyDataEntityScript(this, new List<EntityStructure>() { item.SourceEntity }, progress, token.Token));
-                        }
-                   
-                   
-
-                    DMEEditor.ConfigEditor.JsonLoader.Serialize(Filepath, CreateScript);
-                    DMEEditor.ConfigEditor.JsonLoader.Serialize(InMemoryStructuresfilepath, InMemoryStructures);
-                    OnSaveStructure?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
                
+                // remove every entity in InMemoryStructures that does not exist in Entities
+                InMemoryStructures = InMemoryStructures.Where(p => Entities.Any(p2 => p2.EntityName == p.EntityName)).ToList();
 
+                CreateScript = new ETLScriptHDR();
+                CreateScript.ScriptDTL.AddRange(DMEEditor.ETL.GetCreateEntityScript(this, InMemoryStructures, progress, token.Token, true));
+                foreach (var item in CreateScript.ScriptDTL)
+                {
+                    item.CopyDataScripts.AddRange(DMEEditor.ETL.GetCopyDataEntityScript(this, new List<EntityStructure>() { item.SourceEntity }, progress, token.Token));
+                }
+                DMEEditor.ConfigEditor.JsonLoader.Serialize(Filepath, CreateScript);
+                DMEEditor.ConfigEditor.JsonLoader.Serialize(InMemoryStructuresfilepath, InMemoryStructures);
+                OnSaveStructure?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
             }
             catch (Exception ex)
             {
@@ -553,6 +574,59 @@ namespace TheTechIdea.Beep.DataBase
         {
             OnSyncData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
             return DMEEditor.ErrorObject;
+        }
+        public IErrorsInfo SyncData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
+        {
+            OnSyncData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+            return DMEEditor.ErrorObject;
+        }
+
+        public IErrorsInfo RefreshData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
+        {
+            OnRefreshData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+            return DMEEditor.ErrorObject;
+        }
+        public IErrorsInfo RefreshData( Progress<PassedArgs> progress, CancellationToken token)
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            bool isdeleted = false;
+            try
+            {
+                if (Isfoldercreated && IsCreated)
+                {
+                    // delete all data in the  sqllite InMemory database
+                    foreach (var item in InMemoryStructures)
+                    {
+                       // run sql to delete data from entity 
+                       string sql = $"delete from {item.EntityName}";
+                        DMEEditor.ErrorObject = ExecuteSql(sql);
+                        if (DMEEditor.ErrorObject.Flag == Errors.Ok)
+                        {
+                            isdeleted = true;
+                            DMEEditor.AddLogMessage("Beep", $"Deleted data from {item.EntityName}", System.DateTime.Now, 0, null, Errors.Ok);
+                        }
+                        else
+                        {
+                            DMEEditor.AddLogMessage("Beep", $"Could not delete data from {item.EntityName}", System.DateTime.Now, 0, null, Errors.Failed);
+                        }
+                    }
+                    if (isdeleted)
+                    {
+                        LoadData(progress, token);
+                    }
+                    OnLoadData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+                    IsLoaded = true;
+                }
+                OnRefreshData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+            }
+            catch (Exception ex)
+            {
+                IsLoaded = false;
+                DMEEditor.AddLogMessage("Beep", $"Could not refresh InMemory data for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+            
+           
         }
         #endregion
     }
