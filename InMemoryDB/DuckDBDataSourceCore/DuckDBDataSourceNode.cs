@@ -69,7 +69,7 @@ namespace Beep.InMemory.Nodes
         {
             try
             {
-                DataSourceDefaultMethods.GetEntities(this, DMEEditor, Visutil);
+                DuckDbDefaultMethods.GetEntities(this, DMEEditor, Visutil);
             }
             catch (Exception ex)
             {
@@ -173,7 +173,7 @@ namespace Beep.InMemory.Nodes
                 }
                 if(memoryDB.IsLoaded == true || memoryDB.InMemoryStructures.Count>0)
                 {
-                    DataSourceDefaultMethods.GetEntities(this, DMEEditor, Visutil);
+                    DuckDbDefaultMethods.GetEntities(this, DMEEditor, Visutil);
                 }
                 Visutil.CloseWaitForm();
             }
@@ -304,35 +304,33 @@ namespace Beep.InMemory.Nodes
                     {
                         string tablename = "";
                         string filename= System.IO.Path.GetFileName(filepath);
-                        Visutil.Controlmanager.InputBox("Enter Table Name", "Table Name", ref tablename);
-                        if(!string.IsNullOrEmpty(tablename))
-                        {
+                      
+                      
+                            tablename = Path.GetFileNameWithoutExtension(filename).ToUpper();
                             args.Messege = $"Loadin CSV File {tablename}";
                             Visutil.ShowWaitForm(args);
                             Visutil.PasstoWaitForm(args);
                             try
                             {
                                 DuckDBDataSource.ImportCSV(filepath, tablename);
-                                fileloaded = true;
+                            EntityStructure entityStructure = DuckDBDataSource.GetEntityStructure(tablename, true);
+                            entityStructure.DataSourceID = filename;
+                            memoryDB.InMemoryStructures.Add(entityStructure);
+                            CreateFileIDataSource(filepath);
+                            fileloaded = true;
                             }
                             catch (Exception ex)
                             {
                                 DMEEditor.AddLogMessage("Beep",$"Error: Could not Load CSV file {filename} {ex.Message}", DateTime.Now, -1, "Error", Errors.Failed);
 
                             }
-                         
 
-                        }
-                        
-                  
-
-                
-
+                       
 
                 }
                 if (fileloaded)
                 {
-                    DataSourceDefaultMethods.GetEntities(this, DMEEditor, Visutil);
+                    DuckDbDefaultMethods.GetEntities(this, DMEEditor, Visutil);
                 }
                 Visutil.CloseWaitForm();
             }
@@ -343,6 +341,173 @@ namespace Beep.InMemory.Nodes
             };
             return DMEEditor.ErrorObject;
         }
+        [CommandAttribute(Caption = "Import Parquet", Hidden = false, iconimage = "parquet.png")]
+        public IErrorsInfo ImportParquet()
+        {
+
+            try
+            {
+                bool fileloaded = false;
+                if (memoryDB == null)
+                {
+                    memoryDB = DMEEditor.GetDataSource(DataSourceName) as IInMemoryDB;
+                }
+                if (memoryDB == null)
+                {
+                    DMEEditor.AddLogMessage("Error", "Could not Get InMemory Database", DateTime.Now, -1, "Error", Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                DuckDBDataSource = memoryDB as DuckDBDataSource;
+                DuckDBDataSource.Openconnection();
+                PassedArgs args = new PassedArgs();
+                CancellationToken token = new CancellationToken();
+
+                var progress = new Progress<PassedArgs>(percent =>
+                {
+
+                    if (!string.IsNullOrEmpty(percent.Messege))
+                    {
+                        Visutil.PasstoWaitForm(percent);
+                    }
+                    if (percent.EventType == "Stop")
+                    {
+                        token.ThrowIfCancellationRequested();
+                    }
+
+                });
+                string filepath = Visutil.Controlmanager.LoadFileDialog("parquet Files (*.parquet)|*.parquet|All files (*.*)|*.*", "Select parquet File", null);
+                if (!string.IsNullOrEmpty(filepath))
+                {
+                    string tablename = "";
+                    string filename = System.IO.Path.GetFileName(filepath);
+                    tablename = Path.GetFileNameWithoutExtension(filename).ToUpper();
+                    tablename = tablename.ToUpper();
+                        args.Messege = $"Loadin Import Parquet File {tablename}";
+                        Visutil.ShowWaitForm(args);
+                        Visutil.PasstoWaitForm(args);
+                        try
+                        {
+                            DuckDBDataSource.ImportParquet(filepath, tablename);
+                            EntityStructure entityStructure = DuckDBDataSource.GetEntityStructure(tablename, true);
+                            entityStructure.DataSourceID= filename;
+                            memoryDB.InMemoryStructures.Add(entityStructure);
+                            CreateFileIDataSource(filepath);
+                            fileloaded = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            DMEEditor.AddLogMessage("Beep", $"Error: Could not  Import Parquet file {filename} {ex.Message}", DateTime.Now, -1, "Error", Errors.Failed);
+
+                        }
+                   
+                }
+                if (fileloaded)
+                {
+                    DuckDbDefaultMethods.GetEntities(this, DMEEditor, Visutil);
+                }
+                Visutil.CloseWaitForm();
+            }
+            catch (Exception ex)
+            {
+                string mes = "Could not Import Parquet";
+                DMEEditor.AddLogMessage(ex.Message, mes, DateTime.Now, -1, mes, Errors.Failed);
+            };
+            return DMEEditor.ErrorObject;
+        }
+        [CommandAttribute(Caption = "Import Json", Hidden = false, iconimage = "json.png")]
+        public IErrorsInfo ImportJson()
+        {
+
+            try
+            {
+                bool fileloaded = false;
+                if (memoryDB == null)
+                {
+                    memoryDB = DMEEditor.GetDataSource(DataSourceName) as IInMemoryDB;
+                }
+                if (memoryDB == null)
+                {
+                    DMEEditor.AddLogMessage("Error", "Could not Get InMemory Database", DateTime.Now, -1, "Error", Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                DuckDBDataSource = memoryDB as DuckDBDataSource;
+                DuckDBDataSource.Openconnection();
+                PassedArgs args = new PassedArgs();
+                CancellationToken token = new CancellationToken();
+
+                var progress = new Progress<PassedArgs>(percent =>
+                {
+
+                    if (!string.IsNullOrEmpty(percent.Messege))
+                    {
+                        Visutil.PasstoWaitForm(percent);
+                    }
+                    if (percent.EventType == "Stop")
+                    {
+                        token.ThrowIfCancellationRequested();
+                    }
+                });
+                string filepath = Visutil.Controlmanager.LoadFileDialog("JSON Files (*.json)|*.json|All files (*.*)|*.*", "Select JSON File", null);
+                if (!string.IsNullOrEmpty(filepath))
+                {
+                    string tablename = "";
+                    string filename = System.IO.Path.GetFileName(filepath);
+                    tablename = Path.GetFileNameWithoutExtension(filename).ToUpper();
+                    tablename = tablename.ToUpper();
+                        args.Messege = $"Loadin Import Json File {tablename}";
+                        Visutil.ShowWaitForm(args);
+                        Visutil.PasstoWaitForm(args);
+                        try
+                        {
+                            DuckDBDataSource.ImportJson(filepath, tablename);
+                            EntityStructure entityStructure = DuckDBDataSource.GetEntityStructure(tablename, true);
+                            entityStructure.DataSourceID = filename;
+                            memoryDB.InMemoryStructures.Add(entityStructure);
+                            CreateFileIDataSource(filepath);
+                            fileloaded = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            DMEEditor.AddLogMessage("Beep", $"Error: Could not  Import Json file {filename} {ex.Message}", DateTime.Now, -1, "Error", Errors.Failed);
+
+                        }
+                    
+                }
+                if (fileloaded)
+                {
+                    DuckDbDefaultMethods.GetEntities(this, DMEEditor, Visutil);
+                }
+                Visutil.CloseWaitForm();
+            }
+            catch (Exception ex)
+            {
+                string mes = "Could not Import Parquet";
+                DMEEditor.AddLogMessage(ex.Message, mes, DateTime.Now, -1, mes, Errors.Failed);
+            };
+            return DMEEditor.ErrorObject;
+        }
+ 
+        private bool CreateFileIDataSource(string filepath)
+        {
+            try
+            {
+                IBranch Fileroot = TreeEditor.Branches.FirstOrDefault(p => p.BranchType == EnumPointType.Root && p.BranchClass == "FILE");
+                string filename= System.IO.Path.GetFileName(filepath);
+                if (!Fileroot.ChildBranchs.Any(o=>o.BranchText.Equals(filename)))
+                {
+                   IBranch br= DuckDbDefaultMethods.CreateFileNode(filepath, Fileroot, TreeEditor, DMEEditor, Visutil);
+                  
+                }
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+       
+      
         #endregion"Other Methods"
     }
 }

@@ -32,40 +32,28 @@ namespace DuckDBDataSourceCore
            
         }
         //filePattern could be something like /data/myfiles_*.csv, where * is a 
-        public static DataTable ReadFromMultipleCsvFiles(this DuckDBDataSource DuckDB, string filePattern,bool union_by_name=true)
+        public static void ImportFromMultipleCsvFiles(this DuckDBDataSource DuckDB, string tableName, string filePattern,bool union_by_name=true)
         {
             DataTable dataTable = new DataTable();
-            string query = $"SELECT * FROM read_csv_auto('{filePattern}',union_by_name={union_by_name});";
+            string query = $"CREATE TABLE {tableName} AS FROM  read_csv_auto('{filePattern}',union_by_name={union_by_name});";
 
-           using (var command = new DuckDbCommand(query,DuckDB.DuckConn))
-                {
-                    //connection.Open();
-                    using (var reader = command.ExecuteReader())
-                    {
-                        dataTable.Load(reader);
-                    }
-                }
-           
-
-            return dataTable;
+            using (var command = new DuckDbCommand(query, DuckDB.DuckConn))
+            {
+                //connection.Open();
+                command.ExecuteNonQuery();
+            }
         }
         //Here, filePattern could be /data/myparquetfiles_*.parquet
-        public static DataTable ReadFromMultipleParquetFiles(this DuckDBDataSource DuckDB, string filePattern)
+        public static void ImportFromMultipleParquetFiles(this DuckDBDataSource DuckDB, string tableName, string filePattern)
         {
             DataTable dataTable = new DataTable();
-            string query = $"SELECT * FROM parquet_scan('{filePattern}');";
+            string query = $"CREATE TABLE {tableName} AS FROM parquet_scan('{filePattern}');";
 
-             using (var command = new DuckDbCommand(query,DuckDB.DuckConn))
-                {
-                    //connection.Open();
-                    using (var reader = command.ExecuteReader())
-                    {
-                        dataTable.Load(reader);
-                    }
-                }
-           
-
-            return dataTable;
+            using (var command = new DuckDbCommand(query, DuckDB.DuckConn))
+            {
+                //connection.Open();
+                command.ExecuteNonQuery();
+            }
         }
         public static void ImportCSV(this DuckDBDataSource DuckDB, string filePath, string tableName, bool createTable = true)
         {
@@ -79,7 +67,7 @@ namespace DuckDBDataSourceCore
             else
             {
                 // Importing into an existing table
-                sql = $"COPY {tableName} FROM '{filePath}' (FORMAT csv, HEADER TRUE);";
+                sql = $"COPY {tableName} FROM '{filePath}' (FORMAT csv, HEADER true);";
             }
 
           
@@ -89,6 +77,19 @@ namespace DuckDBDataSourceCore
                     command.ExecuteNonQuery();
                 }
           
+        }
+        public static void ExportToCSV(this DuckDBDataSource DuckDB, string tableName, string filePath)
+        {
+            // This SQL command exports the entire table or the result of a query to a Parquet file
+            string sql = $"COPY (SELECT * FROM {tableName}) TO '{filePath}' (FORMAT 'csv');";
+
+
+            //connection.Open();
+            using (var command = new DuckDbCommand(sql, DuckDB.DuckConn))
+            {
+                command.ExecuteNonQuery();
+            }
+
         }
         public static void ImportParquetIntoExistingTable(this DuckDBDataSource DuckDB, string filePath, string tableName)
         {
@@ -114,27 +115,10 @@ namespace DuckDBDataSourceCore
                 }
            
         }
-        public static DataTable ParquetMetaData(this DuckDBDataSource DuckDB, string filePath)
-        {
-            // This SQL command assumes DuckDB will create the table based on the Parquet file schema
-            string sql = $"SELECT *  FROM parquet_metadata('{filePath}');";
-            DataTable dataTable = new DataTable();
-          
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
-                {
-                    //connection.Open();
-                    using (var reader = command.ExecuteReader())
-                    {
-                        dataTable.Load(reader);
-                    }
-                }
-            
-            return dataTable;
-        }
         public static void ImportJson(this DuckDBDataSource DuckDB, string filePath, string tableName,string parameters="")
         {
             // This SQL command assumes DuckDB will create the table based on the JSON file schema
-            string sql = $"COPY {tableName} FROM '{filePath}'  (FORMAT JSON,AUTO_DETECT true);";
+            string sql = $"CREATE TABLE {tableName} AS SELECT * FROM '{filePath}'  (FORMAT JSON,AUTO_DETECT TRUE);";
 
            
                 using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
@@ -301,7 +285,41 @@ namespace DuckDBDataSourceCore
                 Console.WriteLine();
             }
         }
-        #region "Data Import Methods"
+        #region "Data Reading Methods"
+        public static DataTable ParquetMetaData(this DuckDBDataSource DuckDB, string filePath)
+        {
+            // This SQL command assumes DuckDB will create the table based on the Parquet file schema
+            string sql = $"SELECT *  FROM parquet_metadata('{filePath}');";
+            DataTable dataTable = new DataTable();
+
+            using (var command = new DuckDbCommand(sql, DuckDB.DuckConn))
+            {
+                //connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    dataTable.Load(reader);
+                }
+            }
+
+            return dataTable;
+        }
+        public static DataTable ReadTextFile(this DuckDBDataSource DuckDB, string filePath)
+        {
+            // This SQL command assumes DuckDB will create the table based on the Parquet file schema
+            string sql = $"SELECT size, parse_path(filename), content  FROM read_text('{filePath}');";
+            DataTable dataTable = new DataTable();
+
+            using (var command = new DuckDbCommand(sql, DuckDB.DuckConn))
+            {
+                //connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    dataTable.Load(reader);
+                }
+            }
+
+            return dataTable;
+        }
         public static DataTable ReadParquetFile(this DuckDBDataSource DuckDB, string filepath, bool binaryAsString = false, bool filename = false, bool fileRowNumber = false, bool hivePartitioning = false, bool unionByName = false)
         {
 

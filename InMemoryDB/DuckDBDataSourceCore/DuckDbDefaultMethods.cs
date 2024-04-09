@@ -13,7 +13,7 @@ using DuckDBDataSourceCore;
 
 namespace TheTechIdea.Beep
 {
-    public static class DataSourceDefaultMethods
+    public static class DuckDbDefaultMethods
     {
         public static IErrorsInfo RefreshEntities(IBranch DatabaseBranch,IDMEEditor DMEEditor, IVisManager Visutil)
         {
@@ -197,5 +197,40 @@ namespace TheTechIdea.Beep
             }
             return DMEEditor.ErrorObject;
         }
+        public static IBranch CreateFileNode(string FileNamewPath, IBranch br, ITree TreeEditor, IDMEEditor DMEEditor, IVisManager Visutil)
+        {
+            IBranch viewbr = null;
+            try
+            {
+                ;
+
+                string ext = Path.GetExtension(FileNamewPath).Remove(0, 1);
+                string IconImageName = ext + ".png";
+                string filename = Path.GetFileName(FileNamewPath);
+                ConnectionProperties cn = null;
+                if (!DMEEditor.ConfigEditor.DataConnectionExist(filename))
+                {
+                    cn = DMEEditor.Utilfunction.CreateFileDataConnection(FileNamewPath);
+                    DMEEditor.ConfigEditor.AddDataConnection(cn);
+                    DMEEditor.ConfigEditor.SaveDataconnectionsValues();
+                    br.CreateChildNodes();
+                }
+                else
+                {
+                    cn = DMEEditor.ConfigEditor.DataConnections.FirstOrDefault(p => p.ConnectionName.Equals(filename, StringComparison.InvariantCultureIgnoreCase));
+                }
+                
+                DMEEditor.AddLogMessage("Success", "Added Database Connection", DateTime.Now, 0, null, Errors.Ok);
+            }
+            catch (Exception ex)
+            {
+                string mes = "Could not Add Database Connection";
+                viewbr = null;
+                DMEEditor.AddLogMessage(ex.Message, mes, DateTime.Now, -1, mes, Errors.Failed);
+            };
+
+            return viewbr;
+        }
+     
     }
 }
