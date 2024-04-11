@@ -359,7 +359,7 @@ namespace DuckDBDataSourceCore
 
         public IBranch CreateCategoryNode(CategoryFolder p)
         {
-            throw new NotImplementedException();
+           return null;
         }
         #endregion
     }

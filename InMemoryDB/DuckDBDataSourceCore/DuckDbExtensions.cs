@@ -9,7 +9,7 @@ using TheTechIdea.Util;
 
 namespace TheTechIdea.Beep
 {
-    [AddinAttribute(Caption = "DuckDb Menu", Name = "DuckDbExtensions", misc = "IFunctionExtension", menu = "Beep", ObjectType = "Beep", addinType = AddinType.Class, iconimage = "duckdb.png", order = 3, Showin = ShowinType.Menu)]
+    [AddinAttribute(Caption = "DuckDb", Name = "DuckDbExtensions", misc = "IFunctionExtension", menu = "Beep", ObjectType = "Beep", addinType = AddinType.Class, iconimage = "duckdb.png", order = 3, Showin = ShowinType.Menu)]
     public  class DuckDbExtensions :IFunctionExtension
     {
         public IDMEEditor DMEEditor { get  ; set  ; }

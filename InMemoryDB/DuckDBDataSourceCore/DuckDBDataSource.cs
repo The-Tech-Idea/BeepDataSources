@@ -39,6 +39,7 @@ namespace DuckDBDataSourceCore
         
         public DuckDBDataSource(string pdatasourcename, IDMLogger plogger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(pdatasourcename, plogger, pDMEEditor, databasetype, per)
         {
+            //FormattableString str = $"Data Source={dbpath}";
             if(per == null)
             {
                 per = DMEEditor.ErrorObject;
