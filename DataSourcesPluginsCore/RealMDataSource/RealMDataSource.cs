@@ -6,11 +6,13 @@ using TheTechIdea.Beep.Connections;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Vis;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
 
 namespace TheTechIdea.Beep.DataSource
 {
+    [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.RealIM)]
     public class RealMDataSource : IDataSource
     {
         public RealMDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
@@ -617,6 +619,11 @@ namespace TheTechIdea.Beep.DataSource
             }
 
             return entity;
+        }
+
+        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion "Real M"

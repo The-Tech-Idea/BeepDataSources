@@ -2,73 +2,36 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
-using System.Threading.Tasks;
 using TheTechIdea;
 using TheTechIdea.Beep;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Report;
-using TheTechIdea.Beep.Vis;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
 
-namespace OPCUADataSource
+namespace HadoopDataSourceCore
 {
-    [AddinAttribute(Category = DatasourceCategory.STREAM, DatasourceType = DataSourceType.OPC)]
-    public class OPCDataSource : IDataSource
+    public class HadoopDataSource : IDataSource
     {
-        public string GuidID { get; set; }
-        public DataSourceType DatasourceType { get  ; set  ; }
-        public DatasourceCategory Category { get  ; set  ; }
-        public IDataConnection Dataconnection { get  ; set  ; }
-        public string DatasourceName { get  ; set  ; }
-        public IErrorsInfo ErrorObject { get  ; set  ; }
-        public string Id { get  ; set  ; }
-        public IDMLogger Logger { get  ; set  ; }
-        public List<string> EntitiesNames { get  ; set  ; }
-        public List<EntityStructure> Entities { get  ; set  ; }
-        public IDMEEditor DMEEditor { get  ; set  ; }
-        public ConnectionState ConnectionStatus { get  ; set  ; }
-        public string ColumnDelimiter { get  ; set  ; }
-        public string ParameterDelimiter { get  ; set  ; }
+        private bool disposedValue;
+
+        public string ColumnDelimiter { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ParameterDelimiter { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string GuidID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public DataSourceType DatasourceType { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public DatasourceCategory Category { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IDataConnection Dataconnection { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string DatasourceName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IErrorsInfo ErrorObject { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IDMLogger Logger { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public List<string> EntitiesNames { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public List<EntityStructure> Entities { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IDMEEditor DMEEditor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public ConnectionState ConnectionStatus { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public event EventHandler<PassedArgs> PassEvent;
-        public virtual Task<double> GetScalarAsync(string query)
-        {
-            return Task.Run(() => GetScalar(query));
-        }
-        public virtual double GetScalar(string query)
-        {
-            ErrorObject.Flag = Errors.Ok;
-
-            try
-            {
-                // Assuming you have a database connection and command objects.
-
-                //using (var command = GetDataCommand())
-                //{
-                //    command.CommandText = query;
-                //    var result = command.ExecuteScalar();
-
-                //    // Check if the result is not null and can be converted to a double.
-                //    if (result != null && double.TryParse(result.ToString(), out double value))
-                //    {
-                //        return value;
-                //    }
-                //}
-
-
-                // If the query executed successfully but didn't return a valid double, you can handle it here.
-                // You might want to log an error or throw an exception as needed.
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
-            }
-
-            // Return a default value or throw an exception if the query failed.
-            return 0.0; // You can change this default value as needed.
-        }
 
         public IErrorsInfo BeginTransaction(PassedArgs args)
         {
@@ -105,11 +68,6 @@ namespace OPCUADataSource
             throw new NotImplementedException();
         }
 
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-
         public IErrorsInfo EndTransaction(PassedArgs args)
         {
             throw new NotImplementedException();
@@ -136,6 +94,11 @@ namespace OPCUADataSource
         }
 
         public object GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
             throw new NotImplementedException();
         }
@@ -170,6 +133,16 @@ namespace OPCUADataSource
             throw new NotImplementedException();
         }
 
+        public double GetScalar(string query)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<double> GetScalarAsync(string query)
+        {
+            throw new NotImplementedException();
+        }
+
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
         {
             throw new NotImplementedException();
@@ -200,9 +173,33 @@ namespace OPCUADataSource
             throw new NotImplementedException();
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        protected virtual void Dispose(bool disposing)
         {
-            throw new NotImplementedException();
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects)
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                disposedValue = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~HadoopDataSource()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

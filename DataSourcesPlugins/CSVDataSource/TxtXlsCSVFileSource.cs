@@ -385,6 +385,112 @@ namespace TheTechIdea.Beep.FileManager
             }
            // return Records;
         }
+        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                DataTable dt = null;
+                string qrystr = "";
+                EntityStructure entity = GetEntityStructure(EntityName);
+
+                int fromline = entity.StartRow;
+                int toline = entity.EndRow;
+                if (GetFileState() == ConnectionState.Open)
+                {
+                    if (Entities != null)
+                    {
+                        if (Entities.Count() == 0)
+                        {
+                            GetEntitesList();
+                        }
+
+                    }
+
+                    if (filter != null)
+                    {
+                        if (filter.Count > 0)
+                        {
+                            AppFilter fromlinefilter = filter.FirstOrDefault(p => p.FieldName.Equals("FromLine", StringComparison.InvariantCultureIgnoreCase));
+                            if (fromlinefilter != null)
+                            {
+                                fromline = Convert.ToInt32(fromlinefilter.FilterValue);
+                            }
+                            AppFilter Tolinefilter = filter.FirstOrDefault(p => p.FieldName.Equals("ToLine", StringComparison.InvariantCultureIgnoreCase));
+                            if (fromlinefilter != null)
+                            {
+                                toline = Convert.ToInt32(fromlinefilter.FilterValue);
+                            }
+                        }
+                    }
+                    int idx = -1;
+                    if (Entities.Count > 0)
+                    {
+                        idx = Entities.FindIndex(p => p.EntityName.Equals(EntityName, StringComparison.InvariantCultureIgnoreCase));
+
+                    }
+
+                    if (idx > -1)
+                    {
+                        entity = Entities[idx];
+                        dt = ReadDataTable(EntityName, HeaderExist, fromline, toline);
+                        SyncFieldTypes(ref dt, EntityName);
+                        if (filter != null)
+                        {
+                            if (filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator)).Any())
+                            {
+
+                                foreach (AppFilter item in filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator) && !p.FieldName.Equals("ToLine", StringComparison.InvariantCultureIgnoreCase) && !p.FieldName.Equals("FromLine", StringComparison.InvariantCultureIgnoreCase)))
+                                {
+                                    if (!string.IsNullOrEmpty(item.FilterValue) && !string.IsNullOrWhiteSpace(item.FilterValue))
+                                    {
+                                        //  EntityField f = ent.Fields.Where(i => i.fieldname == item.FieldName).FirstOrDefault();
+                                        if (item.Operator.ToLower() == "between")
+                                        {
+                                            if (item.valueType == "System.DateTime")
+                                            {
+                                                qrystr += "[" + item.FieldName + "] " + item.Operator + " '" + DateTime.Parse(item.FilterValue) + "' and  '" + DateTime.Parse(item.FilterValue1) + "'" + Environment.NewLine;
+                                            }
+                                            else
+                                            {
+                                                qrystr += "[" + item.FieldName + "] " + item.Operator + " " + item.FilterValue + " and  " + item.FilterValue1 + " " + Environment.NewLine;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (item.valueType == "System.String")
+                                            {
+                                                qrystr += "[" + item.FieldName + "] " + item.Operator + " '" + item.FilterValue + "' " + Environment.NewLine;
+                                            }
+                                            else
+                                            {
+                                                qrystr += "[" + item.FieldName + "] " + item.Operator + " " + item.FilterValue + " " + Environment.NewLine;
+                                            }
+
+                                        }
+                                    }
+                                }
+                            }
+                            if (!string.IsNullOrEmpty(qrystr))
+                            {
+                                dt = dt.Select(qrystr).CopyToDataTable();
+                            }
+                        }
+                    }
+
+                }
+                return dt;
+            }
+            catch (Exception ex)
+            {
+
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Ex = ex;
+                Logger.WriteLog($"Error in getting File Data ({ex.Message}) ");
+                return null;
+            }
+            // return Records;
+        }
         public  TypeCode ToConvert( Type dest)
         {
             TypeCode retval = TypeCode.String;

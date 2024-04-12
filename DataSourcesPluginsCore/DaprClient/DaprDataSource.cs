@@ -251,7 +251,10 @@ namespace DaprClient
         {
             throw new NotImplementedException();
         }
-
+        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            throw new NotImplementedException();
+        }
         public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
             throw new NotImplementedException();

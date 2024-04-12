@@ -32,6 +32,14 @@ namespace TheTechIdea.Beep.Redis
         public ConnectionState ConnectionStatus { get ; set ; }
 
         public event EventHandler<PassedArgs> PassEvent;
+        public event EventHandler<PassedArgs> OnLoadData;
+        public event EventHandler<PassedArgs> OnLoadStructure;
+        public event EventHandler<PassedArgs> OnSaveStructure;
+        public event EventHandler<PassedArgs> OnCreateStructure;
+        public event EventHandler<PassedArgs> OnRefreshData;
+        public event EventHandler<PassedArgs> OnRefreshDataEntity;
+        public event EventHandler<PassedArgs> OnSyncData;
+
         public virtual string ColumnDelimiter { get; set; } = "''";
         public virtual string ParameterDelimiter { get; set; } = ":";
         public List<EntityStructure> InMemoryStructures { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -39,6 +47,8 @@ namespace TheTechIdea.Beep.Redis
         public bool IsLoaded { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public bool IsSaved { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public bool IsSynced { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public ETLScriptHDR CreateScript { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsStructureCreated { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public virtual Task<double> GetScalarAsync(string query)
         {
@@ -298,6 +308,36 @@ namespace TheTechIdea.Beep.Redis
         }
 
         public IErrorsInfo SyncData(Progress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo LoadStructure(Progress<PassedArgs> progress, CancellationToken token, bool copydata = false)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo CreateStructure(Progress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo SyncData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo RefreshData(Progress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo RefreshData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
             throw new NotImplementedException();
         }

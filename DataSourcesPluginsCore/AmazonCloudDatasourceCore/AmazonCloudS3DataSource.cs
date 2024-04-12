@@ -279,6 +279,11 @@ namespace TheTechIdea.Beep.Cloud
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+
+        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            throw new NotImplementedException();
+        }
         #endregion
     }
 }

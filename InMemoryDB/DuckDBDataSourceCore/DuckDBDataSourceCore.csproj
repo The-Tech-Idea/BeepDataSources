@@ -11,7 +11,7 @@
 		<PackageIcon>SimpleODM.png</PackageIcon>
 		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<Version>1.0.35</Version>
+		<Version>1.0.36</Version>
 
 	</PropertyGroup>
 
@@ -30,11 +30,11 @@
 	<ItemGroup>
 	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="0.10.1.2" />
 	  <PackageReference Include="DuckDB.NET.Data.Full" Version="0.10.1.2" />
-	  <PackageReference Include="RDBDataSource" Version="1.0.32" />
+	  <PackageReference Include="RDBDataSource" Version="1.0.33" />
 	  <PackageReference Include="System.Data.Odbc" Version="8.0.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.401" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.138" />
-	  <PackageReference Include="TheTechIdea.Beep.Vis.Modules" Version="1.0.96" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.402" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.139" />
+	  <PackageReference Include="TheTechIdea.Beep.Vis.Modules" Version="1.0.101" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Folder Include="gfx\" />

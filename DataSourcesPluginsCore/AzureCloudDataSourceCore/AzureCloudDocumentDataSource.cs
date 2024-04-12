@@ -176,7 +176,10 @@ namespace TheTechIdea.Beep.Cloud
         {
             throw new NotImplementedException();
         }
-
+        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            throw new NotImplementedException();
+        }
         public  object RunQuery( string qrystr)
         {
             throw new NotImplementedException();

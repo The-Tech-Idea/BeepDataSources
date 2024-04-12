@@ -39,6 +39,14 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
     {
         public string GuidID { get; set; }  
         public event EventHandler<PassedArgs> PassEvent;
+        public event EventHandler<PassedArgs> OnLoadData;
+        public event EventHandler<PassedArgs> OnLoadStructure;
+        public event EventHandler<PassedArgs> OnSaveStructure;
+        public event EventHandler<PassedArgs> OnCreateStructure;
+        public event EventHandler<PassedArgs> OnRefreshData;
+        public event EventHandler<PassedArgs> OnRefreshDataEntity;
+        public event EventHandler<PassedArgs> OnSyncData;
+
         public BindingList<string> Databases { get ; set ; }
         public List<DatabaseCollection> RavenDatabases { get; set; }
         public DataSourceType DatasourceType { get ; set ; }
@@ -60,11 +68,13 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
         public string CurrentDatabase { get; set; }
         public virtual string ColumnDelimiter { get; set; } = "''";
         public virtual string ParameterDelimiter { get; set; } = ":";
-        public List<EntityStructure> InMemoryStructures { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool IsCreated { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool IsLoaded { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool IsSaved { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool IsSynced { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public List<EntityStructure> InMemoryStructures { get  ; set  ; }
+        public bool IsCreated { get  ; set  ; }
+        public bool IsLoaded { get  ; set  ; }
+        public bool IsSaved { get  ; set  ; }
+        public bool IsSynced { get  ; set  ; }
+        public ETLScriptHDR CreateScript { get  ; set  ; }
+        public bool IsStructureCreated { get  ; set  ; }
 
         public virtual Task<double> GetScalarAsync(string query)
         {
@@ -717,6 +727,36 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
         }
 
         public IErrorsInfo SyncData(Progress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo LoadStructure(Progress<PassedArgs> progress, CancellationToken token, bool copydata = false)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo CreateStructure(Progress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo SyncData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo RefreshData(Progress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo RefreshData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
             throw new NotImplementedException();
         }

@@ -953,6 +953,82 @@ namespace TheTechIdea.Beep.DataBase
 
 
         }
+        /// Retrieves data for a specified entity from the database, with the option to apply filters.
+        /// </summary>
+        /// <param name="EntityName">The name of the entity (table) to retrieve data from.</param>
+        /// <param name="Filter">A list of filters to apply to the query.</param>
+        /// <remarks>
+        /// This method supports both direct table queries and custom queries. It uses dynamic SQL generation and can adapt to different database types. The method also converts the retrieved DataTable to a list of objects based on the entity's structure and type.
+        /// </remarks>
+        /// <returns>An object representing the data retrieved, which could be a list or another type based on the entity structure.</returns>
+        /// <exception cref="Exception">Catches and logs any exceptions that occur during the data retrieval process.</exception>
+        public virtual object GetEntity(string EntityName, List<AppFilter> Filter, int pageNumber, int pageSize)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            //  int LoadedRecord;
+
+            EntityName = EntityName.ToLower();
+            string inname = "";
+            string qrystr = "select * from ";
+
+            if (!string.IsNullOrEmpty(EntityName) && !string.IsNullOrWhiteSpace(EntityName))
+            {
+                if (!EntityName.Contains("select") && !EntityName.Contains("from"))
+                {
+                    qrystr = "select * from " + EntityName;
+                    qrystr = GetTableName(qrystr.ToLower());
+                    inname = EntityName;
+                }
+                else
+                {
+                    EntityName = GetTableName(EntityName);
+                    string[] stringSeparators = new string[] { " from ", " where ", " group by ", " order by " };
+                    string[] sp = EntityName.Split(stringSeparators, StringSplitOptions.None);
+                    qrystr = EntityName;
+                    inname = sp[1].Trim();
+                }
+
+            }
+            EntityStructure ent = GetEntityStructure(inname);
+            if (ent != null)
+            {
+                if (!string.IsNullOrEmpty(ent.CustomBuildQuery))
+                {
+                    qrystr = ent.CustomBuildQuery;
+                }
+
+            }
+
+            qrystr = BuildQuery(qrystr, Filter);
+            // Get the paging syntax for the specific data source type
+            if(pageNumber>0 && pageSize > 0)
+            {
+                string pagingSyntax = RDBMSHelper.GetPagingSyntax(DatasourceType, pageNumber, pageSize);
+
+                // Append the paging clause to your query
+                qrystr += $" {pagingSyntax}";
+            }
+         
+            try
+            {
+                IDataAdapter adp = GetDataAdapter(qrystr, Filter);
+                DataSet dataSet = new DataSet();
+                adp.Fill(dataSet);
+                DataTable dt = dataSet.Tables[0];
+
+                return dt;//DMEEditor.Utilfunction.ConvertTableToList(dt,GetEntityStructure(EntityName),GetEntityType(EntityName));
+            }
+
+            catch (Exception ex)
+            {
+
+                DMEEditor.AddLogMessage("Fail", $"Error in getting entity Data({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+
+                return null;
+            }
+
+
+        }
         /// <summary>
         /// Asynchronously retrieves data for a specified entity from the database, with the option to apply filters.
         /// </summary>

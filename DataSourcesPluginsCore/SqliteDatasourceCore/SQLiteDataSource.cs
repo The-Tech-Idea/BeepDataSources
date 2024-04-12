@@ -6,7 +6,7 @@ using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
-using static Dapper.SqlMapper;
+
 
 namespace TheTechIdea.Beep.DataBase
 {

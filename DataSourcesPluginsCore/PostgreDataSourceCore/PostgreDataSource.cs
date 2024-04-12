@@ -8,12 +8,14 @@ using TheTechIdea;
 using TheTechIdea.Beep;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Workflow;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
 
 namespace  TheTechIdea.Beep.DataBase
 {
+    [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.Postgre)]
     public class PostgreDataSource : RDBSource, IDataSource
     {
         public PostgreDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
