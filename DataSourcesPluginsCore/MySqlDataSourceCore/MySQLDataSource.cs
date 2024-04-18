@@ -1,4 +1,5 @@
 ﻿
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -21,7 +22,7 @@ namespace TheTechIdea.Beep.DataBase
         {
            ColumnDelimiter  = "'";
             ParameterDelimiter  = "@";
-           
+          
         }
         public override string ColumnDelimiter { get; set; } = "'";
         public override string ParameterDelimiter { get; set; } = "@";
