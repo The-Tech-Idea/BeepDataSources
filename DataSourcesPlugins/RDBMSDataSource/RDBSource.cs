@@ -1554,6 +1554,8 @@ namespace TheTechIdea.Beep.DataBase
         {
             ErrorObject.Flag = Errors.Ok;
             DataSet ds = new DataSet();
+            IDbDataAdapter adp;
+            DataTable tb = new DataTable();
             try
             {
                 if (Dataconnection != null)
@@ -1575,13 +1577,13 @@ namespace TheTechIdea.Beep.DataBase
                     sql = DMEEditor.ConfigEditor.GetSql(Sqlcommandtype.getlistoftables, null, Dataconnection.ConnectionProp.SchemaName, null, DMEEditor.ConfigEditor.QueryList, DatasourceType);
                 }
                 
-                    IDbDataAdapter adp = GetDataAdapter(sql, null);
+                    adp = GetDataAdapter(sql, null);
                     adp.Fill(ds);
 #if DEBUG
                     DMEEditor.AddLogMessage("Beep", $"Get Tables List Query {sql}", DateTime.Now, 0, DatasourceName, Errors.Failed);
                     Debug.WriteLine($" -- Get Tables List Query {sql}");
 #endif 
-                DataTable tb = new DataTable();
+                   
                     tb = ds.Tables[0];
                     EntitiesNames = new List<string>();
                     int i = 0;
@@ -1591,14 +1593,16 @@ namespace TheTechIdea.Beep.DataBase
                         i += 1;
                     }
                
-               
+
             }
             catch (Exception ex)
             {
+               
                 DMEEditor.AddLogMessage("Fail", $"Error in getting  Table List ({ ex.Message})", DateTime.Now, 0, DatasourceName, Errors.Failed);
               
             }
-
+            tb = null;
+            adp = null;
             return EntitiesNames;
 
 
