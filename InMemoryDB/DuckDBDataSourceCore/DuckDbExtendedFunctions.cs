@@ -12,7 +12,7 @@ namespace DuckDBDataSourceCore
             string sql = $"CREATE SEQUENCE {sequenceName} START {start} INCREMENT {increment} MINVALUE {minValue} MAXVALUE {maxValue} {(cycle ? "CYCLE" : "NO CYCLE")};";
 
          
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     command.ExecuteNonQuery();
                 }
@@ -24,7 +24,7 @@ namespace DuckDBDataSourceCore
             string sql = $"CREATE OR REPLACE VIEW {viewName} AS {viewQuerySql};";
 
            
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     // Execute the command to create or replace the view
                     command.ExecuteNonQuery();
@@ -37,7 +37,7 @@ namespace DuckDBDataSourceCore
             DataTable dataTable = new DataTable();
             string query = $"CREATE TABLE {tableName} AS FROM  read_csv_auto('{filePattern}',union_by_name={union_by_name});";
 
-            using (var command = new DuckDbCommand(query, DuckDB.DuckConn))
+            using (var command = new DuckDBCommand(query, DuckDB.DuckConn))
             {
                 //connection.Open();
                 command.ExecuteNonQuery();
@@ -49,7 +49,7 @@ namespace DuckDBDataSourceCore
             DataTable dataTable = new DataTable();
             string query = $"CREATE TABLE {tableName} AS FROM parquet_scan('{filePattern}');";
 
-            using (var command = new DuckDbCommand(query, DuckDB.DuckConn))
+            using (var command = new DuckDBCommand(query, DuckDB.DuckConn))
             {
                 //connection.Open();
                 command.ExecuteNonQuery();
@@ -71,7 +71,7 @@ namespace DuckDBDataSourceCore
             }
 
           
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     //connection.Open();
                     command.ExecuteNonQuery();
@@ -85,7 +85,7 @@ namespace DuckDBDataSourceCore
 
 
             //connection.Open();
-            using (var command = new DuckDbCommand(sql, DuckDB.DuckConn))
+            using (var command = new DuckDBCommand(sql, DuckDB.DuckConn))
             {
                 command.ExecuteNonQuery();
             }
@@ -97,7 +97,7 @@ namespace DuckDBDataSourceCore
             string sql = $"INSERT INTO {tableName} SELECT * FROM read_parquet('{filePath}');";
 
           
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     //connection.Open();
                     command.ExecuteNonQuery();
@@ -108,7 +108,7 @@ namespace DuckDBDataSourceCore
         {
             // This SQL command assumes DuckDB will create the table based on the Parquet file schema
             string sql = $"CREATE TABLE {tableName} AS SELECT * FROM read_parquet('{filePath}');";
-    using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+    using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     //connection.Open();
                     command.ExecuteNonQuery();
@@ -121,7 +121,7 @@ namespace DuckDBDataSourceCore
             string sql = $"CREATE TABLE {tableName} AS SELECT * FROM '{filePath}'  (FORMAT JSON,AUTO_DETECT TRUE);";
 
            
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     //connection.Open();
                     command.ExecuteNonQuery();
@@ -134,7 +134,7 @@ namespace DuckDBDataSourceCore
             string sql = $"CREATE TABLE {tableName} AS SELECT * FROM read_json('{filePath}',auto_detect=true);";
 
          
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     //connection.Open();
                     command.ExecuteNonQuery();
@@ -147,7 +147,7 @@ namespace DuckDBDataSourceCore
             string sql = $"INSERT INTO {tableName} SELECT * FROM read_json('{filePath}');";
 
            
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     //connection.Open();
                     command.ExecuteNonQuery();
@@ -161,7 +161,7 @@ namespace DuckDBDataSourceCore
 
          
                 //connection.Open();
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     command.ExecuteNonQuery();
                 }
@@ -174,7 +174,7 @@ namespace DuckDBDataSourceCore
 
            
                 //connection.Open();
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     command.ExecuteNonQuery();
                 }
@@ -184,7 +184,7 @@ namespace DuckDBDataSourceCore
         {
             DataTable dataTable = new DataTable();
 
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     foreach (var param in parameters)
                     {
@@ -207,7 +207,7 @@ namespace DuckDBDataSourceCore
 
          
                 //connection.Open();
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     command.ExecuteNonQuery();
                 }
@@ -222,7 +222,7 @@ namespace DuckDBDataSourceCore
 
           
                 //connection.Open();
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     command.ExecuteNonQuery();
                 }
@@ -231,7 +231,7 @@ namespace DuckDBDataSourceCore
         public static int ExecuteNonQuery(this DuckDBDataSource DuckDB, string sql)
         {
           
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     //connection.Open();
                     return command.ExecuteNonQuery();
@@ -241,7 +241,7 @@ namespace DuckDBDataSourceCore
         public static object GetScalarValue(this DuckDBDataSource DuckDB, string sql)
         {
            
-                using (var command = new DuckDbCommand(sql,DuckDB.DuckConn))
+                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
                 {
                     //connection.Open();
                     return command.ExecuteScalar();
@@ -292,7 +292,7 @@ namespace DuckDBDataSourceCore
             string sql = $"SELECT *  FROM parquet_metadata('{filePath}');";
             DataTable dataTable = new DataTable();
 
-            using (var command = new DuckDbCommand(sql, DuckDB.DuckConn))
+            using (var command = new DuckDBCommand(sql, DuckDB.DuckConn))
             {
                 //connection.Open();
                 using (var reader = command.ExecuteReader())
@@ -309,7 +309,7 @@ namespace DuckDBDataSourceCore
             string sql = $"SELECT size, parse_path(filename), content  FROM read_text('{filePath}');";
             DataTable dataTable = new DataTable();
 
-            using (var command = new DuckDbCommand(sql, DuckDB.DuckConn))
+            using (var command = new DuckDBCommand(sql, DuckDB.DuckConn))
             {
                 //connection.Open();
                 using (var reader = command.ExecuteReader())
@@ -324,7 +324,7 @@ namespace DuckDBDataSourceCore
         {
 
            DuckDBConnection DuckConn = DuckDB.DuckConn;
-            using (var cmd = new DuckDbCommand($"SELECT * FROM read_parquet('{filepath}', (binary_as_string={binaryAsString.ToString().ToLower()}, filename={filename.ToString().ToLower()}, file_row_number={fileRowNumber.ToString().ToLower()}, hive_partitioning={hivePartitioning.ToString().ToLower()}, union_by_name={unionByName.ToString().ToLower()}));", DuckConn))
+            using (var cmd = new DuckDBCommand($"SELECT * FROM read_parquet('{filepath}', (binary_as_string={binaryAsString.ToString().ToLower()}, filename={filename.ToString().ToLower()}, file_row_number={fileRowNumber.ToString().ToLower()}, hive_partitioning={hivePartitioning.ToString().ToLower()}, union_by_name={unionByName.ToString().ToLower()}));", DuckConn))
             {
                 using (var reader = cmd.ExecuteReader())
                 {
@@ -352,7 +352,7 @@ namespace DuckDBDataSourceCore
 
             sql += ");";
 
-            using (var cmd = new DuckDbCommand(sql, DuckConn))
+            using (var cmd = new DuckDBCommand(sql, DuckConn))
             {
                 using (var reader = cmd.ExecuteReader())
                 {
@@ -381,7 +381,7 @@ namespace DuckDBDataSourceCore
 
             sql += ");";
 
-            using (var cmd = new DuckDbCommand(sql, DuckConn))
+            using (var cmd = new DuckDBCommand(sql, DuckConn))
             {
                 using (var reader = cmd.ExecuteReader())
                 {
@@ -424,7 +424,7 @@ namespace DuckDBDataSourceCore
 
             sql += ");";
 
-            using (var cmd = new DuckDbCommand(sql, DuckConn))
+            using (var cmd = new DuckDBCommand(sql, DuckConn))
             {
                 using (var reader = cmd.ExecuteReader())
                 {

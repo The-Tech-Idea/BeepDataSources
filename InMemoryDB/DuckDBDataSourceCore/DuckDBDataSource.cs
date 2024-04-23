@@ -552,7 +552,7 @@ namespace DuckDBDataSourceCore
                 //List<object> f = DMEEditor.Utilfunction.GetListByDataTable(tb);
                 ErrorObject.Flag = Errors.Ok;
                 EntityStructure DataStruct = GetEntityStructure(EntityName);
-                DuckDbCommand command = GetDataCommand();
+                DuckDBCommand command = GetDataCommand();
                 string str = "";
                 string errorstring = "";
                 int CurrentRecord = 0;
@@ -713,7 +713,7 @@ namespace DuckDBDataSourceCore
             DataRow dr;
             string msg = "";
             //   var sqlTran = Dataconnection.DbConn.BeginTransaction();
-            DuckDbCommand command = GetDataCommand();
+            DuckDBCommand command = GetDataCommand();
             Type enttype = GetEntityType(EntityName);
             //  var ti = Activator.CreateInstance(enttype);
 
@@ -778,7 +778,7 @@ namespace DuckDBDataSourceCore
             }
             else
                 recNumber += 1;
-            DuckDbCommand command = GetDataCommand();
+            DuckDBCommand command = GetDataCommand();
             dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, InsertedData, DataStruct);
             try
             {
@@ -839,7 +839,7 @@ namespace DuckDBDataSourceCore
             }
             else
                 recNumber += 1;
-            DuckDbCommand command = GetDataCommand();
+            DuckDBCommand command = GetDataCommand();
             dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, DeletedDataRow, DataStruct);
             try
             {
@@ -922,7 +922,7 @@ namespace DuckDBDataSourceCore
         //            sql += $"{fld.fieldname} {DuckDBConvert(fld.fieldtype)},";
         //        }
         //        sql = sql.TrimEnd(',') + ")";
-        //        using (var cmd = new DuckDbCommand(sql, DuckConn))
+        //        using (var cmd = new DuckDBCommand(sql, DuckConn))
         //        {
         //            cmd.ExecuteNonQuery();
         //        }
@@ -975,7 +975,7 @@ namespace DuckDBDataSourceCore
         public DataTable RunQueryOnDuckDb( string qryStr)
         {
             var dataTable = new DataTable();
-            DuckDbCommand command = GetDataCommand();
+            DuckDBCommand command = GetDataCommand();
 
             command.CommandText = qryStr;
             //command.Parameters.Add(new DuckDBParameter("table_name", tableName));
@@ -983,7 +983,7 @@ namespace DuckDBDataSourceCore
             {
                 dataTable.Load(reader);
             }
-            //using (var command = new DuckDbCommand(qryStr, DuckConn))
+            //using (var command = new DuckDBCommand(qryStr, DuckConn))
             //{
                
             //    using (var adapter = new OdbcDataAdapter(command))
@@ -995,7 +995,7 @@ namespace DuckDBDataSourceCore
 
             return dataTable;
         }
-        private DuckDbCommand CreateDeleteCommandParameters(DuckDbCommand command, DataRow r, EntityStructure DataStruct)
+        private DuckDBCommand CreateDeleteCommandParameters(DuckDBCommand command, DataRow r, EntityStructure DataStruct)
         {
             command.Parameters.Clear();
 
@@ -1049,7 +1049,7 @@ namespace DuckDBDataSourceCore
             }
             return command;
         }
-        private DuckDbCommand CreateCommandParameters(DuckDbCommand command, DataRow r, EntityStructure DataStruct)
+        private DuckDBCommand CreateCommandParameters(DuckDBCommand command, DataRow r, EntityStructure DataStruct)
         {
             command.Parameters.Clear();
          
@@ -1365,9 +1365,9 @@ namespace DuckDBDataSourceCore
             }
             return qrystr;
         }
-        public virtual DuckDbCommand GetDataCommand()
+        public virtual DuckDBCommand GetDataCommand()
         {
-            DuckDbCommand cmd = null;
+            DuckDBCommand cmd = null;
             ErrorObject.Flag = Errors.Ok;
             try
             {
@@ -1441,7 +1441,7 @@ namespace DuckDBDataSourceCore
             DataTable schemaTable = new DataTable();
 
 
-            DuckDbCommand command = GetDataCommand();
+            DuckDBCommand command = GetDataCommand();
             command.CommandText = sqlQuery;
          
                     // Execute the command with SchemaOnly behavior to get only the schema
@@ -1460,7 +1460,7 @@ namespace DuckDBDataSourceCore
 
             // Using a parameterized query to avoid SQL injection
             string query = $"SELECT * FROM information_schema.columns WHERE table_name = '{tableName}'";
-            DuckDbCommand command = GetDataCommand();
+            DuckDBCommand command = GetDataCommand();
 
             command.CommandText = query;
            // command.Parameters.Add(new DuckDBParameter("table_name", tableName));
