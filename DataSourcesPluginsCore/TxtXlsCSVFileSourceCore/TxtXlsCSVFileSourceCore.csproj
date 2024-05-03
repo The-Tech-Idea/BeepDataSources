@@ -11,6 +11,7 @@
 		<PackageIcon>SimpleODM.png</PackageIcon>
 		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<Version>1.0.1</Version>
 
 	</PropertyGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
@@ -29,8 +30,8 @@
 	  <PackageReference Include="ExcelDataReader" Version="3.6.0" />
 	  <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
 	  <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.402" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.139" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.419" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.144" />
 	</ItemGroup>
 
 
