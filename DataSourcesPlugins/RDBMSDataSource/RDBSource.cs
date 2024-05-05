@@ -1854,6 +1854,11 @@ namespace TheTechIdea.Beep.DataBase
                 }
                 foreach (EntityField dbf in t1.Fields)
                 {
+                    if(DatasourceType== DataSourceType.Mysql)
+                    {
+                        dbf.fieldname = dbf.fieldname.Replace(" ", "_");
+                        dbf.fieldname = "`"+dbf.fieldname+ "`";
+                    }
 
                     createtablestring += "\n " + dbf.fieldname + " " + DMEEditor.typesHelper.GetDataType(DatasourceName, dbf) + " ";
                     if (dbf.IsAutoIncrement)
