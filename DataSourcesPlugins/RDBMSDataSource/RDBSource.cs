@@ -349,20 +349,29 @@ namespace TheTechIdea.Beep.DataBase
                         case "System.DateTime":
                             parameter.DbType = DbType.DateTime;  // Set this once as it's common for both branches
 
-                            if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                            if (r[item.fieldname] == DBNull.Value || string.IsNullOrWhiteSpace(r[item.fieldname].ToString()))
                             {
                                 parameter.Value = DBNull.Value;
                             }
                             else
                             {
-                                // Use TryParse for safer date parsing without exception handling
                                 if (DateTime.TryParse(r[item.fieldname].ToString(), out DateTime dateValue))
                                 {
+                                    // Ensuring the DateTime Kind is correctly set
+                                    if (dateValue.Kind == DateTimeKind.Unspecified)
+                                    {
+                                        // Assuming the unspecified DateTime is in UTC as required by PostgreSQL
+                                        dateValue = DateTime.SpecifyKind(dateValue, DateTimeKind.Utc);
+                                    }
+                                    else if (dateValue.Kind == DateTimeKind.Local)
+                                    {
+                                        // Convert local DateTime to UTC
+                                        dateValue = dateValue.ToUniversalTime();
+                                    }
                                     parameter.Value = dateValue;
                                 }
                                 else
                                 {
-                                    // If parsing fails, assign a DBNull.Value
                                     parameter.Value = DBNull.Value;
                                 }
                             }
@@ -1590,9 +1599,20 @@ namespace TheTechIdea.Beep.DataBase
                     foreach (DataRow row in tb.Rows)
                     {
                         EntitiesNames.Add(row.Field<string>("TABLE_NAME").ToUpper());
+                        
                         i += 1;
                     }
-               
+                    List<string> EntitiesnotinEntitiesNames = new List<string>();
+                    if (Entities.Count > 0)
+                    {
+                        EntitiesnotinEntitiesNames = Entities.Where(p => !EntitiesNames.Contains(p.EntityName)).Select(p => p.EntityName).ToList();
+                        foreach (string item in EntitiesnotinEntitiesNames)
+                        {
+                            int idx = Entities.FindIndex(p => p.EntityName == item);
+                            Entities.RemoveAt(idx);
+                        }
+                    }
+
 
             }
             catch (Exception ex)
