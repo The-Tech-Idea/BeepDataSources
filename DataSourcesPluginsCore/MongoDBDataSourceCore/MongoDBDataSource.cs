@@ -49,7 +49,7 @@ namespace TheTechIdea.Beep.NOSQL
         public List<object> Records { get; set; }
         public ConnectionState ConnectionStatus { get; set; }
         public DataTable SourceEntityData { get; set; }
-        public string CurrentDatabase { get; set; }
+        public string CurrentDatabase { get { return Dataconnection.ConnectionProp.Database; } set { Dataconnection.ConnectionProp.Database = value; } }
         public virtual string ColumnDelimiter { get; set; } = "''";
         public virtual string ParameterDelimiter { get; set; } = ":";
         #region "MongoDB Properties"

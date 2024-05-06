@@ -29,9 +29,9 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <PackageReference Include="Npgsql" Version="8.0.2" />
-	  <PackageReference Include="RDBDataSource" Version="1.0.33" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.402" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.139" />
+	  <PackageReference Include="RDBDataSource" Version="1.0.38" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.432" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.144" />
 	</ItemGroup>
 
 </Project>
