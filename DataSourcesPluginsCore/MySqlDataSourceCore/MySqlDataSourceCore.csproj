@@ -35,7 +35,7 @@
 <ItemGroup>
   <PackageReference Include="MySql.Data" Version="8.3.0" />
   <PackageReference Include="RDBDataSource" Version="1.0.38" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.432" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.433" />
 </ItemGroup>
 
 </Project>

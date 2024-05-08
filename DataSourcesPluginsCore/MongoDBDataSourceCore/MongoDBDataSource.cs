@@ -148,7 +148,6 @@ namespace TheTechIdea.Beep.NOSQL
             }
             return DMEEditor.ErrorObject;
         }
-
         public virtual IErrorsInfo EndTransaction(PassedArgs args)
         {
             ErrorObject.Flag = Errors.Ok;
