@@ -31,8 +31,7 @@ namespace LiteDBDataSourceCore
             DatasourceType = databasetype;
             Category = DatasourceCategory.NOSQL;
             Dataconnection = new FileConnection(DMEEditor);
-            Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
-            _connectionString = Dataconnection.ConnectionProp.ConnectionString;
+            InitDataConnection();
 
             Openconnection(); // Attempt to open connection on initialization
         }
@@ -1000,6 +999,10 @@ namespace LiteDBDataSourceCore
             }else
             {
                 _connectionString = "";
+            }
+            if(Dataconnection.ConnectionProp==null)
+            {
+                Dataconnection.ConnectionProp = new ConnectionProperties();
             }
             Dataconnection.ConnectionProp.IsLocal= true;
 
