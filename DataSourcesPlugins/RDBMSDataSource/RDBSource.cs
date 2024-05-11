@@ -757,7 +757,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             if (!ObjectsCreated || Entityname != lastentityname)
             {
-                DataStruct = GetEntityStructure(Entityname, true);
+                DataStruct = GetEntityStructure(Entityname, false);
                 command = RDBMSConnection.DbConn.CreateCommand();
                 enttype = GetEntityType(Entityname);
                 ObjectsCreated = true;

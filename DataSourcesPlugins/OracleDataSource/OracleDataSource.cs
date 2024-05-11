@@ -255,21 +255,26 @@ namespace TheTechIdea.Beep.DataBase
 
             try
             {
-                //OracleDataAdapter adp =GetDataAdapterForOracle(qrystr, Filter);
-                //DataSet dataSet = new DataSet();
-                //adp.Fill(dataSet);
-                //DataTable dt = dataSet.Tables[0];
-                var retval=GetDataTableUsingReaderAsync(qrystr, Filter);
-                return retval.Result;
+                var retval = Task.Run(() => GetDataTableUsingReaderAsync(qrystr, Filter)).Result;
+                return retval;
             }
-
-            catch (Exception ex)
+            catch (AggregateException ae)
             {
-
-                DMEEditor.AddLogMessage("Fail", $"Error in getting entity Data({ ex.Message})", DateTime.Now, 0, "", Errors.Failed);
-
+                ae.Handle(x =>
+                {
+                    if (x is OracleException) // Specific handling for database related exceptions
+                    {
+                        DMEEditor.AddLogMessage("Oracle Error", $"Database operation failed: {x.Message}", DateTime.Now, 0, "", Errors.Failed);
+                    }
+                    else
+                    {
+                        DMEEditor.AddLogMessage("Error", $"Error in getting entity Data: {x.Message}", DateTime.Now, 0, "", Errors.Failed);
+                    }
+                    return true; // Handle the exception, preventing rethrow
+                });
                 return null;
             }
+
 
 
         }
@@ -284,7 +289,7 @@ namespace TheTechIdea.Beep.DataBase
                 recNumber += 1;
             // DataRow tb = object UploadDataRow;
             ErrorObject.Flag = Errors.Ok;
-            EntityStructure DataStruct = GetEntityStructure(EntityName, true);
+            EntityStructure DataStruct = GetEntityStructure(EntityName, false);
             DataRowView dv;
             DataTable tb;
             DataRow dr;
