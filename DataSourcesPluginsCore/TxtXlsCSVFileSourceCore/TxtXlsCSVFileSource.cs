@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.ConfigUtil;
 using System.Xml;
+using DataManagementModels.Editor;
 
 namespace TheTechIdea.Beep.FileManager
 {
@@ -98,6 +99,7 @@ namespace TheTechIdea.Beep.FileManager
             FileName = Dataconnection.ConnectionProp.FileName;
             FilePath = Dataconnection.ConnectionProp.FilePath;
             SetupConfig();
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
         }
         public virtual IErrorsInfo BeginTransaction(PassedArgs args)
         {
@@ -247,8 +249,8 @@ namespace TheTechIdea.Beep.FileManager
                     }
 
                     ent =Entities[GetEntityIdx(EntityName)];
-                    string filenamenoext = EntityName;
-                    DMTypeBuilder.CreateNewObject(DMEEditor, EntityName, EntityName, Entities.Where(x => x.EntityName == EntityName).FirstOrDefault().Fields);
+                  
+                    DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, ent.Fields);
                 }
              
                 return DMTypeBuilder.myType;
@@ -258,8 +260,10 @@ namespace TheTechIdea.Beep.FileManager
         public  object GetEntity(string EntityName, List<AppFilter> filter)
         {
             ErrorObject.Flag = Errors.Ok;
+            List<object> data=null;
             try
             {
+
                 DataTable dt=null;
                 string qrystr="";
                 EntityStructure entity=GetEntityStructure(EntityName);
@@ -359,7 +363,8 @@ namespace TheTechIdea.Beep.FileManager
                     }
                   
                 }
-                return dt;
+                data = DMEEditor.Utilfunction.GetListByDataTable(dt, "Beep", EntityName);
+                return data;
             }
             catch (Exception ex)
             {
@@ -1046,7 +1051,7 @@ namespace TheTechIdea.Beep.FileManager
 
 
                 // 2. Use the AsDataSet extension method
-
+             
                 ds = reader.AsDataSet(GetDataSetConfiguration(sheetname, startrow));
                 // The result of each spreadsheet is in result.Tables
 
@@ -1129,7 +1134,6 @@ namespace TheTechIdea.Beep.FileManager
                             entityData.Id = i;
                             i++;
                             entityData.OriginalEntityName = sheetname;
-                    //        Entities.Add(entityData);
                             entityData.Drawn = true;
                             EntitiesNames.Add(sheetname);
                             entityData.Fields = new List<EntityField>();
@@ -1341,6 +1345,10 @@ namespace TheTechIdea.Beep.FileManager
             {
                 EntityField f = new EntityField();
                 string entspace = Regex.Replace(field.ColumnName, @"[\s-]+", "_");
+                if (entspace.Equals(sheetname, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    entspace = "_" + entspace;
+                }
                 f.fieldname = entspace;
                 f.Originalfieldname = field.ColumnName;
                 f.fieldtype = field.DataType.ToString();
@@ -1366,9 +1374,9 @@ namespace TheTechIdea.Beep.FileManager
                     {
                         try
                         {
-                            if (r[f.fieldname] != DBNull.Value)
+                            if (r[f.Originalfieldname] != DBNull.Value)
                             {
-                                valstring = r[f.fieldname].ToString();
+                                valstring = r[f.Originalfieldname].ToString();
                                 dateval = DateTime.Now;
 
                                 if (!string.IsNullOrEmpty(valstring) && !string.IsNullOrWhiteSpace(valstring))
@@ -1439,13 +1447,13 @@ namespace TheTechIdea.Beep.FileManager
                         {
                             if (f.fieldtype.Equals("System.String", StringComparison.OrdinalIgnoreCase))
                             {
-                                if (r[f.fieldname] != DBNull.Value)
+                                if (r[f.Originalfieldname] != DBNull.Value)
                                 {
-                                    if (!string.IsNullOrEmpty(r[f.fieldname].ToString()))
+                                    if (!string.IsNullOrEmpty(r[f.Originalfieldname].ToString()))
                                     {
-                                        if (r[f.fieldname].ToString().Length > f.Size1)
+                                        if (r[f.Originalfieldname].ToString().Length > f.Size1)
                                         {
-                                            f.Size1 = r[f.fieldname].ToString().Length;
+                                            f.Size1 = r[f.Originalfieldname].ToString().Length;
                                         }
 
                                     }
@@ -1461,11 +1469,11 @@ namespace TheTechIdea.Beep.FileManager
                         {
                             if (f.fieldtype.Equals("System.Decimal", StringComparison.OrdinalIgnoreCase))
                             {
-                                if (r[f.fieldname] != DBNull.Value)
+                                if (r[f.Originalfieldname] != DBNull.Value)
                                 {
-                                    if (!string.IsNullOrEmpty(r[f.fieldname].ToString()))
+                                    if (!string.IsNullOrEmpty(r[f.Originalfieldname].ToString()))
                                     {
-                                        valstring = r[f.fieldname].ToString();
+                                        valstring = r[f.Originalfieldname].ToString();
                                         if (decimal.TryParse(valstring, out dval))
                                         {
 
