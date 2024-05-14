@@ -344,18 +344,17 @@ namespace TheTechIdea.Beep.NOSQL
                         database.CreateCollection(entity.EntityName);
 
                         // Optionally apply validation rules if the EntityStructure specifies any schema constraints
-                        if (entity.Fields != null && entity.Fields.Any())
-                        {
-                            var validationDocument = GenerateValidationDocument(entity);
-                            var collection = database.GetCollection<BsonDocument>(entity.EntityName);
-                            var options = new UpdateOptions { IsUpsert = true };
-                            var update = new BsonDocument("$set", new BsonDocument("validator", validationDocument));
+                        //if (entity.Fields != null && entity.Fields.Any())
+                        //{
+                        //    var validationDocument = GenerateValidationDocument(entity);
+                        //    var command = new BsonDocumentCommand<BsonDocument>(
+                        //        new BsonDocument { { "collMod", entity.EntityName }, { "validator", new BsonDocument { { "$jsonSchema", validationDocument } } } });
 
-                            // Apply validation rules
-                            database.RunCommand<BsonDocument>(new BsonDocumentCommand<BsonDocument>(
-                                new BsonDocument { { "collMod", entity.EntityName }, { "validator", validationDocument } }));
-                        }
-
+                        //    database.RunCommand(command);
+                        //}
+                        Entities.Add(entity);
+                        EntitiesNames.Add(entity.EntityName);
+                        DMEEditor.AddLogMessage("Beep", "Collection created successfully.", DateTime.Now, -1, null, Errors.Ok);
                         retval = true;
                     }
                     else
@@ -820,9 +819,20 @@ namespace TheTechIdea.Beep.NOSQL
                     }
                     else
                     {
+                      
                         retval.Flag = Errors.Failed;
                         retval.Message = "No documents found in the collection.";
                         result = null;
+                    }
+                    if (Entities.Count > 0 && result==null)
+                    {
+                        result = Entities.Find(c => c.EntityName.Equals(EntityName, StringComparison.CurrentCultureIgnoreCase));
+                        if (result != null)
+                        {
+                            retval.Flag = Errors.Ok;
+                            retval.Message = "documents found in the collection.";
+                            return result;
+                        }
                     }
                 }
 
@@ -1052,7 +1062,8 @@ namespace TheTechIdea.Beep.NOSQL
                     }
                     else // Assuming UploadDataRow is a POCO
                     {
-                        documentToUpdate = UploadDataRow.ToBsonDocument();
+                        documentToUpdate = PocoToBsonDocument(UploadDataRow);
+                       // documentToUpdate = UploadDataRow.ToBsonDocument();
                     }
 
                     // Extract the _id or another unique identifier from the document
@@ -1103,8 +1114,8 @@ namespace TheTechIdea.Beep.NOSQL
                 {
                     var database = _client.GetDatabase(CurrentDatabase);
                     var collection = database.GetCollection<BsonDocument>(EntityName);
-
-                    BsonValue idValue = GetIdentifierValue(DeletedDataRow);
+                    var documentTodelete = BsonSerializer.Deserialize<BsonDocument>(DeletedDataRow.ToJson());
+                    BsonValue idValue = GetIdentifierValue(documentTodelete);
                     var filter = Builders<BsonDocument>.Filter.Eq("_id", idValue);
 
                     var deleteResult = collection.DeleteOne(filter);
@@ -1176,7 +1187,9 @@ namespace TheTechIdea.Beep.NOSQL
                     Openconnection();
                 }
                 if (ConnectionStatus == ConnectionState.Open)
+
                 {
+                     _database = _client.GetDatabase(CurrentDatabase);
                     var collection = _database.GetCollection<BsonDocument>(EntityName);
                     BsonDocument documentToInsert;
                     // Determine the type of InsertedData and convert to BsonDocument
@@ -1190,18 +1203,18 @@ namespace TheTechIdea.Beep.NOSQL
                     }
                     else
                     {
-                        documentToInsert = InsertedData.ToBsonDocument();
+                        documentToInsert = PocoToBsonDocument(InsertedData);
                     }
                     // Check if a session is active and insert accordingly
                     if (_session != null && _session.IsInTransaction)
                     {
                         collection.InsertOne(_session, documentToInsert);
-                        DMEEditor.AddLogMessage("Beep", "Document inserted successfully within a transaction.", DateTime.Now, 0, null, Errors.Ok);
+                      //  DMEEditor.AddLogMessage("Beep", "Document inserted successfully within a transaction.", DateTime.Now, 0, null, Errors.Ok);
                     }
                     else
                     {
                         collection.InsertOne(documentToInsert);
-                        DMEEditor.AddLogMessage("Beep", "Document inserted successfully without a transaction.", DateTime.Now, 0, null, Errors.Ok);
+                     //   DMEEditor.AddLogMessage("Beep", "Document inserted successfully without a transaction.", DateTime.Now, 0, null, Errors.Ok);
                     }
                 }
                 else
@@ -1221,6 +1234,7 @@ namespace TheTechIdea.Beep.NOSQL
             return retval;
         }
         #region "Parsing and Filtering"
+      
         private BsonDocument GenerateValidationDocument(EntityStructure entity)
         {
             var schemaDoc = new BsonDocument();
@@ -1583,6 +1597,23 @@ namespace TheTechIdea.Beep.NOSQL
                 Console.WriteLine("Failed to ping MongoDB server: " + ex.Message);
                 return false; // Ping failed, connection is down or unreachable
             }
+        }
+        private BsonDocument PocoToBsonDocument(object poco)
+        {
+            var bsonDocument = new BsonDocument();
+            var properties = poco.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (var property in properties)
+            {
+                var name = property.Name;
+                var value = property.GetValue(poco);
+
+                // Convert the property value to BsonValue
+                BsonValue bsonValue = value == null ? BsonNull.Value : BsonValue.Create(value);
+                bsonDocument.Add(name, bsonValue);
+            }
+
+            return bsonDocument;
         }
         private void SetObjects(string Entityname)
         {
