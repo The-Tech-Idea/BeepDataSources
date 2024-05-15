@@ -36,6 +36,7 @@ namespace DuckDBDataSourceCore
                 BranchID = ID;
             }
         }
+        public bool Visible { get; set; } = true;
         public string GuidID { get; set; } = Guid.NewGuid().ToString();
         public string ParentGuidID { get; set; }
         public string DataSourceConnectionGuidID { get; set; }
