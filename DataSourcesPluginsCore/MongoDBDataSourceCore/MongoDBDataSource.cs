@@ -17,15 +17,16 @@ using MongoDB.Driver;
 using MongoDB.Driver.Core.Configuration;
 using System.Reflection;
 using MongoDB.Bson;
-
+using TheTechIdea.Beep.Helpers;
 using System;
 using System.Collections.Generic;
 using MongoDB.Bson.Serialization;
-
-using System;
+using DataManagementModels.DriversConfigurations;
+using DataManagementModels.Editor;
 using System.Collections.Generic;
 using System.Linq;
 using SharpCompress.Common;
+using System.ComponentModel;
 
 
 
@@ -93,6 +94,24 @@ namespace TheTechIdea.Beep.NOSQL
         {
             return Task.Run(() => GetScalar(query));
         }
+        private void SetObjects(string Entityname)
+        {
+            if (!ObjectsCreated || Entityname != lastentityname)
+            {
+                DataStruct = GetEntityStructure(Entityname, false);
+                enttype = GetEntityType(Entityname);
+                ObjectsCreated = true;
+                lastentityname = Entityname;
+            }
+        }
+
+
+        Type enttype = null;
+        bool ObjectsCreated = false;
+        string lastentityname = null;
+        EntityStructure DataStruct = null;
+
+
         public virtual double GetScalar(string query)
         {
             ErrorObject.Flag = Errors.Ok;
@@ -522,7 +541,7 @@ namespace TheTechIdea.Beep.NOSQL
                     // Synchronize the Entities list to match the current collection names
                     if (Entities != null)
                     {
-                        var entitiesToRemove = Entities.Where(e => !EntitiesNames.Contains(e.EntityName)).ToList();
+                        var entitiesToRemove = Entities.Where(e => !EntitiesNames.Contains(e.EntityName) && !string.IsNullOrEmpty(e.CustomBuildQuery) ).ToList();
                         foreach (var item in entitiesToRemove)
                         {
                             Entities.Remove(item);
@@ -560,6 +579,7 @@ namespace TheTechIdea.Beep.NOSQL
                 }
                 if (ConnectionStatus == ConnectionState.Open)
                 {
+                    //SetObjects(entityname);
                     //Get data from the custom query and put it in the dataset
                     var db = _client.GetDatabase(CurrentDatabase);
                     var collectionNames = db.ListCollectionNames().ToList();
@@ -571,11 +591,19 @@ namespace TheTechIdea.Beep.NOSQL
                     var collection = db.GetCollection<BsonDocument>(entityname);
                     //use filterstr as a filter to get data from the collection like filter = Builders<BsonDocument>.Filter.Eq("name", "Jack"); 
                     // Parsing the filter string into a MongoDB filter. Assume simple equality checks for this example.
-                    var filter = ParseFilterString(filterstr);
-
-                    var documents = await collection.Find(filter).ToListAsync();
-
-
+                    List<BsonDocument> documents = new List<BsonDocument>();
+                    bool isFilter = false;
+                    if (filterstr != null)
+                    {
+                            var filters = ParseFilterString(filterstr);
+                            documents = collection.Find(filters).ToList();
+                            isFilter = true;
+                      
+                    }
+                    if (!isFilter)
+                    {
+                        documents = collection.Find(new BsonDocument()).ToList();
+                    }
 
 
                     result = documents;
@@ -610,7 +638,7 @@ namespace TheTechIdea.Beep.NOSQL
                 }
                 if (ConnectionStatus == ConnectionState.Open)
                 {
-
+                   // SetObjects(EntityName);
                     //Get data from the custom query and put it in the dataset
                     var db = _client.GetDatabase(CurrentDatabase);
                     var collection = db.GetCollection<BsonDocument>(EntityName);
@@ -677,21 +705,35 @@ namespace TheTechIdea.Beep.NOSQL
                 }
                 if (ConnectionStatus == ConnectionState.Open)
                 {
-
+                    //SetObjects(EntityName);
                     //Get data from the custom query and put it in the dataset
                     var db = _client.GetDatabase(CurrentDatabase);
                     var collection = db.GetCollection<BsonDocument>(EntityName);
+                    List<BsonDocument> documents = new List<BsonDocument>();
                     // Building a MongoDB filter from AppFilter list
-                    var filterString = BuildFilterString(filter);
-                    var filters = ParseFilterString(filterString);
-
-                    // Perform the query
-                    var documents = collection.Find(filters).ToList();
-
+                    bool isFilter = false;
+                    if (filter!=null)
+                    {
+                        if (filter.Count > 0)
+                        {
+                            var filterString = BuildFilterString(filter);
+                            var filters = ParseFilterString(filterString);
+                            documents = collection.Find(filters).ToList();
+                            isFilter = true;
+                        }
+                    }
+                    if (!isFilter)
+                    {
+                        documents = collection.Find(new BsonDocument()).ToList();
+                    }
                     // Optionally convert BSON documents to a specific object type if needed
                     // Assuming you have a method to determine the type from entityName
-                    Type entityType = GetEntityType(EntityName);
-                    result = ConvertBsonDocumentsToObjects(documents, entityType, GetEntityStructureFromBson(documents.FirstOrDefault(), EntityName));
+                    //  Type entityType = GetEntityType(EntityName);
+                    if(enttype== null)
+                    {
+                        enttype = GetEntityType(EntityName);
+                    }
+                    result = ConvertBsonDocumentsToObjects(documents, enttype, GetEntityStructureFromBson(documents.FirstOrDefault(), EntityName));
                 }
             }
             catch (Exception ex)
@@ -772,6 +814,7 @@ namespace TheTechIdea.Beep.NOSQL
                         retval.Message = "No documents found in the collection.";
                         result = null;
                     }
+                    SetObjects(EntityName);
                 }
 
             }
@@ -811,7 +854,16 @@ namespace TheTechIdea.Beep.NOSQL
                     var db = _client.GetDatabase(CurrentDatabase);
                     var collection = db.GetCollection<BsonDocument>(EntityName);
                     // Attempt to get the first document to infer the structure
-                    var firstDocument = collection.Find(new BsonDocument()).FirstOrDefault();
+                    BsonDocument firstDocument;
+                    try
+                    {
+                        firstDocument = collection.Find(new BsonDocument()).FirstOrDefault();
+                    }
+                    catch (Exception ex)
+                    {
+                        firstDocument = null;
+                    }
+                  
                     if (firstDocument != null)
                     {
                         result = GetEntityStructureFromBson(firstDocument, EntityName);
@@ -834,6 +886,13 @@ namespace TheTechIdea.Beep.NOSQL
                             return result;
                         }
                     }
+                    if(result != null)
+                    {
+                        DataStruct = result;
+                    }
+                   
+                   
+                    //     SetObjects(EntityName);
                 }
 
 
@@ -863,6 +922,7 @@ namespace TheTechIdea.Beep.NOSQL
                     Openconnection();
                 }
                 {
+                    SetObjects(EntityName);
                     var db = _client.GetDatabase(CurrentDatabase);
                     var collection = db.GetCollection<BsonDocument>(EntityName);
 
@@ -905,6 +965,15 @@ namespace TheTechIdea.Beep.NOSQL
             }
             return result;
         }
+        /// <summary>
+        /// Sets up necessary objects and structures for database operations based on the provided entity name.
+        /// </summary>
+        /// <param name="Entityname">The name of the entity for which the database command objects will be set up.</param>
+        /// <remarks>
+        /// This method is essential for initializing and reusing database commands and structures, improving efficiency and maintainability.
+        /// </remarks>
+     
+     
         public Type GetEntityType(string EntityName)
         {
             ErrorsInfo retval = new ErrorsInfo();
@@ -913,9 +982,33 @@ namespace TheTechIdea.Beep.NOSQL
             Type result = null;
             try
             {
-                EntityStructure x = GetEntityStructure(EntityName);
-                DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, x.Fields);
-                result = DMTypeBuilder.myType;
+                if(ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+                if(ConnectionStatus == ConnectionState.Open )
+                { 
+                    if(EntityName== lastentityname)
+                    {
+                        if(enttype != null)
+                        {
+                            result= enttype;
+                        }
+                    }
+                    
+                }
+              if(result == null)
+                {
+                   
+                    EntityStructure x = GetEntityStructure(EntityName);
+                    DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, x.Fields);
+                    result = DMTypeBuilder.myType;
+                    if(result != null)
+                    {
+                        DataStruct = x;
+                        enttype = result;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -1387,49 +1480,67 @@ namespace TheTechIdea.Beep.NOSQL
 
             return filterBuilder.Empty;
         }
-        public List<object> ConvertBsonDocumentsToObjects(List<BsonDocument> documents, Type type, EntityStructure entStructure)
+        public object ConvertBsonDocumentsToObjects(List<BsonDocument> documents, Type type, EntityStructure entStructure)
         {
-            List<object> records = new List<object>();
-            Dictionary<string, PropertyInfo> properties = new Dictionary<string, PropertyInfo>();
-
-            // Cache property info and ensure the property exists in the target type
-            foreach (var field in entStructure.Fields)
-            {
-                PropertyInfo propInfo = type.GetProperty(field.fieldname, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-                if (propInfo != null)
-                {
-                    properties.Add(field.fieldname.ToLower(), propInfo);
-                }
-                else
-                {
-                    // Optionally log or handle the error when a property is not found
-                    throw new InvalidOperationException($"Property {field.fieldname} not found on type {type.Name}.");
-                }
-            }
+            Type uowGenericType = typeof(ObservableBindingList<>).MakeGenericType(type);
+            var records = (IBindingListView)Activator.CreateInstance(uowGenericType);
 
             foreach (var document in documents)
             {
                 dynamic instance = Activator.CreateInstance(type);
-                foreach (var kvp in properties)
+                foreach (var field in entStructure.Fields)
                 {
-                    var fieldName = kvp.Key;
-                    var propInfo = kvp.Value;
-
-                    if (document.Contains(fieldName))
+                    var fieldName = field.fieldname.ToLower();
+                    var f = document.Names.FirstOrDefault(p => p.Equals(fieldName, StringComparison.InvariantCultureIgnoreCase));
+                    if (!string.IsNullOrEmpty(f))
                     {
-                        var bsonValue = document[fieldName];
+                        var bsonValue = document.GetElement(f).Value;
                         if (!bsonValue.IsBsonNull)
                         {
                             try
                             {
-                                // Use BsonSerializer if possible for better compatibility with complex types and arrays
-                                object value = BsonSerializer.Deserialize(bsonValue.ToJson(), propInfo.PropertyType);
-                                propInfo.SetValue(instance, value, null);
+                                string netTypeString = field.fieldtype; // Use field.fieldtype directly
+                                Type netType = Type.GetType(netTypeString);
+
+                                if (netType == typeof(string) && bsonValue.BsonType == BsonType.ObjectId)
+                                {
+                                    // Convert ObjectId to string
+                                    var value = bsonValue.AsObjectId.ToString();
+                                    type.GetProperty(field.fieldname).SetValue(instance, value);
+                                }
+                                else if (Type.GetTypeCode(netType) == Type.GetTypeCode(Type.GetType(field.fieldtype)))
+                                {
+                                    // Directly assign if types match
+                                    object value;
+                                    if (Type.GetType(field.fieldtype) == typeof(string))
+                                    {
+                                        value = bsonValue.ToString();
+                                    }
+                                    else
+                                    {
+                                        value = BsonSerializer.Deserialize(bsonValue.ToJson(), Type.GetType(field.fieldtype));
+                                    }
+                                    type.GetProperty(field.fieldname).SetValue(instance, value);
+                                }
+                                else
+                                {
+                                    // Handle type conversion if necessary
+                                    object value;
+                                    if (Type.GetType(field.fieldtype) == typeof(string))
+                                    {
+                                        value = bsonValue.ToString();
+                                    }
+                                    else
+                                    {
+                                        value = Convert.ChangeType(bsonValue, Type.GetType(field.fieldtype));
+                                    }
+                                    type.GetProperty(field.fieldname).SetValue(instance, value);
+                                }
                             }
                             catch (Exception ex)
                             {
                                 // Handle or log the error appropriately
-                                throw new InvalidOperationException($"Error converting field {fieldName} to type {propInfo.PropertyType.Name}: {ex.Message}", ex);
+                                DMEEditor.AddLogMessage("Beep", $"Error setting property {field.fieldname} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
                             }
                         }
                     }
@@ -1439,6 +1550,7 @@ namespace TheTechIdea.Beep.NOSQL
 
             return records;
         }
+
         public EntityStructure GetEntityStructureFromBson(BsonDocument document, string entityName = null)
         {
             EntityStructure entityData = new EntityStructure();
@@ -1459,6 +1571,7 @@ namespace TheTechIdea.Beep.NOSQL
                         EntityName = entityData.EntityName,
                         FieldIndex = fieldIndex++
                     };
+                    
                     fields.Add(field);
                 }
 
@@ -1481,6 +1594,149 @@ namespace TheTechIdea.Beep.NOSQL
             }
             return document;
         }
+        private Type GetTypeFromBsonType(BsonType bsonType)
+        {
+            List<DatatypeMapping> dataTypeMappings = DataTypeFieldMappingHelper.GetMongoDBDataTypeMappings();
+            DatatypeMapping mapping = null;
+
+            switch (bsonType)
+            {
+                case BsonType.String:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("String", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.String");
+                case BsonType.Int32:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Int32", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.Int32");
+                case BsonType.Int64:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Int64", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.Int64");
+                case BsonType.Boolean:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Boolean", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.Boolean");
+                case BsonType.DateTime:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("DateTime", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.DateTime");
+                case BsonType.Double:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Double", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.Double");
+                case BsonType.Decimal128:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Decimal128", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.Decimal");
+                case BsonType.ObjectId:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("ObjectId", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "MongoDB.Bson.ObjectId");
+                case BsonType.Binary:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Binary", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.Byte[]");
+                default:
+                    return typeof(string); // Default to string for other less common types
+            }
+        }
+        private string GetMongoTypeFromNetType(string netType)
+        {
+            List<DatatypeMapping> dataTypeMappings = DataTypeFieldMappingHelper.GetMongoDBDataTypeMappings();
+            DatatypeMapping mapping = null;
+
+            switch (netType)
+            {
+                case "System.Double":
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.NetDataType.Equals("System.Double", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.DataType ?? "Double";
+                case "System.String":
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.NetDataType.Equals("System.String", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.DataType ?? "String";
+                case "System.Object":
+                    return "Document"; // Could also be represented as a custom object or dictionary
+                case "System.Array":
+                    return "Array"; // Could also be a specific array type
+                case "System.Byte[]":
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.NetDataType.Equals("System.Byte[]", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.DataType ?? "Binary";
+                case "MongoDB.Bson.ObjectId":
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.NetDataType.Equals("MongoDB.Bson.ObjectId", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.DataType ?? "ObjectId";
+                case "System.Boolean":
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.NetDataType.Equals("System.Boolean", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.DataType ?? "Boolean";
+                case "System.DateTime":
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.NetDataType.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.DataType ?? "DateTime";
+                case "System.Text.RegularExpressions.Regex":
+                    return "RegularExpression";
+                case "System.Int32":
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.NetDataType.Equals("System.Int32", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.DataType ?? "Int32";
+                case "System.Int64":
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.NetDataType.Equals("System.Int64", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.DataType ?? "Int64";
+                case "System.Decimal":
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.NetDataType.Equals("System.Decimal", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.DataType ?? "Decimal128";
+
+                default:
+                    return "Document"; // Default to Document if the type is not recognized
+            }
+        }
+        private string GetTypeFromBsonValue(BsonValue bsonValue)
+        {
+
+            List<DatatypeMapping> dataTypeMappings = DataTypeFieldMappingHelper.GetMongoDBDataTypeMappings();
+            DatatypeMapping mapping = null;
+
+            switch (bsonValue.BsonType)
+            {
+                case BsonType.Double:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Double", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.Double";
+                case BsonType.String:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("String", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.String";
+                case BsonType.Document:
+                    return "System.Object"; // Could also be represented as a custom object or dictionary
+                case BsonType.Array:
+                    return "System.Array"; // Could also be a specific array type
+                case BsonType.Binary:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Binary", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.Byte[]";
+                case BsonType.Undefined:
+                    return "System.Object";
+                case BsonType.ObjectId:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("ObjectId", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "MongoDB.Bson.ObjectId";
+                case BsonType.Boolean:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Boolean", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.Boolean";
+                case BsonType.DateTime:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("DateTime", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.DateTime";
+                case BsonType.Null:
+                    return "System.Object"; // Or nullable type
+                case BsonType.RegularExpression:
+                    return "System.Text.RegularExpressions.Regex";
+                case BsonType.JavaScript:
+                    return "System.String";
+                case BsonType.Symbol:
+                    return "System.String";
+                case BsonType.JavaScriptWithScope:
+                    return "System.String";
+                case BsonType.Int32:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Int32", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.Int32";
+                case BsonType.Timestamp:
+                    return "System.DateTime"; // Or custom timestamp type
+                case BsonType.Int64:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Int64", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.Int64";
+                case BsonType.Decimal128:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Decimal128", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.Decimal";
+                case BsonType.MinKey:
+                case BsonType.MaxKey:
+                    return "System.Object";
+                default:
+                    return "System.Object"; // Default to object if the type is not recognized
+            }
+        }
         private IEnumerable<BsonDocument> ConvertPocoListToBsonDocuments(List<object> pocoList)
         {
             var bsonDocuments = new List<BsonDocument>();
@@ -1502,82 +1758,11 @@ namespace TheTechIdea.Beep.NOSQL
                 }
                 bsonDocuments.Add(document);
             }
+            
             return bsonDocuments;
         }
-        private string GetTypeFromBsonValue(BsonValue value)
-        {
-            switch (value.BsonType)
-            {
-                case BsonType.String:
-                    return "System.String";
-                case BsonType.Int32:
-                    return "System.Int32";
-                case BsonType.Int64:
-                    return "System.Int64";
-                case BsonType.Boolean:
-                    return "System.Boolean";
-                case BsonType.DateTime:
-                    return "System.DateTime";
-                case BsonType.Double:
-                    return "System.Double";
-                case BsonType.Decimal128:
-                    return "System.Decimal";
-                case BsonType.ObjectId:
-                    return "MongoDB.Bson.ObjectId";  // Uses MongoDB's ObjectId type
-                case BsonType.Binary:
-                    return "System.Byte[]";
-                case BsonType.Array:
-                    return "System.Collections.Generic.List<System.Object>"; // Simplified, actual implementation may need specific list types
-                case BsonType.Document:
-                    return "MongoDB.Bson.BsonDocument";
-                case BsonType.Null:
-                    return "System.Object"; // Null has no direct type, handled as Object
-                case BsonType.RegularExpression:
-                    return "System.Text.RegularExpressions.Regex";
-                case BsonType.JavaScript:
-                    return "System.String"; // JavaScript code as string
-                case BsonType.Symbol:
-                    return "System.String"; // Symbols are deprecated and can be handled as strings
-                case BsonType.JavaScriptWithScope:
-                    return "System.String"; // JavaScript code with scope as string
-                case BsonType.Timestamp:
-                    return "System.DateTime"; // Timestamps can be treated as DateTime
-                case BsonType.Undefined:
-                    return "System.Object"; // Undefined is generally not used; handle as Object
-                case BsonType.MinKey:
-                    return "MongoDB.Bson.BsonMinKey"; // Specific BSON type
-                case BsonType.MaxKey:
-                    return "MongoDB.Bson.BsonMaxKey"; // Specific BSON type
-                default:
-                    return "System.Object"; // Catch-all for any types not explicitly handled
-            }
-        }
-        private Type GetTypeFromBsonType(BsonType bsonType)
-        {
-            switch (bsonType)
-            {
-                case BsonType.String:
-                    return typeof(string);
-                case BsonType.Int32:
-                    return typeof(int);
-                case BsonType.Int64:
-                    return typeof(long);
-                case BsonType.Boolean:
-                    return typeof(bool);
-                case BsonType.DateTime:
-                    return typeof(DateTime);
-                case BsonType.Double:
-                    return typeof(double);
-                case BsonType.Decimal128:
-                    return typeof(decimal);
-                case BsonType.ObjectId:
-                    return typeof(MongoDB.Bson.ObjectId);
-                case BsonType.Binary:
-                    return typeof(byte[]);
-                default:
-                    return typeof(string); // Default to string for other less common types
-            }
-        }
+    
+     
         private string BuildFilterString(List<AppFilter> filters)
         {
             return string.Join(" AND ", filters.Select(f => $"{f.FieldName} {f.Operator} '{f.FilterValue}'"));
@@ -1615,21 +1800,7 @@ namespace TheTechIdea.Beep.NOSQL
 
             return bsonDocument;
         }
-        private void SetObjects(string Entityname)
-        {
-            if (!ObjectsCreated || Entityname != lastentityname)
-            {
-                DataStruct = GetEntityStructure(Entityname, true);
 
-                enttype = GetEntityType(Entityname);
-                ObjectsCreated = true;
-                lastentityname = Entityname;
-            }
-        }
-        Type enttype = null;
-        bool ObjectsCreated = false;
-        string lastentityname = null;
-        EntityStructure DataStruct = null;
         #endregion
         #region "dispose"
         private bool disposedValue;
