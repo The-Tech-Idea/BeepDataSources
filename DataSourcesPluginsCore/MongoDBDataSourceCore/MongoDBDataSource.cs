@@ -27,6 +27,8 @@ using System.Collections.Generic;
 using System.Linq;
 using SharpCompress.Common;
 using System.ComponentModel;
+using Microsoft.CodeAnalysis;
+using System.Collections;
 
 
 
@@ -1138,7 +1140,7 @@ namespace TheTechIdea.Beep.NOSQL
                 }
                 if (ConnectionStatus == ConnectionState.Open)
                 {
-
+                    SetObjects(EntityName);
                     //Get data from the custom query and put it in the dataset
                     var db = _client.GetDatabase(CurrentDatabase);
                     var collection = db.GetCollection<BsonDocument>(EntityName);
@@ -1155,7 +1157,11 @@ namespace TheTechIdea.Beep.NOSQL
                     }
                     else // Assuming UploadDataRow is a POCO
                     {
-                        documentToUpdate = PocoToBsonDocument(UploadDataRow);
+                        if(DataStruct == null)
+                        {
+                            DataStruct = GetEntityStructure(EntityName);
+                        }
+                        documentToUpdate = PocoToBsonDocument(UploadDataRow,DataStruct);
                        // documentToUpdate = UploadDataRow.ToBsonDocument();
                     }
 
@@ -1282,7 +1288,8 @@ namespace TheTechIdea.Beep.NOSQL
                 if (ConnectionStatus == ConnectionState.Open)
 
                 {
-                     _database = _client.GetDatabase(CurrentDatabase);
+                    SetObjects(EntityName);
+                    _database = _client.GetDatabase(CurrentDatabase);
                     var collection = _database.GetCollection<BsonDocument>(EntityName);
                     BsonDocument documentToInsert;
                     // Determine the type of InsertedData and convert to BsonDocument
@@ -1296,7 +1303,11 @@ namespace TheTechIdea.Beep.NOSQL
                     }
                     else
                     {
-                        documentToInsert = PocoToBsonDocument(InsertedData);
+                        if(DataStruct == null)
+                        {
+                            DataStruct = GetEntityStructure(EntityName);
+                        }
+                        documentToInsert = PocoToBsonDocument(InsertedData, DataStruct);
                     }
                     // Check if a session is active and insert accordingly
                     if (_session != null && _session.IsInTransaction)
@@ -1309,6 +1320,8 @@ namespace TheTechIdea.Beep.NOSQL
                         collection.InsertOne(documentToInsert);
                      //   DMEEditor.AddLogMessage("Beep", "Document inserted successfully without a transaction.", DateTime.Now, 0, null, Errors.Ok);
                     }
+                    // Retrieve the _id value from the inserted document
+                    var insertedId = documentToInsert["_id"];
                 }
                 else
                 {
@@ -1550,7 +1563,25 @@ namespace TheTechIdea.Beep.NOSQL
 
             return records;
         }
-
+        private void UpdateDataObjectWithId(object dataObject, BsonValue idValue)
+        {
+            var properties = dataObject.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            foreach (var property in properties)
+            {
+                if (property.Name.Equals("_id", StringComparison.InvariantCultureIgnoreCase) && property.CanWrite)
+                {
+                    if (property.PropertyType == typeof(ObjectId) && idValue.IsObjectId)
+                    {
+                        property.SetValue(dataObject, idValue.AsObjectId);
+                    }
+                    else if (property.PropertyType == typeof(string))
+                    {
+                        property.SetValue(dataObject, idValue.ToString());
+                    }
+                    break;
+                }
+            }
+        }
         public EntityStructure GetEntityStructureFromBson(BsonDocument document, string entityName = null)
         {
             EntityStructure entityData = new EntityStructure();
@@ -1567,6 +1598,8 @@ namespace TheTechIdea.Beep.NOSQL
                     {
                         fieldname = element.Name,
                         fieldtype = GetTypeFromBsonValue(element.Value), // Convert BsonType to a .NET type string
+                        IsKey = element.Name.ToLower().Contains("_id"), // Assume any field with "ID" in the name is a key
+                        IsIdentity = element.Name.ToLower().Contains("_id"),
                         ValueRetrievedFromParent = false,
                         EntityName = entityData.EntityName,
                         FieldIndex = fieldIndex++
@@ -1630,6 +1663,38 @@ namespace TheTechIdea.Beep.NOSQL
                     return Type.GetType(mapping?.NetDataType ?? "System.Byte[]");
                 default:
                     return typeof(string); // Default to string for other less common types
+            }
+        }
+        private BsonValue ConvertToBsonValue(object value, string mongoType)
+        {
+            switch (mongoType)
+            {
+                case "Double":
+                    return BsonValue.Create(Convert.ToDouble(value));
+                case "String":
+                    return BsonValue.Create(value.ToString());
+                case "Document":
+                    return BsonDocument.Create(value); // Assuming value is a dictionary or object that can be converted to BsonDocument
+                case "Array":
+                    return new BsonArray((IEnumerable)value); // Assuming value is an IEnumerable
+                case "Binary":
+                    return BsonValue.Create((byte[])value);
+                case "ObjectId":
+                    return new ObjectId(value.ToString()); // Assuming value is a string representation of ObjectId
+                case "Boolean":
+                    return BsonValue.Create(Convert.ToBoolean(value));
+                case "DateTime":
+                    return BsonValue.Create(Convert.ToDateTime(value));
+                case "RegularExpression":
+                    return BsonValue.Create(new BsonRegularExpression(value.ToString()));
+                case "Int32":
+                    return BsonValue.Create(Convert.ToInt32(value));
+                case "Int64":
+                    return BsonValue.Create(Convert.ToInt64(value));
+                case "Decimal128":
+                    return BsonValue.Create(Convert.ToDecimal(value));
+                default:
+                    return BsonValue.Create(value.ToString()); // Default to string if type is not recognized
             }
         }
         private string GetMongoTypeFromNetType(string netType)
@@ -1783,7 +1848,7 @@ namespace TheTechIdea.Beep.NOSQL
                 return false; // Ping failed, connection is down or unreachable
             }
         }
-        private BsonDocument PocoToBsonDocument(object poco)
+        private BsonDocument PocoToBsonDocument(object poco, EntityStructure entityStructure)
         {
             var bsonDocument = new BsonDocument();
             var properties = poco.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -1791,16 +1856,58 @@ namespace TheTechIdea.Beep.NOSQL
             foreach (var property in properties)
             {
                 var name = property.Name;
-                var value = property.GetValue(poco);
+                var field = entityStructure.Fields.FirstOrDefault(f => f.fieldname.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+                try
+                {
+                    if (field != null)
+                    {
+                        var value = property.GetValue(poco);
 
-                // Convert the property value to BsonValue
-                BsonValue bsonValue = value == null ? BsonNull.Value : BsonValue.Create(value);
-                bsonDocument.Add(name, bsonValue);
+                        // Convert the property value to BsonValue based on the field type in entityStructure
+                        BsonValue bsonValue;
+                        if (value == null)
+                        {
+                            bsonValue = BsonNull.Value;
+                        }
+                        else if (field.IsKey && field.fieldtype == "System.String")
+                        {
+
+                            // Handle ObjectId conversion for key fields
+                            if (ObjectId.TryParse(value.ToString(), out ObjectId objectId))
+                            {
+                                bsonValue = objectId;
+                            }
+                            else
+                            {
+                                // Optionally handle the error or skip the conversion
+                              DMEEditor.AddLogMessage("Beep", $"Error converting property '{name}' to ObjectId.", DateTime.Now, -1, null, Errors.Failed);
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            // Get the MongoDB type from .NET type and convert the value to BsonValue
+                            var mongoType = GetMongoTypeFromNetType(field.fieldtype);
+                            bsonValue = ConvertToBsonValue(value, mongoType);
+                        }
+
+                        bsonDocument.Add(name, bsonValue);
+                    }
+                    else
+                    {
+                        // Optionally log or handle the error when a field is not found in entityStructure
+                       DMEEditor.AddLogMessage("Beep", $"Field '{name}' not found in entity structure.", DateTime.Now, -1, null, Errors.Failed);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DMEEditor.AddLogMessage("Beep", $"Error converting property '{name}' - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                }
+             
             }
 
             return bsonDocument;
         }
-
         #endregion
         #region "dispose"
         private bool disposedValue;
