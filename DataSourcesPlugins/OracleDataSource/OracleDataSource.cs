@@ -8,8 +8,7 @@ using TheTechIdea.Logger;
 using TheTechIdea.Util;
 
 using System.Text.RegularExpressions;
-using System.Data.SqlTypes;
-
+using DataManagementModels.Editor;
 namespace TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType =  DataSourceType.Oracle)]
@@ -23,6 +22,13 @@ namespace TheTechIdea.Beep.DataBase
         }
         private string _ParameterDelimiter = ":";
         private string _ColumnDelimiter = "''";
+        #region "Insert or Update or Delete Objects"
+        EntityStructure DataStruct = null;
+        IDbCommand command = null;
+        Type enttype = null;
+        bool ObjectsCreated = false;
+        string lastentityname = null;
+        #endregion
         public override string ParameterDelimiter { get => _ParameterDelimiter; set =>_ParameterDelimiter = value; }
         public override string ColumnDelimiter { get =>_ColumnDelimiter; set => _ColumnDelimiter = value; }
         public override string DisableFKConstraints(EntityStructure t1)
@@ -82,6 +88,17 @@ namespace TheTechIdea.Beep.DataBase
                              $"             {originalquery} ) a " +
                              $"    WHERE rownum < (({pagenumber} * {pagesize}) + 1)) WHERE rn >= ((({pagenumber} - 1) * {pagesize}) + 1)";
             return pagedquery;
+        }
+        private void SetObjects(string Entityname)
+        {
+            if (!ObjectsCreated || Entityname != lastentityname)
+            {
+                DataStruct = GetEntityStructure(Entityname, false);
+                command = GetDataCommandForOracle();
+                enttype = GetEntityType(Entityname);
+                ObjectsCreated = true;
+                lastentityname = Entityname;
+            }
         }
         private string BuildQuery(string originalquery, List<AppFilter> Filter)
         {
@@ -228,7 +245,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             ErrorObject.Flag = Errors.Ok;
             //  int LoadedRecord;
-
+            bool IsQuery= false;
             EntityName = EntityName.ToLower();
             string inname = "";
             string qrystr = "select * from ";
@@ -255,8 +272,37 @@ namespace TheTechIdea.Beep.DataBase
 
             try
             {
+               
                 var retval = Task.Run(() => GetDataTableUsingReaderAsync(qrystr, Filter)).Result;
-                return retval;
+                SetObjects(EntityName);
+
+                if (enttype == null)
+                    {
+                        if (DataStruct == null)
+                        {
+                            DataStruct = GetEntityStructure(inname);
+                        }
+                        if (DataStruct == null)
+                        {
+                            DataStruct = DMEEditor.Utilfunction.GetEntityStructureFromListorTable(retval);
+                        }
+                        if (DataStruct != null)
+                        {
+                            ;
+                            DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields);
+                            enttype = DMTypeBuilder.myType; ;
+                        }
+
+                    }
+               
+                Type uowGenericType = typeof(ObservableBindingList<>).MakeGenericType(enttype);
+                // Prepare the arguments for the constructor
+                object[] constructorArgs = new object[] { retval };
+
+                // Create an instance of UnitOfWork<T> with the specific constructor
+                // Dynamically handle the instance since we can't cast to a specific IUnitofWork<T> at compile time
+                object uowInstance = Activator.CreateInstance(uowGenericType, constructorArgs);
+                return uowInstance;
             }
             catch (AggregateException ae)
             {

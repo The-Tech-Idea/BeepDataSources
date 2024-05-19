@@ -16,6 +16,8 @@ using TheTechIdea.Beep.Report;
 using System.Data.SqlTypes;
 using TheTechIdea.Beep.Helpers;
 using System.Diagnostics;
+using DataManagementModels.Editor;
+using System.ComponentModel;
 
 namespace TheTechIdea.Beep.DataBase
 {
@@ -908,7 +910,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             ErrorObject.Flag = Errors.Ok;
             //  int LoadedRecord;
-           
+            bool IsQuery = false;
             EntityName = EntityName.ToLower();
             string inname="";
             string qrystr = "select * from ";
@@ -936,7 +938,10 @@ namespace TheTechIdea.Beep.DataBase
                 if (!string.IsNullOrEmpty(ent.CustomBuildQuery))
                 {
                     qrystr = ent.CustomBuildQuery;
-                }
+                    IsQuery = true;
+                }else
+                    IsQuery = false;
+
 
             }
            
@@ -944,12 +949,44 @@ namespace TheTechIdea.Beep.DataBase
           
             try
             {
+                if(enttype == null)
+                {
+                    enttype =GetEntityType(inname);
+                }
                 IDataAdapter adp = GetDataAdapter(qrystr,Filter);
                 DataSet dataSet = new DataSet();
                 adp.Fill(dataSet);
                 DataTable dt = dataSet.Tables[0];
+                if(IsQuery)
+                {
+                    if(enttype == null)
+                    {
+                        if(DataStruct == null)
+                        {
+                            DataStruct = GetEntityStructure(inname);
+                        }
+                        if(DataStruct==null)
+                        {
+                            DataStruct = DMEEditor.Utilfunction.GetEntityStructureFromListorTable(dt);
+                        }
+                        if(DataStruct != null)
+                        {
+                      ;
+                            DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields);
+                            enttype= DMTypeBuilder.myType; ;
+                        }
+                        
+                    }
+                    //return dt;
+                }
+                Type uowGenericType = typeof(ObservableBindingList<>).MakeGenericType(enttype);
+                // Prepare the arguments for the constructor
+                object[] constructorArgs = new object[] {dt };
 
-                return dt;//DMEEditor.Utilfunction.ConvertTableToList(dt,GetEntityStructure(EntityName),GetEntityType(EntityName));
+                // Create an instance of UnitOfWork<T> with the specific constructor
+                // Dynamically handle the instance since we can't cast to a specific IUnitofWork<T> at compile time
+                object uowInstance = Activator.CreateInstance(uowGenericType, constructorArgs);
+                return uowInstance;//DMEEditor.Utilfunction.ConvertTableToList(dt,GetEntityStructure(EntityName),GetEntityType(EntityName));
             }
 
             catch (Exception ex)
