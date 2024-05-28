@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
@@ -11,7 +11,7 @@
 		<PackageIcon>SimpleODM.png</PackageIcon>
 		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<Version>1.0.37</Version>
+		<Version>1.0.38</Version>
 		<Title>TheTechIdea.Beep.DuckDBDataSourceCore</Title>
 		<PackageId>TheTechIdea.Beep.DuckDBDataSourceCore</PackageId>
 
@@ -32,10 +32,10 @@
 	<ItemGroup>
 	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="0.10.3" />
 	  <PackageReference Include="DuckDB.NET.Data.Full" Version="0.10.3" />
-	  <PackageReference Include="RDBDataSource" Version="1.0.42" />
 	  <PackageReference Include="System.Data.Odbc" Version="8.0.0" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.479" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.194" />
+	  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="1.0.43" />
 	  <PackageReference Include="TheTechIdea.Beep.Vis.Modules" Version="1.0.110" />
 	</ItemGroup>
 	<ItemGroup>

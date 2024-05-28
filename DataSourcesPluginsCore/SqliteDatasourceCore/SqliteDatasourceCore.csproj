@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net7.0</TargetFrameworks>
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net7.0;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>Latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -12,7 +12,7 @@
 		<PackageIcon>SimpleODM.png</PackageIcon>
 		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<Version>1.0.38</Version>
+		<Version>1.0.39</Version>
 		<Title>TheTechIdea.Beep.SqliteDatasourceCore</Title>
 		<PackageId>TheTechIdea.Beep.SqliteDatasourceCore</PackageId>
 
@@ -38,10 +38,10 @@
    <Compile Remove="..\..\DataSourcesPlugins\Sqlite\SQLiteDataSource.cs" />
  </ItemGroup>
  <ItemGroup>
-   <PackageReference Include="RDBDataSource" Version="1.0.42" />
    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.479" />
    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.194" />
+   <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="1.0.43" />
  </ItemGroup>
 
 </Project>
