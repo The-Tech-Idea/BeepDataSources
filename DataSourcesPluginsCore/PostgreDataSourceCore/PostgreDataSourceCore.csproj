@@ -13,10 +13,12 @@
 		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<UserSecretsId>0e52f958-db3c-4737-811d-afad4558ff95</UserSecretsId>
+		<Title>TheTechIdea.Beep.PostgreDataSourceCore</Title>
+		<PackageId>TheTechIdea.Beep.PostgreDataSourceCore</PackageId>
 
 	</PropertyGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Copy SourceFiles="$(TargetDir)$(PackageId).dll" DestinationFolder="$(ProjectDir)..\..\..\outputDLL\DataSources\$(PackageId)\$(TargetFramework)" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName).dll" DestinationFolder="$(ProjectDir)..\..\..\outputDLL\DataSources\$(MSBuildProjectName)\$(TargetFramework)" SkipUnchangedFiles="false" />
 	</Target>
 	<Target Name="CopyPackage" AfterTargets="Pack">
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\LocalNugetFiles\DataSources" />

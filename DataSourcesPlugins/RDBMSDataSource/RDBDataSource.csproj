@@ -6,8 +6,8 @@
 	  <Nullable>enable</Nullable>
 	  <RootNamespace>TheTechIdea.Beep</RootNamespace>
 	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	  <PackageId>RDBDataSource</PackageId>
-	  <Title>RDBDataSource</Title>
+	  <PackageId>TheTechIdea.Beep.RDBDataSource</PackageId>
+	  <Title>TheTechIdea.Beep.RDBDataSource</Title>
 	  <Authors>The Tech Idea</Authors>
 	  <Company>The Tech Idea</Company>
 	  <Product>TheTechIdea.Beep.RDBDataSource</Product>
@@ -21,7 +21,7 @@
 	 
   </PropertyGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Copy SourceFiles="$(TargetDir)$(PackageId).dll" DestinationFolder="$(ProjectDir)..\..\..\outputDLL\DataSources\$(PackageId)\$(TargetFramework)" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName).dll" DestinationFolder="$(ProjectDir)..\..\..\outputDLL\DataSources\$(MSBuildProjectName)\$(TargetFramework)" SkipUnchangedFiles="false" />
 	</Target>
 	<Target Name="CopyPackage" AfterTargets="Pack">
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\LocalNugetFiles\DataSources" />

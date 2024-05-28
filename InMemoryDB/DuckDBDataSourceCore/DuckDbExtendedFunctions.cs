@@ -263,7 +263,7 @@ namespace DuckDBDataSourceCore
         }
         public static void PrintQueryResults(this DuckDBDataSource DuckDB, DuckDBResult queryResult)
         {
-            long columnCount = Query.DuckDBColumnCount(ref queryResult);
+            long columnCount = (long)Query.DuckDBColumnCount(ref queryResult);
             for (var index = 0; index < columnCount; index++)
             {
                 var columnName = Query.DuckDBColumnName(ref queryResult, index).ToManagedString(false);
