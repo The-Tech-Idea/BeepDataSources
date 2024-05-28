@@ -41,7 +41,7 @@
    <PackageReference Include="RDBDataSource" Version="1.0.42" />
    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.479" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.187" />
+   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.194" />
  </ItemGroup>
 
 </Project>
