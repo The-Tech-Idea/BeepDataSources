@@ -11,7 +11,7 @@
 		<PackageIcon>SimpleODM.png</PackageIcon>
 		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<Version>1.0.8</Version>
+		<Version>1.0.9</Version>
 		<Title>TheTechIdea.Beep.TxtXlsCSVFileSourceCore</Title>
 		<PackageId>TheTechIdea.Beep.TxtXlsCSVFileSourceCore</PackageId>
 
@@ -32,8 +32,8 @@
 	  <PackageReference Include="ExcelDataReader" Version="3.6.0" />
 	  <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
 	  <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.479" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.194" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.480" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.196" />
 	</ItemGroup>
 
 

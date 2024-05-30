@@ -260,7 +260,7 @@ namespace TheTechIdea.Beep.FileManager
         public  object GetEntity(string EntityName, List<AppFilter> filter)
         {
             ErrorObject.Flag = Errors.Ok;
-            List<object> data=null;
+            object data=null;
             try
             {
 
@@ -363,7 +363,7 @@ namespace TheTechIdea.Beep.FileManager
                     }
                   
                 }
-                data = DMEEditor.Utilfunction.GetListByDataTable(dt, "Beep", EntityName);
+                data = DMEEditor.Utilfunction.ConvertDataTableToObservableList(dt,GetEntityType(EntityName));
                 return data;
             }
             catch (Exception ex)
