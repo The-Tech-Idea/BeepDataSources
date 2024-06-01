@@ -914,7 +914,7 @@ namespace TheTechIdea.Beep.DataBase
             EntityName = EntityName.ToLower();
             string inname="";
             string qrystr = "select * from ";
-            
+            SetObjects(EntityName);
             if (!string.IsNullOrEmpty(EntityName) && !string.IsNullOrWhiteSpace(EntityName))
             {
                 if (!EntityName.Contains("select") && !EntityName.Contains("from"))
@@ -957,10 +957,7 @@ namespace TheTechIdea.Beep.DataBase
                 DataSet dataSet = new DataSet();
                 adp.Fill(dataSet);
                 DataTable dt = dataSet.Tables[0];
-                if(IsQuery)
-                {
-                    if(enttype == null)
-                    {
+
                         if(DataStruct == null)
                         {
                             DataStruct = GetEntityStructure(inname);
@@ -971,14 +968,13 @@ namespace TheTechIdea.Beep.DataBase
                         }
                         if(DataStruct != null)
                         {
-                      ;
                             DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields);
                             enttype= DMTypeBuilder.myType; ;
                         }
                         
-                    }
+
                     //return dt;
-                }
+   
                 Type uowGenericType = typeof(ObservableBindingList<>).MakeGenericType(enttype);
                 // Prepare the arguments for the constructor
                 object[] constructorArgs = new object[] {dt };
@@ -1117,6 +1113,7 @@ namespace TheTechIdea.Beep.DataBase
         }
         public virtual IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
         {
+            DataTable tb = new DataTable();
             if (recEntity != EntityName)
             {
                 recNumber = 1;
@@ -1126,15 +1123,29 @@ namespace TheTechIdea.Beep.DataBase
                 recNumber += 1;
             if (UploadData != null)
             {
-                if (UploadData.GetType().ToString() != "System.Data.DataTable")
+                SetObjects(EntityName);
+                if (UploadData.GetType().FullName.Contains("DataTable"))
                 {
-                    DMEEditor.AddLogMessage("Fail", $"Please use DataTable for this Method {EntityName}", DateTime.Now, 0, null, Errors.Failed);
-                    return DMEEditor.ErrorObject;
+                   
                 }
+                if (UploadData.GetType().FullName.Contains("List"))
+                {
+                    tb =DMEEditor.Utilfunction.ToDataTable((System.Collections.IList)UploadData,enttype);
+                }
+
+                if (UploadData.GetType().FullName.Contains("IEnumerable"))
+                {
+                    tb = DMEEditor.Utilfunction.ToDataTable((System.Collections.IList)UploadData, enttype);
+                }
+                //if (UploadData.GetType().ToString() != "System.Data.DataTable")
+                //{
+                //    DMEEditor.AddLogMessage("Fail", $"Please use DataTable for this Method {EntityName}", DateTime.Now, 0, null, Errors.Failed);
+                //    return DMEEditor.ErrorObject;
+                //}
                 //  RunCopyDataBackWorker(EntityName,  UploadData,  Mapping );
                 #region "Update Code"
                 //IDbTransaction sqlTran;
-                DataTable tb = (DataTable)UploadData;
+          //      tb = (DataTable)UploadData;
                 // DMEEditor.classCreator.CreateClass();
                 //List<object> f = DMEEditor.Utilfunction.GetListByDataTable(tb);
                 ErrorObject.Flag = Errors.Ok;
@@ -1163,50 +1174,31 @@ namespace TheTechIdea.Beep.DataBase
                                 try
                                 {
                                     DataRow r = changes.Rows[i];
+                                   DMEEditor.ErrorObject= InsertEntity(EntityName, r);
                                     CurrentRecord = i;
-                                    switch (r.RowState)
-                                    {
-                                        case DataRowState.Unchanged:
-                                        case DataRowState.Added:
-                                            updatestring = GetInsertString(EntityName, DataStruct);
-                                            break;
-                                        case DataRowState.Deleted:
-                                            updatestring = GetDeleteString(EntityName, DataStruct);
-                                            break;
-                                        case DataRowState.Modified:
-                                            updatestring = GetUpdateString(EntityName, DataStruct);
-                                            break;
-                                        default:
-                                            updatestring = GetInsertString(EntityName, DataStruct);
-                                            break;
-                                    }
-                                    command.CommandText = updatestring;
-                                    command = CreateCommandParameters(command, r, DataStruct);
-                                    errorstring = updatestring.Clone().ToString();
-                                    foreach (EntityField item in DataStruct.Fields)
-                                    {
-                                        try
-                                        {
-                                            string s;
-                                            string f;
-                                            if (r[item.fieldname] == DBNull.Value)
-                                            {
-                                                s = "\' \'";
-                                            }
-                                            else
-                                            {
-                                                s = "\'" + r[item.fieldname].ToString() + "\'";
-                                            }
-                                            f = "@p_" + Regex.Replace(item.fieldname, @"\s+", "_");
-                                            errorstring = errorstring.Replace(f, s);
-                                        }
-                                        catch (Exception ex1)
-                                        {
-                                        }
-                                    }
+                                    //switch (r.RowState)
+                                    //{
+                                    //    case DataRowState.Unchanged:
+                                    //    case DataRowState.Added:
+                                    //        updatestring = GetInsertString(EntityName, DataStruct);
+                                    //        break;
+                                    //    case DataRowState.Deleted:
+                                    //        updatestring = GetDeleteString(EntityName, DataStruct);
+                                    //        break;
+                                    //    case DataRowState.Modified:
+                                    //        updatestring = GetUpdateString(EntityName, DataStruct);
+                                    //        break;
+                                    //    default:
+                                    //        updatestring = GetInsertString(EntityName, DataStruct);
+                                    //        break;
+                                    //}
+                                    //command.CommandText = updatestring;
+                                    //command = CreateCommandParameters(command, r, DataStruct);
+                                    //errorstring = updatestring.Clone().ToString();
+                                  
                                     string msg = "";
-                                    int rowsUpdated = command.ExecuteNonQuery();
-                                    if (rowsUpdated > 0)
+                                    //int rowsUpdated = command.ExecuteNonQuery();
+                                    if (DMEEditor.ErrorObject.Flag== Errors.Ok)
                                     {
                                         msg = $"Successfully I/U/D  Record {i} to {EntityName} : {updatestring}";
                                     }
@@ -2411,7 +2403,9 @@ namespace TheTechIdea.Beep.DataBase
            // DMEEditor.OpenDataSource(ds.DatasourceName);
             if (Dataconnection.ConnectionStatus == ConnectionState.Open)
             {
-                return RDBMSConnection.DbConn.Query<T>(sql).AsList<T>();
+                List<T> t= RDBMSConnection.DbConn.Query<T>(sql).AsList<T>();
+
+                return t;
             }
             else
                 return null;

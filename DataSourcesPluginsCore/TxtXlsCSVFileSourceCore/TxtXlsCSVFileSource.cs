@@ -45,6 +45,24 @@ namespace TheTechIdea.Beep.FileManager
         public DataTable FileData { get; set; }
         IExcelDataReader reader;
         bool IsFileRead = false;
+        #region "Insert or Update or Delete Objects"
+        EntityStructure DataStruct = null;
+        IDbCommand command = null;
+        Type enttype = null;
+        bool ObjectsCreated = false;
+        string lastentityname = null;
+        private void SetObjects(string Entityname)
+        {
+            if (!ObjectsCreated || Entityname != lastentityname)
+            {
+                DataStruct = GetEntityStructure(Entityname, false);
+
+                enttype = GetEntityType(Entityname);
+                ObjectsCreated = true;
+                lastentityname = Entityname;
+            }
+        }
+        #endregion
         public virtual Task<double> GetScalarAsync(string query)
         {
             return Task.Run(() => GetScalar(query));
@@ -96,10 +114,15 @@ namespace TheTechIdea.Beep.FileManager
             Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.FileName == datasourcename).FirstOrDefault();
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
             Category = DatasourceCategory.FILE;
-            FileName = Dataconnection.ConnectionProp.FileName;
-            FilePath = Dataconnection.ConnectionProp.FilePath;
-            SetupConfig();
+            if (Dataconnection.ConnectionProp != null)
+            {
+                FileName = Dataconnection.ConnectionProp.FileName;
+                FilePath = Dataconnection.ConnectionProp.FilePath;
+               
+            }
+           
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+            SetupConfig();
         }
         public virtual IErrorsInfo BeginTransaction(PassedArgs args)
         {
@@ -171,17 +194,9 @@ namespace TheTechIdea.Beep.FileManager
         public ConnectionState Openconnection()
         {
             ConnectionStatus = Dataconnection.OpenConnection();
-
+             FilePath = Dataconnection.ConnectionProp.FilePath;
             if (ConnectionStatus == ConnectionState.Open)
             {
-                //if (DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(FileName) == null)
-                //{
-                //    GetSheets();
-                //}
-                //else
-                //{
-                //    Entities = DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(FileName).Entities;
-                //};
                 GetSheets();
                 CombineFilePath = Path.Combine(Dataconnection.ConnectionProp.FilePath, Dataconnection.ConnectionProp.FileName);
             }
@@ -363,8 +378,18 @@ namespace TheTechIdea.Beep.FileManager
                     }
                   
                 }
-                data = DMEEditor.Utilfunction.ConvertDataTableToObservableList(dt,GetEntityType(EntityName));
-                return data;
+               
+                enttype = GetEntityType(EntityName);
+                Type uowGenericType = typeof(ObservableBindingList<>).MakeGenericType(enttype);
+                // Prepare the arguments for the constructor
+                object[] constructorArgs = new object[] { dt };
+
+                // Create an instance of UnitOfWork<T> with the specific constructor
+                // Dynamically handle the instance since we can't cast to a specific IUnitofWork<T> at compile time
+                object uowInstance = Activator.CreateInstance(uowGenericType, constructorArgs);
+
+               
+                return uowInstance;
             }
             catch (Exception ex)
             {
@@ -1059,9 +1084,14 @@ namespace TheTechIdea.Beep.FileManager
             }
             return ds.Tables[sheetname];
         }
-        private DataSet GetExcelDataSet()
+        private DataSet GetExcelDataSet()   
         {
+            FilePath = Dataconnection.ConnectionProp.FilePath;
             string filpath = Path.Combine(FilePath, FileName);
+            if (string.IsNullOrEmpty(Dataconnection.ConnectionProp.Ext))
+            {
+                Dataconnection.ConnectionProp.Ext= Path.GetExtension(FileName);
+            }
             DataSet ds = new DataSet();
             if (File.Exists(filpath))
             {
