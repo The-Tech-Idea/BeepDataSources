@@ -721,6 +721,34 @@ namespace TheTechIdea.Beep.DataBase
                     msg = $"Successfully Inserted  Record  to {EntityName} ";
                     DMEEditor.ErrorObject.Message = msg;
                     DMEEditor.ErrorObject.Flag = Errors.Ok;
+                    string fetchIdentityQuery = RDBMSHelper.GenerateFetchLastIdentityQuery(DatasourceType);
+                    if (fetchIdentityQuery.ToUpper().Contains("SELECT") && DataStruct.PrimaryKeys.Count()>0)
+                    {
+                        command.CommandText = fetchIdentityQuery;
+                        object result = command.ExecuteScalar();
+                        int identity = 0;
+                        if (result != null)
+                        {
+                            identity = Convert.ToInt32(result);
+                            // Update the primary key property of the inserted record
+                            var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().fieldname);
+                            if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
+                            {
+                                primaryKeyProperty.SetValue(InsertedData, identity);
+                            }
+
+                            msg = $"Successfully Inserted Record to {EntityName} with ID {identity}";
+                            DMEEditor.ErrorObject.Message = msg;
+                            DMEEditor.ErrorObject.Flag = Errors.Ok;
+                        }
+                        else
+                        {
+                            msg = "Failed to retrieve the identity of the inserted record.";
+                            DMEEditor.ErrorObject.Message = msg;
+                            DMEEditor.ErrorObject.Flag = Errors.Failed;
+                        }
+                    }
+                  
                     // DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
                 }
                 else
@@ -1326,6 +1354,22 @@ namespace TheTechIdea.Beep.DataBase
 
             return GetEntityStructure(retval, refresh);
         }
+        private bool GetBooleanField(DataRow r, string fieldName)
+        {
+            try
+            {
+                return r.Field<bool>(fieldName);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool IsNumericType(string fieldType)
+        {
+            return fieldType == "System.Decimal" || fieldType == "System.Float" || fieldType == "System.Double";
+        }
         public virtual EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
         {
             DataTable tb = new DataTable();
@@ -1391,66 +1435,35 @@ namespace TheTechIdea.Beep.DataBase
                                         x.fieldtype = MapOracleFloatToDotNetType(precision);
                                     }
                                 }
-                              
                             x.Size1 = r.Field<int>("ColumnSize");
-                                try
-                                {
-                                    x.IsAutoIncrement = r.Field<bool>("IsAutoIncrement");
-                                }
-                                catch (Exception)
-                                {
-                                  x.IsAutoIncrement = false;
-                                }
-                                try
-                                {
-                                    x.AllowDBNull = r.Field<bool>("AllowDBNull");
-                                }
-                                catch (Exception)
-                                {
-                                }
-                                try
-                                {
-                                    x.IsAutoIncrement = r.Field<bool>("IsIdentity");
-                                    x.IsIdentity = x.IsAutoIncrement;
-                                }
-                                catch (Exception)
-                                {
-                                    x.IsIdentity = false;
-                                }
-                                try
-                                {
-                                    x.IsKey = r.Field<bool>("IsKey");
-                                }
-                                catch (Exception)
-                                {
+                            x.IsAutoIncrement = GetBooleanField(r, "IsAutoIncrement");
+                            x.AllowDBNull = GetBooleanField(r, "AllowDBNull");
+                            x.IsIdentity = GetBooleanField(r, "IsIdentity");
+                            x.IsKey = GetBooleanField(r, "IsKey");
+                            x.IsUnique = GetBooleanField(r, "IsUnique");
+                            x.OrdinalPosition = r.Field<int>("OrdinalPosition");
+                            x.IsReadOnly = GetBooleanField(r, "IsReadOnly");
+                            x.IsRowVersion = GetBooleanField(r, "IsRowVersion");
+                            x.IsLong = GetBooleanField(r, "IsLong");
+                            x.DefaultValue = r["DefaultValue"] != DBNull.Value ? r["DefaultValue"].ToString() : null;
+                            x.Expression = r["Expression"] != DBNull.Value ? r["Expression"].ToString() : null;
+                            x.BaseTableName = r["BaseTableName"] != DBNull.Value ? r["BaseTableName"].ToString() : null;
+                            x.BaseColumnName = r["BaseColumnName"] != DBNull.Value ? r["BaseColumnName"].ToString() : null;
+                            x.MaxLength = r.Field<int>("ColumnSize"); // Ensure this matches your schema
+                            x.IsFixedLength = GetBooleanField(r, "IsFixedLength");
+                            x.IsHidden = GetBooleanField(r, "IsHidden");
 
-                                }
-                                try
+                            if (IsNumericType(x.fieldtype))
+                            {
+                                var NumericPrecision = r["NumericPrecision"];
+                                var NumericScale = r["NumericScale"];
+                                if (NumericPrecision != DBNull.Value && NumericScale != DBNull.Value)
                                 {
-                                  if (x.fieldtype == "System.Decimal" || x.fieldtype=="System.Float" || x.fieldtype == "System.Double") 
-                                    {
-                                        var NumericPrecision = r["NumericPrecision"];
-                                        var NumericScale = r["NumericScale"];
-                                        if (NumericPrecision != System.DBNull.Value && NumericScale != System.DBNull.Value)
-                                        {
-                                            x.NumericPrecision = (short)NumericPrecision;
-                                            x.NumericScale = (short)NumericScale;
-                                        }
-                                    }
-                                }
-                                catch (Exception)
-                                {
-
-                                }
-                                try
-                                {
-                                    x.IsUnique = r.Field<bool>("IsUnique");
-                                }
-                                catch (Exception)
-                                {
-
+                                    x.NumericPrecision = (short)NumericPrecision;
+                                    x.NumericScale = (short)NumericScale;
                                 }
                             }
+                        }
                             catch (Exception ex)
                             {
                                 DMEEditor.AddLogMessage("Fail", $"Error in Creating Field Type({ ex.Message})", DateTime.Now, 0, entname, Errors.Failed);
@@ -2699,13 +2712,15 @@ namespace TheTechIdea.Beep.DataBase
             string schname = Dataconnection.ConnectionProp.SchemaName;
             string userid = Dataconnection.ConnectionProp.UserID;
             string schemastring = "";
-            if (schname != null &&  !schname.Equals(userid, StringComparison.InvariantCultureIgnoreCase))
-            { 
+            if (!string.IsNullOrEmpty(schname) && !schname.Equals(userid, StringComparison.InvariantCultureIgnoreCase))
+            {
                 if (schname.Length > 0)
                 {
                     schemastring = schname + ".";
                 }
             }
+            else
+                schemastring = "";
              if (querystring.IndexOf("select") > 0)
                     {
                         int frompos = querystring.IndexOf("from", StringComparison.InvariantCultureIgnoreCase);
@@ -2725,7 +2740,7 @@ namespace TheTechIdea.Beep.DataBase
                     {
                         int intopos = querystring.IndexOf("into", StringComparison.InvariantCultureIgnoreCase);
                         string[] instokens = querystring.Split(' ');
-                        querystring = querystring.Replace(instokens[2], $" {schemastring}.{instokens[2]} ");
+                        querystring = querystring.Replace(instokens[2], $" {schemastring}{instokens[2]} ");
                     }
                     else if (querystring.IndexOf("update") >= 0)
                     {
