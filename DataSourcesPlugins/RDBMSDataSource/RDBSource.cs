@@ -239,7 +239,8 @@ namespace TheTechIdea.Beep.DataBase
                 {
                    
                     cmd.Dispose();
-                   
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = $" Could not run Script - {sql} -" + ex.Message;
                     DMEEditor.AddLogMessage("Fail", $" Could not run Script - {sql} -" + ex.Message, DateTime.Now, -1, ex.Message, Errors.Failed);
 
                 }
@@ -1238,7 +1239,7 @@ namespace TheTechIdea.Beep.DataBase
                                     //         UpdateEvents(EntityName, msg, highestPercentageReached, CurrentRecord, numberToCompute, this);
                                     if (progress != null)
                                     {
-                                        PassedArgs ps = new PassedArgs { ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = null };
+                                        PassedArgs ps = new PassedArgs { Messege= msg, ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = null };
                                         progress.Report(ps);
                                     }
                                     //   PassEvent?.Invoke(this, args);
@@ -2697,11 +2698,15 @@ namespace TheTechIdea.Beep.DataBase
         {
             string schname = Dataconnection.ConnectionProp.SchemaName;
             string userid = Dataconnection.ConnectionProp.UserID;
-            if (schname != null)
-            {
-                if (!schname.Equals(userid, StringComparison.InvariantCultureIgnoreCase))
+            string schemastring = "";
+            if (schname != null &&  !schname.Equals(userid, StringComparison.InvariantCultureIgnoreCase))
+            { 
+                if (schname.Length > 0)
                 {
-                    if (querystring.IndexOf("select") > 0)
+                    schemastring = schname + ".";
+                }
+            }
+             if (querystring.IndexOf("select") > 0)
                     {
                         int frompos = querystring.IndexOf("from", StringComparison.InvariantCultureIgnoreCase);
                         int wherepos = querystring.IndexOf("where", StringComparison.InvariantCultureIgnoreCase);
@@ -2714,29 +2719,27 @@ namespace TheTechIdea.Beep.DataBase
                         int firstcharindex = querystring.IndexOf(' ', frompos);
                         int lastcharindex = querystring.IndexOf(' ', firstcharindex + 2);
                         string tablename = querystring.Substring(firstcharindex + 1, lastcharindex - firstcharindex - 1);
-                        querystring = querystring.Replace(' ' + tablename + ' ', $" {schname}.{tablename} ");
+                        querystring = querystring.Replace(' ' + tablename + ' ', $" {schemastring}{tablename} ");
                     }
                     else if (querystring.IndexOf("insert") >= 0)
                     {
                         int intopos = querystring.IndexOf("into", StringComparison.InvariantCultureIgnoreCase);
                         string[] instokens = querystring.Split(' ');
-                        querystring = querystring.Replace(instokens[2], $" {schname}.{instokens[2]} ");
+                        querystring = querystring.Replace(instokens[2], $" {schemastring}.{instokens[2]} ");
                     }
                     else if (querystring.IndexOf("update") >= 0)
                     {
                         int setpos = querystring.IndexOf("set", StringComparison.InvariantCultureIgnoreCase);
                         string[] uptokens = querystring.Split(' ');
-                        querystring = querystring.Replace(uptokens[1], $" {schname}.{uptokens[1]} ");
+                        querystring = querystring.Replace(uptokens[1], $" {schemastring}{uptokens[1]} ");
                     }
                     else if (querystring.IndexOf("delete") >= 0)
                     {
                         int frompos = querystring.IndexOf("from", StringComparison.InvariantCultureIgnoreCase);
                         string[] fromtokens = querystring.Split(' ');
-                        querystring = querystring.Replace(fromtokens[1], $" {schname}.{fromtokens[2]} ");
+                        querystring = querystring.Replace(fromtokens[1], $" {schemastring}{fromtokens[2]} ");
                     }
-                }
-                    
-            }
+            
             return querystring;
         }
         #endregion

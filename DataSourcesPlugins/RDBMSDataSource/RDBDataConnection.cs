@@ -19,7 +19,7 @@ namespace TheTechIdea.Beep.DataBase
         public ConnectionDriversConfig DataSourceDriver { get; set; }
         public IDMLogger Logger { get; set; }
         public IErrorsInfo ErrorObject { get; set; }
-    
+
         string ConnString { get; set; }
         public IConnectionProperties ConnectionProp { get; set; } = new ConnectionProperties();
         public RDBDataConnection(IDMEEditor pDMEEditor)
@@ -27,7 +27,8 @@ namespace TheTechIdea.Beep.DataBase
             DMEEditor = pDMEEditor;
 
         }
-        public virtual ConnectionState OpenConnection(DataSourceType dbtype, string connectionstring) {
+        public virtual ConnectionState OpenConnection(DataSourceType dbtype, string connectionstring)
+        {
             ConnectionProp.DatabaseType = dbtype;
             ConnectionProp.ConnectionString = connectionstring;
             return OpenConn();
@@ -54,8 +55,8 @@ namespace TheTechIdea.Beep.DataBase
             //    rep = rep.Replace("{Password}", ConnectionProp.Password);
             //    rep = rep.Replace("{Database}", ConnectionProp.Database);
             //    rep = rep.Replace("{Port}", ConnectionProp.Port.ToString());
-              
-              
+
+
             //    if (rep.Contains("{Url}"))
             //    {
             //        rep = rep.Replace("{Url}", ConnectionProp.Url);
@@ -67,7 +68,7 @@ namespace TheTechIdea.Beep.DataBase
             //            ConnectionProp.FilePath = ConnectionProp.FilePath.Replace(".", DMEEditor.ConfigEditor.ExePath);
             //        }
             //    }
-               
+
             //    if (rep.Contains("{File}"))
             //    {
             //        string file = ConnectionProp.FileName;
@@ -81,13 +82,13 @@ namespace TheTechIdea.Beep.DataBase
             //        rep = rep.Replace("{File}", filename);
             //    }
             //}
-           
-             return  ConnectionHelper.ReplaceValueFromConnectionString(DataSourceDriver, ConnectionProp, DMEEditor);
+
+            return ConnectionHelper.ReplaceValueFromConnectionString(DataSourceDriver, ConnectionProp, DMEEditor);
         }
         public virtual ConnectionState OpenConnection()
         {
 
-            ConnectionStatus = OpenConn(); 
+            ConnectionStatus = OpenConn();
             return ConnectionStatus;
         }
         public virtual ConnectionState OpenConn()
@@ -96,50 +97,56 @@ namespace TheTechIdea.Beep.DataBase
             {
                 if (DbConn.State == ConnectionState.Open)
                 {
-                    
+
                     ConnectionStatus = DbConn.State;
                     DMEEditor.AddLogMessage("Success", $"RDBMS already Open {ConnectionProp.ConnectionName}", DateTime.Now, -1, "", Errors.Ok);
                     return DbConn.State;
                 }
-                
+
             }
             try
+            {
+           
+                if (DataSourceDriver != null)
                 {
-                    DbConn = (IDbConnection) DMEEditor.assemblyHandler.GetInstance(DataSourceDriver.DbConnectionType);
-                    if (DbConn != null)
-                    {
-                        //if (!string.IsNullOrEmpty(ConnectionProp.ConnectionString))
-                        //{
-                        //    ConnString = ConnectionProp.ConnectionString;
-                        //}
-                        //else ConnString = DataSourceDriver.ConnectionString;
-
-                        DbConn.ConnectionString = ReplaceValueFromConnectionString(); //ConnectionProp.ConnectionString;
-                    }
-                    else
-                    {
-                        ConnectionStatus = ConnectionState.Broken;
-                        DMEEditor.AddLogMessage("Fail", $"Could Find DataSource Drivers {DataSourceDriver.classHandler}", DateTime.Now, 0, null, Errors.Failed);
-                        return ConnectionState.Broken;
-                    }
-
+                    DbConn = (IDbConnection)DMEEditor.assemblyHandler.GetInstance(DataSourceDriver.DbConnectionType);
                 }
-                catch (Exception e)
+
+                if (DbConn != null)
                 {
-                    DMEEditor.AddLogMessage("Fail", $"Could not get instance Driver for {ConnectionProp.ConnectionName}- {e.Message}", DateTime.Now, 0, ConnectionProp.ConnectionName, Errors.Failed);
-                  
+                    //if (!string.IsNullOrEmpty(ConnectionProp.ConnectionString))
+                    //{
+                    //    ConnString = ConnectionProp.ConnectionString;
+                    //}
+                    //else ConnString = DataSourceDriver.ConnectionString;
+
+                    DbConn.ConnectionString = ReplaceValueFromConnectionString(); //ConnectionProp.ConnectionString;
+                    ConnectionProp.ConnectionString = DbConn.ConnectionString;
                 }
+                else
+                {
+                    ConnectionStatus = ConnectionState.Broken;
+                    DMEEditor.AddLogMessage("Fail", $"Could Find DataSource Drivers {ConnectionProp.ConnectionName}", DateTime.Now, 0, null, Errors.Failed);
+                    return ConnectionState.Broken;
+                }
+
+            }
+            catch (Exception e)
+            {
+                DMEEditor.AddLogMessage("Fail", $"Could not get instance Driver for {ConnectionProp.ConnectionName}- {e.Message}", DateTime.Now, 0, ConnectionProp.ConnectionName, Errors.Failed);
+
+            }
 
             try
             {
                 if (DbConn != null)
                 {
-                    if (ConnectionProp.FilePath!=null && ConnectionProp.FileName!=null && !string.IsNullOrEmpty(ConnectionProp.FilePath) && !string.IsNullOrEmpty(ConnectionProp.FileName))
+                    if (ConnectionProp.FilePath != null && ConnectionProp.FileName != null && !string.IsNullOrEmpty(ConnectionProp.FilePath) && !string.IsNullOrEmpty(ConnectionProp.FileName))
                     {
                         if (System.IO.File.Exists(Path.Combine(ConnectionProp.FilePath, ConnectionProp.FileName)))
                         {
                             DbConn.Open();
-                     //       DMEEditor.AddLogMessage("Success", $"Open RDBMS Connection to {ConnectionProp.ConnectionName}", DateTime.Now, 0, ConnectionProp.ConnectionName, Errors.Ok);
+                            //       DMEEditor.AddLogMessage("Success", $"Open RDBMS Connection to {ConnectionProp.ConnectionName}", DateTime.Now, 0, ConnectionProp.ConnectionName, Errors.Ok);
                             ConnectionStatus = DbConn.State;
                         }
                         else
@@ -150,9 +157,9 @@ namespace TheTechIdea.Beep.DataBase
                     else
                     {
                         DbConn.Open();
-                       DMEEditor.AddLogMessage("Success", $"Open RDBMS Connection to {ConnectionProp.ConnectionName}", DateTime.Now, 0, ConnectionProp.ConnectionName, Errors.Ok);
+                        DMEEditor.AddLogMessage("Success", $"Open RDBMS Connection to {ConnectionProp.ConnectionName}", DateTime.Now, 0, ConnectionProp.ConnectionName, Errors.Ok);
                         ConnectionStatus = DbConn.State;
-                        if (ConnectionStatus== ConnectionState.Open)
+                        if (ConnectionStatus == ConnectionState.Open)
                         {
                             // Check if need to change schema name
                             if (ConnectionProp.DatabaseType == DataSourceType.Oracle || ConnectionProp.DatabaseType == DataSourceType.SqlServer)
@@ -191,10 +198,11 @@ namespace TheTechIdea.Beep.DataBase
 
                     }
 
-                }else
+                }
+                else
                 {
                     DMEEditor.AddLogMessage("Fail", $"Could not get Drivers for RDBMS Connection to {ConnectionProp.ConnectionName}", DateTime.Now, 0, ConnectionProp.ConnectionName, Errors.Failed);
-                    ConnectionStatus = ConnectionState.Closed; 
+                    ConnectionStatus = ConnectionState.Closed;
                 }
             }
             catch (Exception e)
@@ -212,7 +220,7 @@ namespace TheTechIdea.Beep.DataBase
                 if (DbConn.State == ConnectionState.Open)
                 {
                     ErrorObject.Flag = Errors.Ok;
-                    
+
                     try
                     {
                         DbConn.Close();
@@ -220,12 +228,13 @@ namespace TheTechIdea.Beep.DataBase
                     }
                     catch (Exception ex)
                     {
-                        DMEEditor.AddLogMessage("Fail",$"Could not close Connetion Database Function End {ex.Message}",DateTime.Now,0,null,Errors.Failed);
+                        DMEEditor.AddLogMessage("Fail", $"Could not close Connetion Database Function End {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
 
                     }
-                   
+
                     return DbConn.State;
-                }else
+                }
+                else
                 {
                     ConnectionStatus = ConnectionState.Closed;
                     return ConnectionStatus;
@@ -239,9 +248,9 @@ namespace TheTechIdea.Beep.DataBase
             }
 
 
-          
+
 
         }
-      
+
     }
 }

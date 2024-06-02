@@ -3,6 +3,8 @@ using Microsoft.CodeAnalysis;
 using System.Data;
 using System.Data.SQLite;
 using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.FileManager;
+using TheTechIdea.Beep.Helpers;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
@@ -30,6 +32,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             DMEEditor = pDMEEditor;
             DatasourceName = pdatasourcename;
+           
             if (pdatasourcename != null)
             {
                 if (Dataconnection == null)
@@ -40,13 +43,34 @@ namespace TheTechIdea.Beep.DataBase
                 if (Dataconnection.ConnectionProp == null)
                 {
                     Dataconnection.ConnectionProp = new ConnectionProperties();
+                    CreateDB(pdatasourcename);
+                    ConnectionStatus = Dataconnection.OpenConnection();
+                    if (ConnectionStatus == ConnectionState.Open)
+                    {
+                        DMEEditor.AddLogMessage("Beep", $"Connection to {DatasourceName} Created and is open", DateTime.Now, -1, "", Errors.Ok);
+                    }
+                    DMEEditor.ConfigEditor.AddDataConnection((ConnectionProperties)Dataconnection.ConnectionProp);
+                    DMEEditor.ConfigEditor.SaveDataconnectionsValues();
                 }
+                else
+                {
 
+                     Dataconnection.DataSourceDriver= ConnectionHelper.LinkConnection2Drivers(Dataconnection.ConnectionProp, DMEEditor.ConfigEditor);
+                    ConnectionStatus = Dataconnection.OpenConnection();
+                    if (ConnectionStatus == ConnectionState.Open)
+                    {
+                        DMEEditor.AddLogMessage("Beep", $"Connection to {DatasourceName} is open", DateTime.Now, -1, "", Errors.Ok);
+                    }
+                }
+                
+                
             }
             Dataconnection.ConnectionProp.DatabaseType = DataSourceType.SqlLite;
             ColumnDelimiter = "[]";
             ParameterDelimiter = "$";
-            dbpath = Path.Combine(DMEEditor.ConfigEditor.ExePath, "Scripts", DatasourceName);
+           
+            
+            //dbpath = Path.Combine(DMEEditor.ConfigEditor.ExePath, "Scripts", DatasourceName);
         }
         public List<EntityStructure> InMemoryStructures { get; set; } = new List<EntityStructure>();
         public override string ColumnDelimiter { get; set; } = "[]";
@@ -60,6 +84,7 @@ namespace TheTechIdea.Beep.DataBase
             var progress = new Progress<PassedArgs>(percent => { });
             InMemory = Dataconnection.ConnectionProp.IsInMemory;
             Dataconnection.InMemory = Dataconnection.ConnectionProp.IsInMemory;
+            base.Openconnection();
             if (ConnectionStatus == ConnectionState.Open)
             {
                 DMEEditor.AddLogMessage("Beep", $"Connection is already open", DateTime.Now, -1, "", Errors.Ok);
@@ -132,9 +157,61 @@ namespace TheTechIdea.Beep.DataBase
         {
             return false;
         }
+        public bool CreateDBDefaultDir(string filename)
+        {
+            try
+            {
+                string dirpath= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "TheTechIdea", "Beep","DatabaseFiles");
+                if (!Directory.Exists(dirpath))
+                {
+                    Directory.CreateDirectory(dirpath);
+                }
+                string filepathandname = Path.Combine(dirpath, filename);
+
+                return CreateDB(filepathandname);
+            }
+            catch (Exception ex)
+            {
+                string mes = "Could not Create Sqlite Database";
+                DMEEditor.AddLogMessage(ex.Message, mes, DateTime.Now, -1, mes, Errors.Failed);
+                return false;
+            };
+        }
         public bool CreateDB(string filepathandname)
         {
-            return false;
+            try
+            {
+                if (File.Exists(filepathandname))
+                {
+                    DMEEditor.AddLogMessage("Success", "Sqlite Database already exist", DateTime.Now, 0, null, Errors.Ok);
+                }
+                else
+                {
+                    SQLiteConnection.CreateFile(filepathandname);
+                    enablefk();
+                    DMEEditor.AddLogMessage("Success", "Create Sqlite Database", DateTime.Now, 0, null, Errors.Ok);
+                }
+                base.Dataconnection.ConnectionProp.ConnectionString = $"Data Source={filepathandname};Version=3;New=True;";
+                base.Dataconnection.ConnectionProp.FilePath = Path.GetDirectoryName(filepathandname);
+                base.Dataconnection.ConnectionProp.FileName = Path.GetFileName(filepathandname);
+                if (!System.IO.File.Exists(filepathandname))
+                {
+                    SQLiteConnection.CreateFile(filepathandname);
+                    enablefk();
+                    DMEEditor.AddLogMessage("Success", "Create Sqlite Database", DateTime.Now, 0, null, Errors.Ok);
+                }
+                else
+                {
+                    DMEEditor.AddLogMessage("Success", "Sqlite Database already exist", DateTime.Now, 0, null, Errors.Ok);
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                string mes = "Could not Create Sqlite Database";
+                DMEEditor.AddLogMessage(ex.Message, mes, DateTime.Now, -1, mes, Errors.Failed);
+                return false;
+            };
         }
         public bool DeleteDB()
         {

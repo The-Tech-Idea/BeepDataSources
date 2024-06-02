@@ -33,9 +33,9 @@
 	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="0.10.3" />
 	  <PackageReference Include="DuckDB.NET.Data.Full" Version="0.10.3" />
 	  <PackageReference Include="System.Data.Odbc" Version="8.0.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.483" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.487" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.196" />
-	  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="1.0.49" />
+	  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="1.0.55" />
 	  <PackageReference Include="TheTechIdea.Beep.Vis.Modules" Version="1.0.110" />
 	</ItemGroup>
 	<ItemGroup>
