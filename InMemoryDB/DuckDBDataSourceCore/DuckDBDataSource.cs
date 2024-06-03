@@ -530,6 +530,7 @@ namespace DuckDBDataSourceCore
         }
         public override IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
         {
+            DataTable tb = new DataTable();
             if (recEntity != EntityName)
             {
                 recNumber = 1;
@@ -539,15 +540,25 @@ namespace DuckDBDataSourceCore
                 recNumber += 1;
             if (UploadData != null)
             {
-                if (UploadData.GetType().ToString() != "System.Data.DataTable")
+                SetObjects(EntityName);
+                if (UploadData.GetType().FullName.Contains("DataTable"))
                 {
-                    DMEEditor.AddLogMessage("Fail", $"Please use DataTable for this Method {EntityName}", DateTime.Now, 0, null, Errors.Failed);
-                    return DMEEditor.ErrorObject;
+
                 }
+                if (UploadData.GetType().FullName.Contains("List"))
+                {
+                    tb = DMEEditor.Utilfunction.ToDataTable((System.Collections.IList)UploadData, enttype);
+                }
+
+                if (UploadData.GetType().FullName.Contains("IEnumerable"))
+                {
+                    tb = DMEEditor.Utilfunction.ToDataTable((System.Collections.IList)UploadData, enttype);
+                }
+
                 //  RunCopyDataBackWorker(EntityName,  UploadData,  Mapping );
                 #region "Update Code"
                 //IDbTransaction sqlTran;
-                DataTable tb = (DataTable)UploadData;
+
                 // DMEEditor.classCreator.CreateClass();
                 //List<object> f = DMEEditor.Utilfunction.GetListByDataTable(tb);
                 ErrorObject.Flag = Errors.Ok;
@@ -577,24 +588,25 @@ namespace DuckDBDataSourceCore
                                 {
                                     DataRow r = changes.Rows[i];
                                     CurrentRecord = i;
-                                    switch (r.RowState)
-                                    {
-                                        case DataRowState.Unchanged:
-                                        case DataRowState.Added:
-                                            updatestring = GetInsertString(EntityName, DataStruct);
-                                            break;
-                                        case DataRowState.Deleted:
-                                            updatestring = GetDeleteString(EntityName, DataStruct);
-                                            break;
-                                        case DataRowState.Modified:
-                                            updatestring = GetUpdateString(EntityName, DataStruct);
-                                            break;
-                                        default:
-                                            updatestring = GetInsertString(EntityName, DataStruct);
-                                            break;
-                                    }
-                                    command.CommandText = updatestring;
-                                    command = CreateCommandParameters(command, r, DataStruct);
+                                    updatestring = GetInsertString(EntityName, DataStruct);
+                                    //switch (r.RowState)
+                                    //{
+                                    //    case DataRowState.Unchanged:
+                                    //    case DataRowState.Added:
+                                    //        updatestring = GetInsertString(EntityName, DataStruct);
+                                    //        break;
+                                    //    case DataRowState.Deleted:
+                                    //        updatestring = GetDeleteString(EntityName, DataStruct);
+                                    //        break;
+                                    //    case DataRowState.Modified:
+                                    //        updatestring = GetUpdateString(EntityName, DataStruct);
+                                    //        break;
+                                    //    default:
+                                    //        updatestring = GetInsertString(EntityName, DataStruct);
+                                    //        break;
+                                    //}
+                                    //command.CommandText = updatestring;
+                                    //command = CreateCommandParameters(command, r, DataStruct);
                                     errorstring = updatestring.Clone().ToString();
                                     foreach (EntityField item in DataStruct.Fields)
                                     {
@@ -618,8 +630,8 @@ namespace DuckDBDataSourceCore
                                         }
                                     }
                                     string msg = "";
-                                    int rowsUpdated = command.ExecuteNonQuery();
-                                    if (rowsUpdated > 0)
+                                    //int rowsUpdated = command.ExecuteNonQuery();
+                                    if (DMEEditor.ErrorObject.Flag == Errors.Ok)
                                     {
                                         msg = $"Successfully I/U/D  Record {i} to {EntityName} : {updatestring}";
                                     }
@@ -659,7 +671,7 @@ namespace DuckDBDataSourceCore
                                     //         UpdateEvents(EntityName, msg, highestPercentageReached, CurrentRecord, numberToCompute, this);
                                     if (progress != null)
                                     {
-                                        PassedArgs ps = new PassedArgs { ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = null };
+                                        PassedArgs ps = new PassedArgs { Messege = msg, ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = null };
                                         progress.Report(ps);
                                     }
                                     //   PassEvent?.Invoke(this, args);
@@ -794,18 +806,35 @@ namespace DuckDBDataSourceCore
                     msg = $"Successfully Inserted  Record  to {EntityName} ";
                     DMEEditor.ErrorObject.Message = msg;
                     DMEEditor.ErrorObject.Flag = Errors.Ok;
-                    // DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
-                }
-                else
-                {
-                    msg = $"Fail to Insert  Record  to {EntityName} : {updatestring}";
-                    DMEEditor.ErrorObject.Message = msg;
-                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    string fetchIdentityQuery = RDBMSHelper.GenerateFetchLastIdentityQuery(DatasourceType);
+                    if (fetchIdentityQuery.ToUpper().Contains("SELECT") && DataStruct.PrimaryKeys.Count() > 0)
+                    {
+                        command.CommandText = fetchIdentityQuery;
+                        object result = command.ExecuteScalar();
+                        int identity = 0;
+                        if (result != null)
+                        {
+                            identity = Convert.ToInt32(result);
+                            // Update the primary key property of the inserted record
+                            var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().fieldname);
+                            if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
+                            {
+                                primaryKeyProperty.SetValue(InsertedData, identity);
+                            }
 
-
-                    //  DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-                }
-                // DMEEditor.AddLogMessage("Success",$"Successfully Written Data to {EntityName}",DateTime.Now,0,null, Errors.Ok);
+                            msg = $"Successfully Inserted Record to {EntityName} with ID {identity}";
+                            DMEEditor.ErrorObject.Message = msg;
+                            DMEEditor.ErrorObject.Flag = Errors.Ok;
+                        }
+                        else
+                        {
+                            msg = "Failed to retrieve the identity of the inserted record.";
+                            DMEEditor.ErrorObject.Message = msg;
+                            DMEEditor.ErrorObject.Flag = Errors.Failed;
+                        }
+                    }
+                    }
+                    // DMEEditor.AddLogMessage("Success",$"Successfully Written Data to {EntityName}",DateTime.Now,0,null, Errors.Ok);
 
             }
             catch (Exception ex)
@@ -1398,15 +1427,12 @@ namespace DuckDBDataSourceCore
         private EntityStructure GetEntityStructure(DataTable schemaTable)
         {
             EntityStructure entityStructure = new EntityStructure();
-            string columnNameKey = "COLUMN_NAME";
-            string dataTypeKey = "DATA_TYPE";
-            string maxLengthKey = "CHARACTER_MAXIMUM_LENGTH";
-            string numericPrecisionKey = "NUMERIC_PRECISION";
-            string numericScaleKey = "NUMERIC_SCALE";
-            string isNullableKey = "IS_NULLABLE";
-            string isAutoIncrementKey = "AUTOINCREMENT";
-            string isKeyKey = "PRIMARY_KEY";
-            string isUniqueKey = "UNIQUE";
+            string columnNameKey = "column_name";
+            string dataTypeKey = "data_type";
+            string maxLengthKey = "character_maximum_length";
+            string numericPrecisionKey = "numeric_precision";
+            string numericScaleKey = "numeric_scale";
+            string isNullableKey = "is_nullable";
             // Add more keys for other properties
 
             foreach (DataRow row in schemaTable.Rows)
@@ -1414,13 +1440,17 @@ namespace DuckDBDataSourceCore
                 EntityField field = new EntityField();
                 field.fieldname = row[columnNameKey].ToString();
                 field.fieldtype = row[dataTypeKey].ToString();
-                field.Size1 = Convert.ToInt32(row[maxLengthKey]);
-                field.NumericPrecision = Convert.ToInt16(row[numericPrecisionKey]);
-                field.NumericScale = Convert.ToInt16(row[numericScaleKey]);
-                field.AllowDBNull = row[isNullableKey].ToString() == "YES";
-                field.IsAutoIncrement = row[isAutoIncrementKey].ToString() == "YES";
-                field.IsKey = row[isKeyKey].ToString() == "YES";
-                field.IsUnique = row[isUniqueKey].ToString() == "YES";
+
+                // Handle possible DBNull values and check for column existence
+                field.Size1 = schemaTable.Columns.Contains(maxLengthKey) && row[maxLengthKey] != DBNull.Value ? Convert.ToInt32(row[maxLengthKey]) : 0;
+                field.NumericPrecision = schemaTable.Columns.Contains(numericPrecisionKey) && row[numericPrecisionKey] != DBNull.Value ? Convert.ToInt16(row[numericPrecisionKey]) : (short)0;
+                field.NumericScale = schemaTable.Columns.Contains(numericScaleKey) && row[numericScaleKey] != DBNull.Value ? Convert.ToInt16(row[numericScaleKey]) : (short)0;
+                field.AllowDBNull = schemaTable.Columns.Contains(isNullableKey) && row[isNullableKey].ToString().ToUpper() == "YES";
+
+                // Default values for auto-increment, primary key, and unique
+                field.IsAutoIncrement = false;
+                field.IsKey = false;
+                field.IsUnique = false;
                 // Map other schema properties to the EntityField instance
                 // ...
 

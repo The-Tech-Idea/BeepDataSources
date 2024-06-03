@@ -1178,7 +1178,7 @@ namespace TheTechIdea.Beep.DataBase
                 // DMEEditor.classCreator.CreateClass();
                 //List<object> f = DMEEditor.Utilfunction.GetListByDataTable(tb);
                 ErrorObject.Flag = Errors.Ok;
-                EntityStructure DataStruct = GetEntityStructure(EntityName);
+               // EntityStructure DataStruct = GetEntityStructure(EntityName);
                 IDbCommand command = RDBMSConnection.DbConn.CreateCommand();
                 string str = "";
                 string errorstring = "";

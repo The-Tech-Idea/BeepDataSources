@@ -43,24 +43,24 @@ namespace TheTechIdea.Beep.DataBase
                 if (Dataconnection.ConnectionProp == null)
                 {
                     Dataconnection.ConnectionProp = new ConnectionProperties();
-                    CreateDB(pdatasourcename);
-                    ConnectionStatus = Dataconnection.OpenConnection();
-                    if (ConnectionStatus == ConnectionState.Open)
-                    {
-                        DMEEditor.AddLogMessage("Beep", $"Connection to {DatasourceName} Created and is open", DateTime.Now, -1, "", Errors.Ok);
-                    }
-                    DMEEditor.ConfigEditor.AddDataConnection((ConnectionProperties)Dataconnection.ConnectionProp);
-                    DMEEditor.ConfigEditor.SaveDataconnectionsValues();
+                    //CreateDB(pdatasourcename);
+                    //ConnectionStatus = Dataconnection.OpenConnection();
+                    //if (ConnectionStatus == ConnectionState.Open)
+                    //{
+                    //    DMEEditor.AddLogMessage("Beep", $"Connection to {DatasourceName} Created and is open", DateTime.Now, -1, "", Errors.Ok);
+                    //}
+                    //DMEEditor.ConfigEditor.AddDataConnection((ConnectionProperties)Dataconnection.ConnectionProp);
+                    //DMEEditor.ConfigEditor.SaveDataconnectionsValues();
                 }
                 else
                 {
 
-                     Dataconnection.DataSourceDriver= ConnectionHelper.LinkConnection2Drivers(Dataconnection.ConnectionProp, DMEEditor.ConfigEditor);
-                    ConnectionStatus = Dataconnection.OpenConnection();
-                    if (ConnectionStatus == ConnectionState.Open)
-                    {
-                        DMEEditor.AddLogMessage("Beep", $"Connection to {DatasourceName} is open", DateTime.Now, -1, "", Errors.Ok);
-                    }
+                    Dataconnection.DataSourceDriver= ConnectionHelper.LinkConnection2Drivers(Dataconnection.ConnectionProp, DMEEditor.ConfigEditor);
+                    //ConnectionStatus = Dataconnection.OpenConnection();
+                    //if (ConnectionStatus == ConnectionState.Open)
+                    //{
+                    //    DMEEditor.AddLogMessage("Beep", $"Connection to {DatasourceName} is open", DateTime.Now, -1, "", Errors.Ok);
+                    //}
                 }
                 
                 
@@ -84,16 +84,11 @@ namespace TheTechIdea.Beep.DataBase
             var progress = new Progress<PassedArgs>(percent => { });
             InMemory = Dataconnection.ConnectionProp.IsInMemory;
             Dataconnection.InMemory = Dataconnection.ConnectionProp.IsInMemory;
-            base.Openconnection();
-            if (ConnectionStatus == ConnectionState.Open)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Connection is already open", DateTime.Now, -1, "", Errors.Ok);
-                return ConnectionState.Open;
-            }
+  
             if (Dataconnection.ConnectionProp.IsInMemory)
             {
                 OpenDatabaseInMemory(Dataconnection.ConnectionProp.Database);
-                base.Openconnection();
+                 
                 if (DMEEditor.ErrorObject.Flag == Errors.Ok)
                 {
                     LoadStructure(progress, token.Token, false);
@@ -104,6 +99,12 @@ namespace TheTechIdea.Beep.DataBase
             {
                 base.Openconnection();
 
+            }
+            
+            if (ConnectionStatus == ConnectionState.Open)
+            {
+                DMEEditor.AddLogMessage("Beep", $"Connection is already open", DateTime.Now, -1, "", Errors.Ok);
+                return ConnectionState.Open;
             }
             return ConnectionStatus;
         }
@@ -381,10 +382,11 @@ namespace TheTechIdea.Beep.DataBase
                 base.Dataconnection.InMemory = true;
                 base.Dataconnection.ConnectionProp.FileName = string.Empty;
                 base.Dataconnection.ConnectionProp.ConnectionString = $@"Data Source=:memory:;Version=3;New=True;";
+                base.Dataconnection.DataSourceDriver.ConnectionString= $@"Data Source=:memory:;Version=3;New=True;";
                 base.Dataconnection.ConnectionProp.Database = databasename;
                 base.Dataconnection.ConnectionProp.ConnectionName = databasename;
                 //base.Dataconnection.ConnectionStatus = ConnectionState.Open;
-
+                base.Dataconnection.OpenConnection();
             }
             catch (Exception ex)
             {
