@@ -1179,7 +1179,7 @@ namespace TheTechIdea.Beep.DataBase
                 //List<object> f = DMEEditor.Utilfunction.GetListByDataTable(tb);
                 ErrorObject.Flag = Errors.Ok;
                // EntityStructure DataStruct = GetEntityStructure(EntityName);
-                IDbCommand command = RDBMSConnection.DbConn.CreateCommand();
+             //   IDbCommand command = RDBMSConnection.DbConn.CreateCommand();
                 string str = "";
                 string errorstring = "";
                 int CurrentRecord = 0;
@@ -1285,7 +1285,7 @@ namespace TheTechIdea.Beep.DataBase
                                 }
                             }
                             DMEEditor.ETL.CurrentScriptRecord = DMEEditor.ETL.ScriptCount;
-                            command.Dispose();
+                            //command.Dispose();
                             DMEEditor.AddLogMessage("Success", $"Finished Uploading Data to {EntityName}", DateTime.Now, 0, null, Errors.Ok);
                         }
                        
@@ -1785,6 +1785,7 @@ namespace TheTechIdea.Beep.DataBase
                 else
                 {
                     Entities.Add(entity);
+                    EntitiesNames.Add(entity.EntityName);
                     retval = true;
                 }
             }
