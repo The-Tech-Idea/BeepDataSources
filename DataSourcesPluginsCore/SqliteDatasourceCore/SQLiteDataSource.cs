@@ -1,9 +1,9 @@
 ﻿using DataManagementModels.DataBase;
 using Microsoft.CodeAnalysis;
+using SQLite;
 using System.Data;
 using System.Data.SQLite;
 using TheTechIdea.Beep.Editor;
-using TheTechIdea.Beep.FileManager;
 using TheTechIdea.Beep.Helpers;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Logger;
@@ -18,7 +18,7 @@ namespace TheTechIdea.Beep.DataBase
     {
         private string dateformat = "yyyy-MM-dd HH:mm:ss";
         public bool CanCreateLocal { get; set; }
-        // SQLiteConnection sQLiteConnection;
+         SQLiteConnection sQLiteConnection;
         string dbpath;
         public bool IsCreated { get; set; } = false;
         public bool IsLoaded { get; set; } = false;
@@ -137,7 +137,8 @@ namespace TheTechIdea.Beep.DataBase
                 }
                 if (!System.IO.File.Exists(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName)))
                 {
-                    SQLiteConnection.CreateFile(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName));
+                    //SQLiteConnection.CreateFile(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName));
+                    sQLiteConnection = new SQLiteAsyncConnection(Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName), SQLiteOpenFlags.Create);
                     enablefk();
                     DMEEditor.AddLogMessage("Success", "Create Sqlite Database", DateTime.Now, 0, null, Errors.Ok);
                 }
