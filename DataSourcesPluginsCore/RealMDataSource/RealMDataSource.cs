@@ -15,6 +15,9 @@ namespace TheTechIdea.Beep.DataSource
     [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.RealIM)]
     public class RealMDataSource : IDataSource
     {
+        public string DbPath { get; set; }
+        public string dbname { get; set; }
+       
         public RealMDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
         {
             DatasourceName = datasourcename;
@@ -22,11 +25,17 @@ namespace TheTechIdea.Beep.DataSource
             ErrorObject = per;
             DMEEditor = pDMEEditor;
             DatasourceType = databasetype;
-            Category = DatasourceCategory.NOSQL;
+            Category = DatasourceCategory.RDBMS;
             Dataconnection = new DefaulDataConnection();
+            Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
+            ConnectionStatus = System.Data.ConnectionState.Closed;
+            if (Dataconnection.ConnectionProp == null)
+            {
+                Dataconnection.ConnectionProp = new ConnectionProperties();
+                Dataconnection.DataSourceDriver = DMEEditor.ConfigEditor.DataDriversClasses.Find(p => p.classHandler == "SQLiteMauiDataSource");
+            }
+            dbname = "MyData.db";
 
-
-           // Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
 
         }
         public Realm RealMInstance { get; set; } 
