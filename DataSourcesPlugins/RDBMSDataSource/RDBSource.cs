@@ -788,7 +788,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             if (!ObjectsCreated || Entityname != lastentityname)
             {
-                DataStruct = GetEntityStructure(Entityname, false);
+                DataStruct = GetEntityStructure(Entityname, true);
                 command = RDBMSConnection.DbConn.CreateCommand();
                 enttype = GetEntityType(Entityname);
                 ObjectsCreated = true;
@@ -987,22 +987,23 @@ namespace TheTechIdea.Beep.DataBase
                 adp.Fill(dataSet);
                 DataTable dt = dataSet.Tables[0];
 
-                        if(DataStruct == null)
-                        {
-                            DataStruct = GetEntityStructure(inname);
-                        }
-                        if(DataStruct==null)
-                        {
-                            DataStruct = DMEEditor.Utilfunction.GetEntityStructureFromListorTable(dt);
-                        }
-                        if(DataStruct != null)
-                        {
-                            DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields);
-                            enttype= DMTypeBuilder.myType; ;
-                        }
+                    //    if(DataStruct == null)
+                    //    {
+                    //        DataStruct = GetEntityStructure(inname);
+                    //    }
+                    //    if(DataStruct==null)
+                    //    {
+                    //        DataStruct = DMEEditor.Utilfunction.GetEntityStructureFromListorTable(dt);
+                    //    }
+                    //    if(DataStruct != null)
+                    //    {
+                    //      GetEntityType(EntityName);
+                    //        //DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields);
+                    //        //enttype= DMTypeBuilder.myType; ;
+                    //    }
                         
 
-                    //return dt;
+                    ////return dt;
    
                 Type uowGenericType = typeof(ObservableBindingList<>).MakeGenericType(enttype);
                 // Prepare the arguments for the constructor
@@ -1592,6 +1593,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             EntityStructure x = GetEntityStructure(EntityName);
             DMTypeBuilder.CreateNewObject(DMEEditor,"Beep."+DatasourceName, EntityName, x.Fields);
+            enttype= DMTypeBuilder.myType;
             return DMTypeBuilder.myType;
         }
         /// <summary>
