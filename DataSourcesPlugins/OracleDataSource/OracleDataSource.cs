@@ -275,26 +275,6 @@ namespace TheTechIdea.Beep.DataBase
                
                 var retval = Task.Run(() => GetDataTableUsingReaderAsync(qrystr, Filter)).Result;
                 SetObjects(EntityName);
-
-                if (enttype == null)
-                    {
-                        if (DataStruct == null)
-                        {
-                            DataStruct = GetEntityStructure(inname);
-                        }
-                        if (DataStruct == null)
-                        {
-                            DataStruct = DMEEditor.Utilfunction.GetEntityStructureFromListorTable(retval);
-                        }
-                        if (DataStruct != null)
-                        {
-                            ;
-                            DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields);
-                            enttype = DMTypeBuilder.myType; ;
-                        }
-
-                    }
-               
                 Type uowGenericType = typeof(ObservableBindingList<>).MakeGenericType(enttype);
                 // Prepare the arguments for the constructor
                 object[] constructorArgs = new object[] { retval };
@@ -324,242 +304,242 @@ namespace TheTechIdea.Beep.DataBase
 
 
         }
-        public override IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
-        {
-            if (recEntity != EntityName)
-            {
-                recNumber = 1;
-                recEntity = EntityName;
-            }
-            else
-                recNumber += 1;
-            // DataRow tb = object UploadDataRow;
-            ErrorObject.Flag = Errors.Ok;
-            EntityStructure DataStruct = GetEntityStructure(EntityName, false);
-            DataRowView dv;
-            DataTable tb;
-            DataRow dr;
-            string msg = "";
-            //   var sqlTran = Dataconnection.DbConn.BeginTransaction();
-            OracleCommand command = GetDataCommandForOracle();
-            Type enttype = GetEntityType(EntityName);
-          //  var ti = Activator.CreateInstance(enttype);
+        //public override IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
+        //{
+        //    if (recEntity != EntityName)
+        //    {
+        //        recNumber = 1;
+        //        recEntity = EntityName;
+        //    }
+        //    else
+        //        recNumber += 1;
+        //    // DataRow tb = object UploadDataRow;
+        //    ErrorObject.Flag = Errors.Ok;
+        //    EntityStructure DataStruct = GetEntityStructure(EntityName, false);
+        //    DataRowView dv;
+        //    DataTable tb;
+        //    DataRow dr;
+        //    string msg = "";
+        //    //   var sqlTran = Dataconnection.DbConn.BeginTransaction();
+        //    OracleCommand command = GetDataCommandForOracle();
+        //    Type enttype = GetEntityType(EntityName);
+        //  //  var ti = Activator.CreateInstance(enttype);
 
-            dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, UploadDataRow, DataStruct);
-            try
-            {
-                string updatestring = GetUpdateString(EntityName, DataStruct);
-                command.CommandText = updatestring;
-                command = CreateCommandParameters(command, dr, DataStruct);
-                int rowsUpdated = command.ExecuteNonQuery();
-                if (rowsUpdated > 0)
-                {
-                    msg = $"Successfully Updated  Record  to {EntityName} : {updatestring}";
-                    // DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
-                }
-                else
-                {
-                    msg = $"Fail to Updated  Record  to {EntityName} : {updatestring}";
-                    DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-                }
-
-
-            }
-            catch (Exception ex)
-            {
-                ErrorObject.Ex = ex;
-
-                command.Dispose();
-                try
-                {
-                    // Attempt to roll back the transaction.
-                    //     sqlTran.Rollback();
-                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback Complete";
-                }
-                catch (Exception exRollback)
-                {
-                    // Throws an InvalidOperationException if the connection
-                    // is closed or the transaction has already been rolled
-                    // back on the server.
-                    // Console.WriteLine(exRollback.Message);
-                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback InComplete";
-                    ErrorObject.Ex = exRollback;
-                }
-                msg = "Unsuccessfully no Data has been written to Data Source";
-                DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-
-            }
-
-            return ErrorObject;
-        }
-        public override IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
-        {
-            if (recEntity != EntityName)
-            {
-                recNumber = 1;
-                recEntity = EntityName;
-            }
-            else
-                recNumber += 1;
-            if (UploadData != null)
-            {
-                if (UploadData.GetType().ToString() != "System.Data.DataTable")
-                {
-                    DMEEditor.AddLogMessage("Fail", $"Please use DataTable for this Method {EntityName}", DateTime.Now, 0, null, Errors.Failed);
-                    return DMEEditor.ErrorObject;
-                }
-                //  RunCopyDataBackWorker(EntityName,  UploadData,  Mapping );
-                #region "Update Code"
-                //IDbTransaction sqlTran;
-                DataTable tb = (DataTable)UploadData;
-                // DMEEditor.classCreator.CreateClass();
-                //List<object> f = DMEEditor.Utilfunction.GetListByDataTable(tb);
-                ErrorObject.Flag = Errors.Ok;
-                EntityStructure DataStruct = GetEntityStructure(EntityName);
-                OracleCommand command = GetDataCommandForOracle();
-                string str = "";
-                string errorstring = "";
-                int CurrentRecord = 0;
-                DMEEditor.ETL.CurrentScriptRecord = 0;
-                DMEEditor.ETL.ScriptCount += tb.Rows.Count;
-                int highestPercentageReached = 0;
-                int numberToCompute = DMEEditor.ETL.ScriptCount;
-                try
-                {
-                    if (tb != null)
-                    {
-                        numberToCompute = tb.Rows.Count;
-                        tb.TableName = EntityName;
-                        // int i = 0;
-                        string updatestring = null;
-                        DataTable changes = tb.GetChanges();
-                        if (changes != null)
-                        {
-                            for (int i = 0; i < changes.Rows.Count; i++)
-                            {
-                                try
-                                {
-                                    DataRow r = changes.Rows[i];
-                                    CurrentRecord = i;
-                                    switch (r.RowState)
-                                    {
-                                        case DataRowState.Unchanged:
-                                        case DataRowState.Added:
-                                            updatestring = GetInsertString(EntityName, DataStruct);
-                                            break;
-                                        case DataRowState.Deleted:
-                                            updatestring = GetDeleteString(EntityName, DataStruct);
-                                            break;
-                                        case DataRowState.Modified:
-                                            updatestring = GetUpdateString(EntityName, DataStruct);
-                                            break;
-                                        default:
-                                            updatestring = GetInsertString(EntityName, DataStruct);
-                                            break;
-                                    }
-                                    command.CommandText = updatestring;
-                                    command = CreateCommandParameters(command, r, DataStruct);
-                                    errorstring = updatestring.Clone().ToString();
-                                    foreach (EntityField item in DataStruct.Fields)
-                                    {
-                                        try
-                                        {
-                                            string s;
-                                            string f;
-                                            if (r[item.fieldname] == DBNull.Value)
-                                            {
-                                                s = "\' \'";
-                                            }
-                                            else
-                                            {
-                                                s = "\'" + r[item.fieldname].ToString() + "\'";
-                                            }
-                                            f = "@p_" + Regex.Replace(item.fieldname, @"\s+", "_");
-                                            errorstring = errorstring.Replace(f, s);
-                                        }
-                                        catch (Exception ex1)
-                                        {
-                                        }
-                                    }
-                                    string msg = "";
-                                    int rowsUpdated = command.ExecuteNonQuery();
-                                    if (rowsUpdated > 0)
-                                    {
-                                        msg = $"Successfully I/U/D  Record {i} to {EntityName} : {updatestring}";
-                                    }
-                                    else
-                                    {
-                                        msg = $"Fail to I/U/D  Record {i} to {EntityName} : {updatestring}";
-                                    }
-                                    int percentComplete = (int)((float)CurrentRecord / (float)numberToCompute * 100);
-                                    if (percentComplete > highestPercentageReached)
-                                    {
-                                        highestPercentageReached = percentComplete;
-
-                                    }
-                                    PassedArgs args = new PassedArgs
-                                    {
-                                        CurrentEntity = EntityName,
-                                        DatasourceName = DatasourceName,
-                                        DataSource = this,
-                                        EventType = "UpdateEntity",
-                                    };
-                                    if (DataStruct.PrimaryKeys != null)
-                                    {
-                                        if (DataStruct.PrimaryKeys.Count == 1)
-                                        {
-                                            args.ParameterString1 = r[DataStruct.PrimaryKeys[0].fieldname].ToString();
-                                        }
-                                        if (DataStruct.PrimaryKeys.Count == 2)
-                                        {
-                                            args.ParameterString2 = r[DataStruct.PrimaryKeys[1].fieldname].ToString();
-                                        }
-                                        if (DataStruct.PrimaryKeys.Count == 3)
-                                        {
-                                            args.ParameterString3 = r[DataStruct.PrimaryKeys[2].fieldname].ToString();
-                                        }
-                                    }
-                                    args.ParameterInt1 = percentComplete;
-                                    //         UpdateEvents(EntityName, msg, highestPercentageReached, CurrentRecord, numberToCompute, this);
-                                    if (progress != null)
-                                    {
-                                        PassedArgs ps = new PassedArgs { ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = null };
-                                        progress.Report(ps);
-                                    }
-                                    //   PassEvent?.Invoke(this, args);
-                                    //   DMEEditor.RaiseEvent(this, args);
-                                }
-                                catch (Exception er)
-                                {
-                                    string msg = $"Fail to I/U/D  Record {i} to {EntityName} : {updatestring}";
-                                    if (progress != null)
-                                    {
-                                        PassedArgs ps = new PassedArgs { ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = msg };
-                                        progress.Report(ps);
-                                    }
-                                    DMEEditor.AddLogMessage("Fail", msg, DateTime.Now, i, EntityName, Errors.Failed);
-                                }
-                            }
-                            DMEEditor.ETL.CurrentScriptRecord = DMEEditor.ETL.ScriptCount;
-                            command.Dispose();
-                            DMEEditor.AddLogMessage("Success", $"Finished Uploading Data to {EntityName}", DateTime.Now, 0, null, Errors.Ok);
-                        }
-
-                    }
+        //    dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, UploadDataRow, DataStruct);
+        //    try
+        //    {
+        //        string updatestring = GetUpdateString(EntityName, DataStruct);
+        //        command.CommandText = updatestring;
+        //        command = CreateCommandParameters(command, dr, DataStruct);
+        //        int rowsUpdated = command.ExecuteNonQuery();
+        //        if (rowsUpdated > 0)
+        //        {
+        //            msg = $"Successfully Updated  Record  to {EntityName} : {updatestring}";
+        //            // DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
+        //        }
+        //        else
+        //        {
+        //            msg = $"Fail to Updated  Record  to {EntityName} : {updatestring}";
+        //            DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
+        //        }
 
 
-                }
-                catch (Exception ex)
-                {
-                    ErrorObject.Ex = ex;
-                    command.Dispose();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        ErrorObject.Ex = ex;
+
+        //        command.Dispose();
+        //        try
+        //        {
+        //            // Attempt to roll back the transaction.
+        //            //     sqlTran.Rollback();
+        //            msg = "Unsuccessfully no Data has been written to Data Source,Rollback Complete";
+        //        }
+        //        catch (Exception exRollback)
+        //        {
+        //            // Throws an InvalidOperationException if the connection
+        //            // is closed or the transaction has already been rolled
+        //            // back on the server.
+        //            // Console.WriteLine(exRollback.Message);
+        //            msg = "Unsuccessfully no Data has been written to Data Source,Rollback InComplete";
+        //            ErrorObject.Ex = exRollback;
+        //        }
+        //        msg = "Unsuccessfully no Data has been written to Data Source";
+        //        DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
+
+        //    }
+
+        //    return ErrorObject;
+        //}
+        //public override IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
+        //{
+        //    if (recEntity != EntityName)
+        //    {
+        //        recNumber = 1;
+        //        recEntity = EntityName;
+        //    }
+        //    else
+        //        recNumber += 1;
+        //    if (UploadData != null)
+        //    {
+        //        if (UploadData.GetType().ToString() != "System.Data.DataTable")
+        //        {
+        //            DMEEditor.AddLogMessage("Fail", $"Please use DataTable for this Method {EntityName}", DateTime.Now, 0, null, Errors.Failed);
+        //            return DMEEditor.ErrorObject;
+        //        }
+        //        //  RunCopyDataBackWorker(EntityName,  UploadData,  Mapping );
+        //        #region "Update Code"
+        //        //IDbTransaction sqlTran;
+        //        DataTable tb = (DataTable)UploadData;
+        //        // DMEEditor.classCreator.CreateClass();
+        //        //List<object> f = DMEEditor.Utilfunction.GetListByDataTable(tb);
+        //        ErrorObject.Flag = Errors.Ok;
+        //        EntityStructure DataStruct = GetEntityStructure(EntityName);
+        //        OracleCommand command = GetDataCommandForOracle();
+        //        string str = "";
+        //        string errorstring = "";
+        //        int CurrentRecord = 0;
+        //        DMEEditor.ETL.CurrentScriptRecord = 0;
+        //        DMEEditor.ETL.ScriptCount += tb.Rows.Count;
+        //        int highestPercentageReached = 0;
+        //        int numberToCompute = DMEEditor.ETL.ScriptCount;
+        //        try
+        //        {
+        //            if (tb != null)
+        //            {
+        //                numberToCompute = tb.Rows.Count;
+        //                tb.TableName = EntityName;
+        //                // int i = 0;
+        //                string updatestring = null;
+        //                DataTable changes = tb.GetChanges();
+        //                if (changes != null)
+        //                {
+        //                    for (int i = 0; i < changes.Rows.Count; i++)
+        //                    {
+        //                        try
+        //                        {
+        //                            DataRow r = changes.Rows[i];
+        //                            CurrentRecord = i;
+        //                            switch (r.RowState)
+        //                            {
+        //                                case DataRowState.Unchanged:
+        //                                case DataRowState.Added:
+        //                                    updatestring = GetInsertString(EntityName, DataStruct);
+        //                                    break;
+        //                                case DataRowState.Deleted:
+        //                                    updatestring = GetDeleteString(EntityName, DataStruct);
+        //                                    break;
+        //                                case DataRowState.Modified:
+        //                                    updatestring = GetUpdateString(EntityName, DataStruct);
+        //                                    break;
+        //                                default:
+        //                                    updatestring = GetInsertString(EntityName, DataStruct);
+        //                                    break;
+        //                            }
+        //                            command.CommandText = updatestring;
+        //                            command = CreateCommandParameters(command, r, DataStruct);
+        //                            errorstring = updatestring.Clone().ToString();
+        //                            foreach (EntityField item in DataStruct.Fields)
+        //                            {
+        //                                try
+        //                                {
+        //                                    string s;
+        //                                    string f;
+        //                                    if (r[item.fieldname] == DBNull.Value)
+        //                                    {
+        //                                        s = "\' \'";
+        //                                    }
+        //                                    else
+        //                                    {
+        //                                        s = "\'" + r[item.fieldname].ToString() + "\'";
+        //                                    }
+        //                                    f = "@p_" + Regex.Replace(item.fieldname, @"\s+", "_");
+        //                                    errorstring = errorstring.Replace(f, s);
+        //                                }
+        //                                catch (Exception ex1)
+        //                                {
+        //                                }
+        //                            }
+        //                            string msg = "";
+        //                            int rowsUpdated = command.ExecuteNonQuery();
+        //                            if (rowsUpdated > 0)
+        //                            {
+        //                                msg = $"Successfully I/U/D  Record {i} to {EntityName} : {updatestring}";
+        //                            }
+        //                            else
+        //                            {
+        //                                msg = $"Fail to I/U/D  Record {i} to {EntityName} : {updatestring}";
+        //                            }
+        //                            int percentComplete = (int)((float)CurrentRecord / (float)numberToCompute * 100);
+        //                            if (percentComplete > highestPercentageReached)
+        //                            {
+        //                                highestPercentageReached = percentComplete;
+
+        //                            }
+        //                            PassedArgs args = new PassedArgs
+        //                            {
+        //                                CurrentEntity = EntityName,
+        //                                DatasourceName = DatasourceName,
+        //                                DataSource = this,
+        //                                EventType = "UpdateEntity",
+        //                            };
+        //                            if (DataStruct.PrimaryKeys != null)
+        //                            {
+        //                                if (DataStruct.PrimaryKeys.Count == 1)
+        //                                {
+        //                                    args.ParameterString1 = r[DataStruct.PrimaryKeys[0].fieldname].ToString();
+        //                                }
+        //                                if (DataStruct.PrimaryKeys.Count == 2)
+        //                                {
+        //                                    args.ParameterString2 = r[DataStruct.PrimaryKeys[1].fieldname].ToString();
+        //                                }
+        //                                if (DataStruct.PrimaryKeys.Count == 3)
+        //                                {
+        //                                    args.ParameterString3 = r[DataStruct.PrimaryKeys[2].fieldname].ToString();
+        //                                }
+        //                            }
+        //                            args.ParameterInt1 = percentComplete;
+        //                            //         UpdateEvents(EntityName, msg, highestPercentageReached, CurrentRecord, numberToCompute, this);
+        //                            if (progress != null)
+        //                            {
+        //                                PassedArgs ps = new PassedArgs { ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = null };
+        //                                progress.Report(ps);
+        //                            }
+        //                            //   PassEvent?.Invoke(this, args);
+        //                            //   DMEEditor.RaiseEvent(this, args);
+        //                        }
+        //                        catch (Exception er)
+        //                        {
+        //                            string msg = $"Fail to I/U/D  Record {i} to {EntityName} : {updatestring}";
+        //                            if (progress != null)
+        //                            {
+        //                                PassedArgs ps = new PassedArgs { ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = msg };
+        //                                progress.Report(ps);
+        //                            }
+        //                            DMEEditor.AddLogMessage("Fail", msg, DateTime.Now, i, EntityName, Errors.Failed);
+        //                        }
+        //                    }
+        //                    DMEEditor.ETL.CurrentScriptRecord = DMEEditor.ETL.ScriptCount;
+        //                    command.Dispose();
+        //                    DMEEditor.AddLogMessage("Success", $"Finished Uploading Data to {EntityName}", DateTime.Now, 0, null, Errors.Ok);
+        //                }
+
+        //            }
 
 
-                }
-                #endregion
-            }
-            return ErrorObject;
-        }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            ErrorObject.Ex = ex;
+        //            command.Dispose();
+
+
+        //        }
+        //        #endregion
+        //    }
+        //    return ErrorObject;
+        //}
         //public override IErrorsInfo DeleteEntity(string EntityName, object DeletedDataRow)
         //{
 
