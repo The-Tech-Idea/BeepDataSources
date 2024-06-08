@@ -23,6 +23,7 @@ namespace TheTechIdea.Beep.DataBase
 {
     public class RDBSource : IRDBSource
     {
+        HashSet<string> usedParameterNames = new HashSet<string>();
         public event EventHandler<PassedArgs> PassEvent;
         // Static random number generator used for various purposes within the class.
         static Random r = new Random();
@@ -453,6 +454,87 @@ namespace TheTechIdea.Beep.DataBase
             }
             return command;
         }
+        private IDbCommand CreateCommandParameters(IDbCommand command, object InsertedData, EntityStructure DataStruct)
+        {
+
+            foreach (var field in DataStruct.Fields)
+            {
+                // Skip auto-increment (identity) fields
+                if (field.IsAutoIncrement)
+                {
+                    continue;
+                }
+
+                var property = InsertedData.GetType().GetProperty(field.fieldname);
+                if (property != null)
+                {
+                    var value = property.GetValue(InsertedData);
+                    var parameter = command.CreateParameter();
+
+                    // Find the corresponding parameter name in usedParameterNames
+                    string paramName = Regex.Replace(field.fieldname, @"\s+", "_");
+                    if (paramName.Length > 30)
+                    {
+                        paramName = paramName.Substring(0, 30);
+                    }
+
+                    string matchingParamName = usedParameterNames.FirstOrDefault(p => p.StartsWith(paramName));
+                    if (string.IsNullOrEmpty(matchingParamName))
+                    {
+                        throw new InvalidOperationException($"Parameter name for field '{field.fieldname}' not found in usedParameterNames.");
+                    }
+
+                    parameter.ParameterName = $"{ParameterDelimiter}p_" + matchingParamName;
+                    parameter.Value = value ?? DBNull.Value;
+                    parameter.DbType = GetDbType(field.fieldtype);
+
+                    command.Parameters.Add(parameter);
+                }
+            }
+
+            return command;
+        }
+
+        private DbType GetDbType(string fieldType)
+        {
+            // Convert field type to DbType
+            switch (fieldType)
+            {
+                case "System.String":
+                    return DbType.String;
+                case "System.Int32":
+                    return DbType.Int32;
+                case "System.Int64":
+                    return DbType.Int64;
+                case "System.DateTime":
+                    return DbType.DateTime;
+                case "System.Boolean":
+                    return DbType.Boolean;
+                case "System.Decimal":
+                    return DbType.Decimal;
+                // Add other types as needed
+                default:
+                    return DbType.String; // Default to string if type is unknown
+            }
+        }
+
+        private DbType TypeToDbType(Type type)
+        {
+            // Add more mappings as necessary
+            if (type == typeof(string)) return DbType.String;
+            if (type == typeof(int)) return DbType.Int32;
+            if (type == typeof(long)) return DbType.Int64;
+            if (type == typeof(short)) return DbType.Int16;
+            if (type == typeof(byte)) return DbType.Byte;
+            if (type == typeof(decimal)) return DbType.Decimal;
+            if (type == typeof(double)) return DbType.Double;
+            if (type == typeof(float)) return DbType.Single;
+            if (type == typeof(DateTime)) return DbType.DateTime;
+            if (type == typeof(bool)) return DbType.Boolean;
+            // Add other type mappings as necessary
+
+            return DbType.String; // Default type
+        }
         /// <summary>
         /// Creates parameters for a DELETE database command based on the provided DataRow and EntityStructure.
         /// </summary>
@@ -706,14 +788,14 @@ namespace TheTechIdea.Beep.DataBase
             else
                 recNumber += 1;
 
-            dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, InsertedData, DataStruct);
+       //     dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, InsertedData, DataStruct);
             try
             {
+                usedParameterNames = new HashSet<string>();
                 updatestring = GetInsertString(EntityName, DataStruct);
                 command = GetDataCommand();
-
                 command.CommandText = updatestring;
-                command = CreateCommandParameters(command, dr, DataStruct);
+                command = CreateCommandParameters(command, InsertedData, DataStruct);
 
                 int rowsUpdated = command.ExecuteNonQuery();
                 if (rowsUpdated > 0)
@@ -726,20 +808,22 @@ namespace TheTechIdea.Beep.DataBase
                     {
                         command.CommandText = fetchIdentityQuery;
                         object result = command.ExecuteScalar();
-                        int identity = 0;
                         if (result != null)
                         {
-                            identity = Convert.ToInt32(result);
-                            // Update the primary key property of the inserted record
                             var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().fieldname);
                             if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
                             {
-                                primaryKeyProperty.SetValue(InsertedData, identity);
-                            }
+                                var primaryKeyType = primaryKeyProperty.PropertyType;
+                                Type underlyingType = Nullable.GetUnderlyingType(primaryKeyType) ?? primaryKeyType;
 
-                            msg = $"Successfully Inserted Record to {EntityName} with ID {identity}";
-                            DMEEditor.ErrorObject.Message = msg;
-                            DMEEditor.ErrorObject.Flag = Errors.Ok;
+                                // Convert the identity to the appropriate type
+                                var convertedIdentity = Convert.ChangeType(result, underlyingType);
+                                primaryKeyProperty.SetValue(InsertedData, convertedIdentity);
+
+                                msg = $"Successfully Inserted Record to {EntityName} with ID {convertedIdentity}";
+                                DMEEditor.ErrorObject.Message = msg;
+                                DMEEditor.ErrorObject.Flag = Errors.Ok;
+                            }
                         }
                         else
                         {
@@ -2293,22 +2377,43 @@ namespace TheTechIdea.Beep.DataBase
         {
             List<EntityField> SourceEntityFields = new List<EntityField>();
             List<EntityField> DestEntityFields = new List<EntityField>();
-            // List<Mapping_rep_fields> map = new List < Mapping_rep_fields >()  ; 
-            //   map= Mapping.FldMapping;
-            //    EntityName = Regex.Replace(EntityName, @"\s+", "");
-            string Insertstr = "insert into " + EntityName + " (";
+
+            string Insertstr = "INSERT INTO " + EntityName + " (";
             Insertstr = GetTableName(Insertstr.ToLower());
-            string Valuestr = ") values (";
-            var insertfieldname = "";
-            // string datafieldname = "";
-            string typefield = "";
-            int i = DataStruct.Fields.Count();
+            string Valuestr = ") VALUES (";
+            
             int t = 0;
             foreach (EntityField item in DataStruct.Fields.OrderBy(o => o.fieldname))
             {
-               Insertstr += $"{GetFieldName(item.fieldname)},";
-               Valuestr += $"{ParameterDelimiter}p_" + Regex.Replace(item.fieldname, @"\s+", "_") + ",";
-                 
+                if (!(item.IsAutoIncrement ))
+                {
+                    string fieldName = GetFieldName(item.fieldname);
+                    string paramName = Regex.Replace(item.fieldname, @"\s+", "_");
+
+                    // Ensure the field name and parameter name are within the Oracle identifier length limit
+                    if (fieldName.Length > 30)
+                    {
+                        fieldName = fieldName.Substring(0, 30);
+                    }
+
+                    if (paramName.Length > 30)
+                    {
+                        paramName = paramName.Substring(0, 30);
+                    }
+
+                    // Ensure unique parameter names
+                    int suffix = 1;
+                    string originalParamName = paramName;
+                    while (usedParameterNames.Contains(paramName))
+                    {
+                        paramName = originalParamName + "_" + suffix++;
+                    }
+                    usedParameterNames.Add(paramName);
+
+                    Insertstr += $"{fieldName},";
+                    Valuestr += $"{ParameterDelimiter}p_" + paramName + ",";
+                }
+
                 t += 1;
             }
             Insertstr = Insertstr.Remove(Insertstr.Length - 1);
