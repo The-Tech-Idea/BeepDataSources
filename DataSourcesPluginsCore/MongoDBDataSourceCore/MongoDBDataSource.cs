@@ -29,6 +29,8 @@ using SharpCompress.Common;
 using System.ComponentModel;
 using Microsoft.CodeAnalysis;
 using System.Collections;
+using System.Text.RegularExpressions;
+using MongoDB.Driver.Core.Events;
 
 
 
@@ -52,6 +54,7 @@ namespace TheTechIdea.Beep.NOSQL
         public List<object> Records { get; set; }
         public ConnectionState ConnectionStatus { get; set; }
         public DataTable SourceEntityData { get; set; }
+        public MongoClientSettings Settings { get; set; } 
         public string CurrentDatabase { get { return Dataconnection.ConnectionProp.Database; } set { Dataconnection.ConnectionProp.Database = value; } }
         public virtual string ColumnDelimiter { get; set; } = "''";
         public virtual string ParameterDelimiter { get; set; } = ":";
@@ -77,20 +80,81 @@ namespace TheTechIdea.Beep.NOSQL
                 ErrorObject = ErrorObject
 
             };
-            Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
+            if (DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).Any())
+            {
+                Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
+            }else
+            {
+                ConnectionDriversConfig driversConfig= DMEEditor.ConfigEditor.DataDriversClasses.FirstOrDefault(p => p.DatasourceType == databasetype);
+                Dataconnection.ConnectionProp = new ConnectionProperties
+                {
+                    ConnectionName = datasourcename,
+                    ConnectionString = driversConfig.ConnectionString,
+                    DriverName = driversConfig.PackageName,
+                    DriverVersion = driversConfig.version,
+                    DatabaseType = DataSourceType.MongoDB,
+                    Category = DatasourceCategory.NOSQL
+                };
+            }
+           
             Dataconnection.ConnectionProp.Category = DatasourceCategory.NOSQL;
             Dataconnection.ConnectionProp.DatabaseType = DataSourceType.MongoDB;
             _connectionString = Dataconnection.ConnectionProp.ConnectionString;
             CurrentDatabase = Dataconnection.ConnectionProp.Database;
-            if (CurrentDatabase != null)
+            Settings = new MongoClientSettings();
+            //if (CurrentDatabase != null)
+            //{
+            //    if (CurrentDatabase.Length > 0)
+            //    {
+            //        _client = new MongoClient(_connectionString);
+            //        GetEntitesList();
+            //    }
+            //}
+
+        }
+        public void HandleConnectionStringforMongoDB()
+        {
+            if (_connectionString.Contains("}"))
             {
-                if (CurrentDatabase.Length > 0)
+                // Create a dictionary to map placeholders to their respective values
+                var replacements = new Dictionary<string, string>
+        {
+            { "{Host}", Dataconnection.ConnectionProp.Host },
+            { "{Port}", Dataconnection.ConnectionProp.Port.ToString() },
+            { "{Database}", Dataconnection.ConnectionProp.Database }
+        };
+
+                // Optionally add Username and Password to the replacements dictionary
+                if (!string.IsNullOrEmpty(Dataconnection.ConnectionProp.UserID) ||
+                    !string.IsNullOrEmpty(Dataconnection.ConnectionProp.Password))
                 {
-                    _client = new MongoClient(_connectionString);
-                    GetEntitesList();
+                    replacements.Add("{Username}", Dataconnection.ConnectionProp.UserID);
+                    replacements.Add("{Password}", Dataconnection.ConnectionProp.Password);
                 }
+
+                // Use a regular expression to replace placeholders, ignoring case
+                foreach (var replacement in replacements)
+                {
+                    if (!string.IsNullOrEmpty(replacement.Value))
+                    {
+                        _connectionString = Regex.Replace(_connectionString, Regex.Escape(replacement.Key), replacement.Value, RegexOptions.IgnoreCase);
+                    }
+                }
+
+                // Remove any remaining username and password placeholders if they were not replaced
+                _connectionString = Regex.Replace(_connectionString, @"\{Username\}:\{Password\}@", string.Empty, RegexOptions.IgnoreCase);
+                _connectionString = Regex.Replace(_connectionString, @"\{Username\}:\{Password\}", string.Empty, RegexOptions.IgnoreCase);
             }
 
+            // get database name from connection string if CurrentDatabase is not set
+            if (string.IsNullOrEmpty(CurrentDatabase))
+            {
+                var match = Regex.Match(_connectionString, @"\/(?<database>[^\/\?]+)(\?|$)");
+                if (match.Success)
+                {
+                    CurrentDatabase = match.Groups["database"].Value;
+                }
+            }
         }
         public virtual Task<double> GetScalarAsync(string query)
         {
@@ -244,10 +308,35 @@ namespace TheTechIdea.Beep.NOSQL
             {
                 if (_client == null) // Assuming _client is the MongoClient instance
                 {
+                    HandleConnectionStringforMongoDB();
+                    Settings = MongoClientSettings.FromConnectionString(_connectionString);
+                    //Settings.UseTls = true;
+
+                    //Settings.SslSettings = new SslSettings
+                    //{
+                        
+                    //    EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12 // Ensure this matches the server configuration
+                    //};
+                    //Settings.ClusterConfigurator = cb =>
+                    //{
+                    //    cb.Subscribe<CommandStartedEvent>(e =>
+                    //    {
+                    //        Console.WriteLine($"CommandStartedEvent: {e.CommandName} - {e.Command.ToJson()}");
+                    //    });
+                    //    cb.Subscribe<CommandSucceededEvent>(e =>
+                    //    {
+                    //        Console.WriteLine($"CommandSucceededEvent: {e.CommandName} - {e.Reply.ToJson()}");
+                    //    });
+                    //    cb.Subscribe<CommandFailedEvent>(e =>
+                    //    {
+                    //        Console.WriteLine($"CommandFailedEvent: {e.CommandName} - {e.Failure}");
+                    //    });
+                    //};
                     // Connection string should be stored securely or configured outside of the codebase
-                    string connectionString = Dataconnection.ConnectionProp.ConnectionString;
-                    _client = new MongoClient(connectionString);
-                }
+                    //string connectionString = Dataconnection.ConnectionProp.ConnectionString;
+                    _client = new MongoClient(Settings);
+                    _database = _client.GetDatabase(CurrentDatabase);
+                  }
                     // Now check if the client is connected using the ping command
                     if (IsMongoDBConnected(_client))
                     {
@@ -1289,7 +1378,7 @@ namespace TheTechIdea.Beep.NOSQL
 
                 {
                     SetObjects(EntityName);
-                    _database = _client.GetDatabase(CurrentDatabase);
+                 //   _database = _client.GetDatabase(CurrentDatabase);
                     var collection = _database.GetCollection<BsonDocument>(EntityName);
                     BsonDocument documentToInsert;
                     // Determine the type of InsertedData and convert to BsonDocument
@@ -1836,7 +1925,8 @@ namespace TheTechIdea.Beep.NOSQL
         {
             try
             {
-                // The ping command is a cheap and effective way to check connection health
+                //The ping command is a cheap and effective way to check connection health
+
                 var ping = new BsonDocument("ping", 1);
                 client.GetDatabase("admin").RunCommand<BsonDocument>(ping);
                 return true; // Ping succeeded, connection is up
