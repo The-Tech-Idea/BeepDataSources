@@ -310,11 +310,16 @@ namespace TheTechIdea.Beep.NOSQL
                 {
                     HandleConnectionStringforMongoDB();
                     Settings = MongoClientSettings.FromConnectionString(_connectionString);
+                    var pas = new PassedArgs();
+                    pas.ObjectName = "MongoDB";
+                    ObjectItem objectItem=new ObjectItem() {  Name= "MongoDB", obj=Settings };
+                    pas.Objects.Add(objectItem);
+                    PassEvent?.Invoke(this, pas);
                     //Settings.UseTls = true;
 
                     //Settings.SslSettings = new SslSettings
                     //{
-                        
+
                     //    EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12 // Ensure this matches the server configuration
                     //};
                     //Settings.ClusterConfigurator = cb =>
