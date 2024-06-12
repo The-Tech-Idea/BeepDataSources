@@ -701,7 +701,16 @@ namespace TheTechIdea.Beep.NOSQL
                         documents = collection.Find(new BsonDocument()).ToList();
                     }
 
+                    if (DataStruct == null)
+                    {
+                        DataStruct = CompileSchemaFromDocuments(documents, entityname);
+                    }
 
+                    // Optionally convert BSON documents to a specific object type if needed
+                    // Assuming you have a method to determine the type from entityName
+                    //  Type entityType = GetEntityType(EntityName);
+                    enttype = GetEntityType(entityname);
+                    result = ConvertBsonDocumentsToObjects(documents, enttype, DataStruct);
                     result = documents;
                 }
                 else
@@ -822,14 +831,16 @@ namespace TheTechIdea.Beep.NOSQL
                     {
                         documents = collection.Find(new BsonDocument()).ToList();
                     }
+                    if (DataStruct == null)
+                    {
+                        DataStruct = CompileSchemaFromDocuments(documents, EntityName);
+                    }
+                    
                     // Optionally convert BSON documents to a specific object type if needed
                     // Assuming you have a method to determine the type from entityName
                     //  Type entityType = GetEntityType(EntityName);
-                    if(enttype== null)
-                    {
-                        enttype = GetEntityType(EntityName);
-                    }
-                    result = ConvertBsonDocumentsToObjects(documents, enttype, GetEntityStructureFromBson(documents.FirstOrDefault(), EntityName));
+                    enttype = GetEntityType(EntityName);
+                    result = ConvertBsonDocumentsToObjects(documents, enttype, DataStruct);
                 }
             }
             catch (Exception ex)
@@ -929,15 +940,15 @@ namespace TheTechIdea.Beep.NOSQL
             ErrorsInfo retval = new ErrorsInfo();
             retval.Flag = Errors.Ok;
             retval.Message = "Get Entity Structure Successfully";
-            EntityStructure result = new EntityStructure();
+           
             try
             {
                 if (refresh == false && Entities.Count > 0)
                 {
-                    result = Entities.Find(c => c.EntityName.Equals(EntityName, StringComparison.CurrentCultureIgnoreCase));
-                    if (result != null)
+                    DataStruct = Entities.Find(c => c.EntityName.Equals(EntityName, StringComparison.CurrentCultureIgnoreCase));
+                    if (DataStruct != null)
                     {
-                        return result;
+                        return DataStruct;
                     }
                 }
                 if (ConnectionStatus != ConnectionState.Open)
@@ -951,48 +962,70 @@ namespace TheTechIdea.Beep.NOSQL
                     var collection = db.GetCollection<BsonDocument>(EntityName);
                     // Attempt to get the first document to infer the structure
                     BsonDocument firstDocument;
+                    List<BsonDocument> list = new List<BsonDocument>();
                     try
                     {
                         firstDocument = collection.Find(new BsonDocument()).FirstOrDefault();
+                        list = collection.Find(new BsonDocument()).ToList();
                     }
                     catch (Exception ex)
                     {
                         firstDocument = null;
                     }
-                  
+
                     if (firstDocument != null)
                     {
-                        result = GetEntityStructureFromBson(firstDocument, EntityName);
-                        result.IsLoaded = true;
-                    }
-                    else
-                    {
-                      
-                        retval.Flag = Errors.Failed;
-                        retval.Message = "No documents found in the collection.";
-                        result = null;
-                    }
-                    if (Entities.Count > 0 && result==null)
-                    {
-                        result = Entities.Find(c => c.EntityName.Equals(EntityName, StringComparison.CurrentCultureIgnoreCase));
-                        if (result != null)
+                        if (DataStruct != null) 
                         {
-                            retval.Flag = Errors.Ok;
-                            retval.Message = "documents found in the collection.";
-                            return result;
+                            if (DataStruct.EntityName == null || DataStruct.EntityName != EntityName)
+                            {
+                                DataStruct = CompileSchemaFromDocuments(list, EntityName);
+                            }
+                        }else
+                            DataStruct = CompileSchemaFromDocuments(list, EntityName);
+
+
+                        ObjectsCreated = true;
+                        // Optionally convert BSON documents to a specific object type if needed
+                        // Assuming you have a method to determine the type from entityName
+                        //  Type entityType = GetEntityType(EntityName);
+                        enttype = GetEntityType(EntityName);
+                        // result = GetEntityStructureFromBson(firstDocument, EntityName);
+                        if (Entities.Count > 0 && !Entities.Any(p => p.EntityName == EntityName))
+                        {
+                            Entities.Add(DataStruct);
+                            EntitiesNames.Add(EntityName);
                         }
+                        if (Entities.Count == 0)
+                        {
+                            Entities.Add(DataStruct);
+                            EntitiesNames.Add(EntityName);
+                        }
+                        else
+                        {
+
+                            retval.Flag = Errors.Failed;
+                            retval.Message = "No documents found in the collection.";
+                            DataStruct = null;
+                        }
+                        if (Entities.Count > 0 && DataStruct == null)
+                        {
+                            DataStruct = Entities.Find(c => c.EntityName.Equals(EntityName, StringComparison.CurrentCultureIgnoreCase));
+                            if (DataStruct != null)
+                            {
+                                retval.Flag = Errors.Ok;
+                                retval.Message = "documents found in the collection.";
+                                return DataStruct;
+                            }
+                        }
+
+
+
+                        //     SetObjects(EntityName);
                     }
-                    if(result != null)
-                    {
-                        DataStruct = result;
-                    }
-                   
-                   
-                    //     SetObjects(EntityName);
+
+
                 }
-
-
-
 
             }
             catch (Exception ex)
@@ -1000,10 +1033,10 @@ namespace TheTechIdea.Beep.NOSQL
                 string methodName = MethodBase.GetCurrentMethod().Name;
                 retval.Flag = Errors.Failed;
                 retval.Message = ex.Message;
-                result = null;
+                DataStruct = null;
                 DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
             }
-            return result;
+            return DataStruct;
         }
         public DataTable GetEntityDataTable(string EntityName, string filterstr)
         {
@@ -1068,14 +1101,13 @@ namespace TheTechIdea.Beep.NOSQL
         /// <remarks>
         /// This method is essential for initializing and reusing database commands and structures, improving efficiency and maintainability.
         /// </remarks>
-     
-     
         public Type GetEntityType(string EntityName)
         {
             ErrorsInfo retval = new ErrorsInfo();
             retval.Flag = Errors.Ok;
             retval.Message = "Get Entity Type  ";
             Type result = null;
+   //         SetObjects(EntityName);
             try
             {
                 if(ConnectionStatus != ConnectionState.Open)
@@ -1095,13 +1127,18 @@ namespace TheTechIdea.Beep.NOSQL
                 }
               if(result == null)
                 {
-                   
-                    EntityStructure x = GetEntityStructure(EntityName);
-                    DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, x.Fields);
+
+                    if(DataStruct == null)
+                    {
+                        lastentityname = EntityName;
+                        DataStruct = GetEntityStructure(EntityName);
+                    }
+                    
+                    DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields);
                     result = DMTypeBuilder.myType;
                     if(result != null)
                     {
-                        DataStruct = x;
+                       
                         enttype = result;
                     }
                 }
@@ -1383,26 +1420,28 @@ namespace TheTechIdea.Beep.NOSQL
 
                 {
                     SetObjects(EntityName);
-                 //   _database = _client.GetDatabase(CurrentDatabase);
+                  
                     var collection = _database.GetCollection<BsonDocument>(EntityName);
-                    BsonDocument documentToInsert;
+                    var entityStructure = GetEntityStructure(EntityName) ?? new EntityStructure(EntityName);
+                    BsonDocument documentToInsert = ConvertToBsonDocument(InsertedData, entityStructure);
+                    UpdateEntityStructure(documentToInsert, entityStructure);
                     // Determine the type of InsertedData and convert to BsonDocument
-                    if (InsertedData is BsonDocument bsonDocument)
-                    {
-                        documentToInsert = bsonDocument;
-                    }
-                    else if (InsertedData is DataRow dataRow)
-                    {
-                        documentToInsert = DataRowToBsonDocument(dataRow);
-                    }
-                    else
-                    {
-                        if(DataStruct == null)
-                        {
-                            DataStruct = GetEntityStructure(EntityName);
-                        }
-                        documentToInsert = PocoToBsonDocument(InsertedData, DataStruct);
-                    }
+                    //if (InsertedData is BsonDocument bsonDocument)
+                    //{
+                    //    documentToInsert = bsonDocument;
+                    //}
+                    //else if (InsertedData is DataRow dataRow)
+                    //{
+                    //    documentToInsert = DataRowToBsonDocument(dataRow);
+                    //}
+                    //else
+                    //{
+                    //    if(DataStruct == null)
+                    //    {
+                    //        DataStruct = GetEntityStructure(EntityName);
+                    //    }
+                    //    documentToInsert = PocoToBsonDocument(InsertedData, DataStruct);
+                    //}
                     // Check if a session is active and insert accordingly
                     if (_session != null && _session.IsInTransaction)
                     {
@@ -1433,8 +1472,44 @@ namespace TheTechIdea.Beep.NOSQL
             }
             return retval;
         }
-        #region "Parsing and Filtering"
+        private BsonDocument ConvertToBsonDocument(object data, EntityStructure structure)
+        {
+            if (data is BsonDocument bsonDocument)
+            {
+                return bsonDocument;
+            }
+            else if (data is DataRow dataRow)
+            {
+                return DataRowToBsonDocument(dataRow);
+            }
+            else
+            {
+                return PocoToBsonDocument(data, structure);
+            }
+        }
+        private void UpdateEntityStructure(BsonDocument document, EntityStructure structure)
+        {
+            foreach (var element in document.Elements)
+            {
+                if (!structure.Fields.Any(f => f.fieldname.Equals(element.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    structure.Fields.Add(new EntityField
+                    {
+                        fieldname = element.Name,
+                        fieldtype = element.Value.BsonType.ToString(), // Assuming a method to translate BsonType to a more general type name
+                        EntityName = structure.EntityName
+                    });
+                }
+            }
+        }
+        #region "Insert Bulk"
       
+
+      
+        #endregion
+
+        #region "Parsing and Filtering"
+
         private BsonDocument GenerateValidationDocument(EntityStructure entity)
         {
             var schemaDoc = new BsonDocument();
@@ -1676,6 +1751,41 @@ namespace TheTechIdea.Beep.NOSQL
                 }
             }
         }
+        public EntityStructure CompileSchemaFromDocuments(List<BsonDocument> documents,string entityName)
+        {
+            EntityStructure entityStructure = new EntityStructure();
+            Dictionary<string, EntityField> fieldDictionary = new Dictionary<string, EntityField>();
+            // Use provided entity name or default to a generic name
+            entityStructure.EntityName = entityName ?? "DefaultEntityName";
+            List<EntityField> fields = new List<EntityField>();
+            entityStructure.DatasourceEntityName = entityName;
+            entityStructure.OriginalEntityName = entityName;
+            entityStructure.DataSourceID = DatasourceName;
+            int fieldIndex = 0;
+            foreach (var document in documents)
+            {
+                foreach (var element in document.Elements)
+                {
+                    if (!fieldDictionary.ContainsKey(element.Name))
+                    {
+                        EntityField newField = new EntityField
+                        {
+                            fieldname = element.Name,
+                            BaseColumnName = element.Name,
+                            fieldtype = GetTypeFromBsonValue(element.Value),
+                            IsKey = element.Name.ToLower().Contains("_id"),
+                            IsIdentity = element.Name.ToLower().Contains("_id"),
+                            FieldIndex = fieldIndex++
+                        };
+                        fieldDictionary[element.Name] = newField;
+                    }
+                }
+            }
+
+            entityStructure.Fields = new List<EntityField>(fieldDictionary.Values);
+            return entityStructure;
+        }
+
         public EntityStructure GetEntityStructureFromBson(BsonDocument document, string entityName = null)
         {
             EntityStructure entityData = new EntityStructure();
@@ -1684,13 +1794,16 @@ namespace TheTechIdea.Beep.NOSQL
                 // Use provided entity name or default to a generic name
                 entityData.EntityName = entityName ?? "DefaultEntityName";
                 List<EntityField> fields = new List<EntityField>();
-
+                entityData.DatasourceEntityName = entityName;
+                entityData.OriginalEntityName= entityName;
+                entityData.DataSourceID = DatasourceName;
                 int fieldIndex = 0;
                 foreach (var element in document.Elements)
                 {
                     EntityField field = new EntityField
                     {
                         fieldname = element.Name,
+                        BaseColumnName = element.Name,
                         fieldtype = GetTypeFromBsonValue(element.Value), // Convert BsonType to a .NET type string
                         IsKey = element.Name.ToLower().Contains("_id"), // Assume any field with "ID" in the name is a key
                         IsIdentity = element.Name.ToLower().Contains("_id"),
