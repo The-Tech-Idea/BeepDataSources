@@ -642,6 +642,11 @@ namespace TheTechIdea.Beep.NOSQL
                         {
                             Entities.Remove(item);
                         }
+                        var entitiesToAdd = EntitiesNames.Where(e => !Entities.Any(x => x.EntityName == e)).ToList();
+                        foreach (var item in entitiesToAdd)
+                        {
+                            Entities.Add(GetEntityStructure(item, true));
+                        }
                     }
 
 
@@ -905,23 +910,7 @@ namespace TheTechIdea.Beep.NOSQL
                 if (ConnectionStatus == ConnectionState.Open)
                 {
 
-                    //Get data from the custom query and put it in the dataset
-                    var db = _client.GetDatabase(CurrentDatabase);
-                    var collection = db.GetCollection<BsonDocument>(EntityName);
-                    // Attempt to get the first document to infer the structure
-                    var firstDocument = collection.Find(new BsonDocument()).FirstOrDefault();
-                    if (firstDocument != null)
-                    {
-                        result = GetEntityStructureFromBson(firstDocument, EntityName);
-                        result.IsLoaded = true;
-                    }
-                    else
-                    {
-                        retval.Flag = Errors.Failed;
-                        retval.Message = "No documents found in the collection.";
-                        result = null;
-                    }
-                    SetObjects(EntityName);
+                    result= GetEntityStructure(EntityName, refresh);
                 }
 
             }
@@ -983,8 +972,6 @@ namespace TheTechIdea.Beep.NOSQL
                             }
                         }else
                             DataStruct = CompileSchemaFromDocuments(list, EntityName);
-
-
                         ObjectsCreated = true;
                         // Optionally convert BSON documents to a specific object type if needed
                         // Assuming you have a method to determine the type from entityName
@@ -994,19 +981,19 @@ namespace TheTechIdea.Beep.NOSQL
                         if (Entities.Count > 0 && !Entities.Any(p => p.EntityName == EntityName))
                         {
                             Entities.Add(DataStruct);
-                            EntitiesNames.Add(EntityName);
                         }
-                        if (Entities.Count == 0)
+                        if (Entities.Count == 0 && !Entities.Any(p => p.EntityName == EntityName))
                         {
                             Entities.Add(DataStruct);
-                            EntitiesNames.Add(EntityName);
                         }
-                        else
+                       
+                        if(EntitiesNames.Count == 0)
                         {
-
-                            retval.Flag = Errors.Failed;
-                            retval.Message = "No documents found in the collection.";
-                            DataStruct = null;
+                            EntitiesNames = Entities.Select(p => p.EntityName).ToList();
+                        }
+                        if(EntitiesNames.Count>0 && !EntitiesNames.Any(p => p == EntityName))
+                        {
+                            EntitiesNames.Add(EntityName);
                         }
                         if (Entities.Count > 0 && DataStruct == null)
                         {
@@ -1018,15 +1005,14 @@ namespace TheTechIdea.Beep.NOSQL
                                 return DataStruct;
                             }
                         }
-
-
-
-                        //     SetObjects(EntityName);
                     }
-
-
+                    else
+                    {
+                        retval.Flag = Errors.Failed;
+                        retval.Message = "No documents found in the collection.";
+                        DataStruct = null;
+                    }
                 }
-
             }
             catch (Exception ex)
             {

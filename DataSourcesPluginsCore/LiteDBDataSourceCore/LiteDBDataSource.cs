@@ -13,14 +13,18 @@ using TheTechIdea.Beep.FileManager;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Logger;
 using TheTechIdea.Util;
-
+using DataManagementModels.DriversConfigurations;
+using DataManagementModels.Editor;
+using System.Text.RegularExpressions;
+using TheTechIdea.Beep.Helpers;
+using System.ComponentModel;
 
 namespace LiteDBDataSourceCore
 {
     public class LiteDBDataSource : IDataSource,ILocalDB
     {
         private bool disposedValue;
-        private LiteDatabase _db;
+        private LiteDatabase db;
         private string _connectionString;
         public LiteDBDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
         {
@@ -31,9 +35,9 @@ namespace LiteDBDataSourceCore
             DatasourceType = databasetype;
             Category = DatasourceCategory.NOSQL;
             Dataconnection = new FileConnection(DMEEditor);
-            InitDataConnection();
+            
 
-            Openconnection(); // Attempt to open connection on initialization
+            //Openconnection(); // Attempt to open connection on initialization
         }
         public string GuidID { get  ; set  ; }
         public DataSourceType DatasourceType { get; set; } = DataSourceType.LiteDB;
@@ -43,7 +47,7 @@ namespace LiteDBDataSourceCore
         public IErrorsInfo ErrorObject { get  ; set  ; }
         public string Id { get  ; set  ; }
         public IDMLogger Logger { get  ; set  ; }
-        public List<string> EntitiesNames { get  ; set  ; }
+        public List<string> EntitiesNames { get  ; set  ; }=new List<string>();
         public List<EntityStructure> Entities { get; set; } = new List<EntityStructure>();
         public IDMEEditor DMEEditor { get  ; set  ; }
         public ConnectionState ConnectionStatus { get  ; set  ; }
@@ -53,253 +57,12 @@ namespace LiteDBDataSourceCore
         public bool InMemory { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public event EventHandler<PassedArgs> PassEvent;
-
-        public IErrorsInfo BeginTransaction(PassedArgs args)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool CheckEntityExist(string EntityName)
-        {
-            ErrorsInfo erretval = new ErrorsInfo();
-            erretval.Flag = Errors.Ok;
-            erretval.Message = "Executed Successfully";
-            bool retval = false;
-
-            try
-            {
-                if (_db == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection(); // Ensure the database is connected
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    var collection = _db.GetCollection<BsonDocument>(EntityName);
-                    long count = collection.Count();
-
-                    if (count > 0)
-                    {
-                        retval = true; // Collection exists and has documents
-                    }
-                    else
-                    {
-                        retval = false; // Collection does not exist or is empty
-                        DMEEditor.AddLogMessage("Beep", "Collection does not exist.", DateTime.Now, -1, null, Errors.Failed);
-                    }
-                }
-                else
-                {
-                    erretval.Flag = Errors.Failed;
-                    erretval.Message = "Could not open connection";
-                    retval = false; // Failed to open connection
-                }
-            }
-            catch (Exception ex)
-            {
-                string methodName = MethodBase.GetCurrentMethod().Name;
-                retval = false;
-                erretval.Flag = Errors.Failed;
-                erretval.Message = $"Error checking existence of the entity {EntityName}: {ex.Message}";
-                DMEEditor.AddLogMessage("Beep", $"Error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-            }
-
-            return retval;
-        }
-
-        public ConnectionState Closeconnection()
-        {
-            if (_db != null)
-            {
-                _db.Dispose();
-                _db = null;
-                ConnectionStatus = ConnectionState.Closed;
-            }
-            return ConnectionStatus;
-        }
-
-        public IErrorsInfo Commit(PassedArgs args)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo CreateEntities(List<EntityStructure> entities)
-        {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "All entities processed successfully." };
-            try
-            {
-                if (_db == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();  // Ensure the database is connected
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    foreach (var entity in entities)
-                    {
-                        var collection = _db.GetCollection<BsonDocument>(entity.EntityName);
-                        long count = collection.Count();
-
-                        if (count == 0) // If the collection is empty, initialize it
-                        {
-                            // Optionally initialize with a default document if required
-                            if (entity.Fields != null && entity.Fields.Count > 0)
-                            {
-                                var doc = new BsonDocument();
-                                foreach (var field in entity.Fields)
-                                {
-                                    doc[field.fieldname] = new BsonValue((object)null);  // Set default null or another default value
-                                }
-                                collection.Insert(doc);  // Insert the initial document to create the collection
-                            }
-
-                            // Add indexes specified in the EntityStructure
-                            foreach (var field in entity.Fields)
-                            {
-                                if (field.IsKey)  // Assuming 'IsKey' implies an index should be created
-                                {
-                                    collection.EnsureIndex(field.fieldname);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            retval.Message += $" Collection {entity.EntityName} already initialized; ";
-                        }
-                    }
-                }
-                else
-                {
-                    retval.Flag = Errors.Failed;
-                    retval.Message = "Database connection is not open.";
-                }
-            }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = $"Error creating entities: {ex.Message}";
-            }
-
-            return retval;
-        }
-
-        public bool CreateEntityAs(EntityStructure entity)
-        {
-            ErrorsInfo retval = new ErrorsInfo();
-            retval.Flag = Errors.Ok;
-            retval.Message = "Executed Successfully "; ;
-            bool success = false;
-            try
-            {
-                if (_db == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();  // Ensure the database is connected
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    // Check if the collection already exists by trying to get it and seeing if any records exist
-                    var collection = _db.GetCollection<BsonDocument>(entity.EntityName);
-                    var exists = collection.Count() > 0;
-
-                    if (!exists)
-                    {
-                        // Optionally, you might want to initialize the collection with an index or a first document
-                        // For example, initializing with a document
-                        if (entity.Fields != null && entity.Fields.Count > 0)
-                        {
-                            var doc = new BsonDocument();
-                            foreach (var field in entity.Fields)
-                            {
-                                doc[field.fieldname] = new BsonValue((object)null);  // Set default null or another default value
-                            }
-                            collection.Insert(doc);  // Insert the initial document to create the collection
-                        }
-
-                        // Add indexes specified in the EntityStructure
-                        foreach (var field in entity.Fields)
-                        {
-                            if (field.IsKey)  // Assuming 'IsKey' implies an index should be created
-                            {
-                                collection.EnsureIndex(field.fieldname);
-                            }
-                        }
-                        success = true;
-                    }
-                    else
-                    {
-                        retval.Flag = Errors.Failed;
-                        retval.Message = "Collection already exists.";
-                        DMEEditor.AddLogMessage("Beep", "Collection already exists.", DateTime.Now, -1, null, Errors.Failed);
-                    }
-                }
-                else
-                {
-                    retval.Flag = Errors.Failed;
-                    retval.Message = "Could not open connection";
-                }
-            }
-            catch (Exception ex)
-            {
-                string methodName = MethodBase.GetCurrentMethod().Name;
-                success = false;
-                DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-            }
-            return success;
-        }
-
-        public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
-        {
-            ErrorsInfo retval = new ErrorsInfo();
-            try
-            {
-                if (_db == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection(); // Ensure the database is connected
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    var collection = _db.GetCollection<BsonDocument>(EntityName);
-                    BsonValue idValue = GetIdentifierValue(UploadDataRow); // Extract ID from DataRow
-
-                    var result = collection.Delete(idValue); // Delete the document by its ID
-                    if (result)
-                    {
-                        retval.Flag = Errors.Ok;
-                        retval.Message = "Entity deleted successfully.";
-                    }
-                    else
-                    {
-                        retval.Flag = Errors.Failed;
-                        retval.Message = "No document found with the specified identifier.";
-                    }
-                }
-                else
-                {
-                    retval.Flag = Errors.Failed;
-                    retval.Message = "Database connection is not open.";
-                }
-            }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = $"Error deleting entity: {ex.Message}";
-            }
-
-            return retval;
-        }
-
-        public IErrorsInfo EndTransaction(PassedArgs args)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IErrorsInfo ExecuteSql(string sql)
-        {
-            throw new NotImplementedException();
-        }
-
+        Type enttype = null;
+        bool ObjectsCreated = false;
+        string lastentityname = null;
+        EntityStructure DataStruct = null;
+        string DBfilepathandname=string.Empty;
+        #region "Misc"
         public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
             throw new NotImplementedException();
@@ -309,7 +72,16 @@ namespace LiteDBDataSourceCore
         {
             throw new NotImplementedException();
         }
-
+        private void SetObjects(string Entityname)
+        {
+            if (!ObjectsCreated || Entityname != lastentityname)
+            {
+                DataStruct = GetEntityStructure(Entityname, false);
+                enttype = GetEntityType(Entityname);
+                ObjectsCreated = true;
+                lastentityname = Entityname;
+            }
+        }
         public List<string> GetEntitesList()
         {
 
@@ -325,22 +97,32 @@ namespace LiteDBDataSourceCore
                 }
                 if (ConnectionStatus == ConnectionState.Open)
                 {
-                    
-                    var collectionNames = _db.GetCollectionNames().ToList();
-                    foreach (var item in collectionNames)
+                    using (var db = new LiteDatabase(_connectionString))
                     {
-                        EntitiesNames.Add(item);
+                        var collectionNames = db.GetCollectionNames().ToList();
+                        foreach (var item in collectionNames)
+                        {
+                            EntitiesNames.Add(item);
 
+                        }
+
+                        // Synchronize the Entities list to match the current collection names
+                       
                     }
-                    // Synchronize the Entities list to match the current collection names
                     if (Entities != null)
                     {
-                        var entitiesToRemove = Entities.Where(e => !EntitiesNames.Contains(e.EntityName)).ToList();
+                        var entitiesToRemove = Entities.Where(e => !EntitiesNames.Contains(e.EntityName) && !string.IsNullOrEmpty(e.CustomBuildQuery)).ToList();
                         foreach (var item in entitiesToRemove)
                         {
                             Entities.Remove(item);
                         }
+                        var entitiesToAdd = EntitiesNames.Where(e => !Entities.Any(x => x.EntityName == e)).ToList();
+                        foreach (var item in entitiesToAdd)
+                        {
+                            Entities.Add(GetEntityStructure(item, true));
+                        }
                     }
+
 
 
                 }
@@ -358,103 +140,6 @@ namespace LiteDBDataSourceCore
                 DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
             }
             return EntitiesNames;
-        }
-
-        public object GetEntity(string EntityName, List<AppFilter> filter)
-        {
-            ErrorsInfo retval = new ErrorsInfo();
-            retval.Flag = Errors.Ok;
-            retval.Message = "Get Entity Successfully";
-            object result = null;
-            try
-            {
-                if (ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();
-                }
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    var collection = _db.GetCollection<BsonDocument>(EntityName);
-
-                    // Build the LiteDB BsonExpression from the list of AppFilter
-                    var bsonExpression = BuildLiteDBExpression(filter);
-
-                    // Execute the query
-                    var documents = collection.Find(bsonExpression);
-
-                    // Optionally, convert BSON documents to a specific object type if necessary
-                    // This conversion would depend on the expected return type and data structure
-                    result = documents.ToList(); // Convert to List to ensure the query executes
-
-                }
-
-            }
-            catch (Exception ex)
-            {
-                string methodName = MethodBase.GetCurrentMethod().Name;
-                retval.Flag = Errors.Failed;
-                retval.Message = ex.Message;
-                DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-            }
-            return result;
-        }
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
-        {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Get Entity Successfully" };
-            object result = null;
-            try
-            {
-                if (_db == null)
-                {
-                    Openconnection();  // Ensure the database connection is open
-                }
-
-                var collection = _db.GetCollection<BsonDocument>(EntityName);
-
-                // Convert AppFilters to LiteDB BsonExpression
-                var bsonExpression = BuildLiteDBExpression(filter);
-
-                // Calculate pagination parameters
-                int skipAmount = (pageNumber - 1) * pageSize;
-
-                // Apply the filter and pagination to the query
-                // Here we directly use skip and limit parameters in the Find method
-                var results = collection.Find(bsonExpression, skipAmount, pageSize);
-
-                result = results.ToList();  // Convert to List to realize the query and gather results
-            }
-            catch (Exception ex)
-            {
-                string methodName = MethodBase.GetCurrentMethod().Name;
-                retval.Flag = Errors.Failed;
-                retval.Message = ex.Message;
-                DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-            }
-
-            return result;
-        }
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
-        {
-
-            return Task.Run(() =>
-            {
-                ErrorsInfo retval = new ErrorsInfo();
-                retval.Flag = Errors.Ok;
-                retval.Message = "Get Entity Successfully";
-                object result = null;
-                try
-                {
-                    result = GetEntity(EntityName, Filter);
-                }
-                catch (Exception ex)
-                {
-                    string methodName = MethodBase.GetCurrentMethod().Name;
-                    retval.Flag = Errors.Failed;
-                    retval.Message = ex.Message;
-                    DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                }
-                return result;
-            });
         }
 
         public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
@@ -502,28 +187,79 @@ namespace LiteDBDataSourceCore
                 // Retrieve the structure from the database
                 if (ConnectionStatus == ConnectionState.Open)
                 {
-                    var collection = _db.GetCollection<BsonDocument>(EntityName);
-                    var firstDocument = collection.Query().First(); // Get the first document to infer the structure
-
-                    if (firstDocument != null)
+                    using (var db = new LiteDatabase(_connectionString))
                     {
-                        result.Fields = new List<EntityField>();
-                        foreach (var key in firstDocument.Keys)
+                        var collection = db.GetCollection<BsonDocument>(EntityName);
+                        var firstDocument = collection.Query().First(); // Get the first document to infer the structure
+                        var list = collection.FindAll().ToList(); // Get all documents to infer the structure
+                        if (firstDocument != null)
                         {
-                            result.Fields.Add(new EntityField
+                            if (DataStruct != null)
                             {
-                                fieldname = key,
-                                fieldtype = GetDotNetTypeFromBsonType(firstDocument[key].Type)
-                            });
+                                if (DataStruct.EntityName == null || DataStruct.EntityName != EntityName)
+                                {
+                                    DataStruct = CompileSchemaFromDocuments(list, EntityName);
+                                }
+                            }
+                            else
+                                DataStruct = CompileSchemaFromDocuments(list, EntityName);
+
+
+                            ObjectsCreated = true;
+                            // Optionally convert BSON documents to a specific object type if needed
+                            // Assuming you have a method to determine the type from entityName
+                            //  Type entityType = GetEntityType(EntityName);
+                            enttype = GetEntityType(EntityName);
                         }
-                        result.IsLoaded = true;
                     }
-                    else
+                    // result = GetEntityStructureFromBson(firstDocument, EntityName);
+                    if (Entities == null)
                     {
-                        DMEEditor.AddLogMessage("Beep", "No documents found in the collection, unable to infer structure.", DateTime.Now, -1, null, Errors.Failed);
+                        Entities = new List<EntityStructure>();
+                    }
+                    if (Entities.Count > 0 && !Entities.Any(p => p.EntityName == EntityName))
+                    {
+                        Entities.Add(DataStruct);
+                    }
+                    if (Entities.Count == 0 && !Entities.Any(p => p.EntityName == EntityName))
+                    {
+                        Entities.Add(DataStruct);
+                    }
+                    if (EntitiesNames == null)
+                    {
+                        EntitiesNames = new List<string>();
+                    }
+                    if (EntitiesNames.Count == 0)
+                    {
+                        EntitiesNames = Entities.Select(p => p.EntityName).ToList();
+                    }
+                    if (EntitiesNames.Count > 0 && !EntitiesNames.Any(p => p == EntityName))
+                    {
+                        EntitiesNames.Add(EntityName);
+                    }
+                    if (Entities.Count > 0 && DataStruct == null)
+                    {
+                        DataStruct = Entities.Find(c => c.EntityName.Equals(EntityName, StringComparison.CurrentCultureIgnoreCase));
+                        if (DataStruct != null)
+                        {
+                            retval.Flag = Errors.Ok;
+                            retval.Message = "documents found in the collection.";
+                            return DataStruct;
+                        }
                     }
                 }
-            }
+                else
+                {
+
+                    retval.Flag = Errors.Failed;
+                    retval.Message = "No documents found in the collection.";
+                    DataStruct = null;
+                }
+                result = DataStruct;
+            } 
+                 
+                
+           
             catch (Exception ex)
             {
                 string methodName = MethodBase.GetCurrentMethod().Name;
@@ -559,7 +295,7 @@ namespace LiteDBDataSourceCore
                 if (ConnectionStatus == ConnectionState.Open)
                 {
 
-                  return GetEntityStructure(EntityName,refresh);
+                    result = GetEntityStructure(EntityName, refresh);
                 }
 
             }
@@ -579,11 +315,41 @@ namespace LiteDBDataSourceCore
             retval.Flag = Errors.Ok;
             retval.Message = "Get Entity Type  ";
             Type result = null;
+            //         SetObjects(EntityName);
             try
             {
-                EntityStructure x = GetEntityStructure(EntityName,false);
-                DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, x.Fields);
-                result = DMTypeBuilder.myType;
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    if (EntityName == lastentityname)
+                    {
+                        if (enttype != null)
+                        {
+                            result = enttype;
+                        }
+                    }
+
+                }
+                if (result == null)
+                {
+
+                    if (DataStruct == null)
+                    {
+                        lastentityname = EntityName;
+                        DataStruct = GetEntityStructure(EntityName, false);
+                    }
+
+                    DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields);
+                    result = DMTypeBuilder.myType;
+                    if (result != null)
+                    {
+
+                        enttype = result;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -595,11 +361,245 @@ namespace LiteDBDataSourceCore
             }
             return result;
         }
+
+        public bool CheckEntityExist(string EntityName)
+        {
+            ErrorsInfo erretval = new ErrorsInfo();
+            erretval.Flag = Errors.Ok;
+            erretval.Message = "Executed Successfully";
+            bool retval = false;
+
+            try
+            {
+                if (db == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection(); // Ensure the database is connected
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    using (var db = new LiteDatabase(_connectionString))
+                    {
+                        var collection = db.GetCollection<BsonDocument>(EntityName);
+                        long count = collection.Count();
+
+                        if (count > 0)
+                        {
+                            retval = true; // Collection exists and has documents
+                        }
+                        else
+                        {
+                            retval = false; // Collection does not exist or is empty
+                            DMEEditor.AddLogMessage("Beep", "Collection does not exist.", DateTime.Now, -1, null, Errors.Failed);
+                        }
+                    }
+                  
+                }
+                else
+                {
+                    erretval.Flag = Errors.Failed;
+                    erretval.Message = "Could not open connection";
+                    retval = false; // Failed to open connection
+                }
+            }
+            catch (Exception ex)
+            {
+                string methodName = MethodBase.GetCurrentMethod().Name;
+                retval = false;
+                erretval.Flag = Errors.Failed;
+                erretval.Message = $"Error checking existence of the entity {EntityName}: {ex.Message}";
+                DMEEditor.AddLogMessage("Beep", $"Error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return retval;
+        }
+
+        #endregion
+        #region "DDL"
+        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo CreateEntities(List<EntityStructure> entities)
+        {
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "All entities processed successfully." };
+            try
+            {
+                if (db == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();  // Ensure the database is connected
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    using (var db = new LiteDatabase(_connectionString))
+                    {
+                        foreach (var entity in entities)
+                        {
+                            var collection = db.GetCollection<BsonDocument>(entity.EntityName);
+                            long count = collection.Count();
+
+                            if (count == 0) // If the collection is empty, initialize it
+                            {
+                                // Optionally initialize with a default document if required
+                                if (entity.Fields != null && entity.Fields.Count > 0)
+                                {
+                                    var doc = new BsonDocument();
+                                    foreach (var field in entity.Fields)
+                                    {
+                                        doc[field.fieldname] = new BsonValue((object)null);  // Set default null or another default value
+                                    }
+                                    collection.Insert(doc);  // Insert the initial document to create the collection
+                                }
+
+                                // Add indexes specified in the EntityStructure
+                                foreach (var field in entity.Fields)
+                                {
+                                    if (field.IsKey)  // Assuming 'IsKey' implies an index should be created
+                                    {
+                                        collection.EnsureIndex(field.fieldname);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                retval.Message += $" Collection {entity.EntityName} already initialized; ";
+                            }
+                        }
+                    }
+                    
+                }
+                else
+                {
+                    retval.Flag = Errors.Failed;
+                    retval.Message = "Database connection is not open.";
+                }
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error creating entities: {ex.Message}";
+            }
+
+            return retval;
+        }
+
+        public bool CreateEntityAs(EntityStructure entity)
+        {
+            ErrorsInfo retval = new ErrorsInfo();
+            retval.Flag = Errors.Ok;
+            retval.Message = "Executed Successfully "; ;
+            bool success = false;
+            try
+            {
+                if (db == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();  // Ensure the database is connected
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    using (var db = new LiteDatabase(_connectionString))
+                    {
+                        // Check if the collection already exists by trying to get it and seeing if any records exist
+                        var collection = db.GetCollection<BsonDocument>(entity.EntityName);
+                        var exists = collection.Count() > 0;
+
+                        if (!exists)
+                        {
+                            // Optionally, you might want to initialize the collection with an index or a first document
+                            // For example, initializing with a document
+                            if (entity.Fields != null && entity.Fields.Count > 0)
+                            {
+                                var doc = new BsonDocument();
+                                foreach (var field in entity.Fields)
+                                {
+                                    if(field.fieldname != "_id") {
+                                        doc[field.fieldname] = new BsonValue((object)null);  // Set default null or another default value
+                                    }else
+                                        {
+                                        doc[field.fieldname] = new BsonValue(Guid.NewGuid().ToString());}
+                                    
+                                }
+                                collection.Insert(doc);  // Insert the initial document to create the collection
+                            }
+
+                            // Add indexes specified in the EntityStructure
+                            foreach (var field in entity.Fields)
+                            {
+                                if (field.IsKey)  // Assuming 'IsKey' implies an index should be created
+                                {
+                                    collection.EnsureIndex(field.fieldname);
+                                }
+                            }
+                            success = true;
+                        }
+                        else
+                        {
+                            retval.Flag = Errors.Failed;
+                            retval.Message = "Collection already exists.";
+                            DMEEditor.AddLogMessage("Beep", "Collection already exists.", DateTime.Now, -1, null, Errors.Failed);
+                        }
+                    }
+                   
+                }
+                else
+                {
+                    retval.Flag = Errors.Failed;
+                    retval.Message = "Could not open connection";
+                }
+            }
+            catch (Exception ex)
+            {
+                string methodName = MethodBase.GetCurrentMethod().Name;
+                success = false;
+                DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return success;
+        }
+
+
+
+        #endregion
+        #region "Get Metadata"
+        #endregion
+        public IErrorsInfo BeginTransaction(PassedArgs args)
+        {
+            throw new NotImplementedException();
+        }
+        public IErrorsInfo Commit(PassedArgs args)
+        {
+            throw new NotImplementedException();
+        }
+        public IErrorsInfo EndTransaction(PassedArgs args)
+        {
+            throw new NotImplementedException();
+        }
         public ConnectionState Openconnection()
         {
             try
             {
-                _db = new LiteDatabase(_connectionString);
+                InitDataConnection();
+                if (_connectionString == null)
+                {
+                    throw new Exception("Connection string is empty");
+                }
+               
+                if (File.Exists(DBfilepathandname))
+                {
+                    DMEEditor.AddLogMessage("Success", "lITEdb Database already exist", DateTime.Now, 0, null, Errors.Ok);
+                }
+                else
+                {
+                    
+                    DMEEditor.AddLogMessage("Success", "Create lITEdb Database", DateTime.Now, 0, null, Errors.Ok);
+                }
+                using (var db = new LiteDatabase(_connectionString))
+                {
+                  
+                }
+
                 ConnectionStatus = ConnectionState.Open;
             }
             catch (Exception ex)
@@ -609,26 +609,207 @@ namespace LiteDBDataSourceCore
             }
             return ConnectionStatus;
         }
+        public ConnectionState Closeconnection()
+        {
+            if (db != null)
+            {
+                db.Dispose();
+                db = null;
+                ConnectionStatus = ConnectionState.Closed;
+            }
+            return ConnectionStatus;
+        }
+        #region "Query"
+        public Task<double> GetScalarAsync(string query)
+        {
+            return  Task.Run(() => GetScalar(query));
+        }
+
+        public double GetScalar(string query)
+        {
+            try
+            {
+                using (var db = new LiteDatabase(_connectionString))
+                {
+                    var result = db.Execute(query);
+                    return Convert.ToDouble(result);
+                }
+             
+                   
+              
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+                return 0.0;
+            }
+        }
+
+        public IErrorsInfo ExecuteSql(string sql)
+        {
+            var retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Executed Successfully" };
+            try
+            {
+                using (var db = new LiteDatabase(_connectionString))
+                {
+                    db.Execute(sql);
+                }
+               
+              
+            }
+            catch (Exception ex)
+            {
+                var methodName = MethodBase.GetCurrentMethod().Name;
+                retval.Flag = Errors.Failed;
+                retval.Message = ex.Message;
+                DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
+        }
+
+
+        public object GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            ErrorsInfo retval = new ErrorsInfo();
+            retval.Flag = Errors.Ok;
+            retval.Message = "Get Entity Successfully";
+            object result = null;
+            IEnumerable<BsonDocument> documents;
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    using (var db = new LiteDatabase(_connectionString))
+                    {
+                        var collection = db.GetCollection<BsonDocument>(EntityName);
+
+                        if (filter!=null && filter.Count > 0) {
+                            var bsonExpression = BuildLiteDBExpression(filter);
+
+                            // Execute the query
+                            documents = collection.Find(bsonExpression);
+                        }
+                        else
+                        {
+                            documents=collection.Count() > 0 ? collection.FindAll() : null;
+                        }
+                        // Build the LiteDB BsonExpression from the list of AppFilter
+                      
+
+                        // Optionally, convert BSON documents to a specific object type if necessary
+                        // This conversion would depend on the expected return type and data structure
+                      //  result = documents.ToList(); // Convert to List to ensure the query executes
+
+                        List<BsonDocument> ls = documents.ToList();  // Convert to List to realize the query and gather results
+                        result = ConvertBsonDocumentsToObjects(ls, enttype, DataStruct);
+                    }
+                  
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                string methodName = MethodBase.GetCurrentMethod().Name;
+                retval.Flag = Errors.Failed;
+                retval.Message = ex.Message;
+                DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return result;
+        }
+        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Get Entity Successfully" };
+           object retlist = null;
+            try
+            {
+                if (db == null)
+                {
+                    Openconnection();  // Ensure the database connection is open
+                }
+                using (var db = new LiteDatabase(_connectionString))
+                {
+                    var collection = db.GetCollection<BsonDocument>(EntityName);
+
+                    // Convert AppFilters to LiteDB BsonExpression
+                    var bsonExpression = BuildLiteDBExpression(filter);
+
+                    // Calculate pagination parameters
+                    int skipAmount = (pageNumber - 1) * pageSize;
+
+                    // Apply the filter and pagination to the query
+                    // Here we directly use skip and limit parameters in the Find method
+                    var col = collection.Find(bsonExpression, skipAmount, pageSize);
+
+                    List<BsonDocument> result = col.ToList();  // Convert to List to realize the query and gather results
+                    retlist = ConvertBsonDocumentsToObjects(result, enttype, DataStruct);
+
+                }
+            
+            }
+            catch (Exception ex)
+            {
+                string methodName = MethodBase.GetCurrentMethod().Name;
+                retval.Flag = Errors.Failed;
+                retval.Message = ex.Message;
+                DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return retlist;
+        }
+        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        {
+
+            return Task.Run(() =>
+            {
+                ErrorsInfo retval = new ErrorsInfo();
+                retval.Flag = Errors.Ok;
+                retval.Message = "Get Entity Successfully";
+                object result = null;
+                try
+                {
+                    result = GetEntity(EntityName, Filter);
+                }
+                catch (Exception ex)
+                {
+                    string methodName = MethodBase.GetCurrentMethod().Name;
+                    retval.Flag = Errors.Failed;
+                    retval.Message = ex.Message;
+                    DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                }
+                return result;
+            });
+        }
+
         public object RunQuery(string qrystr)
         {
             ErrorsInfo retval = new ErrorsInfo();
             object result = null;
             try
             {
-                if (_db == null || ConnectionStatus != ConnectionState.Open)
+                if (db == null || ConnectionStatus != ConnectionState.Open)
                 {
                     Openconnection(); // Ensure the database is connected
                 }
 
                 if (ConnectionStatus == ConnectionState.Open)
                 {
-                    // Assuming you know which collection to query against, or it's part of the qrystr
-                    var collection = _db.GetCollection<BsonDocument>("DefaultCollection");
+                    using (var db = new LiteDatabase(_connectionString))
+                    {
+                        // Assuming you know which collection to query against, or it's part of the qrystr
+                        var collection = db.GetCollection<BsonDocument>("DefaultCollection");
 
-                    // If qrystr is expected to be a direct BSON expression
-                    var expression = BsonExpression.Create(qrystr);
-                    var docs = collection.Find(expression);
-                    result = docs.ToList(); // Materialize query results to a list
+                        // If qrystr is expected to be a direct BSON expression
+                        var expression = BsonExpression.Create(qrystr);
+                        var docs = collection.Find(expression);
+                      //  result = docs.ToList(); // Materialize query results to a list
+                        List<BsonDocument> ls = docs.ToList();  // Convert to List to realize the query and gather results
+                        result = ConvertBsonDocumentsToObjects(ls, enttype, DataStruct);
+                    }
                 }
                 else
                 {
@@ -642,60 +823,110 @@ namespace LiteDBDataSourceCore
 
             return result;
         }
-        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
+        #endregion
+        #region "CRUD"
+        public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
-        }
-        public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
-        {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Batch update initiated." };
-            int count = 0;
-            int successCount = 0;
-
+            ErrorsInfo retval = new ErrorsInfo();
             try
             {
-                if (_db == null || ConnectionStatus != ConnectionState.Open)
+                if (db == null || ConnectionStatus != ConnectionState.Open)
                 {
                     Openconnection(); // Ensure the database is connected
                 }
 
                 if (ConnectionStatus == ConnectionState.Open)
                 {
-                    var collection = _db.GetCollection<BsonDocument>(EntityName);
-
-                    // Assuming UploadData is an IEnumerable of data rows or POCOs
-                    IEnumerable<object> items = UploadData as IEnumerable<object>;
-                    if (items == null)
+                    using (var db = new LiteDatabase(_connectionString))
                     {
-                        DMEEditor.AddLogMessage("Beep", $"UploadData must be an IEnumerable type.", DateTime.Now, -1, null, Errors.Failed);
-                        return new ErrorsInfo { Flag = Errors.Failed, Message = "UploadData must be an IEnumerable type." };
-                    }
+                        var collection = db.GetCollection<BsonDocument>(EntityName);
+                        BsonValue idValue = GetIdentifierValue(UploadDataRow); // Extract ID from DataRow
 
-                    foreach (var item in items)
-                    {
-                        BsonDocument docToUpdate = ConvertToBsonDocument(item);
-                        if (!docToUpdate.ContainsKey("_id"))
+                        var result = collection.Delete(idValue); // Delete the document by its ID
+                        if (result)
                         {
-                            DMEEditor.AddLogMessage("Beep", $"Each document must contain an '_id' field for updates.", DateTime.Now, -1, null, Errors.Failed);
+                            retval.Flag = Errors.Ok;
+                            retval.Message = "Entity deleted successfully.";
                         }
                         else
                         {
+                            retval.Flag = Errors.Failed;
+                            retval.Message = "No document found with the specified identifier.";
+                        }
+                    }
+                   
+                  
+                }
+                else
+                {
+                    retval.Flag = Errors.Failed;
+                    retval.Message = "Database connection is not open.";
+                }
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error deleting entity: {ex.Message}";
+            }
 
-                            var id = docToUpdate["_id"];
-                            bool result = collection.Update(id, docToUpdate);
+            return retval;
+        }
+        public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
+        {
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Batch update initiated." };
+            int count = 0;
+            int successCount = 0;
+            IEnumerable<object> items;
+            try
+            {
+                if (db == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection(); // Ensure the database is connected
+                }
 
-                            if (result)
-                            {
-                                successCount++;
-                            }
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    using (var db = new LiteDatabase(_connectionString))
+                    {
+                        var collection = db.GetCollection<BsonDocument>(EntityName);
+                        items = UploadData as IEnumerable<object>;
+
+                        if (items == null)
+                        {
+                            DMEEditor.AddLogMessage("Beep", $"UploadData must be an IEnumerable type.", DateTime.Now, -1, null, Errors.Failed);
+                            return new ErrorsInfo { Flag = Errors.Failed, Message = "UploadData must be an IEnumerable type." };
                         }
 
+                        foreach (var item in items)
+                        {
+                            BsonDocument docToUpdate = ConvertToBsonDocument(item);
+                            if (!docToUpdate.ContainsKey("_id"))
+                            {
+                                DMEEditor.AddLogMessage("Beep", $"Each document must contain an '_id' field for updates.", DateTime.Now, -1, null, Errors.Failed);
+                            }
+                            else
+                            {
 
-                        count++;
-                        progress?.Report(new PassedArgs { Messege = $"Updating {count} of {items}", ParameterInt1 = count });
+                                var id = docToUpdate["_id"];
+                                bool result = collection.Update(id, docToUpdate);
+
+                                if (result)
+                                {
+                                    successCount++;
+                                }
+                            }
+
+
+                            count++;
+                            progress?.Report(new PassedArgs { Messege = $"Updating {count} of {items}", ParameterInt1 = count });
+                        }
+
+                        retval.Message = $"{successCount} out of {count} entities updated successfully.";
                     }
+                
 
-                    retval.Message = $"{successCount} out of {count} entities updated successfully.";
+                    // Assuming UploadData is an IEnumerable of data rows or POCOs
+               
                 }
                 else
                 {
@@ -713,6 +944,32 @@ namespace LiteDBDataSourceCore
 
             return retval;
         }
+
+        public ILiteCollection<T> GetLiteCollection<T>(string EntityName)
+        {
+            ILiteCollection<T> retval = null;
+            try
+            {
+                if (db == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection(); // Ensure the database is connected
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    using (var db = new LiteDatabase(_connectionString))
+                    {
+                        retval = db.GetCollection<T>(EntityName);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Beep", $"Error getting LiteCollection: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return retval;
+        }
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
         {
             ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data inserted successfully." };
@@ -720,21 +977,34 @@ namespace LiteDBDataSourceCore
             try
             {
                 // Ensure database connection is open
-                if (_db == null || ConnectionStatus != ConnectionState.Open)
+                if (db == null || ConnectionStatus != ConnectionState.Open)
                 {
                     Openconnection();
                 }
 
                 if (ConnectionStatus == ConnectionState.Open)
                 {
-                    var collection = _db.GetCollection<BsonDocument>(EntityName);
+                    using (var db = new LiteDatabase(_connectionString))
+                    {
+                        // Get Collection based on entityType or DataStruct or EntityName
+                        // user GetLiteCollection method to get the collection
+                        // Example usage where 'entType' is resolved at runtime, perhaps from some metadata or user input
+                        SetObjects(EntityName);
 
-                    // Determine the type of InsertedData and convert it to BsonDocument if necessary
-                    BsonDocument docToInsert = ConvertToBsonDocument(InsertedData);
+                        var collection = db.GetCollection<BsonDocument>(EntityName);
+                        if(collection.Count()==0)
+                        {
+                 //           collection.Name= EntityName;
+                            collection.EnsureIndex("_id", true);
+                        }
+                        // Determine the type of InsertedData and convert it to BsonDocument if necessary
+                        BsonDocument docToInsert = ConvertToBsonDocument(InsertedData);
 
-                    collection.Insert(docToInsert);
-                    retval.Flag = Errors.Ok;
-                    retval.Message = "Data inserted successfully.";
+                        collection.Insert(docToInsert);
+                        retval.Flag = Errors.Ok;
+                        retval.Message = "Data inserted successfully.";
+                    }
+                    
                 }
                 else
                 {
@@ -757,35 +1027,39 @@ namespace LiteDBDataSourceCore
             ErrorsInfo retval = new ErrorsInfo();
             try
             {
-                if (_db == null || ConnectionStatus != ConnectionState.Open)
+                if (db == null || ConnectionStatus != ConnectionState.Open)
                 {
                     Openconnection(); // Ensure the database is connected
                 }
 
                 if (ConnectionStatus == ConnectionState.Open)
                 {
-                    var collection = _db.GetCollection<BsonDocument>(EntityName);
-                    BsonDocument docToUpdate = ConvertToBsonDocument(UploadDataRow);
-
-                    // Assuming an "_id" field is used as a unique identifier
-                    if (!docToUpdate.ContainsKey("_id"))
+                    using (var db = new LiteDatabase(_connectionString))
                     {
-                        DMEEditor.AddLogMessage("Beep", "Document must contain an '_id' field for updates.", DateTime.Now, -1, null, Errors.Failed);
-                    }
+                        var collection = db.GetCollection<BsonDocument>(EntityName);
+                        BsonDocument docToUpdate = ConvertToBsonDocument(UploadDataRow);
 
-                    var id = docToUpdate["_id"];
-                    var result = collection.Update(docToUpdate);
+                        // Assuming an "_id" field is used as a unique identifier
+                        if (!docToUpdate.ContainsKey("_id"))
+                        {
+                            DMEEditor.AddLogMessage("Beep", "Document must contain an '_id' field for updates.", DateTime.Now, -1, null, Errors.Failed);
+                        }
 
-                    if (result)
-                    {
-                        retval.Flag = Errors.Ok;
-                        retval.Message = "Document updated successfully.";
+                        var id = docToUpdate["_id"];
+                        var result = collection.Update(docToUpdate);
+
+                        if (result)
+                        {
+                            retval.Flag = Errors.Ok;
+                            retval.Message = "Document updated successfully.";
+                        }
+                        else
+                        {
+                            retval.Flag = Errors.Failed;
+                            retval.Message = "No document found with the specified ID.";
+                        }
                     }
-                    else
-                    {
-                        retval.Flag = Errors.Failed;
-                        retval.Message = "No document found with the specified ID.";
-                    }
+                 
                 }
                 else
                 {
@@ -804,16 +1078,17 @@ namespace LiteDBDataSourceCore
             return retval;
         }
 
+        #endregion
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-                    if (_db != null)
+                    if (db != null)
                     {
-                        _db.Dispose();
-                        _db = null;
+                        db.Dispose();
+                        db = null;
                     }
                     // TODO: dispose managed state (managed objects)
                 }
@@ -838,15 +1113,7 @@ namespace LiteDBDataSourceCore
             GC.SuppressFinalize(this);
         }
 
-        public Task<double> GetScalarAsync(string query)
-        {
-            throw new NotImplementedException();
-        }
-
-        public double GetScalar(string query)
-        {
-            throw new NotImplementedException();
-        }
+        #region "Helpers"
         private BsonDocument ToBsonDocument(object data)
         {
             if (data is BsonDocument doc)
@@ -864,7 +1131,14 @@ namespace LiteDBDataSourceCore
         {
             // Start with a base expression that selects all documents
             string expression = "";
-
+            if(filters == null)
+            {
+                return BsonExpression.Create("$");
+            }
+            if (filters.Count == 0)
+            {
+                return BsonExpression.Create("$");
+            }
             foreach (var filter in filters)
             {
                 if (!string.IsNullOrEmpty(expression))
@@ -893,47 +1167,163 @@ namespace LiteDBDataSourceCore
             // Properly format the value based on its type, assuming it's a string here
             return $"\"{value}\""; // Quotes are necessary for string values in expressions
         }
-        private EntityStructure GetEntityStructureFromBson(BsonDocument document, string entityName)
+        private EntityStructure CompileSchemaFromDocuments(List<BsonDocument> documents, string entityName)
         {
-            EntityStructure structure = new EntityStructure { EntityName = entityName };
-            structure.Fields = new List<EntityField>();
-
-            // Iterate over each key-value pair in the BsonDocument
-            foreach (var element in document)
+            EntityStructure entityStructure = new EntityStructure
             {
-                string fieldType = GetDotNetTypeFromBsonType(element.Value.Type);
-                structure.Fields.Add(new EntityField
+                EntityName = entityName ?? "DefaultEntityName",
+                DatasourceEntityName = entityName,
+                OriginalEntityName = entityName,
+                DataSourceID = DatasourceName
+            };
+
+            Dictionary<string, EntityField> fieldDictionary = new Dictionary<string, EntityField>();
+            int fieldIndex = 0;
+
+            foreach (var document in documents)
+            {
+                foreach (var element in document)
                 {
-                    fieldname = element.Key,
-                    fieldtype = fieldType
-                });
+                    if (!fieldDictionary.ContainsKey(element.Key))
+                    {
+                        EntityField newField = new EntityField
+                        {
+                            fieldname = element.Key,
+                            BaseColumnName = element.Key,
+                            fieldtype = GetDotNetTypeStringFromBsonType(element.Value.Type),
+                            IsKey = element.Key.Equals("_id", StringComparison.OrdinalIgnoreCase),
+                            IsIdentity = element.Key.Equals("_id", StringComparison.OrdinalIgnoreCase),
+                            FieldIndex = fieldIndex++
+                        };
+                        fieldDictionary[element.Key] = newField;
+                    }
+                }
             }
 
-            return structure;
+            entityStructure.Fields = new List<EntityField>(fieldDictionary.Values);
+            return entityStructure;
         }
-
-        private string GetDotNetTypeFromBsonType(BsonType bsonType)
+        private string GetDotNetTypeStringFromBsonType(BsonType bsonType)
         {
+            List<DatatypeMapping> dataTypeMappings = DataTypeFieldMappingHelper.GetLiteDBDataTypesMapping();
+            DatatypeMapping mapping = null;
+
             switch (bsonType)
             {
-                case BsonType.Int32:
-                    return "System.Int32";
                 case BsonType.Double:
-                    return "System.Double";
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Double", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.Double";
                 case BsonType.String:
-                    return "System.String";
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("String", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.String";
                 case BsonType.Document:
-                    return "System.Collections.Generic.Dictionary<string, object>";
+                    return "System.Object";
                 case BsonType.Array:
                     return "System.Collections.Generic.List<object>";
-                case BsonType.Boolean:
-                    return "System.Boolean";
-                case BsonType.DateTime:
-                    return "System.DateTime";
+                case BsonType.Binary:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Binary", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.Byte[]";
                 case BsonType.ObjectId:
-                    return "LiteDB.ObjectId"; // Note: LiteDB's ObjectId type
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("ObjectId", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "LiteDB.ObjectId";
+                case BsonType.Boolean:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Boolean", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.Boolean";
+                case BsonType.DateTime:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("DateTime", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.DateTime";
+                case BsonType.Null:
+                    return mapping?.NetDataType ?? "System.String";
+                case BsonType.Int32:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Int32", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.Int32";
+                case BsonType.Int64:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Int64", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.Int64";
+                case BsonType.Decimal:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Decimal", StringComparison.InvariantCultureIgnoreCase));
+                    return mapping?.NetDataType ?? "System.Decimal";
                 default:
-                    return "System.Object"; // Fallback type
+                    return "System.Object";
+            }
+        }
+
+        private Type GetDotNetTypeFromBsonType(BsonType bsonType)
+        {
+            List<DatatypeMapping> dataTypeMappings = DataTypeFieldMappingHelper.GetLiteDBDataTypesMapping();
+            DatatypeMapping mapping = null;
+
+            switch (bsonType)
+            {
+                case BsonType.Double:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Double", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.Double");
+                case BsonType.String:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("String", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.String");
+                case BsonType.Document:
+                    return typeof(object);
+                case BsonType.Array:
+                    return typeof(Array);
+                case BsonType.Binary:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Binary", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.Byte[]");
+              
+                case BsonType.ObjectId:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("ObjectId", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "LiteDB.ObjectId");
+                case BsonType.Boolean:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Boolean", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.Boolean");
+                case BsonType.DateTime:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("DateTime", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.DateTime");
+                case BsonType.Null:
+                    return typeof(object);
+                case BsonType.Int32:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Int32", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.Int32");
+                case BsonType.Int64:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Int64", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.Int64");
+                case BsonType.Decimal:
+                    mapping = dataTypeMappings.FirstOrDefault(x => x.DataType.Equals("Decimal", StringComparison.InvariantCultureIgnoreCase));
+                    return Type.GetType(mapping?.NetDataType ?? "System.Decimal");
+                default:
+                    return typeof(object);
+            }
+        }
+        private object ConvertBsonValueToNetType(BsonValue bsonValue, Type targetType)
+        {
+            if (bsonValue.IsNull)
+                return null;
+
+            switch (bsonValue.Type)
+            {
+                case BsonType.Int32:
+                    return bsonValue.AsInt32;
+                case BsonType.Int64:
+                    return bsonValue.AsInt64;
+                case BsonType.Double:
+                    return bsonValue.AsDouble;
+                case BsonType.String:
+                    return bsonValue.AsString;
+                case BsonType.Document:
+                    return bsonValue.AsDocument;
+                case BsonType.Array:
+                    return bsonValue.AsArray.Select(a => ConvertBsonValueToNetType(a, typeof(object))).ToList();
+                case BsonType.Binary:
+                    return bsonValue.AsBinary;
+                case BsonType.ObjectId:
+                    return bsonValue.AsObjectId.ToString(); // Convert ObjectId to string
+                case BsonType.Guid:
+                    return bsonValue.AsGuid;
+                case BsonType.Boolean:
+                    return bsonValue.AsBoolean;
+                case BsonType.DateTime:
+                    return bsonValue.AsDateTime;
+                default:
+                    return bsonValue;
             }
         }
         private BsonValue GetIdentifierValue(object data)
@@ -960,56 +1350,233 @@ namespace LiteDBDataSourceCore
         }
         private BsonDocument ConvertToBsonDocument(object data)
         {
-            if (data is BsonDocument bson)
+            EntityStructure entStructure = DataStruct;
+            var doc = new BsonDocument();
+            if(data is null)
             {
-                return bson;
-            }
-            else if (data is DataRow dataRow)
-            {
-                // Convert DataRow to BsonDocument
-                var doc = new BsonDocument();
-                foreach (DataColumn column in dataRow.Table.Columns)
-                {
-                    doc[column.ColumnName] = new BsonValue(dataRow[column]);
-                }
                 return doc;
+            }
+            if(data is BsonDocument)
+            {
+                return (BsonDocument)data;
+            }
+            if (data is DataRow dataRow)
+            {
+                // Convert DataRow to BsonDocument using EntityStructure for schema guidance
+                foreach (var field in entStructure.Fields)
+                {
+                    var fieldName = field.fieldname;
+                    var value = dataRow.Table.Columns.Contains(fieldName) ? dataRow[fieldName] : DBNull.Value;
+
+                    // Convert value to the appropriate BsonValue type
+                    doc[fieldName] = ConvertToBsonValue(field.fieldtype, value);
+                }
             }
             else
             {
-                // Assuming data is a POCO, serialize to BsonDocument
-                return BsonMapper.Global.ToDocument(data.GetType(), data);
+                // Assuming data is a POCO, manually serialize to BsonDocument using EntityStructure for schema guidance
+                foreach (var field in entStructure.Fields)
+                {
+                    var prop = data.GetType().GetProperty(field.fieldname);
+                    if (prop != null)
+                    {
+                        var value = prop.GetValue(data);
+                        doc[field.fieldname] = ConvertToBsonValue(field.fieldtype, value);
+                    }
+                    else
+                    {
+                        doc[field.fieldname] = BsonValue.Null;
+                    }
+                }
+            }
+
+            return doc;
+        }
+        private BsonValue ConvertToBsonValue(string fieldType, object value)
+        {
+            if (value == null)
+            {
+                return BsonValue.Null;
+            }
+
+            switch (fieldType)
+            {
+                case "System.Int32":
+                    return new BsonValue(Convert.ToInt32(value));
+                case "System.Int64":
+                    return new BsonValue(Convert.ToInt64(value));
+                case "System.Double":
+                    return new BsonValue(Convert.ToDouble(value));
+                case "System.Decimal":
+                    return new BsonValue(Convert.ToDecimal(value));
+                case "System.String":
+                    return new BsonValue(SanitizeString(value.ToString()));
+                case "System.Boolean":
+                    return new BsonValue(Convert.ToBoolean(value));
+                case "System.DateTime":
+                    return new BsonValue(Convert.ToDateTime(value));
+                case "System.Guid":
+                    return new BsonValue((Guid)value);
+                case "System.Byte[]":
+                    return new BsonValue((byte[])value);
+                default:
+                    return new BsonValue(SanitizeString(value.ToString()));
             }
         }
+
+        private string SanitizeString(string value)
+        {
+            // Remove unwanted double quotes
+            return value.Replace("\"", "");
+        }
+       
+        private BsonValue ConvertToBsonValue(object value, Type type)
+        {
+            // Handle conversion based on type
+            if (type == typeof(DateTime))
+                return new BsonValue(Convert.ToDateTime(value));
+            if (type == typeof(int))
+                return new BsonValue(Convert.ToInt32(value));
+            if (type == typeof(double))
+                return new BsonValue(Convert.ToDouble(value));
+            if (type == typeof(bool))
+                return new BsonValue(Convert.ToBoolean(value));
+            if (type == typeof(string))
+                return new BsonValue(value.ToString());
+
+            return new BsonValue(value); // As a fallback
+        }
+        public object ConvertBsonDocumentsToObjects(List<BsonDocument> documents, Type type, EntityStructure entStructure)
+        {
+            Type uowGenericType = typeof(ObservableBindingList<>).MakeGenericType(type);
+            var records = (IBindingListView)Activator.CreateInstance(uowGenericType);
+
+            foreach (var document in documents)
+            {
+                dynamic instance = Activator.CreateInstance(type);
+                foreach (var field in entStructure.Fields)
+                {
+                    var fieldName = field.fieldname.ToLower();
+                    var f = document.Keys.FirstOrDefault(p => p.Equals(fieldName, StringComparison.InvariantCultureIgnoreCase));
+                    if (!string.IsNullOrEmpty(f))
+                    {
+                        var bsonValue = document[f];
+                        if (!bsonValue.IsNull)
+                        {
+                            try
+                            {
+                                string netTypeString = field.fieldtype; // Use field.fieldtype directly
+                                Type netType = Type.GetType(netTypeString);
+
+                                if (netType == typeof(string) && bsonValue.IsObjectId)
+                                {
+                                    // Convert ObjectId to string
+                                    var value = bsonValue.AsObjectId.ToString();
+                                    type.GetProperty(field.fieldname).SetValue(instance, value);
+                                }
+                                else if (Type.GetTypeCode(netType) == Type.GetTypeCode(Type.GetType(field.fieldtype)))
+                                {
+                                    // Directly assign if types match
+                                    object value;
+                                    if (Type.GetType(field.fieldtype) == typeof(string))
+                                    {
+                                       // value = bsonValue.ToString();
+                                        value= RemoveQuotes(bsonValue.ToString());
+                                    }
+                                    else
+                                    {
+                                        value = ConvertBsonValueToNetType(bsonValue, Type.GetType(field.fieldtype));
+                                    }
+                                    type.GetProperty(field.fieldname).SetValue(instance, value);
+                                }
+                                else
+                                {
+                                    // Handle type conversion if necessary
+                                    object value;
+                                    if (Type.GetType(field.fieldtype) == typeof(string))
+                                    {
+                                        value = RemoveQuotes(bsonValue.ToString());
+                                    }
+                                    else
+                                    {
+                                        value = Convert.ChangeType(ConvertBsonValueToNetType(bsonValue, Type.GetType(field.fieldtype)), Type.GetType(field.fieldtype));
+                                    }
+                                    type.GetProperty(field.fieldname).SetValue(instance, value);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                // Handle or log the error appropriately
+                                DMEEditor.AddLogMessage("Beep", $"Error setting property {field.fieldname} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                            }
+                        }
+                    }
+                }
+                records.Add(instance);
+            }
+
+            return records;
+        }
+        private string RemoveQuotes(string value)
+        {
+            if (value.StartsWith("\"") && value.EndsWith("\""))
+            {
+                return value.Substring(1, value.Length - 2);
+            }
+            return value;
+        }
+        #endregion
+
+        #region "LocalDB"
         private void InitDataConnection()
         {
-            if(Dataconnection == null)
-            {
-                Dataconnection = new FileConnection(DMEEditor);
-            }
-            if(DatasourceName != null && DMEEditor.ConfigEditor.DataConnections.Count > 0)
+
+
+            if (DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == DatasourceName).Any())
             {
                 Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == DatasourceName).FirstOrDefault();
-            }else
-            {
-                Dataconnection.ConnectionProp = new ConnectionProperties();
             }
-            if (_connectionString == null && Dataconnection.ConnectionProp != null)
+            else
             {
-                _connectionString = Dataconnection.ConnectionProp.ConnectionString;
-            }else
-            {
-                _connectionString = "";
-            }
-            if(Dataconnection.ConnectionProp==null)
-            {
-                Dataconnection.ConnectionProp = new ConnectionProperties();
-            }
-            Dataconnection.ConnectionProp.IsLocal= true;
+                ConnectionDriversConfig driversConfig = DMEEditor.ConfigEditor.DataDriversClasses.FirstOrDefault(p => p.DatasourceType == DataSourceType.LiteDB);
+                if (driversConfig != null)
+                {
+                    Dataconnection.ConnectionProp = new ConnectionProperties
+                    {
+                        ConnectionName = DatasourceName,
+                        ConnectionString = driversConfig.ConnectionString,
+                        DriverName = driversConfig.PackageName,
+                        DriverVersion = driversConfig.version,
+                        DatabaseType = DataSourceType.LiteDB,
+                        Category = DatasourceCategory.NOSQL
+                    };
 
+                }
+
+            }
+            if (string.IsNullOrEmpty(_connectionString) && string.IsNullOrEmpty(DBfilepathandname))
+            {
+                DBfilepathandname = Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath, $"{DatasourceName}.db");
+
+            }
+            if (!string.IsNullOrEmpty(DBfilepathandname))
+            {
+                Dataconnection.ConnectionProp.ConnectionString = $"{DBfilepathandname}";
+                Dataconnection.ConnectionProp.FilePath = Path.GetDirectoryName(DBfilepathandname);
+                Dataconnection.ConnectionProp.FileName = Path.GetFileName(DBfilepathandname);
+
+            }
+
+            Dataconnection.ConnectionProp.Category = DatasourceCategory.NOSQL;
+            Dataconnection.ConnectionProp.DatabaseType = DataSourceType.LiteDB;
+            _connectionString = Dataconnection.ConnectionProp.ConnectionString;
+
+            // HandleConnectionStringforMongoDB();
+            Dataconnection.ConnectionProp.IsLocal = true;
         }
-        #region "LocalDB"
         public bool CreateDB()
         {
+            DBfilepathandname = string.Empty;
             InitDataConnection();
             return Openconnection() == ConnectionState.Open;
         }
@@ -1017,7 +1584,7 @@ namespace LiteDBDataSourceCore
         public bool CreateDB(bool inMemory)
         {
             InitDataConnection();
-            Dataconnection.ConnectionProp.ConnectionString = Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath,"LiteDb.db");
+            Dataconnection.ConnectionProp.ConnectionString = Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath, $"{DatasourceName}.db");
             _connectionString = Dataconnection.ConnectionProp.ConnectionString;
 
             return Openconnection() == ConnectionState.Open;
@@ -1029,28 +1596,17 @@ namespace LiteDBDataSourceCore
             {
                 return false;
             }
+            DBfilepathandname = filepathandname;
             InitDataConnection();
-            if(filepathandname != null)
-            {
-                Dataconnection.ConnectionProp.ConnectionString = filepathandname;
-                _connectionString = Dataconnection.ConnectionProp.ConnectionString;
-            }
-            else
-            {
-                Dataconnection.ConnectionProp.ConnectionString = Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath, "LiteDb.db");
-                _connectionString = Dataconnection.ConnectionProp.ConnectionString;
-            }
-
-            
             return Openconnection() == ConnectionState.Open;
         }
 
         public bool DeleteDB()
         {
-            if(_db != null)
+            if(db != null)
             {
-                _db.Dispose();
-                _db = null;
+                db.Dispose();
+                db = null;
             }
             if (File.Exists(_connectionString))
             {
@@ -1066,14 +1622,26 @@ namespace LiteDBDataSourceCore
             try
             {
                 // Ensure database connection is open
-                if (_db == null || ConnectionStatus != ConnectionState.Open)
+                if (db == null || ConnectionStatus != ConnectionState.Open)
                 {
                     Openconnection();
                 }
 
                 if (ConnectionStatus == ConnectionState.Open)
                 {
-                    DeleteEntity(EntityName, null);
+                    using (var db = new LiteDatabase(_connectionString))
+                    {
+                        // Drop the collection
+                        bool dropped = db.DropCollection(EntityName);
+
+                        if (!dropped)
+                        {
+                            // If DropCollection returns false, the collection did not exist.
+                            retval.Flag = Errors.Failed;
+                            retval.Message = "Collection does not exist or could not be dropped.";
+                            DMEEditor.AddLogMessage("Beep", "Collection does not exist or could not be dropped.", DateTime.Now, -1, null, Errors.Failed);
+                        }
+                    }
                 }
                 else
                 {
@@ -1099,7 +1667,7 @@ namespace LiteDBDataSourceCore
             bool result = false;
             try
             {
-                if (_db == null)
+                if (db == null)
                 {
                     Openconnection();  // Ensure the database connection is open
                 }
@@ -1135,6 +1703,50 @@ namespace LiteDBDataSourceCore
 
             return result;
 
+        }
+        public void HandleConnectionStringforMongoDB()
+        {
+            if (_connectionString.Contains("}"))
+            {
+                // Create a dictionary to map placeholders to their respective values
+                var replacements = new Dictionary<string, string>
+        {
+            { "{Host}", Dataconnection.ConnectionProp.Host },
+            { "{Port}", Dataconnection.ConnectionProp.Port.ToString() },
+            { "{Database}", Dataconnection.ConnectionProp.Database }
+        };
+
+                // Optionally add Username and Password to the replacements dictionary
+                if (!string.IsNullOrEmpty(Dataconnection.ConnectionProp.UserID) ||
+                    !string.IsNullOrEmpty(Dataconnection.ConnectionProp.Password))
+                {
+                    replacements.Add("{Username}", Dataconnection.ConnectionProp.UserID);
+                    replacements.Add("{Password}", Dataconnection.ConnectionProp.Password);
+                }
+
+                // Use a regular expression to replace placeholders, ignoring case
+                foreach (var replacement in replacements)
+                {
+                    if (!string.IsNullOrEmpty(replacement.Value))
+                    {
+                        _connectionString = Regex.Replace(_connectionString, Regex.Escape(replacement.Key), replacement.Value, RegexOptions.IgnoreCase);
+                    }
+                }
+
+                // Remove any remaining username and password placeholders if they were not replaced
+                _connectionString = Regex.Replace(_connectionString, @"\{Username\}:\{Password\}@", string.Empty, RegexOptions.IgnoreCase);
+                _connectionString = Regex.Replace(_connectionString, @"\{Username\}:\{Password\}", string.Empty, RegexOptions.IgnoreCase);
+            }
+
+            // get database name from connection string if CurrentDatabase is not set
+            //if (string.IsNullOrEmpty(CurrentDatabase))
+            //{
+            //    var match = Regex.Match(_connectionString, @"\/(?<database>[^\/\?]+)(\?|$)");
+            //    if (match.Success)
+            //    {
+            //        CurrentDatabase = match.Groups["database"].Value;
+            //    }
+            //}
         }
         #endregion
 
