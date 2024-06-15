@@ -18,9 +18,11 @@ using DataManagementModels.Editor;
 using System.Text.RegularExpressions;
 using TheTechIdea.Beep.Helpers;
 using System.ComponentModel;
+using TheTechIdea.Beep.Vis;
 
 namespace LiteDBDataSourceCore
 {
+    [AddinAttribute(Category = DatasourceCategory.NOSQL, DatasourceType = DataSourceType.LiteDB)]
     public class LiteDBDataSource : IDataSource,ILocalDB
     {
         private bool disposedValue;
