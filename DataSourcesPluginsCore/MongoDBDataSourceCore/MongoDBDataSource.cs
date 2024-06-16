@@ -458,7 +458,9 @@ namespace TheTechIdea.Beep.NOSQL
                         // Create the collection
                         database.CreateCollection(entity.EntityName);
 
-                        // Optionally apply validation rules if the EntityStructure specifies any schema constraints
+                        //Optionally apply validation rules if the EntityStructure specifies any schema constraints
+                        // Insert a document with fields specified in the entity to ensure the collection schema
+                        //Optionally apply validation rules if the EntityStructure specifies any schema constraints
                         //if (entity.Fields != null && entity.Fields.Any())
                         //{
                         //    var validationDocument = GenerateValidationDocument(entity);
@@ -467,8 +469,31 @@ namespace TheTechIdea.Beep.NOSQL
 
                         //    database.RunCommand(command);
                         //}
-                        Entities.Add(entity);
-                        EntitiesNames.Add(entity.EntityName);
+                        if (Entities== null)
+                        {
+                            Entities = new List<EntityStructure>();
+                        }
+                        if (Entities.Count > 0 && !Entities.Any(p=>p.EntityName==entity.EntityName)) {
+                            Entities.Add(entity);
+                        }
+                        else
+                        {
+                            Entities.Add(entity);
+                        }
+                        if (EntitiesNames == null)
+                        {
+                               EntitiesNames = new List<string>();
+                        }
+                        if(EntitiesNames.Count == 0 )
+                        {
+                            EntitiesNames.Add(entity.EntityName);
+                        }
+                        if(EntitiesNames.Count > 0 && !EntitiesNames.Contains(entity.EntityName))
+                        {
+                            EntitiesNames.Add(entity.EntityName);
+                        }
+
+                      
                         DMEEditor.AddLogMessage("Beep", "Collection created successfully.", DateTime.Now, -1, null, Errors.Ok);
                         retval = true;
                     }
@@ -637,7 +662,7 @@ namespace TheTechIdea.Beep.NOSQL
                     // Synchronize the Entities list to match the current collection names
                     if (Entities != null)
                     {
-                        var entitiesToRemove = Entities.Where(e => !EntitiesNames.Contains(e.EntityName) && !string.IsNullOrEmpty(e.CustomBuildQuery) ).ToList();
+                        var entitiesToRemove = Entities.Where(e => !EntitiesNames.Contains(e.EntityName)  ).ToList();
                         foreach (var item in entitiesToRemove)
                         {
                             Entities.Remove(item);
@@ -645,7 +670,7 @@ namespace TheTechIdea.Beep.NOSQL
                         var entitiesToAdd = EntitiesNames.Where(e => !Entities.Any(x => x.EntityName == e)).ToList();
                         foreach (var item in entitiesToAdd)
                         {
-                            Entities.Add(GetEntityStructure(item, true));
+                            GetEntityStructure(item, true);
                         }
                     }
 
@@ -964,6 +989,7 @@ namespace TheTechIdea.Beep.NOSQL
 
                     if (firstDocument != null)
                     {
+                      
                         if (DataStruct != null) 
                         {
                             if (DataStruct.EntityName == null || DataStruct.EntityName != EntityName)
@@ -978,15 +1004,18 @@ namespace TheTechIdea.Beep.NOSQL
                         //  Type entityType = GetEntityType(EntityName);
                         enttype = GetEntityType(EntityName);
                         // result = GetEntityStructureFromBson(firstDocument, EntityName);
+                        if(Entities==null)
+                        {
+                            Entities = new List<EntityStructure>();
+                        }
+                        if(EntitiesNames == null)
+                        {
+                            EntitiesNames = new List<string>();
+                        }
                         if (Entities.Count > 0 && !Entities.Any(p => p.EntityName == EntityName))
                         {
                             Entities.Add(DataStruct);
                         }
-                        if (Entities.Count == 0 && !Entities.Any(p => p.EntityName == EntityName))
-                        {
-                            Entities.Add(DataStruct);
-                        }
-                       
                         if(EntitiesNames.Count == 0)
                         {
                             EntitiesNames = Entities.Select(p => p.EntityName).ToList();
@@ -1008,9 +1037,18 @@ namespace TheTechIdea.Beep.NOSQL
                     }
                     else
                     {
-                        retval.Flag = Errors.Failed;
+                        if (Entities.Count > 0)
+                        {
+                            DataStruct = Entities.Find(c => c.EntityName.Equals(EntityName, StringComparison.CurrentCultureIgnoreCase));
+                            retval.Flag = Errors.Ok;
+                        }
+                        if(DataStruct==null)
+                        {
+                            retval.Flag = Errors.Failed;
+                        }
+                        
                         retval.Message = "No documents found in the collection.";
-                        DataStruct = null;
+                      
                     }
                 }
             }
@@ -1396,6 +1434,7 @@ namespace TheTechIdea.Beep.NOSQL
             ErrorsInfo retval = new ErrorsInfo();
             retval.Flag = Errors.Ok;
             retval.Message = "Entity Created Successfully";
+            EntityStructure entity = null;
             try
             {
                 if (ConnectionStatus != ConnectionState.Open)
@@ -1441,6 +1480,22 @@ namespace TheTechIdea.Beep.NOSQL
                     }
                     // Retrieve the _id value from the inserted document
                     var insertedId = documentToInsert["_id"];
+                    if (Entities == null)
+                    {
+                        Entities = new List<EntityStructure>();
+                    }
+                    if (EntitiesNames == null)
+                    {
+                        EntitiesNames = new List<string>();
+                    }
+                    if (!Entities.Any(p => p.EntityName == EntityName))
+                    {
+                        entity = GetEntityStructure(EntityName, false);
+                    }
+                    if (!EntitiesNames.Any(p => p == EntityName))
+                    {
+                        EntitiesNames.Add(EntityName);
+                    }
                 }
                 else
                 {

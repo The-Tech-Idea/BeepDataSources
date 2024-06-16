@@ -111,6 +111,18 @@ namespace LiteDBDataSourceCore
                         // Synchronize the Entities list to match the current collection names
                        
                     }
+                    if (Entities == null)
+                    {
+                        Entities = new List<EntityStructure>();
+                    }
+                   
+                   
+                    if (EntitiesNames == null)
+                    {
+                        EntitiesNames = new List<string>();
+                    }
+                   
+                
                     if (Entities != null)
                     {
                         var entitiesToRemove = Entities.Where(e => !EntitiesNames.Contains(e.EntityName) && !string.IsNullOrEmpty(e.CustomBuildQuery)).ToList();
@@ -432,45 +444,23 @@ namespace LiteDBDataSourceCore
                 {
                     Openconnection();  // Ensure the database is connected
                 }
+                if (Entities == null)
+                {
+                    Entities = new List<EntityStructure>();
+                }
 
+
+                if (EntitiesNames == null)
+                {
+                    EntitiesNames = new List<string>();
+                }
                 if (ConnectionStatus == ConnectionState.Open)
                 {
-                    using (var db = new LiteDatabase(_connectionString))
+                    foreach (var item in entities)
                     {
-                        foreach (var entity in entities)
-                        {
-                            var collection = db.GetCollection<BsonDocument>(entity.EntityName);
-                            long count = collection.Count();
-
-                            if (count == 0) // If the collection is empty, initialize it
-                            {
-                                // Optionally initialize with a default document if required
-                                if (entity.Fields != null && entity.Fields.Count > 0)
-                                {
-                                    var doc = new BsonDocument();
-                                    foreach (var field in entity.Fields)
-                                    {
-                                        doc[field.fieldname] = new BsonValue((object)null);  // Set default null or another default value
-                                    }
-                                    collection.Insert(doc);  // Insert the initial document to create the collection
-                                }
-
-                                // Add indexes specified in the EntityStructure
-                                foreach (var field in entity.Fields)
-                                {
-                                    if (field.IsKey)  // Assuming 'IsKey' implies an index should be created
-                                    {
-                                        collection.EnsureIndex(field.fieldname);
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                retval.Message += $" Collection {entity.EntityName} already initialized; ";
-                            }
-                        }
+                        CreateEntityAs(item);
                     }
-                    
+
                 }
                 else
                 {
@@ -499,7 +489,16 @@ namespace LiteDBDataSourceCore
                 {
                     Openconnection();  // Ensure the database is connected
                 }
+                if (Entities == null)
+                {
+                    Entities = new List<EntityStructure>();
+                }
 
+
+                if (EntitiesNames == null)
+                {
+                    EntitiesNames = new List<string>();
+                }
                 if (ConnectionStatus == ConnectionState.Open)
                 {
                     using (var db = new LiteDatabase(_connectionString))
@@ -534,6 +533,37 @@ namespace LiteDBDataSourceCore
                                 {
                                     collection.EnsureIndex(field.fieldname);
                                 }
+                            }
+                            if(Entities==null)
+                            {
+                                Entities = new List<EntityStructure>();
+                            }
+                            if(EntitiesNames==null)
+                            {
+                                EntitiesNames = new List<string>();
+                            }
+                            if(Entities.Count > 0)
+                            {
+                                if (!Entities.Any(p => p.EntityName == entity.EntityName))
+                                {
+                                    Entities.Add(entity);
+                                }
+                              
+                            }
+                            else
+                            {
+                                Entities.Add(entity);
+                            }
+                            if(EntitiesNames.Count > 0)
+                            {
+                                if (!EntitiesNames.Any(p => p == entity.EntityName))
+                                {
+                                    EntitiesNames.Add(entity.EntityName);
+                                }
+                            }
+                            else
+                            {
+                                EntitiesNames.Add(entity.EntityName);
                             }
                             success = true;
                         }
@@ -975,7 +1005,7 @@ namespace LiteDBDataSourceCore
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
         {
             ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data inserted successfully." };
-
+            EntityStructure entity=null;
             try
             {
                 // Ensure database connection is open
@@ -1003,10 +1033,27 @@ namespace LiteDBDataSourceCore
                         BsonDocument docToInsert = ConvertToBsonDocument(InsertedData);
 
                         collection.Insert(docToInsert);
+                      
+                      
                         retval.Flag = Errors.Ok;
                         retval.Message = "Data inserted successfully.";
                     }
-                    
+                    if (Entities == null)
+                    {
+                        Entities = new List<EntityStructure>();
+                    }
+                    if (EntitiesNames == null)
+                    {
+                        EntitiesNames = new List<string>();
+                    }
+                    if (!Entities.Any(p => p.EntityName == EntityName))
+                    {
+                       entity = GetEntityStructure(EntityName, false);
+                    }
+                    if (!EntitiesNames.Any(p => p == entity.EntityName))
+                    {
+                        EntitiesNames.Add(entity.EntityName);
+                    }
                 }
                 else
                 {
