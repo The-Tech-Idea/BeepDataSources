@@ -1414,7 +1414,10 @@ namespace TheTechIdea.Beep.NOSQL
             retval.Message = "Entities Created Successfully";
             try
             {
-
+                foreach (var item in entities)
+                {
+                    CreateEntityAs(item);
+                }
             }
             catch (Exception ex)
             {
