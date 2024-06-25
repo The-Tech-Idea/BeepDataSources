@@ -30,11 +30,11 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="1.0.0" />
-	  <PackageReference Include="DuckDB.NET.Data.Full" Version="1.0.0" />
+	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="1.0.1" />
+	  <PackageReference Include="DuckDB.NET.Data.Full" Version="1.0.1" />
 	  <PackageReference Include="System.Data.Odbc" Version="8.0.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.534" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.205" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.536" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.215" />
 	  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="1.0.77" />
 	  <PackageReference Include="TheTechIdea.Beep.Vis.Modules" Version="1.0.111" />
 	</ItemGroup>
