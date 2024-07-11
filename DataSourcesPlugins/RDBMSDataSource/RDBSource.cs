@@ -1307,13 +1307,13 @@ namespace TheTechIdea.Beep.DataBase
             ErrorObject.Flag = Errors.Ok;
             //  int LoadedRecord;
             bool IsQuery = false;
-            EntityName = EntityName.ToLower();
+          
             string inname = "";
             string qrystr = "select * from ";
             SetObjects(EntityName);
             if (!string.IsNullOrEmpty(EntityName) && !string.IsNullOrWhiteSpace(EntityName))
             {
-                if (!EntityName.Contains("select") && !EntityName.Contains("from"))
+                if (!EntityName.ToLower().Contains("select") && !EntityName.ToLower().Contains("from"))
                 {
                     qrystr = "select * from " + EntityName;
                     qrystr = GetTableName(qrystr.ToLower());
@@ -1323,7 +1323,7 @@ namespace TheTechIdea.Beep.DataBase
                 {
                     EntityName = GetTableName(EntityName);
                     string[] stringSeparators = new string[] { " from ", " where ", " group by ", " order by " };
-                    string[] sp = EntityName.Split(stringSeparators, StringSplitOptions.None);
+                    string[] sp = EntityName.ToLower().Split(stringSeparators, StringSplitOptions.None);
                     qrystr = EntityName;
                     inname = sp[1].Trim();
                 }
@@ -1931,7 +1931,7 @@ namespace TheTechIdea.Beep.DataBase
         public virtual Type GetEntityType(string EntityName)
         {
             EntityStructure x = GetEntityStructure(EntityName);
-            DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, x.Fields);
+            DMTypeBuilder.CreateNewObject(DMEEditor, DatasourceName, DatasourceName, EntityName, x.Fields);
             enttype = DMTypeBuilder.myType;
             return DMTypeBuilder.myType;
         }

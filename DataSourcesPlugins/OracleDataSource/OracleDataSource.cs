@@ -246,13 +246,13 @@ namespace TheTechIdea.Beep.DataBase
             ErrorObject.Flag = Errors.Ok;
             //  int LoadedRecord;
             bool IsQuery= false;
-            EntityName = EntityName.ToLower();
+         
             string inname = "";
             string qrystr = "select * from ";
 
             if (!string.IsNullOrEmpty(EntityName) && !string.IsNullOrWhiteSpace(EntityName))
             {
-                if (!EntityName.Contains("select") && !EntityName.Contains("from"))
+                if (!EntityName.ToLower().Contains("select") && !EntityName.ToLower().Contains("from"))
                 {
                     qrystr = "select * from " + EntityName;
                     inname = EntityName;
@@ -261,7 +261,7 @@ namespace TheTechIdea.Beep.DataBase
                 {
 
                     string[] stringSeparators = new string[] { " from ", " where ", " group by ", " order by " };
-                    string[] sp = EntityName.Split(stringSeparators, StringSplitOptions.None);
+                    string[] sp = EntityName.ToLower().Split(stringSeparators, StringSplitOptions.None);
                     qrystr = EntityName;
                     inname = sp[1].Trim();
                 }
