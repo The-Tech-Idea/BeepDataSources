@@ -29,8 +29,8 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Supabase" Version="1.0.5" />
-		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.552" />
-		<PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.232" />
+		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.557" />
+		<PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.241" />
 	</ItemGroup>
 
 </Project>
