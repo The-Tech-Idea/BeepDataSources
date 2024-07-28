@@ -40,7 +40,7 @@
   <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.28.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.558" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.563" />
   </ItemGroup>
 
 
