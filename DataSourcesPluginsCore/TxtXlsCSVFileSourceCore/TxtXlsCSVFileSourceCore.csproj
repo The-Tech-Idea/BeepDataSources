@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;net6.0;net7.0;net8.0</TargetFrameworks>
+		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>Latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -32,8 +32,8 @@
 	  <PackageReference Include="ExcelDataReader" Version="3.7.0" />
 	  <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
 	  <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.563" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.245" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.571" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.253" />
 	</ItemGroup>
 
 
