@@ -30,8 +30,8 @@
   <ItemGroup>
     <PackageReference Include="InfluxDB.Client" Version="4.18.0" />
     <PackageReference Include="InfluxDB.Client.Linq" Version="4.18.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.571" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.253" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.572" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.254" />
   </ItemGroup>
 
 </Project>
