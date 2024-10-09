@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;net6.0;net7.0</TargetFrameworks>
+		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>Latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -573,10 +573,10 @@
     <None Remove="C:\Users\f_ald\.nuget\packages\ravendb.embedded\6.0.0\contentFiles\any\any\RavenDBServer\ZstdSharp.dll" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="RavenDB.Client" Version="6.0.101" />
-    <PackageReference Include="RavenDB.Embedded" Version="6.0.101" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.402" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.139" />
+    <PackageReference Include="RavenDB.Client" Version="6.2.0" />
+    <PackageReference Include="RavenDB.Embedded" Version="6.2.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.572" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.254" />
   </ItemGroup>
 
 
