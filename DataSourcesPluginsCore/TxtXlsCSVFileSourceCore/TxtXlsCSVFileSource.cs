@@ -1,6 +1,6 @@
-﻿using TheTechIdea.Logger;
+﻿
 using System.Data;
-using TheTechIdea.Util;
+
 
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Report;
@@ -10,8 +10,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.ConfigUtil;
-using System.Xml;
-using DataManagementModels.Editor;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Addin;
 
 namespace TheTechIdea.Beep.FileManager
 {

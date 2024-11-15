@@ -7,7 +7,13 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
-using TheTechIdea.Util;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.DriversConfigurations;
+using TheTechIdea.Beep.Editor;
+
 using System.Net.Http.Json;
 
 namespace TheTechIdea.Beep.WebAPI.WebAPI
@@ -68,7 +74,7 @@ namespace TheTechIdea.Beep.WebAPI.WebAPI
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Error", $"Cannot Connect to Service {ex.Message}", DateTime.Now, -1, cn.ConnectionProp.Url, TheTechIdea.Util.Errors.Failed);
+                DMEEditor.AddLogMessage("Error", $"Cannot Connect to Service {ex.Message}", DateTime.Now, -1, cn.ConnectionProp.Url, Errors.Failed);
 
                 return false;
             }
@@ -84,7 +90,7 @@ namespace TheTechIdea.Beep.WebAPI.WebAPI
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Error", $"Cannot Connect to  Service  {ex.Message}", DateTime.Now, -1, cn.ConnectionProp.Url, TheTechIdea.Util.Errors.Failed);
+                DMEEditor.AddLogMessage("Error", $"Cannot Connect to  Service  {ex.Message}", DateTime.Now, -1, cn.ConnectionProp.Url, Errors.Failed);
 
                 return false;
             }
@@ -99,7 +105,7 @@ namespace TheTechIdea.Beep.WebAPI.WebAPI
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Error", $"Cannot get Data from Service {ex.Message}", DateTime.Now, -1, cn.ConnectionProp.Url, TheTechIdea.Util.Errors.Failed);
+                DMEEditor.AddLogMessage("Error", $"Cannot get Data from Service {ex.Message}", DateTime.Now, -1, cn.ConnectionProp.Url, Errors.Failed);
 
                 return "Error";
             }

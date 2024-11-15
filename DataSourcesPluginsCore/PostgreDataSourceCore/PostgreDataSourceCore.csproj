@@ -15,7 +15,7 @@
 		<UserSecretsId>0e52f958-db3c-4737-811d-afad4558ff95</UserSecretsId>
 		<Title>TheTechIdea.Beep.PostgreDataSourceCore</Title>
 		<PackageId>TheTechIdea.Beep.PostgreDataSourceCore</PackageId>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 
 	</PropertyGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
@@ -31,10 +31,10 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="Npgsql" Version="8.0.4" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.572" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.254" />
-	  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="1.0.81" />
+	  <PackageReference Include="Npgsql" Version="8.0.5" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.2" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.2" />
+	  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.0" />
 	</ItemGroup>
 
 </Project>

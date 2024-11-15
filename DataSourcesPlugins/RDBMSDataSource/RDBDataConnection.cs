@@ -1,10 +1,14 @@
-﻿using TheTechIdea.Logger;
+﻿
 using System;
-using TheTechIdea.Util;
 using System.Data;
 using System.IO;
-using DataManagementModels.DriversConfigurations;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.Helpers;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.DriversConfigurations;
 
 namespace TheTechIdea.Beep.DataBase
 {

@@ -6,11 +6,15 @@ using System.Linq;
 using System.Text;
 using TheTechIdea.Beep;
 using TheTechIdea.Beep.Vis;
-using TheTechIdea.Beep.DataBase;
-using TheTechIdea.Logger;
-using TheTechIdea.Util;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.DriversConfigurations;
+using TheTechIdea.Beep.Editor;
 
-namespace  TheTechIdea.Beep.DataBase
+
+namespace TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType =  DataSourceType.FireBird)]
     public class FireBirdEmbeddedDataSource : RDBSource, ILocalDB, IDataSource

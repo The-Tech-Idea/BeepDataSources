@@ -11,7 +11,7 @@
 		<PackageIcon>SimpleODM.png</PackageIcon>
 		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<Version>1.0.17</Version>
+		<Version>1.0.19</Version>
 		<Title>TheTechIdea.Beep.OracleDataSourceCore</Title>
 		<PackageId>TheTechIdea.Beep.OracleDataSourceCore</PackageId>
 
@@ -33,8 +33,8 @@
 		<EmbeddedResource Include="..\..\DataSourcesPlugins\OracleDataSource\**\*.resx" />
 </ItemGroup>
 <ItemGroup>
-  <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.6.0" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.572" />
-  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="1.0.81" />
+  <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.6.1" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.2" />
+  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.0" />
 </ItemGroup>
 </Project>

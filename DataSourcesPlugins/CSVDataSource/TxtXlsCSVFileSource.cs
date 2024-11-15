@@ -1,21 +1,20 @@
 ﻿
-using TheTechIdea.Logger;
-using System.Data;
-using TheTechIdea.Util;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.DriversConfigurations;
+using TheTechIdea.Beep.Editor;
 
-using System.IO;
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Data;
+
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Vis;
 using ExcelDataReader;
 using System.Text;
 using System.Text.RegularExpressions;
-using TheTechIdea.Beep.Editor;
-using TheTechIdea.Beep.ConfigUtil;
+
 using System.Xml;
 
 namespace TheTechIdea.Beep.FileManager

@@ -6,10 +6,15 @@ using System.Text.RegularExpressions;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.DataView;
 using TheTechIdea.Beep.Vis;
-using TheTechIdea.Logger;
-using TheTechIdea.Util;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.DriversConfigurations;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Composite;
 
-namespace TheTechIdea.Beep.CompositeLayer
+namespace TheTechIdea.Beep.Composite
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.SqlLite)]
     public class CompositeLayerDataSource : RDBSource, ICompositeLayerDataSource

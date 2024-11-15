@@ -14,6 +14,7 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Title>TheTechIdea.Beep.SqlServerDataSourceCore</Title>
 		<PackageId>TheTechIdea.Beep.SqlServerDataSourceCore</PackageId>
+		<Version>1.0.1</Version>
 
 	</PropertyGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
@@ -36,10 +37,10 @@
   <Compile Remove="..\..\DataSourcesPlugins\SQLServerDataSource\SQLServerDataSource.cs" />
 </ItemGroup>
 <ItemGroup>
-  <PackageReference Include="RDBDataSource" Version="1.0.42" />
-  <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.572" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="1.0.254" />
+  <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.2" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.2" />
+  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.0" />
 </ItemGroup>
 
 

@@ -1,17 +1,11 @@
-﻿using Npgsql;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using TheTechIdea;
-using TheTechIdea.Beep;
-using TheTechIdea.Beep.DataBase;
+﻿
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Vis;
-using TheTechIdea.Beep.Workflow;
-using TheTechIdea.Logger;
-using TheTechIdea.Util;
+
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.ConfigUtil;
 
 namespace  TheTechIdea.Beep.DataBase
 {

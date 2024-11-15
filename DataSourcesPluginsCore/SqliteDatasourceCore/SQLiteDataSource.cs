@@ -1,4 +1,4 @@
-﻿using DataManagementModels.DataBase;
+﻿
 using Microsoft.CodeAnalysis;
 
 using System.Data;
@@ -6,8 +6,12 @@ using System.Data.SQLite;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Helpers;
 using TheTechIdea.Beep.Vis;
-using TheTechIdea.Logger;
-using TheTechIdea.Util;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.DriversConfigurations;
+
 
 
 namespace TheTechIdea.Beep.DataBase

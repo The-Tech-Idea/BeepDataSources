@@ -1,4 +1,4 @@
-﻿using DataManagementModels.DataBase;
+﻿using TheTechIdea.Beep.DataBase;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -9,11 +9,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 
-using TheTechIdea.Logger;
-using TheTechIdea.Util;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities    ;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Addin;
 
 
 namespace TheTechIdea.Beep

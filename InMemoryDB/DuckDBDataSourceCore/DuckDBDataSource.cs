@@ -1,4 +1,4 @@
-﻿using DataManagementModels.DataBase;
+﻿
 using DuckDB.NET.Data;
 using DuckDB.NET;
 using System.Data;
@@ -7,8 +7,13 @@ using TheTechIdea.Beep;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Vis;
-using TheTechIdea.Logger;
-using TheTechIdea.Util;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Addin;
+
+
+
 using System.Reflection;
 using System.Text;
 using System.Xml;
@@ -17,13 +22,13 @@ using DuckDB.NET.Native;
 using System.Data.Common;
 using System.Data.Odbc;
 using TheTechIdea.Beep.Report;
-using DataManagementModels.DriversConfigurations;
-using static TheTechIdea.Beep.Util;
+
 using DateTime = System.DateTime;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 using TheTechIdea.Beep.Helpers;
 using System.Data.SqlTypes;
+
 
 namespace DuckDBDataSourceCore
 {

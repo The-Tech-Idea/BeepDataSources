@@ -1,14 +1,16 @@
 ﻿using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Reflection;
-using DataManagementModels.DriversConfigurations;
+using TheTechIdea.Beep.DriversConfigurations;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Report;
-using TheTechIdea.Logger;
-using TheTechIdea.Util;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities;
 
 using System.Text.RegularExpressions;
-using DataManagementModels.Editor;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Addin;
 namespace TheTechIdea.Beep.DataBase
 {
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType =  DataSourceType.Oracle)]
