@@ -17,7 +17,7 @@ using TheTechIdea.Beep.Addin;
 
 namespace TheTechIdea.Beep.Cloud
 {
-    [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.WebService)]
+    [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.WebApi)]
     public class AmazonCloudDynamoDbDataSource : IDataSource
 
     {

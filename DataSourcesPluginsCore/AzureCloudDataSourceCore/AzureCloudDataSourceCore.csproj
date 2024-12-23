@@ -34,9 +34,9 @@
 	  <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
 	  <PackageReference Include="Azure.Storage.Files.Shares" Version="12.21.0" />
 	  <PackageReference Include="Azure.Storage.Queues" Version="12.21.0" />
-	  <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.45.2" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.2" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.2" />
+	  <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.46.0" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.8" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.27" />
 	</ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
 	<PropertyGroup>
 		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
@@ -6,14 +7,14 @@
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Authors>The Tech Idea</Authors>
 		<Company>The Tech Idea</Company>
-		<Copyright>2022</Copyright>
+		<Copyright>2024</Copyright>
 		<PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
 		<PackageIcon>SimpleODM.png</PackageIcon>
 		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<Version>1.0.9</Version>
-		<Title>TheTechIdea.Beep.TxtXlsCSVFileSourceCore</Title>
-		<PackageId>TheTechIdea.Beep.TxtXlsCSVFileSourceCore</PackageId>
+		<Version>1.0.0</Version>
+		<Title>TheTechIdea.Beep.MassTransitDataSourceCore</Title>
+		<PackageId>TheTechIdea.Beep.MassTransitDataSourceCore</PackageId>
 
 	</PropertyGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
@@ -29,12 +30,18 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="ExcelDataReader" Version="3.7.0" />
-	  <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
-	  <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.8" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.27" />
+		<PackageReference Include="MassTransit" Version="8.3.4" />
+		<PackageReference Include="MassTransit.Abstractions" Version="8.3.4" />
+		<PackageReference Include="MassTransit.ActiveMQ" Version="8.3.4" />
+		<PackageReference Include="MassTransit.AmazonSQS" Version="8.3.4" />
+		<PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.3.4" />
+		<PackageReference Include="MassTransit.Kafka" Version="8.3.4" />
+		<PackageReference Include="MassTransit.MongoDb" Version="8.3.4" />
+		<PackageReference Include="MassTransit.Newtonsoft" Version="8.3.4" />
+		<PackageReference Include="MassTransit.RabbitMQ" Version="8.3.4" />
+		<PackageReference Include="MassTransit.Redis" Version="8.3.4" />
+		<PackageReference Include="Microsoft.Azure.ServiceBus" Version="5.2.0" />
+		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.8" />
+		<PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.25" />
 	</ItemGroup>
-
-
 </Project>

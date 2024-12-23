@@ -274,7 +274,7 @@ namespace TheTechIdea.Beep.FileManager
                     DMTypeBuilder.CreateNewObject(DMEEditor, EntityName, EntityName, Entities.Where(x => x.EntityName == EntityName).FirstOrDefault().Fields);
                 }
              
-                return DMTypeBuilder.myType;
+                return DMTypeBuilder.MyType;
             }
             return null;
         }

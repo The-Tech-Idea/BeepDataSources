@@ -1159,7 +1159,7 @@ namespace TheTechIdea.Beep.NOSQL
                     }
                     
                     DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields);
-                    result = DMTypeBuilder.myType;
+                    result = DMTypeBuilder.MyType;
                     if(result != null)
                     {
                        

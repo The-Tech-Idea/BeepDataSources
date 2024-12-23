@@ -1373,7 +1373,7 @@ namespace TheTechIdea.Beep.DataBase
                 //    {
                 //      GetEntityType(EntityName);
                 //        //DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields);
-                //        //enttype= DMTypeBuilder.myType; ;
+                //        //enttype= DMTypeBuilder.MyType; ;
                 //    }
 
 
@@ -1534,7 +1534,7 @@ namespace TheTechIdea.Beep.DataBase
                 //           DMTypeBuilder.CreateNewObject(DMEEditor, null, srcentitystructure.EntityName, SourceFields);
                 if (UploadData.GetType().FullName.Contains("DataTable"))
                 {
-                    srcList = DMEEditor.Utilfunction.GetListByDataTable((DataTable)UploadData, DMTypeBuilder.myType, DataStruct);
+                    srcList = DMEEditor.Utilfunction.GetListByDataTable((DataTable)UploadData, DMTypeBuilder.MyType, DataStruct);
 
                 }
                 else
@@ -1937,8 +1937,8 @@ namespace TheTechIdea.Beep.DataBase
         {
             EntityStructure x = GetEntityStructure(EntityName);
             DMTypeBuilder.CreateNewObject(DMEEditor, DatasourceName, DatasourceName, EntityName, x.Fields);
-            enttype = DMTypeBuilder.myType;
-            return DMTypeBuilder.myType;
+            enttype = DMTypeBuilder.MyType;
+            return DMTypeBuilder.MyType;
         }
         /// <summary>
         /// Retrieves a list of all entity names (like tables) from the database.

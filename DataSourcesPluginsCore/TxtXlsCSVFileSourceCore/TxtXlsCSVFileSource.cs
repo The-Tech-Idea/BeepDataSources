@@ -269,7 +269,7 @@ namespace TheTechIdea.Beep.FileManager
                     DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, ent.Fields);
                 }
              
-                return DMTypeBuilder.myType;
+                return DMTypeBuilder.MyType;
             }
             return null;
         }

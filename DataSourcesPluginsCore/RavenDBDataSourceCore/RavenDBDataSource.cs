@@ -341,7 +341,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
         {
             EntityStructure x = GetEntityStructure(EntityName, false);
             DMTypeBuilder.CreateNewObject(DMEEditor, EntityName, EntityName, x.Fields);
-            return DMTypeBuilder.myType;
+            return DMTypeBuilder.MyType;
         }
 
         public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
