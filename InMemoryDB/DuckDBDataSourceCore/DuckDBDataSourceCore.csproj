@@ -11,8 +11,8 @@
 		<PackageIcon>SimpleODM.png</PackageIcon>
 		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<Version>1.0.44</Version>
-		<Title>TheTechIdea.Beep.DuckDBDataSourceCore</Title>
+		<Version>1.0.45</Version>
+		<Title>DuckDBDataSourceCore</Title>
 		<PackageId>TheTechIdea.Beep.DuckDBDataSourceCore</PackageId>
 
 	</PropertyGroup>
