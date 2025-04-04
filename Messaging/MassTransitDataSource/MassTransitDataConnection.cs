@@ -11,29 +11,41 @@ using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Messaging;
 using TheTechIdea.Beep.Utilities;
 
-namespace MassTransitDataSourceCore
+
+namespace TheTechIdea.Beep.MassTransitDataSourceCore
 {
     public class MassTransitDataConnection : IDataConnection
     {
         private IBusControl _busControl;
+        public ConnectionState ConnectionStatus { get; set; } = ConnectionState.Closed;
+        public IDictionary<string, StreamConfig> StreamConfigs { get; } = new Dictionary<string, StreamConfig>();
+        public IDMLogger Logger { get; set; }
+        public IDataConnection Dataconnection { get; set; } // Assuming this holds connection properties
+
+      
         private readonly MassTransitTransportType _transportType;
         private readonly MassTransitSerializerType _serializerType;
         public IServiceCollection Services { get; set; }
-        public MassTransitDataConnection(IServiceCollection services,IDMEEditor dMEEditor, MassTransitTransportType transportType, MassTransitSerializerType serializerType)
+        public MassTransitDataConnection(IDMEEditor dMEEditor, MassTransitTransportType transportType, MassTransitSerializerType serializerType)
         {
             DMEEditor = dMEEditor ?? throw new ArgumentNullException(nameof(dMEEditor));
             _transportType = transportType;
             _serializerType = serializerType;
-            Services = services;
+          
         }
+        public MassTransitDataConnection(IDMEEditor dMEEditor)
+        { 
+            DMEEditor = dMEEditor ?? throw new ArgumentNullException(nameof(dMEEditor));
+           
 
+        }
         public IConnectionProperties ConnectionProp { get; set; }
         public ConnectionDriversConfig DataSourceDriver { get; set; }
-        public ConnectionState ConnectionStatus { get;  set; } = ConnectionState.Closed;
+       
         public IDMEEditor DMEEditor { get; set; }
         public int ID { get; set; }
         public string GuidID { get; set; }
-        public IDMLogger Logger { get; set; }
+     
         public IErrorsInfo ErrorObject { get; set; }
         public bool InMemory { get; set; }
 
@@ -41,7 +53,7 @@ namespace MassTransitDataSourceCore
         {
             try
             {
-                _busControl = ConfigureTransport();
+               
                 _busControl.Start();
                 ConnectionStatus = ConnectionState.Open;
                 Logger?.WriteLog("[OpenConnection] Connection established successfully.");
@@ -101,129 +113,68 @@ namespace MassTransitDataSourceCore
             return ConnectionProp?.ConnectionString ?? string.Empty;
         }
 
-        private IBusControl ConfigureTransport()
-        {
-            Services.AddMassTransit(x =>
-            {
-
-                if (_transportType == MassTransitTransportType.Kafka)
-                {
-                    x.UsingInMemory();
-                    x.AddRider(rider =>
-                    {
-                        rider.UsingKafka((context, k) =>
-                        {
-                            k.Host($"{ConnectionProp.Host}:{ConnectionProp.Port}");
-                        });
-                    });
-
-                }
-                if (_transportType == MassTransitTransportType.RabbitMQ)
-                {
-                   
-                        x.UsingRabbitMq((context, cfg) =>
-                        {
-                            cfg.Host($"{ConnectionProp.Host}", "/", h =>
-                            {
-                                h.Username($"{ConnectionProp.UserID}");
-                                h.Password($"{ConnectionProp.Password}");
-                            });
-                        });
-                   
-                }
-                if (_transportType == MassTransitTransportType.AzureServiceBus)
-                {
-                    x.UsingAzureServiceBus((context, cfg) =>
-                    {
-                        cfg.Host(ConnectionProp.ConnectionString);
-                    });
-                }
-                if (_transportType == MassTransitTransportType.ActiveMQ)
-                {
-                    x.UsingActiveMq((context, cfg) =>
-                    {
-                        cfg.Host($"{ConnectionProp.Host}", ConnectionProp.Port
-                    ,h =>
-                        {
-                            h.UseSsl();
-
-                            h.Username($"{ConnectionProp.UserID}");
-                            h.Password($"{ConnectionProp.Password}");
-                        });
-                    });
-                }
-                if (_transportType == MassTransitTransportType.AmazonSQS)
-                {
-                    x.UsingAmazonSqs((context, cfg) =>
-                    {
-                        cfg.Host($"{ConnectionProp.Host}", h =>
-                        {
-                            h.AccessKey($"{ConnectionProp.KeyToken}");
-                            h.SecretKey($"{ConnectionProp.ApiKey}");
-                        });
-                    });
-                }
-                if(_transportType == MassTransitTransportType.SQLDB)
-                {
-                    x.UsingSqlServer((context, cfg) =>
-                    {
-                        cfg.Host(ConnectionProp.Host, h =>
-                        {
-                            h.Database(ConnectionProp.Database);
-                            h.Username(ConnectionProp.UserID);
-                            h.Password(ConnectionProp.Password);
-                        });
-                    });
-                }
-                if(_transportType == MassTransitTransportType.AzureEventHb)
-                {
-                    x.UsingAzureServiceBus((context, cfg) =>
-                    {
-                        cfg.Host(ConnectionProp.ConnectionString);
-                    });
-                }
-            });
-
-        }
-
-        private IBusControl ConfigureKafkaTransport()
-        {
-            var services = new ServiceCollection();
-
-            services.AddMassTransit(x =>
-            {
-                x.AddRider(rider =>
-                {
-                    rider.AddConsumer<MyConsumer>();
-
-                    rider.UsingKafka((context, kafka) =>
-                    {
-                        kafka.Host(ConnectionProp.Host);
-
-                        kafka.TopicEndpoint<string>("example-topic", "example-group", e =>
-                        {
-                            e.ConfigureConsumer<MyConsumer>(context);
-                        });
-                    });
-                });
-            });
-
-            var provider = services.BuildServiceProvider();
-            return provider.GetRequiredService<IBusControl>();
-        }
+    
         private ConnectionProperties ParseConnectionString(string connectionString)
         {
             var properties = new ConnectionProperties();
             // Implement connection string parsing logic here
             return properties;
         }
-        private class MyConsumer : IConsumer<string>
+        // Initializes a stream configuration.
+        public void Initialize(StreamConfig config)
         {
-            public Task Consume(ConsumeContext<string> context)
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            if (!StreamConfigs.ContainsKey(config.EntityName))
+                StreamConfigs[config.EntityName] = config;
+
+            Logger?.WriteLog($"Stream '{config.EntityName}' initialized.");
+        }
+
+        // Sends a message to the specified stream.
+        public async Task SendMessageAsync(string streamName, GenericMessage message, CancellationToken cancellationToken)
+        {
+            if (_busControl == null || ConnectionStatus != ConnectionState.Open)
+                throw new InvalidOperationException("Bus is not connected. Call OpenConnection() before sending messages.");
+
+            if (!StreamConfigs.ContainsKey(streamName))
+                throw new KeyNotFoundException($"Stream configuration for '{streamName}' not found.");
+
+            var config = StreamConfigs[streamName];
+            // Build the endpoint URI. Adjust the URI format as required.
+            var endpointUri = new Uri($"{Dataconnection.ConnectionProp.Host}/{config.EntityName}");
+            var sendEndpoint = await _busControl.GetSendEndpoint(endpointUri);
+            await sendEndpoint.Send(message, cancellationToken);
+            Logger?.WriteLog($"Message sent to stream '{streamName}'.");
+        }
+
+        // Subscribes to a stream by dynamically creating a receive endpoint.
+        public async Task SubscribeAsync(string streamName, Func<GenericMessage, Task> onMessageReceived, CancellationToken cancellationToken)
+        {
+            if (_busControl == null || ConnectionStatus != ConnectionState.Open)
+                throw new InvalidOperationException("Bus is not connected. Call OpenConnection() before subscribing to streams.");
+
+            if (!StreamConfigs.ContainsKey(streamName))
+                throw new KeyNotFoundException($"Stream configuration for '{streamName}' not found.");
+
+            var config = StreamConfigs[streamName];
+
+            // Dynamically create a receive endpoint. This works for RabbitMQ (and other transports)
+            // without requiring you to rebuild the entire bus.
+            var handle = _busControl.ConnectReceiveEndpoint(config.EntityName, ep =>
             {
-                // Add consumer logic here
-                return Task.CompletedTask;
-            }
+                // Here we use MassTransit's handler registration for GenericMessage.
+                // This inline handler delegates the received message to your callback.
+                ep.Handler<GenericMessage>(async context =>
+                {
+                    await onMessageReceived(context.Message);
+                });
+            });
+
+            // Wait until the endpoint is ready.
+            await handle.Ready;
+            Logger?.WriteLog($"Subscribed to stream '{streamName}'.");
         }
     }
 }

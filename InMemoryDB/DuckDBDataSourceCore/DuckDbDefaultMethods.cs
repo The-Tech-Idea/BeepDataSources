@@ -17,7 +17,7 @@ namespace TheTechIdea.Beep
 {
     public static class DuckDbDefaultMethods
     {
-        public static IErrorsInfo RefreshEntities(IBranch DatabaseBranch,IDMEEditor DMEEditor, IVisManager Visutil)
+        public static IErrorsInfo RefreshEntities(IBranch DatabaseBranch,IDMEEditor DMEEditor, IAppManager Visutil)
         {
             ITree tree = (ITree)Visutil.Tree;
             string BranchText = DatabaseBranch.BranchText;
@@ -35,7 +35,7 @@ namespace TheTechIdea.Beep
                     DataSource.Openconnection();
                     if (DataSource.ConnectionStatus == System.Data.ConnectionState.Open)
                     {
-                        if (Visutil.Controlmanager.InputBoxYesNo("Beep DM", "Are you sure, this might take some time?") == DialogResult.Yes)
+                        if (Visutil.DialogManager.InputBoxYesNo("Beep DM", "Are you sure, this might take some time?") == BeepDialogResult.Yes)
                         {
                             passedArgs.Messege = "Connection Successful";
                             Visutil.PasstoWaitForm(passedArgs);
@@ -43,7 +43,7 @@ namespace TheTechIdea.Beep
                             Visutil.PasstoWaitForm(passedArgs);
                             DataSource.Entities.Clear();
                             DataSource.GetEntitesList();
-                            tree.treeBranchHandler.RemoveChildBranchs(DatabaseBranch);
+                            tree.Treebranchhandler.RemoveChildBranchs(DatabaseBranch);
                             int i = 0;
                             passedArgs.Messege = $"Getting {DataSource.EntitiesNames.Count} Entities";
                             Visutil.PasstoWaitForm(passedArgs);
@@ -63,7 +63,7 @@ namespace TheTechIdea.Beep
                                     DuckDBDataSourceEntityNode dbent = new DuckDBDataSourceEntityNode(tree, DMEEditor, DatabaseBranch, tb, tree.SeqID, EnumPointType.Entity, iconimage, DataSource);
                                     dbent.DataSourceName = DataSource.DatasourceName;
                                     dbent.DataSource = DataSource;
-                                    tree.treeBranchHandler.AddBranch(DatabaseBranch, dbent);
+                                    tree.Treebranchhandler.AddBranch(DatabaseBranch, dbent);
                                     i += 1;
                                 }
                             }
@@ -96,7 +96,7 @@ namespace TheTechIdea.Beep
             }
             return DMEEditor.ErrorObject;
         }
-        public static IErrorsInfo GetEntities(IBranch DatabaseBranch, IDMEEditor DMEEditor, IVisManager Visutil)
+        public static IErrorsInfo GetEntities(IBranch DatabaseBranch, IDMEEditor DMEEditor, IAppManager Visutil)
         {
             ITree tree = (ITree)Visutil.Tree;
             string BranchText = DatabaseBranch.BranchText;
@@ -166,7 +166,7 @@ namespace TheTechIdea.Beep
                                 DuckDBDataSourceEntityNode dbent = new DuckDBDataSourceEntityNode(tree, DMEEditor, DatabaseBranch, tb, tree.SeqID, EnumPointType.Entity, iconimage, DataSource);
                                 dbent.DataSourceName = DataSource.DatasourceName;
                                 dbent.DataSource = DataSource;
-                                tree.treeBranchHandler.AddBranch(DatabaseBranch, dbent);
+                                tree.Treebranchhandler.AddBranch(DatabaseBranch, dbent);
                                 i += 1;
                             }
                         }
@@ -199,7 +199,7 @@ namespace TheTechIdea.Beep
             }
             return DMEEditor.ErrorObject;
         }
-        public static IBranch CreateFileNode(string FileNamewPath, IBranch br, ITree TreeEditor, IDMEEditor DMEEditor, IVisManager Visutil)
+        public static IBranch CreateFileNode(string FileNamewPath, IBranch br, ITree TreeEditor, IDMEEditor DMEEditor, IAppManager Visutil)
         {
             IBranch viewbr = null;
             try

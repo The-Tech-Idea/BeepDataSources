@@ -22,7 +22,7 @@ namespace Beep.InMemory.Nodes
         {
                 
         }
-        
+        public string MenuID { get; set; } = "DuckDBDataSourceNode";
         public string GuidID { get; set; } = Guid.NewGuid().ToString();
         public string ParentGuidID { get; set; }
         public string DataSourceConnectionGuidID { get; set; }
@@ -52,7 +52,7 @@ namespace Beep.InMemory.Nodes
         public ITree TreeEditor { get; set; }
         public List<string> BranchActions { get; set; }
         public object TreeStrucure { get; set; }
-        public IVisManager Visutil { get; set; }
+        public IAppManager Visutil { get; set; }
         public int MiscID { get; set; }
         public IInMemoryDB memoryDB { get; set; }
         DuckDBDataSource DuckDBDataSource { get; set; }
@@ -220,8 +220,8 @@ namespace Beep.InMemory.Nodes
                 }
                 if (memoryDB.IsLoaded )
                 {
-                    var retval =Visutil.Controlmanager.InputBoxYesNo("Warning", "This will refresh the data in memory, Do you want to continue?");
-                    if (retval == DialogResult.Yes)
+                    var retval =Visutil.DialogManager.InputBoxYesNo("Warning", "This will refresh the data in memory, Do you want to continue?");
+                    if (retval == BeepDialogResult.Yes)
                     {
                         args.Messege = $"Loadin Data in InMemory  {DataSourceName}";
                         Visutil.ShowWaitForm(args);
@@ -302,7 +302,7 @@ namespace Beep.InMemory.Nodes
                         }
 
                     });
-                    string filepath=Visutil.Controlmanager.LoadFileDialog("CSV Files (*.csv)|*.csv|All files (*.*)|*.*", "Select CSV File",null);
+                    string filepath=Visutil.DialogManager.LoadFileDialog("CSV Files (*.csv)|*.csv|All files (*.*)|*.*", "Select CSV File",null);
                     if (!string.IsNullOrEmpty(filepath))
                     {
                         string tablename = "";
@@ -378,7 +378,7 @@ namespace Beep.InMemory.Nodes
                     }
 
                 });
-                string filepath = Visutil.Controlmanager.LoadFileDialog("parquet Files (*.parquet)|*.parquet|All files (*.*)|*.*", "Select parquet File", null);
+                string filepath = Visutil.DialogManager.LoadFileDialog("parquet Files (*.parquet)|*.parquet|All files (*.*)|*.*", "Select parquet File", null);
                 if (!string.IsNullOrEmpty(filepath))
                 {
                     string tablename = "";
@@ -450,7 +450,7 @@ namespace Beep.InMemory.Nodes
                         token.ThrowIfCancellationRequested();
                     }
                 });
-                string filepath = Visutil.Controlmanager.LoadFileDialog("JSON Files (*.json)|*.json|All files (*.*)|*.*", "Select JSON File", null);
+                string filepath = Visutil.DialogManager.LoadFileDialog("JSON Files (*.json)|*.json|All files (*.*)|*.*", "Select JSON File", null);
                 if (!string.IsNullOrEmpty(filepath))
                 {
                     string tablename = "";
