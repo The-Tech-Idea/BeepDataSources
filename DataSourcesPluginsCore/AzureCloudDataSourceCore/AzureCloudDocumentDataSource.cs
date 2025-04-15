@@ -14,7 +14,7 @@ using TheTechIdea.Beep.Editor;
 
 namespace TheTechIdea.Beep.Cloud
 {
-    [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.WebService)]
+    [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.WebApi)]
     public class AzureCloudDocumentDataSource : IDataSource
     {
         public string GuidID { get; set; }

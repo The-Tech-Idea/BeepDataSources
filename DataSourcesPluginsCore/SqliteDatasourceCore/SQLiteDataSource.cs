@@ -43,7 +43,7 @@ namespace TheTechIdea.Beep.DataBase
                 {
                     Dataconnection = new RDBDataConnection(DMEEditor);
                 }
-                Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.FirstOrDefault(p => p.ConnectionName.Equals(pdatasourcename, StringComparison.InvariantCultureIgnoreCase)); ;
+                Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.FirstOrDefault(p => p.ConnectionName!=null && p.ConnectionName.Equals(pdatasourcename, StringComparison.InvariantCultureIgnoreCase)); ;
                 if (Dataconnection.ConnectionProp == null)
                 {
                     Dataconnection.ConnectionProp = new ConnectionProperties();

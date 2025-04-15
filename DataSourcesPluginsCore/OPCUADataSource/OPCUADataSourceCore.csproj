@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+		<TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>Latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -27,8 +27,8 @@
 		</None>
 	</ItemGroup>
   <ItemGroup>
-    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.374.126" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.2" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.375.457" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.42" />
   </ItemGroup>
 
 </Project>

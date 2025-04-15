@@ -42,6 +42,7 @@ namespace DuckDBDataSourceCore
                 BranchID = ID;
             }
         }
+        public string MenuID { get; set; }
         public bool Visible { get; set; } = true;
         public string GuidID { get; set; } = Guid.NewGuid().ToString();
         public string ParentGuidID { get; set; }
@@ -69,7 +70,7 @@ namespace DuckDBDataSourceCore
         public ITree TreeEditor { get; set; }
         public List<string> BranchActions { get; set; }
         public object TreeStrucure { get; set; }
-        public IVisManager Visutil { get; set; }
+        public IAppManager Visutil { get; set; }
         public string ObjectType { get; set; } = "Beep";
         public int MiscID { get; set; }
         public bool IsDataSourceNode { get ; set; }=false;
@@ -185,7 +186,7 @@ namespace DuckDBDataSourceCore
                 };
                 DMEEditor.Passedarguments = args;
                 IBranch pbr = TreeEditor.Branches.Where(x => x.BranchType == EnumPointType.Root && x.BranchClass == "VIEW").FirstOrDefault();
-                TreeEditor.treeBranchHandler.SendActionFromBranchToBranch(pbr, this, "Create View using Table");
+                TreeEditor.Treebranchhandler.SendActionFromBranchToBranch(pbr, this, "Create View using Table");
 
             }
             catch (Exception ex)
@@ -326,7 +327,7 @@ namespace DuckDBDataSourceCore
             bool entityexist = true;
             try
             {
-                if (Visutil.Controlmanager.InputBoxYesNo("Beep DM", "Are you sure you ?") == DialogResult.Yes)
+                if (Visutil.DialogManager.InputBoxYesNo("Beep DM", "Are you sure you ?") == BeepDialogResult.Yes)
                 {
 
                     EntityStructure = DataSource.GetEntityStructure(BranchText, true);
@@ -339,7 +340,7 @@ namespace DuckDBDataSourceCore
                         }
                         if (DMEEditor.ErrorObject.Flag == Errors.Ok || !entityexist)
                         {
-                            TreeEditor.treeBranchHandler.RemoveBranch(this);
+                            TreeEditor.Treebranchhandler.RemoveBranch(this);
                             DataSource.Entities.RemoveAt(DataSource.Entities.FindIndex(p => p.DatasourceEntityName == EntityStructure.DatasourceEntityName));
                             DMEEditor.AddLogMessage("Success", $"Droped Entity {EntityStructure.EntityName}", DateTime.Now, -1, null, Errors.Ok);
                         }

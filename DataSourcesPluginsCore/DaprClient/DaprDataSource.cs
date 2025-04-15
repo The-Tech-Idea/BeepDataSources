@@ -29,7 +29,7 @@ using static Dapr.Client.Autogen.Grpc.v1.Dapr;
 
 namespace DaprClient
 {
-    [AddinAttribute(Category = DatasourceCategory.WEBAPI, DatasourceType = DataSourceType.WebService)]
+    [AddinAttribute(Category = DatasourceCategory.WEBAPI, DatasourceType = DataSourceType.WebApi)]
     public class DaprDataSource : IDataSource
     {
         public string GuidID { get; set; }
@@ -115,7 +115,7 @@ namespace DaprClient
             // Return a default value or throw an exception if the query failed.
             return 0.0; // You can change this default value as needed.
         }
-        public DataSourceType DatasourceType { get; set; } = DataSourceType.WebService;
+        public DataSourceType DatasourceType { get; set; } = DataSourceType.WebApi;
         public DatasourceCategory Category { get; set; } = DatasourceCategory.WEBAPI;
         public IDataConnection Dataconnection { get ; set ; }
         public string DatasourceName { get ; set ; }
