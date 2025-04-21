@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>Latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -11,11 +11,19 @@
 		<PackageIcon>SimpleODM.png</PackageIcon>
 		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<Version>1.0.45</Version>
-		<Title>DuckDBDataSourceCore</Title>
-		<PackageId>TheTechIdea.Beep.DuckDBDataSourceCore</PackageId>
+		<Version>1.0.0</Version>
+		<Title>SharpVectorDataSourceCore</Title>
+		<PackageId>TheTechIdea.Beep.SharpVectorDataSourceCore</PackageId>
 
 	</PropertyGroup>
+
+	<ItemGroup>
+    <PackageReference Include="Build5Nines.SharpVector" Version="2.0.4" />
+    <PackageReference Include="Build5Nines.SharpVector.Ollama" Version="2.0.3" />
+    <PackageReference Include="Build5Nines.SharpVector.OpenAI" Version="2.0.3" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.24" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.57" />
+  </ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName).dll" DestinationFolder="$(ProjectDir)..\..\..\outputDLL\DataSources\$(MSBuildProjectName)\$(TargetFramework)" SkipUnchangedFiles="false" />
@@ -29,17 +37,4 @@
 			<PackagePath>\</PackagePath>
 		</None>
 	</ItemGroup>
-	<ItemGroup>
-	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="1.2.1" />
-	  <PackageReference Include="DuckDB.NET.Data.Full" Version="1.2.1" />
-	  <PackageReference Include="System.Data.Odbc" Version="9.0.4" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.24" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.57" />
-	  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.1" />
-	  <PackageReference Include="TheTechIdea.Beep.Vis.Modules" Version="1.0.139" />
-	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="gfx\" />
-	</ItemGroup>
-
 </Project>

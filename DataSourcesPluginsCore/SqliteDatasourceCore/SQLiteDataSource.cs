@@ -530,7 +530,7 @@ namespace TheTechIdea.Beep.DataBase
         }
 
         #endregion
-        public IErrorsInfo CreateStructure(Progress<PassedArgs> progress, CancellationToken token)
+        public IErrorsInfo CreateStructure(IProgress<PassedArgs> progress, CancellationToken token)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
@@ -554,7 +554,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             return DMEEditor.ErrorObject;
         }
-        public virtual IErrorsInfo LoadData(Progress<PassedArgs> progress, CancellationToken token)
+        public virtual IErrorsInfo LoadData(IProgress<PassedArgs> progress, CancellationToken token)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
@@ -577,7 +577,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             return DMEEditor.ErrorObject;
         }
-        public virtual IErrorsInfo LoadStructure(Progress<PassedArgs> progress, CancellationToken token, bool copydata = false)
+        public virtual IErrorsInfo LoadStructure(IProgress<PassedArgs> progress, CancellationToken token, bool copydata = false)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
@@ -656,23 +656,23 @@ namespace TheTechIdea.Beep.DataBase
             }
             return DMEEditor.ErrorObject;
         }
-        public virtual IErrorsInfo SyncData(Progress<PassedArgs> progress, CancellationToken token)
+        public virtual IErrorsInfo SyncData(IProgress<PassedArgs> progress, CancellationToken token)
         {
             OnSyncData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
             return DMEEditor.ErrorObject;
         }
-        public IErrorsInfo SyncData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
+        public IErrorsInfo SyncData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
         {
             OnSyncData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
             return DMEEditor.ErrorObject;
         }
 
-        public IErrorsInfo RefreshData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
+        public IErrorsInfo RefreshData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
         {
             OnRefreshData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
             return DMEEditor.ErrorObject;
         }
-        public IErrorsInfo RefreshData( Progress<PassedArgs> progress, CancellationToken token)
+        public IErrorsInfo RefreshData( IProgress<PassedArgs> progress, CancellationToken token)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             bool isdeleted = false;
