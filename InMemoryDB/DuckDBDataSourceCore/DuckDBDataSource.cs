@@ -17,10 +17,9 @@ using TheTechIdea.Beep.Addin;
 using System.Reflection;
 using System.Text;
 using System.Xml;
-using static DuckDB.NET.Native.NativeMethods;
-using DuckDB.NET.Native;
+
 using System.Data.Common;
-using System.Data.Odbc;
+
 using TheTechIdea.Beep.Report;
 
 using DateTime = System.DateTime;
@@ -70,21 +69,36 @@ namespace DuckDBDataSourceCore
            
             dbpath = Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath, DatasourceName);
         }
- 
+
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects)
+                    // Dispose managed resources
+                    if (DuckConn != null)
+                    {
+                        DuckConn.Dispose();
+                        DuckConn = null;
+                    }
+                    if (Transaction != null)
+                    {
+                        Transaction.Dispose();
+                        Transaction = null;
+                    }
+                    if (command != null)
+                    {
+                        command.Dispose();
+                        command = null;
+                    }
                 }
 
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
+                // Free unmanaged resources and override finalizer
                 disposedValue = true;
             }
         }
+
         // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
         // ~DuckDBDataSource()
         // {
@@ -108,24 +122,30 @@ namespace DuckDBDataSourceCore
                 Dataconnection.ConnectionProp.Database = databasename;
                 Dataconnection.ConnectionProp.ConnectionName = databasename;
                 Dataconnection.ConnectionProp.SchemaName = "main";
-                // connection = new OdbcConnection("Driver={DuckDB};"+$"Database={databasename};");
-                DuckConn= new DuckDBConnection("DataSource=:memory:?cache=shared");
+
+                DuckConn = new DuckDBConnection("DataSource=:memory:?cache=shared");
                 DuckConn.Open();
-                if (DuckConn.State== ConnectionState.Open)
+                if (DuckConn.State == ConnectionState.Open)
                 {
                     Dataconnection.ConnectionStatus = ConnectionState.Open;
-                }else
+                }
+                else
+                {
                     Dataconnection.ConnectionStatus = ConnectionState.Closed;
-
-
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.ErrorObject.Message = "Failed to open in-memory database connection";
+                }
             }
             catch (Exception ex)
             {
-
-                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", System.DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.AddLogMessage("Beep", $"Error opening in-memory database: {ex.Message}",
+                    System.DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
         }
+
         public string GetConnectionString()
         {
             return Dataconnection.ConnectionProp.ConnectionString;
@@ -167,46 +187,72 @@ namespace DuckDBDataSourceCore
         }
         public override ConnectionState Closeconnection()
         {
-            ConnectionState retval= ConnectionState.Closed;
+            ConnectionState retval = ConnectionState.Closed;
             try
             {
                 SaveStructure();
-                if(DuckConn!=null)
+                if (DuckConn != null)
                 {
                     DuckConn.Close();
+                    Dataconnection.ConnectionStatus = ConnectionState.Closed;
+                    DMEEditor.AddLogMessage("Success", $"Closing connection to DuckDB Database",
+                        System.DateTime.Now, 0, null, Errors.Ok);
                 }
-             
-                Dataconnection.ConnectionStatus = ConnectionState.Closed;
-                DMEEditor.AddLogMessage("Success", $"Closing connection to Sqlite Database", System.DateTime.Now, 0, null, Errors.Ok);
             }
             catch (Exception ex)
             {
-                string errmsg = "Error Closing connection to Sqlite Database";
-                DMEEditor.AddLogMessage("Fail", $"{errmsg}:{ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+                string errmsg = "Error Closing connection to DuckDB Database";
+                DMEEditor.AddLogMessage("Fail", $"{errmsg}:{ex.Message}",
+                    System.DateTime.Now, 0, null, Errors.Failed);
             }
-            //  return RDBMSConnection.DbConn.State;
             return retval;
-
         }
+
         public override IErrorsInfo BeginTransaction(PassedArgs args)
         {
-            Transaction= DuckConn.BeginTransaction();
+            if (DuckConn == null || DuckConn.State != ConnectionState.Open)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Message = "Cannot begin transaction: Connection is not open";
+                return DMEEditor.ErrorObject;
+            }
+
+            Transaction = DuckConn.BeginTransaction();
             return base.BeginTransaction(args);
         }
+
         public override IErrorsInfo Commit(PassedArgs args)
         {
+            if (Transaction == null)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Message = "Cannot commit: No active transaction";
+                return DMEEditor.ErrorObject;
+            }
+
             Transaction.Commit();
-            return base.Commit(args);   
+            Transaction = null;
+            return base.Commit(args);
         }
+
         public override IErrorsInfo EndTransaction(PassedArgs args)
         {
+            if (Transaction == null)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Message = "Cannot rollback: No active transaction";
+                return DMEEditor.ErrorObject;
+            }
+
             Transaction.Rollback();
+            Transaction = null;
             return base.EndTransaction(args);
         }
+
         #endregion "IDataSource Methods"
         #region "DuckDB Methods"
-      
-        public  string DuckDBConvert(Type netType)
+
+        public string DuckDBConvert(Type netType)
         {
             if (netType == typeof(bool))
                 return "BOOLEAN";
@@ -865,7 +911,7 @@ namespace DuckDBDataSourceCore
             DataRowView dv;
             DataTable tb;
             DataRow dr;
-            var sqlTran = RDBMSConnection.DbConn.BeginTransaction();
+            var sqlTran = RDBMSConnection?.DbConn.BeginTransaction();
             if (recEntity != EntityName)
             {
                 recNumber = 1;
@@ -944,31 +990,43 @@ namespace DuckDBDataSourceCore
 
             return EntitiesNames;
         }
-        //public override bool CreateEntityAs(EntityStructure entity)
-        //{
-        //    DMEEditor.ErrorObject.Flag = Errors.Ok;
-        //    bool retval = false;
-        //    try
-        //    {
-        //        string sql = $"CREATE TABLE {entity.EntityName} (";
-        //        foreach (EntityField fld in entity.Fields)
-        //        {
-        //            sql += $"{fld.fieldname} {DuckDBConvert(fld.fieldtype)},";
-        //        }
-        //        sql = sql.TrimEnd(',') + ")";
-        //        using (var cmd = new DuckDBCommand(sql, DuckConn))
-        //        {
-        //            cmd.ExecuteNonQuery();
-        //        }
-        //        retval = true;
-        //        DMEEditor.AddLogMessage("Success", $"Creating Entity {entity.EntityName}", System.DateTime.Now, 0, null, Errors.Ok);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        DMEEditor.AddLogMessage("Fail", $"Error in Creating Entity {entity.EntityName} {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
-        //    }
-        //    return retval;
-        //}
+        public override bool CreateEntityAs(EntityStructure entity)
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            bool retval = false;
+            try
+            {
+                string sql = $"CREATE TABLE {entity.EntityName} (";
+                foreach (EntityField fld in entity.Fields)
+                {
+                    string fieldType = DuckDBConvert(fld.fieldtype);
+                    sql += $"{fld.fieldname} {fieldType}";
+
+                    // Add constraints
+                    if (!fld.AllowDBNull)
+                        sql += " NOT NULL";
+                    if (fld.IsKey)
+                        sql += " PRIMARY KEY";
+                    if (fld.IsAutoIncrement)
+                        sql += " AUTOINCREMENT";
+
+                    sql += ",";
+                }
+                sql = sql.TrimEnd(',') + ")";
+                using (var cmd = new DuckDBCommand(sql, DuckConn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                retval = true;
+                DMEEditor.AddLogMessage("Success", $"Creating Entity {entity.EntityName}", System.DateTime.Now, 0, null, Errors.Ok);
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Fail", $"Error in Creating Entity {entity.EntityName} {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+            }
+            return retval;
+        }
+
         public override object RunQuery(string qrystr)
         {
             if (RDBMSHelper.IsSqlStatementValid(qrystr)) { return RunQueryOnDuckDb(qrystr); }
@@ -1093,108 +1151,83 @@ namespace DuckDBDataSourceCore
                 if (!command.Parameters.Contains("p_" + Regex.Replace(item.fieldname, @"\s+", "_")))
                 {
                     DbParameter parameter = command.CreateParameter();
-                    switch (item.fieldtype)
-                    {
-                        case "System.DateTime":
-                            parameter.DbType = DbType.DateTime;
-                            if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
-                            {
-
-                                parameter.Value = DBNull.Value;
-                                parameter.DbType = DbType.DateTime;
-                            }
-                            else
-                            {
-                                parameter.DbType = DbType.DateTime;
-                                try
-                                {
-                                    parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
-                                }
-                                catch (FormatException formatex)
-                                {
-
-                                    parameter.Value = null;
-                                }
-                            }
-                            break;
-                        case "System.Double":
-                            parameter.DbType = DbType.Double;
-                            parameter.Value = Convert.ToDouble(r[item.fieldname]);
-                            break;
-                        case "System.Single": // Single is equivalent to float in C#
-                            parameter.DbType = DbType.Single;
-                            parameter.Value = Convert.ToSingle(r[item.fieldname]);
-                            break;
-                        case "System.Byte":
-                            parameter.DbType = DbType.Byte;
-                            parameter.Value = Convert.ToByte(r[item.fieldname]);
-                            break;
-                        case "System.Guid":
-                            parameter.DbType = DbType.Guid;
-                            parameter.Value = Guid.Parse(r[item.fieldname].ToString());
-                            break;
-                        case "System.String":  // For VARCHAR2 and NVARCHAR2
-                            parameter.DbType = DbType.String;
-                            parameter.Value = r[item.fieldname] ?? DBNull.Value;
-                            break;
-                        case "System.Decimal":  // For NUMBER without scale
-                            parameter.DbType = DbType.Decimal;
-                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToDecimal(r[item.fieldname]);
-                            break;
-                        case "System.Int32":  // For NUMBER that fits into Int32
-                            parameter.DbType = DbType.Int32;
-                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToInt32(r[item.fieldname]);
-                            break;
-                        case "System.Int64":  // For NUMBER that fits into Int64
-                            parameter.DbType = DbType.Int64;
-                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToInt64(r[item.fieldname]);
-                            break;
-                        case "System.Boolean":  // If you have a boolean in .NET mapped to VARCHAR2(3 CHAR) in Oracle
-                            parameter.DbType = DbType.Boolean;
-                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToBoolean(r[item.fieldname]);
-                            break;
-                        // Add more cases as needed for other types
-                        default:
-                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : r[item.fieldname];
-                            break;
-                    }
-                    //if (!item.fieldtype.Equals("System.String", StringComparison.OrdinalIgnoreCase) && !item.fieldtype.Equals("System.DateTime", StringComparison.OrdinalIgnoreCase))
-                    //{
-                    //    if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
-                    //    {
-                    //        parameter.Value = Convert.ToDecimal(null);
-                    //    }
-                    //    else
-                    //    {
-                    //        parameter.Value = r[item.fieldname];
-                    //    }
-                    //}
-                    //else
-                    //    if (item.fieldtype.Equals("System.DateTime", StringComparison.OrdinalIgnoreCase))
-                    //{
-                    //    if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
-                    //    {
-
-                    //        parameter.Value = DBNull.Value;
-                    //        parameter.DbType = DbType.DateTime;
-                    //    }
-                    //    else
-                    //    {
-                    //        parameter.DbType = DbType.DateTime;
-                    //        try
-                    //        {
-                    //            parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
-                    //        }
-                    //        catch (FormatException formatex)
-                    //        {
-
-                    //            parameter.Value = Oracle.ManagedDataAccess.Types.OracleTimeStamp.Null;
-                    //        }
-                    //    }
-                    //}
-                    //else
-                    //    parameter.Value = r[item.fieldname];
                     parameter.ParameterName = "p_" + Regex.Replace(item.fieldname, @"\s+", "_");
+
+                    if (r.IsNull(item.fieldname))
+                    {
+                        parameter.Value = DBNull.Value;
+                    }
+                    else
+                    {
+                        switch (item.fieldtype)
+                        {
+                            case "System.DateTime":
+                                parameter.DbType = DbType.DateTime;
+                                if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                                {
+
+                                    parameter.Value = DBNull.Value;
+                                    parameter.DbType = DbType.DateTime;
+                                }
+                                else
+                                {
+                                    parameter.DbType = DbType.DateTime;
+                                    try
+                                    {
+                                        parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
+                                    }
+                                    catch (FormatException formatex)
+                                    {
+
+                                        parameter.Value = null;
+                                    }
+                                }
+                                break;
+                            case "System.Double":
+                                parameter.DbType = DbType.Double;
+                                parameter.Value = Convert.ToDouble(r[item.fieldname]);
+                                break;
+                            case "System.Single": // Single is equivalent to float in C#
+                                parameter.DbType = DbType.Single;
+                                parameter.Value = Convert.ToSingle(r[item.fieldname]);
+                                break;
+                            case "System.Byte":
+                                parameter.DbType = DbType.Byte;
+                                parameter.Value = Convert.ToByte(r[item.fieldname]);
+                                break;
+                            case "System.Guid":
+                                parameter.DbType = DbType.Guid;
+                                parameter.Value = Guid.Parse(r[item.fieldname].ToString());
+                                break;
+                            case "System.String":  // For VARCHAR2 and NVARCHAR2
+                                parameter.DbType = DbType.String;
+                                parameter.Value = r[item.fieldname] ?? DBNull.Value;
+                                break;
+                            case "System.Decimal":  // For NUMBER without scale
+                                parameter.DbType = DbType.Decimal;
+                                parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToDecimal(r[item.fieldname]);
+                                break;
+                            case "System.Int32":  // For NUMBER that fits into Int32
+                                parameter.DbType = DbType.Int32;
+                                parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToInt32(r[item.fieldname]);
+                                break;
+                            case "System.Int64":  // For NUMBER that fits into Int64
+                                parameter.DbType = DbType.Int64;
+                                parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToInt64(r[item.fieldname]);
+                                break;
+                            case "System.Boolean":  // If you have a boolean in .NET mapped to VARCHAR2(3 CHAR) in Oracle
+                                parameter.DbType = DbType.Boolean;
+                                parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToBoolean(r[item.fieldname]);
+                                break;
+                            // Add more cases as needed for other types
+                            default:
+                                parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : r[item.fieldname];
+                                break;
+                        }
+                    }
+                  
+            
+                    
                     //   parameter.DbType = TypeToDbType(tb.Columns[item.fieldname].DataType);
                     command.Parameters.Add(parameter);
                 }

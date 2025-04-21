@@ -1,10 +1,13 @@
 ﻿using DuckDB.NET.Data;
 using DuckDB.NET.Native;
 using System.Data;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
 using static DuckDB.NET.Native.NativeMethods;
 
 namespace DuckDBDataSourceCore
 {
+    
     public static class DuckDbExtendedFunctions
     {
         public static void CreateSequence(this DuckDBDataSource DuckDB, string sequenceName, int start = 1, int increment = 1, int minValue = 1, int maxValue = int.MaxValue, bool cycle = false)
