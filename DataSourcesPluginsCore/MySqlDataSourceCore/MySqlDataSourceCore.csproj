@@ -36,10 +36,10 @@
   <Compile Remove="..\..\DataSourcesPlugins\MySql\MySQLDataSource.cs" />
 </ItemGroup>
 <ItemGroup>
-  <PackageReference Include="MySql.Data" Version="9.2.0" />
-  <PackageReference Include="System.Text.Json" Version="9.0.3" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.16" />
-  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.0" />
+  <PackageReference Include="MySql.Data" Version="9.3.0" />
+  <PackageReference Include="System.Text.Json" Version="9.0.4" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.24" />
+  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.1" />
 </ItemGroup>
 
 </Project>

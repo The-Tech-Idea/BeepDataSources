@@ -38,9 +38,9 @@
 </ItemGroup>
 <ItemGroup>
   <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.16" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.42" />
-  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.0" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.24" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.57" />
+  <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.1" />
 </ItemGroup>
 
 
