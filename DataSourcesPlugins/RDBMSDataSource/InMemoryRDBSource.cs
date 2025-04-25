@@ -15,6 +15,7 @@ using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities    ;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Addin;
+using Microsoft.CodeAnalysis.Operations;
 
 
 namespace TheTechIdea.Beep
@@ -30,9 +31,12 @@ namespace TheTechIdea.Beep
             ErrorObject = per;
             DatasourceName = pdatasourcename;
             DatasourceType = databasetype;
-            Createfolder(DatasourceName);
-
-
+            if (Dataconnection?.ConnectionProp?.Entities != null)
+            {
+                Entities = Dataconnection.ConnectionProp.Entities.ToList();
+                EntitiesNames = Entities.Select(e => e.EntityName).ToList();
+                InMemoryStructures = Entities;
+            }
         }
 
         #endregion
@@ -45,12 +49,7 @@ namespace TheTechIdea.Beep
         public bool IsStructureLoaded { get; set; } = false;
         public ETLScriptHDR CreateScript { get; set; } = new ETLScriptHDR();
         public List<EntityStructure> InMemoryStructures { get; set; } = new List<EntityStructure>();
-   
-        public static string BeepDataPath { get; private set; }
-        public static string InMemoryPath { get; private set; }
-        public static string Filepath { get; private set; }
-        public static string InMemoryStructuresfilepath { get; private set; }
-        public static bool Isfoldercreated { get; private set; } = false;
+ 
         #endregion
         #region "InMemoryDataSource Methods"
         public virtual string GetConnectionString()
@@ -62,7 +61,7 @@ namespace TheTechIdea.Beep
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
             {
-                if (Isfoldercreated && IsCreated)
+                if ( IsCreated)
                 {
                     List<ETLScriptDet> retscripts = DMEEditor.ETL.GetCopyDataEntityScript(this, Entities, progress, token);
                     DMEEditor.ETL.Script.ScriptDTL = retscripts;
@@ -85,80 +84,154 @@ namespace TheTechIdea.Beep
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
             {
-
-                if (IsLoaded == false && IsCreated == false && IsStructureCreated == false && Entities.Count == 0)
+                if (!IsStructureLoaded)
                 {
-                    if (Isfoldercreated)
+                    Entities.Clear();
+                    EntitiesNames.Clear();
+                    LoadEntities(DatasourceName);
+                    if (Dataconnection?.ConnectionProp?.Entities != null && Dataconnection.ConnectionProp.Entities.Any())
                     {
-                        ConnectionStatus = ConnectionState.Open;
-                        InMemoryStructures = new List<EntityStructure>();
-                        Entities = new List<EntityStructure>();
-                        EntitiesNames = new List<string>();
-                        if (File.Exists(InMemoryStructuresfilepath))
-                        {
-                            InMemoryStructures = DMEEditor.ConfigEditor.JsonLoader.DeserializeSingleObject<List<EntityStructure>>(InMemoryStructuresfilepath);
-                            CreateScript = new ETLScriptHDR();
-                            CreateScript.ScriptDTL.AddRange(DMEEditor.ETL.GetCreateEntityScript(this, InMemoryStructures, progress, token, true));
-                            foreach (var item in CreateScript.ScriptDTL)
-                            {
-                                item.CopyDataScripts.AddRange(DMEEditor.ETL.GetCopyDataEntityScript(this, new List<EntityStructure>() { item.SourceEntity }, progress, token));
-                            }
-                        }
-                        if (!IsStructureLoaded)
-                        {
-                            if (File.Exists(Filepath))
-                            {
-                                CreateScript = DMEEditor.ConfigEditor.JsonLoader.DeserializeSingleObject<ETLScriptHDR>(Filepath);
-                                if (CreateScript == null)
-                                {
-                                    CreateScript = new ETLScriptHDR();
-                                }
-                                else
-                                {
-                                    IsStructureCreated = false;
-                                }
-                            }
-                        }
-                        //    SaveStructure();
-                        OnLoadStructure?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
-                    }
-                }
+                      
+                        IsStructureLoaded = true;
+                        IsLoaded = true;
+                   }
 
+                    OnLoadStructure?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+                }
             }
             catch (Exception ex)
             {
+                IsStructureLoaded = false;
                 IsStructureCreated = false;
-                DMEEditor.AddLogMessage("Beep", $"Could not Load InMemory Structure for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor.AddLogMessage("Beep", $"Failed to load in-memory structure: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
         }
         public virtual IErrorsInfo SaveStructure()
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
+
             try
             {
-                CancellationTokenSource token = new CancellationTokenSource();
-                var progress = new Progress<PassedArgs>(percent => { });
-
-                // remove every entity in InMemoryStructures that does not exist in Entities
-                InMemoryStructures = InMemoryStructures.Where(p => Entities.Any(p2 => p2.EntityName == p.EntityName)).ToList();
-
-                CreateScript = new ETLScriptHDR();
-                CreateScript.ScriptDTL.AddRange(DMEEditor.ETL.GetCreateEntityScript(this, InMemoryStructures, progress, token.Token, true));
-                foreach (var item in CreateScript.ScriptDTL)
+                // Step 1: Get the latest list of table/entity names
+                if(Entities == null || Entities.Count == 0)
                 {
-                    item.CopyDataScripts.AddRange(DMEEditor.ETL.GetCopyDataEntityScript(this, new List<EntityStructure>() { item.SourceEntity }, progress, token.Token));
+                    DMEEditor.AddLogMessage("Beep", $"No entities found in the in-memory structure for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
+                    return DMEEditor.ErrorObject;
                 }
-                DMEEditor.ConfigEditor.JsonLoader.Serialize(Filepath, CreateScript);
-                DMEEditor.ConfigEditor.JsonLoader.Serialize(InMemoryStructuresfilepath, InMemoryStructures);
+                if(ConnectionStatus!= ConnectionState.Open)
+                {
+                    DMEEditor.AddLogMessage("Beep", $"Connection is not established for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                var entityNamesFromDb = GetEntitesList();
+                SyncEntitiesNameandEntities();
+                // Step 2: Ensure Entities collection contains all the entities from the database
+
+                SaveEntites(DatasourceName);
+
+                // Step 7: Raise event
                 OnSaveStructure?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Beep", $"Could not save InMemory Structure for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Failed to save in-memory structure for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
+
             return DMEEditor.ErrorObject;
         }
+        public void SyncEntitiesNameandEntities()
+        {
+            try
+            {
+                // Initialize collections if they're null
+                if (Entities == null) Entities = new List<EntityStructure>();
+                if (EntitiesNames == null) EntitiesNames = new List<string>();
+
+                // Step 1: Create a copy of EntitiesNames to safely iterate
+                var entityNamesToProcess = new List<string>(EntitiesNames);
+                var entityNamesToRemove = new List<string>();
+
+                // Step 2: Check entities in EntitiesNames and add missing ones to Entities
+                foreach (string entityName in entityNamesToProcess)
+                {
+                    if (string.IsNullOrEmpty(entityName)) continue;
+
+                    // Check if entity already exists in Entities collection
+                    bool entityExists = Entities.Any(e => e.EntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase));
+
+                    if (!entityExists)
+                    {
+                        // Try to get entity structure
+                        EntityStructure entityStructure = GetEntityStructure(entityName);
+                        if (entityStructure != null)
+                        {
+                            // Add to Entities if not already there
+                            Entities.Add(entityStructure);
+                            DMEEditor.AddLogMessage("Success", $"Added entity {entityName} to Entities collection", DateTime.Now, 0, null, Errors.Ok);
+                        }
+                        else
+                        {
+                            // Mark for removal from EntitiesNames if structure couldn't be retrieved
+                            entityNamesToRemove.Add(entityName);
+                            DMEEditor.AddLogMessage("Warning", $"Could not get structure for entity {entityName}, removing from EntitiesNames", DateTime.Now, 0, null, Errors.Warning);
+                        }
+                    }
+                }
+
+                // Step 3: Remove invalid entities from EntitiesNames
+                foreach (string entityToRemove in entityNamesToRemove)
+                {
+                    EntitiesNames.Remove(entityToRemove);
+                }
+
+                // Step 4: Check Entities collection and ensure all are in EntitiesNames
+                // Also create missing entities in database if needed
+                foreach (EntityStructure entity in Entities.ToList()) // Use ToList() to avoid collection modification issues
+                {
+                    if (entity == null || string.IsNullOrEmpty(entity.EntityName)) continue;
+
+                    // Check if entity name exists in EntitiesNames
+                    if (!EntitiesNames.Contains(entity.EntityName, StringComparer.OrdinalIgnoreCase))
+                    {
+                        // Try to create entity in database
+                        bool created = CreateEntityAs(entity);
+
+                        if (created)
+                        {
+                            // Add to EntitiesNames if successfully created
+                            EntitiesNames.Add(entity.EntityName);
+                            DMEEditor.AddLogMessage("Success", $"Created entity {entity.EntityName} in database and added to EntitiesNames", DateTime.Now, 0, null, Errors.Ok);
+                        }
+                        else
+                        {
+                            DMEEditor.AddLogMessage("Warning", $"Failed to create entity {entity.EntityName} in database", DateTime.Now, 0, null, Errors.Warning);
+                        }
+                    }
+                }
+
+                // Step 5: Sync with InMemoryStructures
+                if (InMemoryStructures == null) InMemoryStructures = new List<EntityStructure>();
+                InMemoryStructures = new List<EntityStructure>(Entities);
+
+                // Step 6: Sync with ConnectionProp.Entities if available
+                if (Dataconnection?.ConnectionProp?.Entities != null)
+                {
+                    Dataconnection.ConnectionProp.Entities = InMemoryStructures;
+                }
+
+                // Mark as synced
+                IsSynced = true;
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Error", $"Error synchronizing entities: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                IsSynced = false;
+            }
+        }
+
+
         public virtual IErrorsInfo OpenDatabaseInMemory(string databasename)
         {
             return DMEEditor.ErrorObject;
@@ -185,7 +258,7 @@ namespace TheTechIdea.Beep
             bool isdeleted = false;
             try
             {
-                if (Isfoldercreated && IsCreated)
+                if (IsCreated)
                 {
                     // delete all data in the  sqllite InMemory database
                     foreach (var item in InMemoryStructures)
@@ -244,29 +317,24 @@ namespace TheTechIdea.Beep
             {
                 return false;
             }
-            bool retval = base.CreateEntityAs(entity);
+            bool created = base.CreateEntityAs(entity);
             entity.DataSourceID = ds;
-            if (retval)
+            if (created)
             {
-                if (EntitiesNames.Contains(entity.EntityName) == false)
-                {
+                Entities.Add(entity);
+                EntitiesNames.Add(entity.EntityName);
+                InMemoryStructures.Add(entity);
 
-                    EntitiesNames.Add(entity.EntityName);
-                }
-                if (Entities.Where(c => c.EntityName == entity.EntityName).Count() == 0)
+                if (Dataconnection?.ConnectionProp?.Entities != null)
                 {
-                    Entities.Add(entity);
+                    Dataconnection.ConnectionProp.Entities = InMemoryStructures;
                 }
+
+                IsLoaded = IsCreated = IsStructureCreated = true;
             }
 
-           
-                IsLoaded = true;
-                IsCreated = true;
-                IsStructureCreated = true;
-                InMemoryStructures.Add(entity);
-          
+            return created;
 
-            return retval;
         }
        
         #endregion
@@ -278,6 +346,7 @@ namespace TheTechIdea.Beep
             {
                 if (disposing)
                 {
+                    SaveStructure();
                     // TODO: dispose managed state (managed objects)
                 }
 
@@ -304,46 +373,58 @@ namespace TheTechIdea.Beep
 
         #endregion
         #region "Load Save Data Methods"
-        private void Createfolder(string datasourcename)
+        public  IErrorsInfo SaveEntites( string datasourcename)
         {
-            if (!string.IsNullOrEmpty(datasourcename))
+
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            PassedArgs passedArgs = new PassedArgs { DatasourceName = datasourcename     };
+            try
             {
-                try
+                IDataSource DataSource = DMEEditor.GetDataSource(datasourcename);
+                if (DataSource != null)
                 {
-                    if (!Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "TheTechIdea", "Beep")))
-                    {
-                        Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "TheTechIdea", "Beep"));
-
-                    }
-                    BeepDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "TheTechIdea", "Beep");
-                    if (!Directory.Exists(Path.Combine(BeepDataPath, "InMemory")))
-                    {
-                        Directory.CreateDirectory(Path.Combine(BeepDataPath, "InMemory"));
-
-                    }
-                    InMemoryPath = Path.Combine(BeepDataPath, "InMemory");
-                    if (!Directory.Exists(Path.Combine(InMemoryPath, datasourcename)))
-                    {
-                        Directory.CreateDirectory(Path.Combine(InMemoryPath, datasourcename));
-
-                    }
-                    Filepath = Path.Combine(InMemoryPath, datasourcename, "createscripts.json");
-                    InMemoryStructuresfilepath = Path.Combine(InMemoryPath, datasourcename, "InMemoryStructures.json");
-                    Isfoldercreated = true;
+                    DMEEditor.ConfigEditor.SaveDataSourceEntitiesValues(new TheTechIdea.Beep.ConfigUtil.DatasourceEntities { datasourcename = datasourcename, Entities = this.Entities });
                 }
-                catch (Exception ex)
-                {
-                    Isfoldercreated = false;
-                    DMEEditor.ErrorObject.Ex = ex;
-                    DMEEditor.ErrorObject.Flag = Errors.Failed;
-
-                    DMEEditor.AddLogMessage("Beep", $"Could not create InMemory Structure folders for {datasourcename}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
-                }
-
             }
-
-
-
+            catch (Exception ex)
+            {
+                DMEEditor.Logger.WriteLog($"Error in Saving Entities ({ex.Message}) ");
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Ex = ex;
+            }
+            return DMEEditor.ErrorObject;
+        }
+        public  IErrorsInfo LoadEntities( string datasourcename)
+        {
+           
+          
+           
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            PassedArgs passedArgs = new PassedArgs { DatasourceName = datasourcename };
+            try
+            {
+                IDataSource DataSource = DMEEditor.GetDataSource(datasourcename);
+                if (DataSource != null)
+                {
+                    var ents = DMEEditor.ConfigEditor.LoadDataSourceEntitiesValues(datasourcename);
+                    if (ents != null)
+                    {
+                        if (ents.Entities.Count > 0)
+                        {
+                            DataSource.Entities = ents.Entities;
+                            DataSource.EntitiesNames = ents.Entities.Select(x => x.EntityName).ToList();
+                        }
+                    }
+                    InMemoryStructures = DataSource.Entities;
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.Logger.WriteLog($"Error in Loading Entities ({ex.Message}) ");
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Ex = ex;
+            }
+            return DMEEditor.ErrorObject;
         }
         public IErrorsInfo CreateStructure(IProgress<PassedArgs> progress, CancellationToken token)
         {
@@ -352,15 +433,21 @@ namespace TheTechIdea.Beep
             {
                 if (!IsStructureCreated)
                 {
-                    DMEEditor.ETL.Script = CreateScript;
-                    DMEEditor.ETL.Script.LastRunDateTime = System.DateTime.Now;
-                    // Running the async method synchronously
-                    var task = Task.Run(() => DMEEditor.ETL.RunCreateScript(progress, token, true, true));
-                    task.Wait(token);  // Pass the cancellation token to Wait.
-                    IsStructureCreated = true;
-                    IsStructureCreated = true;
+                    
+                    GetEntitesList();
+                    for (int i = 0; i < Entities.Count-1; i++)
+                    {
+                        if (!string.IsNullOrEmpty(Entities[i].DataSourceID))
+                        {
+                            CreateEntityAs(Entities[i]);
+                            Entities[i].IsCreated = true;
+                        }
+                       
 
+                    }
+                  
                 }
+                IsStructureCreated = true;
             }
             catch (Exception ex)
             {

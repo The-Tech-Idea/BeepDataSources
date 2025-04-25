@@ -1,6 +1,10 @@
 ﻿using DuckDB.NET.Data;
 using DuckDB.NET.Native;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Data;
+using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Helpers;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using static DuckDB.NET.Native.NativeMethods;
@@ -61,24 +65,40 @@ namespace DuckDBDataSourceCore
         public static void ImportCSV(this DuckDBDataSource DuckDB, string filePath, string tableName, bool createTable = true)
         {
             string sql;
-
-            if (createTable)
+            IDMEEditor editor = DuckDB.DMEEditor;
+            try
             {
-                // Assuming AUTO_DETECT and creating a new table
-                sql = $"CREATE TABLE {tableName} AS FROM read_csv('{filePath}');";
-            }
-            else
-            {
-                // Importing into an existing table
-                sql = $"COPY {tableName} FROM '{filePath}' (FORMAT csv, HEADER true);";
-            }
-
-          
-                using (var command = new DuckDBCommand(sql,DuckDB.DuckConn))
+                // Check if the table already exists
+                if (DuckDB.TableExists(tableName) && !createTable)
+                {
+                    // If the table exists and we are not creating a new one, we can just import data
+                    sql = $"COPY {tableName} FROM '{filePath}' (FORMAT csv, HEADER true);";
+                }
+                else
+                {
+                    // If the table does not exist or we want to create a new one
+                    sql = $"CREATE TABLE {tableName} AS SELECT * FROM read_csv_auto('{filePath}');";
+                }
+                using (var command = new DuckDBCommand(sql, DuckDB.DuckConn))
                 {
                     //connection.Open();
                     command.ExecuteNonQuery();
                 }
+                FileHelper.CreateFileDataConnection( filePath);
+                // Create EntityStructure object 
+                // and set its properties
+
+                EntityStructure entityStructure=DuckDB.GetEntityStructure(tableName);
+               
+                DuckDB.SaveStructure();
+             //   FileConnectionHelper.LoadFile(filePath);
+            }
+            catch (Exception ex)
+            {
+
+            }
+           
+
           
         }
         public static void ExportToCSV(this DuckDBDataSource DuckDB, string tableName, string filePath)

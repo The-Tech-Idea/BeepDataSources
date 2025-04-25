@@ -27,12 +27,13 @@ using System.Text.RegularExpressions;
 using System.Diagnostics;
 using TheTechIdea.Beep.Helpers;
 using System.Data.SqlTypes;
+using TheTechIdea.Beep.Workflow.DefaultRules;
 
 
 namespace DuckDBDataSourceCore
 {
     [AddinAttribute(Category = DatasourceCategory.INMEMORY, DatasourceType = DataSourceType.DuckDB)]
-    public class DuckDBDataSource : InMemoryRDBSource
+    public class DuckDBDataSource : InMemoryRDBSource,IDisposable
     {
         private bool disposedValue;
         string dbpath;
@@ -66,7 +67,12 @@ namespace DuckDBDataSourceCore
              //   Dataconnection.ConnectionProp.IsInMemory=true;
              ColumnDelimiter = "[]";
             ParameterDelimiter = "$";
-           
+            if (Dataconnection?.ConnectionProp?.Entities != null)
+            {
+                Entities = Dataconnection.ConnectionProp.Entities.ToList();
+                EntitiesNames = Entities.Select(e => e.EntityName).ToList();
+                InMemoryStructures = Entities;
+            }
             dbpath = Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath, DatasourceName);
         }
 
@@ -76,6 +82,8 @@ namespace DuckDBDataSourceCore
             {
                 if (disposing)
                 {
+
+                    SaveStructure();
                     // Dispose managed resources
                     if (DuckConn != null)
                     {
@@ -100,11 +108,11 @@ namespace DuckDBDataSourceCore
         }
 
         // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~DuckDBDataSource()
-        // {
-        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        //     Dispose(disposing: false);
-        // }
+        ~DuckDBDataSource()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: false);
+        }
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
@@ -125,9 +133,16 @@ namespace DuckDBDataSourceCore
 
                 DuckConn = new DuckDBConnection("DataSource=:memory:?cache=shared");
                 DuckConn.Open();
+
                 if (DuckConn.State == ConnectionState.Open)
                 {
                     Dataconnection.ConnectionStatus = ConnectionState.Open;
+                    if (Dataconnection?.ConnectionProp?.Entities != null)
+                    {
+                        Entities = Dataconnection.ConnectionProp.Entities.ToList();
+                        EntitiesNames = Entities.Select(e => e.EntityName).ToList();
+                        InMemoryStructures = Entities;
+                    }
                 }
                 else
                 {
@@ -160,7 +175,7 @@ namespace DuckDBDataSourceCore
         {
          
             CancellationTokenSource token = new CancellationTokenSource();
-
+            IProgress<PassedArgs> progress = new Progress<PassedArgs>();
             Dataconnection.InMemory = Dataconnection.ConnectionProp.IsInMemory;
             if (ConnectionStatus == ConnectionState.Open)
             {
@@ -173,7 +188,8 @@ namespace DuckDBDataSourceCore
                 base.Openconnection();
                 if (DMEEditor.ErrorObject.Flag == Errors.Ok)
                 {
-                    
+                    base.LoadStructure(progress, token.Token, false);
+                    base.CreateStructure(progress, token.Token);
                     return ConnectionState.Open;
                 }
             }
@@ -190,13 +206,18 @@ namespace DuckDBDataSourceCore
             ConnectionState retval = ConnectionState.Closed;
             try
             {
-                SaveStructure();
+               
                 if (DuckConn != null)
                 {
-                    DuckConn.Close();
-                    Dataconnection.ConnectionStatus = ConnectionState.Closed;
-                    DMEEditor.AddLogMessage("Success", $"Closing connection to DuckDB Database",
-                        System.DateTime.Now, 0, null, Errors.Ok);
+                    if(DuckConn.State== ConnectionState.Open)
+                    {
+                        SaveStructure();
+                        DuckConn.Close();
+                        Dataconnection.ConnectionStatus = ConnectionState.Closed;
+                        DMEEditor.AddLogMessage("Success", $"Closing connection to DuckDB Database",
+                            System.DateTime.Now, 0, null, Errors.Ok);
+                    }
+                
                 }
             }
             catch (Exception ex)
@@ -254,6 +275,9 @@ namespace DuckDBDataSourceCore
 
         public string DuckDBConvert(Type netType)
         {
+            if (netType == null)
+                return "VARCHAR";
+
             if (netType == typeof(bool))
                 return "BOOLEAN";
             else if (netType == typeof(sbyte))
@@ -280,25 +304,200 @@ namespace DuckDBDataSourceCore
                 return "DOUBLE";
             else if (netType == typeof(System.DateTime))
                 return "TIMESTAMP";
+            else if (netType == typeof(DateTimeOffset))
+                return "TIMESTAMP WITH TIME ZONE";
+            else if (netType == typeof(TimeSpan))
+                return "INTERVAL";
+            else if (netType == typeof(DateOnly))
+                return "DATE";
+            else if (netType == typeof(TimeOnly))
+                return "TIME";
             else if (netType == typeof(string))
                 return "VARCHAR";
             else if (netType == typeof(char))
                 return "VARCHAR";
             else if (netType == typeof(byte[]))
                 return "BLOB";
+            else if (netType == typeof(Guid))
+                return "UUID";
             else if (netType == typeof(XmlDocument) || netType == typeof(XmlElement) || netType == typeof(XmlNode))
                 return "VARCHAR";
-            else
-                throw new ArgumentException("Unsupported .NET data type: " + netType);
+            else if (netType == typeof(System.Text.Json.Nodes.JsonNode) ||
+                     netType == typeof(System.Text.Json.JsonDocument) ||
+                     netType == typeof(System.Text.Json.JsonElement))
+                return "JSON";
+            else if (netType.IsArray)
+                return "ARRAY";
+            else if (netType.IsEnum)
+                return "INTEGER"; // Enums are typically backed by integers
+            else if (netType == typeof(System.DBNull))
+                return "NULL";
+            else if (netType.IsGenericType)
+            {
+                // Handle generic collections
+                Type genericType = netType.GetGenericTypeDefinition();
+                if (genericType == typeof(List<>) ||
+                    genericType == typeof(IList<>) ||
+                    genericType == typeof(IEnumerable<>) ||
+                    genericType == typeof(ICollection<>))
+                {
+                    return "ARRAY";
+                }
+
+                // Handle nullable types
+                if (genericType == typeof(Nullable<>))
+                {
+                    Type underlyingType = netType.GetGenericArguments()[0];
+                    return DuckDBConvert(underlyingType); // Get the type of the nullable
+                }
+            }
+
+            // For any other types, default to VARCHAR
+            return "VARCHAR";
         }
-      
-        public  string DuckDBConvert(string netTypeName)
+
+
+        public string DuckDBConvert(string netTypeName)
         {
+            // Handle null or empty type name
+            if (string.IsNullOrEmpty(netTypeName))
+                return "VARCHAR";
+
+            // Try to get the Type from the name
             Type netType = Type.GetType(netTypeName);
 
+            // If we couldn't resolve the type, try some common type names
             if (netType == null)
-                throw new ArgumentException("Unrecognized .NET data type: " + netTypeName);
+            {
+                // Handle common type names that might not be fully qualified
+                switch (netTypeName.Trim().ToLowerInvariant())
+                {
+                    // Basic numeric types
+                    case "int":
+                    case "int32":
+                    case "system.int32":
+                        return "INTEGER";
+                    case "uint":
+                    case "uint32":
+                    case "system.uint32":
+                        return "UINTEGER";
+                    case "long":
+                    case "int64":
+                    case "system.int64":
+                        return "BIGINT";
+                    case "ulong":
+                    case "uint64":
+                    case "system.uint64":
+                        return "UBIGINT";
+                    case "short":
+                    case "int16":
+                    case "system.int16":
+                        return "SMALLINT";
+                    case "ushort":
+                    case "uint16":
+                    case "system.uint16":
+                        return "USMALLINT";
+                    case "byte":
+                    case "system.byte":
+                        return "UTINYINT";
+                    case "sbyte":
+                    case "system.sbyte":
+                        return "TINYINT";
+                    case "decimal":
+                    case "system.decimal":
+                        return "DECIMAL";
+                    case "double":
+                    case "system.double":
+                        return "DOUBLE";
+                    case "float":
+                    case "single":
+                    case "system.single":
+                        return "REAL";
 
+                    // Boolean type
+                    case "bool":
+                    case "boolean":
+                    case "system.boolean":
+                        return "BOOLEAN";
+
+                    // String types
+                    case "string":
+                    case "system.string":
+                        return "VARCHAR";
+                    case "char":
+                    case "system.char":
+                        return "VARCHAR";
+
+                    // Date/time types
+                    case "datetime":
+                    case "system.datetime":
+                        return "TIMESTAMP";
+                    case "datetimeoffset":
+                    case "system.datetimeoffset":
+                        return "TIMESTAMP WITH TIME ZONE";
+                    case "timespan":
+                    case "system.timespan":
+                        return "INTERVAL";
+                    case "date":
+                    case "system.date":
+                    case "dateonly":
+                    case "system.dateonly":
+                        return "DATE";
+                    case "time":
+                    case "system.time":
+                    case "timeonly":
+                    case "system.timeonly":
+                        return "TIME";
+
+                    // Binary types
+                    case "byte[]":
+                    case "system.byte[]":
+                        return "BLOB";
+
+                    // Guid
+                    case "guid":
+                    case "system.guid":
+                        return "UUID";
+
+                    // XML types
+                    case "xmldocument":
+                    case "system.xml.xmldocument":
+                    case "xmlelement":
+                    case "system.xml.xmlelement":
+                    case "xmlnode":
+                    case "system.xml.xmlnode":
+                        return "VARCHAR";
+
+                    // JSON types
+                    case "jsonnode":
+                    case "system.text.json.jsonnode":
+                    case "jsondocument":
+                    case "system.text.json.jsondocument":
+                    case "jsonelement":
+                    case "system.text.json.jsonelement":
+                        return "JSON";
+
+                    // Geo types
+                    case "geometry":
+                    case "system.data.spatial.dbgeometry":
+                    case "geography":
+                    case "system.data.spatial.dbgeography":
+                        return "VARCHAR";
+
+                    // Arrays and collections
+                    case "list<>":
+                    case "ilist<>":
+                    case "icollection<>":
+                    case "ienumerable<>":
+                        return "ARRAY";
+
+                    // Default for unknown types
+                    default:
+                        return "VARCHAR";
+                }
+            }
+
+            // Regular Type handling
             if (netType == typeof(bool))
                 return "BOOLEAN";
             else if (netType == typeof(sbyte))
@@ -325,17 +524,51 @@ namespace DuckDBDataSourceCore
                 return "DOUBLE";
             else if (netType == typeof(System.DateTime))
                 return "TIMESTAMP";
+            else if (netType == typeof(DateTimeOffset))
+                return "TIMESTAMP WITH TIME ZONE";
+            else if (netType == typeof(TimeSpan))
+                return "INTERVAL";
+            else if (netType == typeof(DateOnly))
+                return "DATE";
+            else if (netType == typeof(TimeOnly))
+                return "TIME";
             else if (netType == typeof(string))
                 return "VARCHAR";
             else if (netType == typeof(char))
                 return "VARCHAR";
             else if (netType == typeof(byte[]))
                 return "BLOB";
+            else if (netType == typeof(Guid))
+                return "UUID";
             else if (netType == typeof(XmlDocument) || netType == typeof(XmlElement) || netType == typeof(XmlNode))
                 return "VARCHAR";
+            else if (netType == typeof(System.Text.Json.Nodes.JsonNode) ||
+                     netType == typeof(System.Text.Json.JsonDocument) ||
+                     netType == typeof(System.Text.Json.JsonElement))
+                return "JSON";
+            else if (netType.IsArray)
+                return "ARRAY";
+            else if (netType.IsEnum)
+                return "INTEGER"; // Enums are typically backed by integers
+            else if (netType == typeof(System.DBNull))
+                return "NULL";
             else
-                throw new ArgumentException("Unsupported .NET data type: " + netTypeName);
+            {
+                // Try to handle generic collections
+                if (netType.IsGenericType &&
+                   (netType.GetGenericTypeDefinition() == typeof(List<>) ||
+                    netType.GetGenericTypeDefinition() == typeof(IList<>) ||
+                    netType.GetGenericTypeDefinition() == typeof(IEnumerable<>) ||
+                    netType.GetGenericTypeDefinition() == typeof(ICollection<>)))
+                {
+                    return "ARRAY";
+                }
+
+                // For unknown or complex types, default to VARCHAR
+                return "VARCHAR";
+            }
         }
+
         #endregion
         #region "Insert or Update or Delete Objects"
         EntityStructure DataStruct = null;
@@ -975,21 +1208,37 @@ namespace DuckDBDataSourceCore
         public override List<string> GetEntitesList()
         {
             EntitiesNames = new List<string>();
-            using (var command = DuckConn.CreateCommand())
+
+            try
             {
-                command.CommandText = "SHOW TABLES;";
-                using (var reader = command.ExecuteReader())
+                using (var command = DuckConn.CreateCommand())
                 {
-                    while (reader.Read())
+                    // DuckDB uses `information_schema.tables` for metadata like PostgreSQL
+                    command.CommandText = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main';";
+
+                    using (var reader = command.ExecuteReader())
                     {
-                        EntitiesNames.Add(reader.GetString(0));
+                        while (reader.Read())
+                        {
+                            string tableName = reader.GetString(0);
+                            if (!string.IsNullOrWhiteSpace(tableName))
+                            {
+                                EntitiesNames.Add(tableName);
+                                GetEntityStructure(tableName);
+                            }
+                        }
                     }
                 }
+                SyncEntitiesNameandEntities();
+                return EntitiesNames;
             }
-
-
-            return EntitiesNames;
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("DuckDB", $"Failed to get list of entities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return new List<string>();
+            }
         }
+     
         public override bool CreateEntityAs(EntityStructure entity)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
@@ -1019,6 +1268,7 @@ namespace DuckDBDataSourceCore
                 }
                 retval = true;
                 DMEEditor.AddLogMessage("Success", $"Creating Entity {entity.EntityName}", System.DateTime.Now, 0, null, Errors.Ok);
+                SaveStructure();
             }
             catch (Exception ex)
             {
@@ -1462,9 +1712,12 @@ namespace DuckDBDataSourceCore
             }
             return cmd;
         }
-        private EntityStructure GetEntityStructure(DataTable schemaTable)
+        private EntityStructure GetEntityStructure(DataTable schemaTable,string tableName)
         {
             EntityStructure entityStructure = new EntityStructure();
+            entityStructure.GuidID = Guid.NewGuid().ToString();
+            entityStructure.IsCreated = false;
+            entityStructure.IsSynced=true;
             string columnNameKey = "column_name";
             string dataTypeKey = "data_type";
             string maxLengthKey = "character_maximum_length";
@@ -1472,10 +1725,13 @@ namespace DuckDBDataSourceCore
             string numericScaleKey = "numeric_scale";
             string isNullableKey = "is_nullable";
             // Add more keys for other properties
-
+            entityStructure.Parameters = new List<EntityParameters>();
+            entityStructure.Fields = new List<EntityField>();
+            entityStructure.PrimaryKeys = new List<EntityField>();
             foreach (DataRow row in schemaTable.Rows)
             {
                 EntityField field = new EntityField();
+                field.GuidID = Guid.NewGuid().ToString();
                 field.fieldname = row[columnNameKey].ToString();
                 field.fieldtype = row[dataTypeKey].ToString();
 
@@ -1493,7 +1749,27 @@ namespace DuckDBDataSourceCore
                 // ...
 
                 entityStructure.Fields.Add(field);
+                // Check if the field is a primary key
+                if (schemaTable.Columns.Contains("column_key") && row["column_key"].ToString().Equals("PRI", StringComparison.OrdinalIgnoreCase))
+                {
+                    field.IsKey = true;
+                    entityStructure.PrimaryKeys.Add(field);
+                }
+                // Check if the field is unique
+                if (schemaTable.Columns.Contains("column_key") && row["column_key"].ToString().Equals("UNI", StringComparison.OrdinalIgnoreCase))
+                {
+                    field.IsUnique = true;
+                }
+                // Check if the field is auto-increment
+                if (schemaTable.Columns.Contains("extra") && row["extra"].ToString().Equals("auto_increment", StringComparison.OrdinalIgnoreCase))
+                {
+                    field.IsAutoIncrement = true;
+                }
+                // Add other properties as needed
+                // Add to Parameters list if needed
             }
+            entityStructure.EntityName = tableName;
+
             return entityStructure;
         }
         public EntityStructure GetEntityStructure( string tableName)
@@ -1502,7 +1778,37 @@ namespace DuckDBDataSourceCore
             entityStructure.EntityName = tableName;
 
             DataTable schemaTable = DuckConn.GetSchema("Columns", new[] { null, null, tableName, null });
-            return GetEntityStructure(schemaTable);
+            // update EntityStructure with the schema information
+            entityStructure = GetEntityStructure(schemaTable,tableName);
+            SyncEntityStructure(entityStructure);
+            return entityStructure;
+        }
+        private void SyncEntityStructure(EntityStructure entity)
+        {
+            // if entity exist in Entities list then sync , if not add it
+            int idx = Entities.FindIndex(e => e.EntityName.Equals(entity.EntityName, StringComparison.OrdinalIgnoreCase));
+            if (idx >= 0)
+            {
+                // Update existing entity
+                Entities[idx] = entity;
+            }
+            else
+            {
+                // Add new entity
+                Entities.Add(entity);
+            }
+            // check if entity is already in the list Entitiesname
+            int idx1 = EntitiesNames.FindIndex(e => e.Equals(entity.EntityName, StringComparison.OrdinalIgnoreCase));
+            if (idx1 >= 0)
+            {
+                // Update existing entity
+                EntitiesNames[idx1] = entity.EntityName;
+            }
+            else
+            {
+                // Add new entity
+                EntitiesNames.Add(entity.EntityName);
+            }
         }
         public DataTable GetTableSchemaFromQuery(string sqlQuery)
         {

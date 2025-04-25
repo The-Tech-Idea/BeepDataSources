@@ -19,8 +19,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.24" />
-		<PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.58" />
+		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.29" />
+		<PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.60" />
 	</ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
