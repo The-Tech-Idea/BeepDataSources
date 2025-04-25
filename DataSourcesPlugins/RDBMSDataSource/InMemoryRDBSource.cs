@@ -406,6 +406,8 @@ namespace TheTechIdea.Beep
                     {
                         if (ents.Entities.Count > 0)
                         {
+                            // remove duplicates
+                            ents.Entities = ents.Entities.GroupBy(x => x.EntityName).Select(g => g.First()).ToList();
                             DataSource.Entities = ents.Entities;
                             DataSource.EntitiesNames = ents.Entities.Select(x => x.EntityName).ToList();
                         }
@@ -432,11 +434,11 @@ namespace TheTechIdea.Beep
                     GetEntitesList();
                     for (int i = 0; i < Entities.Count-1; i++)
                     {
-                        if (!string.IsNullOrEmpty(Entities[i].DataSourceID))
-                        {
+                    //    if (!string.IsNullOrEmpty(Entities[i].DataSourceID))
+                    //    {
                             CreateEntityAs(Entities[i]);
                             Entities[i].IsCreated = true;
-                        }
+                  //      }
                        
 
                     }

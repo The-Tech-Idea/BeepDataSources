@@ -128,13 +128,21 @@ namespace DuckDBDataSourceCore
 
                 DuckConn = new DuckDBConnection("DataSource=:memory:?cache=shared");
                 DuckConn.Open();
-
+                IsStructureLoaded = false;
+                IsStructureCreated = false;
                 if (DuckConn.State != ConnectionState.Open)
              
                 {
+                    ConnectionStatus = ConnectionState.Closed;
                     Dataconnection.ConnectionStatus = ConnectionState.Closed;
                     DMEEditor.ErrorObject.Flag = Errors.Failed;
                     DMEEditor.ErrorObject.Message = "Failed to open in-memory database connection";
+                }
+                else
+                {
+
+                    ConnectionStatus = ConnectionState.Open;
+                    Dataconnection.ConnectionStatus = ConnectionState.Open;
                 }
             }
             catch (Exception ex)
@@ -163,6 +171,8 @@ namespace DuckDBDataSourceCore
             CancellationTokenSource token = new CancellationTokenSource();
             IProgress<PassedArgs> progress = new Progress<PassedArgs>();
             Dataconnection.InMemory = Dataconnection.ConnectionProp.IsInMemory;
+            IsStructureCreated = false;
+            IsStructureLoaded = false;
             if (ConnectionStatus == ConnectionState.Open)
             {
                 DMEEditor.AddLogMessage("Beep", $"Connection is already open", System.DateTime.Now, -1, "", Errors.Ok);
@@ -176,6 +186,9 @@ namespace DuckDBDataSourceCore
                 {
                     base.LoadStructure(progress, token.Token, false);
                     base.CreateStructure(progress, token.Token);
+
+                    ConnectionStatus = ConnectionState.Open;
+                    Dataconnection.ConnectionStatus = ConnectionState.Open;
                     return ConnectionState.Open;
                 }
             }
@@ -199,6 +212,8 @@ namespace DuckDBDataSourceCore
                     {
                         SaveStructure();
                         DuckConn.Close();
+
+                        ConnectionStatus = ConnectionState.Closed;
                         Dataconnection.ConnectionStatus = ConnectionState.Closed;
                         DMEEditor.AddLogMessage("Success", $"Closing connection to DuckDB Database",
                             System.DateTime.Now, 0, null, Errors.Ok);
