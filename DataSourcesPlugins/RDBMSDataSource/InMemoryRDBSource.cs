@@ -31,12 +31,7 @@ namespace TheTechIdea.Beep
             ErrorObject = per;
             DatasourceName = pdatasourcename;
             DatasourceType = databasetype;
-            if (Dataconnection?.ConnectionProp?.Entities != null)
-            {
-                Entities = Dataconnection.ConnectionProp.Entities.ToList();
-                EntitiesNames = Entities.Select(e => e.EntityName).ToList();
-                InMemoryStructures = Entities;
-            }
+           
         }
 
         #endregion
@@ -89,7 +84,7 @@ namespace TheTechIdea.Beep
                     Entities.Clear();
                     EntitiesNames.Clear();
                     LoadEntities(DatasourceName);
-                    if (Dataconnection?.ConnectionProp?.Entities != null && Dataconnection.ConnectionProp.Entities.Any())
+                    if (Entities != null  && Entities.Any())
                     {
                       
                         IsStructureLoaded = true;

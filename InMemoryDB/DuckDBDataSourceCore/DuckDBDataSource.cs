@@ -67,12 +67,7 @@ namespace DuckDBDataSourceCore
              //   Dataconnection.ConnectionProp.IsInMemory=true;
              ColumnDelimiter = "[]";
             ParameterDelimiter = "$";
-            if (Dataconnection?.ConnectionProp?.Entities != null)
-            {
-                Entities = Dataconnection.ConnectionProp.Entities.ToList();
-                EntitiesNames = Entities.Select(e => e.EntityName).ToList();
-                InMemoryStructures = Entities;
-            }
+           
             dbpath = Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath, DatasourceName);
         }
 
@@ -134,17 +129,8 @@ namespace DuckDBDataSourceCore
                 DuckConn = new DuckDBConnection("DataSource=:memory:?cache=shared");
                 DuckConn.Open();
 
-                if (DuckConn.State == ConnectionState.Open)
-                {
-                    Dataconnection.ConnectionStatus = ConnectionState.Open;
-                    if (Dataconnection?.ConnectionProp?.Entities != null)
-                    {
-                        Entities = Dataconnection.ConnectionProp.Entities.ToList();
-                        EntitiesNames = Entities.Select(e => e.EntityName).ToList();
-                        InMemoryStructures = Entities;
-                    }
-                }
-                else
+                if (DuckConn.State != ConnectionState.Open)
+             
                 {
                     Dataconnection.ConnectionStatus = ConnectionState.Closed;
                     DMEEditor.ErrorObject.Flag = Errors.Failed;
@@ -185,7 +171,7 @@ namespace DuckDBDataSourceCore
             if (Dataconnection.ConnectionProp.IsInMemory)
             {
                 OpenDatabaseInMemory(Dataconnection.ConnectionProp.Database);
-                base.Openconnection();
+                
                 if (DMEEditor.ErrorObject.Flag == Errors.Ok)
                 {
                     base.LoadStructure(progress, token.Token, false);
