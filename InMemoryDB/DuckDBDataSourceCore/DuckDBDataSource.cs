@@ -1,8 +1,5 @@
-﻿
-using DuckDB.NET.Data;
-using DuckDB.NET;
+﻿using DuckDB.NET.Data;
 using System.Data;
-using TheTechIdea;
 using TheTechIdea.Beep;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
@@ -11,23 +8,15 @@ using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Addin;
-
-
-
 using System.Reflection;
-using System.Text;
 using System.Xml;
-
 using System.Data.Common;
-
 using TheTechIdea.Beep.Report;
-
 using DateTime = System.DateTime;
 using System.Text.RegularExpressions;
-using System.Diagnostics;
 using TheTechIdea.Beep.Helpers;
 using System.Data.SqlTypes;
-using TheTechIdea.Beep.Workflow.DefaultRules;
+
 
 
 namespace DuckDBDataSourceCore
@@ -36,9 +25,6 @@ namespace DuckDBDataSourceCore
     public class DuckDBDataSource : InMemoryRDBSource,IDisposable
     {
         private bool disposedValue;
-        string dbpath;
-        
-   
         public DuckDBConnection DuckConn { get; set; }
         DuckDBTransaction Transaction { get; set; }
         
@@ -68,7 +54,7 @@ namespace DuckDBDataSourceCore
              ColumnDelimiter = "[]";
             ParameterDelimiter = "$";
            
-            dbpath = Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath, DatasourceName);
+            
         }
 
         protected virtual void Dispose(bool disposing)

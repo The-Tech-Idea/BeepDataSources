@@ -3,19 +3,14 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using TheTechIdea.Beep.Editor;
-
 using TheTechIdea.Beep.Logger;
-using TheTechIdea.Beep.Utilities    ;
+using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Addin;
-using Microsoft.CodeAnalysis.Operations;
+
 
 
 namespace TheTechIdea.Beep
