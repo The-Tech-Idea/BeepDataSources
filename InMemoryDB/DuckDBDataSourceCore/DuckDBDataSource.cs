@@ -188,13 +188,17 @@ namespace DuckDBDataSourceCore
         }
         public override ConnectionState Closeconnection()
         {
-            ConnectionState retval = ConnectionState.Closed;
+           
             try
             {
                
                 if (DuckConn != null)
                 {
-                    if(DuckConn.State== ConnectionState.Open)
+                    if(DuckConn.State != ConnectionState.Open)
+                    {
+                        return DuckConn.State;
+                    }
+                    if (DuckConn.State== ConnectionState.Open)
                     {
                         SaveStructure();
                         DuckConn.Close();
@@ -213,7 +217,7 @@ namespace DuckDBDataSourceCore
                 DMEEditor.AddLogMessage("Fail", $"{errmsg}:{ex.Message}",
                     System.DateTime.Now, 0, null, Errors.Failed);
             }
-            return retval;
+            return ConnectionStatus;
         }
 
         public override IErrorsInfo BeginTransaction(PassedArgs args)
@@ -657,8 +661,9 @@ namespace DuckDBDataSourceCore
                     fnd.Fields = new List<EntityField>();
                     fnd.PrimaryKeys = new List<EntityField>();
                     DataRow rt = tb.Rows[0];
-                    fnd.Created = true;
+                    fnd.IsCreated = true;
                     fnd.Editable = false;
+                    fnd.EntityType = EntityType.InMemory;
                     fnd.Drawn = true;
                     foreach (DataRow r in rt.Table.Rows)
                     {
@@ -733,7 +738,7 @@ namespace DuckDBDataSourceCore
                     else
                     {
 
-                        Entities[idx].Created = true;
+                        Entities[idx].IsCreated = true;
                         Entities[idx].Editable = false;
                         Entities[idx].Drawn = true;
                         Entities[idx].Fields = fnd.Fields;
@@ -744,7 +749,7 @@ namespace DuckDBDataSourceCore
                 }
                 else
                 {
-                    fnd.Created = false;
+                    fnd.IsCreated = false;
                 }
 
             }
@@ -1207,7 +1212,7 @@ namespace DuckDBDataSourceCore
                     {
                         while (reader.Read())
                         {
-                            string tableName = reader.GetString(0);
+                            string tableName = reader.GetString(0).ToUpper();
                             if (!string.IsNullOrWhiteSpace(tableName))
                             {
                                 EntitiesNames.Add(tableName);
@@ -1226,43 +1231,45 @@ namespace DuckDBDataSourceCore
             }
         }
      
-        public override bool CreateEntityAs(EntityStructure entity)
-        {
-            DMEEditor.ErrorObject.Flag = Errors.Ok;
-            bool retval = false;
-            try
-            {
-                string sql = $"CREATE TABLE {entity.EntityName} (";
-                foreach (EntityField fld in entity.Fields)
-                {
-                    string fieldType = DuckDBConvert(fld.fieldtype);
-                    sql += $"{fld.fieldname} {fieldType}";
+        //public override bool CreateEntityAs(EntityStructure entity)
+        //{
+        //    DMEEditor.ErrorObject.Flag = Errors.Ok;
+        //    entity.EntityName = entity.EntityName.ToUpper();
+        //    entity.DatasourceEntityName = entity.EntityName;
+        //    bool retval = false;
+        //    try
+        //    {
+        //        string sql = $"CREATE TABLE {entity.EntityName} (";
+        //        foreach (EntityField fld in entity.Fields)
+        //        {
+        //            string fieldType = DuckDBConvert(fld.fieldtype);
+        //            sql += $"{fld.fieldname} {fieldType}";
 
-                    // Add constraints
-                    if (!fld.AllowDBNull)
-                        sql += " NOT NULL";
-                    if (fld.IsKey)
-                        sql += " PRIMARY KEY";
-                    if (fld.IsAutoIncrement)
-                        sql += " AUTOINCREMENT";
+        //            // Add constraints
+        //            if (!fld.AllowDBNull)
+        //                sql += " NOT NULL";
+        //            if (fld.IsKey)
+        //                sql += " PRIMARY KEY";
+        //            if (fld.IsAutoIncrement)
+        //                sql += " AUTOINCREMENT";
 
-                    sql += ",";
-                }
-                sql = sql.TrimEnd(',') + ")";
-                using (var cmd = new DuckDBCommand(sql, DuckConn))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                retval = true;
-                DMEEditor.AddLogMessage("Success", $"Creating Entity {entity.EntityName}", System.DateTime.Now, 0, null, Errors.Ok);
-                SaveStructure();
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Fail", $"Error in Creating Entity {entity.EntityName} {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
-            }
-            return retval;
-        }
+        //            sql += ",";
+        //        }
+        //        sql = sql.TrimEnd(',') + ")";
+        //        using (var cmd = new DuckDBCommand(sql, DuckConn))
+        //        {
+        //            cmd.ExecuteNonQuery();
+        //        }
+        //        retval = true;
+        //        DMEEditor.AddLogMessage("Success", $"Creating Entity {entity.EntityName}", System.DateTime.Now, 0, null, Errors.Ok);
+        //    //    SaveStructure();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        DMEEditor.AddLogMessage("Fail", $"Error in Creating Entity {entity.EntityName} {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+        //    }
+        //    return retval;
+        //}
 
         public override object RunQuery(string qrystr)
         {

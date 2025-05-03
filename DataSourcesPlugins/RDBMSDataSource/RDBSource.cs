@@ -24,6 +24,7 @@ using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Addin;
 using static TheTechIdea.Beep.Utilities.Util;
 using TheTechIdea.Beep.DriversConfigurations;
+using System.Text;
 
 namespace TheTechIdea.Beep.DataBase
 {
@@ -1176,6 +1177,17 @@ namespace TheTechIdea.Beep.DataBase
         /// <remarks>
         /// This method enhances flexibility in data retrieval by allowing dynamic query modifications based on runtime conditions and parameters.
         /// </remarks>
+        /// /// <summary>
+        /// Dynamically builds an SQL query based on the original query and provided filters.
+        /// </summary>
+        /// <param name="originalquery">The base SQL query string.</param>
+        /// <param name="Filter">List of filters to be applied to the query.</param>
+        /// <returns>The dynamically built SQL query string.</returns>
+        /// <remarks>
+        /// This method creates flexible, database-agnostic queries by properly handling 
+        /// SQL syntax, filter operators, and parameter names for prepared statements.
+        /// </remarks>
+
         private string BuildQuery(string originalquery, List<AppFilter> Filter)
         {
             string retval;
@@ -1297,6 +1309,364 @@ namespace TheTechIdea.Beep.DataBase
             }
             return qrystr;
         }
+        //private string BuildQuery(string originalquery, List<AppFilter> Filter)
+        //{
+        //    if (string.IsNullOrEmpty(originalquery))
+        //    {
+        //        DMEEditor.AddLogMessage("Fail", "Cannot build query from null or empty query string", DateTime.Now, 0, "Error", Errors.Failed);
+        //        return string.Empty;
+        //    }
+
+        //    try
+        //    {
+        //        // Normalize query to lowercase for parsing
+        //        string queryLower = originalquery.ToLower();
+
+        //        // Apply schema name to table if needed
+        //        string queryWithSchema = GetTableName(queryLower);
+
+        //        // Parse the query into components
+        //        QueryBuild queryStructure = ParseQueryComponents(queryWithSchema);
+
+        //        // Start building the new query
+        //        StringBuilder queryBuilder = new StringBuilder();
+
+        //        // Add SELECT and FROM clauses
+        //        string schemaPrefix = GetSchemaPrefix();
+        //        queryBuilder.AppendLine($"SELECT {queryStructure.FieldsString} FROM {schemaPrefix}{queryStructure.EntitiesString}");
+
+        //        // Process WHERE clause with filters
+        //        bool hasWhereClause = queryLower.Contains("where");
+        //        string whereClause = BuildWhereClause(queryStructure, Filter, hasWhereClause);
+        //        if (!string.IsNullOrEmpty(whereClause))
+        //        {
+        //            queryBuilder.AppendLine(whereClause);
+        //        }
+
+        //        // Add remaining clauses in correct order
+        //        AppendClauseIfExists(queryBuilder, queryStructure.GroupbyCondition, "GROUP BY");
+        //        AppendClauseIfExists(queryBuilder, queryStructure.HavingCondition, "HAVING");
+        //        AppendClauseIfExists(queryBuilder, queryStructure.OrderbyCondition, "ORDER BY");
+
+        //        return queryBuilder.ToString();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        DMEEditor.AddLogMessage("Fail", $"Unable to build query object {originalquery}- {ex.Message}", DateTime.Now, 0, "Error", Errors.Failed);
+        //        return originalquery; // Return original query on failure
+        //    }
+        //}
+
+        /// <summary>
+        /// Parses SQL query components into a QueryBuild structure.
+        /// </summary>
+        private QueryBuild ParseQueryComponents(string query)
+        {
+            QueryBuild queryStructure = new QueryBuild();
+
+            // Define the SQL clause keywords to split by
+            string[] clauseKeywords = { "select", "from", "where", "group by", "having", "order by" };
+
+            // Split the query by clause keywords
+            string[] parts = query.Split(clauseKeywords, StringSplitOptions.RemoveEmptyEntries);
+
+            // Parse SELECT clause
+            if (parts.Length > 0)
+            {
+                queryStructure.FieldsString = parts[0].Trim();
+                queryStructure.Fields.AddRange(parts[0].Split(',').Select(f => f.Trim()));
+            }
+
+            // Parse FROM clause
+            if (parts.Length > 1)
+            {
+                queryStructure.EntitiesString = parts[1].Trim();
+                queryStructure.Entities.AddRange(parts[1].Split(',').Select(e => e.Trim()));
+            }
+
+            // Extract additional clauses if present in original query
+            if (query.Contains("where"))
+            {
+                int wherePos = query.IndexOf("where", StringComparison.OrdinalIgnoreCase) + 5;
+                int endPos = FindNextClausePosition(query, wherePos, new[] { "group by", "having", "order by" });
+                queryStructure.WhereCondition = query.Substring(wherePos, endPos - wherePos).Trim();
+            }
+
+            if (query.Contains("group by"))
+            {
+                int groupByPos = query.IndexOf("group by", StringComparison.OrdinalIgnoreCase) + 8;
+                int endPos = FindNextClausePosition(query, groupByPos, new[] { "having", "order by" });
+                queryStructure.GroupbyCondition = query.Substring(groupByPos, endPos - groupByPos).Trim();
+            }
+
+            if (query.Contains("having"))
+            {
+                int havingPos = query.IndexOf("having", StringComparison.OrdinalIgnoreCase) + 6;
+                int endPos = FindNextClausePosition(query, havingPos, new[] { "order by" });
+                queryStructure.HavingCondition = query.Substring(havingPos, endPos - havingPos).Trim();
+            }
+
+            if (query.Contains("order by"))
+            {
+                int orderByPos = query.IndexOf("order by", StringComparison.OrdinalIgnoreCase) + 8;
+                queryStructure.OrderbyCondition = query.Substring(orderByPos).Trim();
+            }
+
+            return queryStructure;
+        }
+
+        /// <summary>
+        /// Finds the position of the next SQL clause in the query.
+        /// </summary>
+        private int FindNextClausePosition(string query, int startPos, string[] clauses)
+        {
+            int nextPos = query.Length;
+
+            foreach (string clause in clauses)
+            {
+                int pos = query.IndexOf(clause, startPos, StringComparison.OrdinalIgnoreCase);
+                if (pos > 0 && pos < nextPos)
+                {
+                    nextPos = pos;
+                }
+            }
+
+            return nextPos;
+        }
+
+        /// <summary>
+        /// Gets the schema prefix for the query.
+        /// </summary>
+        private string GetSchemaPrefix()
+        {
+            string schemaName = GetSchemaName();
+            return !string.IsNullOrEmpty(schemaName) ? $"{schemaName}." : string.Empty;
+        }
+
+        /// <summary>
+        /// Builds the WHERE clause including any filters.
+        /// </summary>
+        private string BuildWhereClause(QueryBuild queryStructure, List<AppFilter> filters, bool hasExistingWhere)
+        {
+            StringBuilder whereBuilder = new StringBuilder();
+            bool hasFilters = filters != null && filters.Any(f => IsValidFilter(f));
+
+            // Determine if we need to add a WHERE clause
+            if (hasExistingWhere || hasFilters)
+            {
+                whereBuilder.Append("WHERE ");
+
+                // Add filters if present
+                if (hasFilters)
+                {
+                    bool firstFilter = true;
+                    foreach (AppFilter filter in filters.Where(IsValidFilter))
+                    {
+                        if (!firstFilter)
+                        {
+                            whereBuilder.AppendLine(" AND ");
+                        }
+
+                        whereBuilder.Append(FormatFilterCondition(filter));
+                        firstFilter = false;
+                    }
+                }
+
+                // Add existing where clause if present
+                if (hasExistingWhere && !string.IsNullOrEmpty(queryStructure.WhereCondition))
+                {
+                    if (hasFilters)
+                    {
+                        whereBuilder.AppendLine(" AND ");
+                    }
+                    whereBuilder.Append(queryStructure.WhereCondition);
+                }
+            }
+
+            return whereBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Checks if an AppFilter has valid values for SQL generation.
+        /// </summary>
+        private bool IsValidFilter(AppFilter filter)
+        {
+            return filter != null &&
+                   !string.IsNullOrEmpty(filter.FieldName) &&
+                   !string.IsNullOrWhiteSpace(filter.FieldName) &&
+                   !string.IsNullOrEmpty(filter.Operator) &&
+                   !string.IsNullOrWhiteSpace(filter.Operator) &&
+                   !string.IsNullOrEmpty(filter.FilterValue) &&
+                   !string.IsNullOrWhiteSpace(filter.FilterValue);
+        }
+
+        /// <summary>
+        /// Formats a filter condition for SQL.
+        /// </summary>
+        private string FormatFilterCondition(AppFilter filter)
+        {
+            string fieldName = filter.FieldName;
+            string paramName = SanitizeParameterName(filter.FieldName);
+
+            if (filter.Operator.ToLower() == "between")
+            {
+                return $"{fieldName} BETWEEN {ParameterDelimiter}p_{paramName} AND {ParameterDelimiter}p_{paramName}1";
+            }
+            else
+            {
+                return $"{fieldName} {filter.Operator} {ParameterDelimiter}p_{paramName}";
+            }
+        }
+
+        /// <summary>
+        /// Sanitizes a parameter name to ensure it's valid for SQL.
+        /// </summary>
+        private string SanitizeParameterName(string fieldName)
+        {
+            // Replace spaces with underscores and ensure name is valid
+            string paramName = Regex.Replace(fieldName, @"\s+", "_");
+
+            // Truncate if needed (for databases with name length limits)
+            if (paramName.Length > 30 && (DatasourceType == DataSourceType.Oracle || DatasourceType == DataSourceType.Postgre))
+            {
+                paramName = paramName.Substring(0, 30);
+            }
+
+            return paramName;
+        }
+
+        /// <summary>
+        /// Appends a SQL clause to the query builder if it exists.
+        /// </summary>
+        private void AppendClauseIfExists(StringBuilder queryBuilder, string clauseContent, string clauseName)
+        {
+            if (!string.IsNullOrEmpty(clauseContent))
+            {
+                queryBuilder.AppendLine($"{clauseName} {clauseContent}");
+            }
+        }
+
+        //private string BuildQuery(string originalquery, List<AppFilter> Filter)
+        //{
+        //    string retval;
+        //    string[] stringSeparators;
+        //    string[] sp;
+        //    string qrystr = "Select ";
+        //    bool FoundWhere = false;
+        //    QueryBuild queryStructure = new QueryBuild();
+        //    try
+        //    {
+        //        //stringSeparators = new string[] {"select ", " from ", " where ", " group by "," having ", " order by " };
+        //        // Get Selected Fields
+        //        originalquery = GetTableName(originalquery.ToLower());
+        //        stringSeparators = new string[] { "select", "from", "where", "group by", "having", "order by" };
+        //        sp = originalquery.ToLower().Split(stringSeparators, StringSplitOptions.RemoveEmptyEntries);
+        //        queryStructure.FieldsString = sp[0];
+        //        string[] Fieldsp = sp[0].Split(',');
+        //        queryStructure.Fields.AddRange(Fieldsp);
+        //        // Get From  Tables
+        //        queryStructure.EntitiesString = sp[1];
+        //        string[] Tablesdsp = sp[1].Split(',');
+        //        queryStructure.Entities.AddRange(Tablesdsp);
+
+        //        if (GetSchemaName() == null)
+        //        {
+        //            qrystr += queryStructure.FieldsString + " " + " from " + queryStructure.EntitiesString;
+        //        }
+        //        else
+        //            qrystr += queryStructure.FieldsString + $" from {GetSchemaName().ToLower()}." + queryStructure.EntitiesString;
+
+        //        qrystr += Environment.NewLine;
+
+        //        if (Filter != null)
+        //        {
+        //            if (Filter.Count > 0)
+        //            {
+        //                if (Filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator)).Any())
+        //                {
+        //                    qrystr += Environment.NewLine;
+        //                    if (FoundWhere == false)
+        //                    {
+        //                        qrystr += " where " + Environment.NewLine;
+        //                        FoundWhere = true;
+        //                    }
+
+        //                    foreach (AppFilter item in Filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator)))
+        //                    {
+        //                        if (!string.IsNullOrEmpty(item.FilterValue) && !string.IsNullOrWhiteSpace(item.FilterValue))
+        //                        {
+        //                            //  EntityField f = ent.Fields.Where(i => i.fieldname == item.FieldName).FirstOrDefault();
+        //                            if (item.Operator.ToLower() == "between")
+        //                            {
+        //                                qrystr += item.FieldName + " " + item.Operator + $" {ParameterDelimiter}p_" + item.FieldName + $" and  {ParameterDelimiter}p_" + item.FieldName + "1 " + Environment.NewLine;
+        //                            }
+        //                            else
+        //                            {
+        //                                qrystr += item.FieldName + " " + item.Operator + $" {ParameterDelimiter}p_" + item.FieldName + " " + Environment.NewLine;
+        //                            }
+
+        //                        }
+
+
+
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        if (originalquery.ToLower().Contains("where"))
+        //        {
+        //            qrystr += Environment.NewLine;
+
+        //            string[] whereSeparators = new string[] { "where", "group by", "having", "order by" };
+
+        //            string[] spwhere = originalquery.ToLower().Split(whereSeparators, StringSplitOptions.RemoveEmptyEntries);
+        //            queryStructure.WhereCondition = spwhere[0];
+        //            if (FoundWhere == false)
+        //            {
+        //                qrystr += " where " + Environment.NewLine;
+        //                FoundWhere = true;
+        //            }
+        //            qrystr += spwhere[1];
+        //            qrystr += Environment.NewLine;
+
+
+
+        //        }
+        //        if (originalquery.ToLower().Contains("group by"))
+        //        {
+        //            string[] groupbySeparators = new string[] { "group by", "having", "order by" };
+
+        //            string[] groupbywhere = originalquery.ToLower().Split(groupbySeparators, StringSplitOptions.RemoveEmptyEntries);
+        //            queryStructure.GroupbyCondition = groupbywhere[1];
+        //            qrystr += " group by " + groupbywhere[1];
+        //            qrystr += Environment.NewLine;
+        //        }
+        //        if (originalquery.ToLower().Contains("having"))
+        //        {
+        //            string[] havingSeparators = new string[] { "having", "order by" };
+
+        //            string[] havingywhere = originalquery.ToLower().Split(havingSeparators, StringSplitOptions.RemoveEmptyEntries);
+        //            queryStructure.HavingCondition = havingywhere[1];
+        //            qrystr += " having " + havingywhere[1];
+        //            qrystr += Environment.NewLine;
+        //        }
+        //        if (originalquery.ToLower().Contains("order by"))
+        //        {
+        //            string[] orderbySeparators = new string[] { "order by" };
+
+        //            string[] orderbywhere = originalquery.ToLower().Split(orderbySeparators, StringSplitOptions.RemoveEmptyEntries);
+        //            queryStructure.OrderbyCondition = orderbywhere[1];
+        //            qrystr += " order by " + orderbywhere[1];
+
+        //        }
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        DMEEditor.AddLogMessage("Fail", $"Unable Build Query Object {originalquery}- {ex.Message}", DateTime.Now, 0, "Error", Errors.Failed);
+        //    }
+        //    return qrystr;
+        //}
         /// <summary>
         /// Retrieves data for a specified entity from the database, with the option to apply filters.
         /// </summary>
@@ -1312,7 +1682,6 @@ namespace TheTechIdea.Beep.DataBase
             ErrorObject.Flag = Errors.Ok;
             //  int LoadedRecord;
             bool IsQuery = false;
-          
             string inname = "";
             string qrystr = "select * from ";
             SetObjects(EntityName);
@@ -1344,12 +1713,8 @@ namespace TheTechIdea.Beep.DataBase
                 }
                 else
                     IsQuery = false;
-
-
             }
-
             qrystr = BuildQuery(qrystr, Filter);
-
             try
             {
                 if (enttype == null)
@@ -1358,27 +1723,10 @@ namespace TheTechIdea.Beep.DataBase
                 }
                 IDataAdapter adp = GetDataAdapter(qrystr, Filter);
                 DataSet dataSet = new DataSet();
+                // Temporarily disable constraints during fill operation
+                dataSet.EnforceConstraints = false;
                 adp.Fill(dataSet);
                 DataTable dt = dataSet.Tables[0];
-
-                //    if(DataStruct == null)
-                //    {
-                //        DataStruct = GetEntityStructure(inname);
-                //    }
-                //    if(DataStruct==null)
-                //    {
-                //        DataStruct = DMEEditor.Utilfunction.GetEntityStructureFromListorTable(dt);
-                //    }
-                //    if(DataStruct != null)
-                //    {
-                //      GetEntityType(EntityName);
-                //        //DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields);
-                //        //enttype= DMTypeBuilder.MyType; ;
-                //    }
-
-
-                ////return dt;
-
                 Type uowGenericType = typeof(ObservableBindingList<>).MakeGenericType(enttype);
                 // Prepare the arguments for the constructor
                 object[] constructorArgs = new object[] { dt };
@@ -1391,90 +1739,180 @@ namespace TheTechIdea.Beep.DataBase
 
             catch (Exception ex)
             {
-
                 DMEEditor.AddLogMessage("Fail", $"Error in getting entity Data({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
-
                 return null;
             }
-
-
         }
-        /// Retrieves data for a specified entity from the database, with the option to apply filters.
+        /// <summary>
+        /// Retrieves data for a specified entity from the database with pagination support.
         /// </summary>
         /// <param name="EntityName">The name of the entity (table) to retrieve data from.</param>
         /// <param name="Filter">A list of filters to apply to the query.</param>
-        /// <remarks>
-        /// This method supports both direct table queries and custom queries. It uses dynamic SQL generation and can adapt to different database types. The method also converts the retrieved DataTable to a list of objects based on the entity's structure and type.
-        /// </remarks>
-        /// <returns>An object representing the data retrieved, which could be a list or another type based on the entity structure.</returns>
-        /// <exception cref="Exception">Catches and logs any exceptions that occur during the data retrieval process.</exception>
+        /// <param name="pageNumber">The page number to retrieve (1-based).</param>
+        /// <param name="pageSize">The number of records per page.</param>
+        /// <returns>A PagedResult object containing the data and pagination metadata.</returns>
         public virtual object GetEntity(string EntityName, List<AppFilter> Filter, int pageNumber, int pageSize)
         {
             ErrorObject.Flag = Errors.Ok;
-            //  int LoadedRecord;
-
-            EntityName = EntityName.ToLower();
-            string inname = "";
-            string qrystr = "select * from ";
-
-            if (!string.IsNullOrEmpty(EntityName) && !string.IsNullOrWhiteSpace(EntityName))
-            {
-                if (!EntityName.Contains("select") && !EntityName.Contains("from"))
-                {
-                    qrystr = "select * from " + EntityName;
-                    qrystr = GetTableName(qrystr.ToLower());
-                    inname = EntityName;
-                }
-                else
-                {
-                    EntityName = GetTableName(EntityName);
-                    string[] stringSeparators = new string[] { " from ", " where ", " group by ", " order by " };
-                    string[] sp = EntityName.Split(stringSeparators, StringSplitOptions.None);
-                    qrystr = EntityName;
-                    inname = sp[1].Trim();
-                }
-
-            }
-            EntityStructure ent = GetEntityStructure(inname);
-            if (ent != null)
-            {
-                if (!string.IsNullOrEmpty(ent.CustomBuildQuery))
-                {
-                    qrystr = ent.CustomBuildQuery;
-                }
-
-            }
-
-            qrystr = BuildQuery(qrystr, Filter);
-            // Get the paging syntax for the specific data source type
-            if (pageNumber > 0 && pageSize > 0)
-            {
-                string pagingSyntax = RDBMSHelper.GetPagingSyntax(DatasourceType, pageNumber, pageSize);
-
-                // Append the paging clause to your query
-                qrystr += $" {pagingSyntax}";
-            }
 
             try
             {
-                IDataAdapter adp = GetDataAdapter(qrystr, Filter);
+                // Validate parameters
+                if (pageNumber < 1)
+                    pageNumber = 1;
+
+                if (pageSize < 1)
+                    pageSize = 20; // Set a reasonable default
+
+                string entityNameToUse = EntityName?.Trim();
+                bool isQuery = false;
+                string inname = "";
+                string baseQuery = "";
+
+                // Step 1: Determine if we're dealing with a table name or a query
+                if (string.IsNullOrEmpty(entityNameToUse))
+                {
+                    DMEEditor.AddLogMessage("Fail", "Entity name cannot be null or empty", DateTime.Now, 0, "", Errors.Failed);
+                    return null;
+                }
+
+                if (entityNameToUse.ToLower().Contains("select") && entityNameToUse.ToLower().Contains("from"))
+                {
+                    // This is a custom query
+                    isQuery = true;
+                    baseQuery = entityNameToUse;
+
+                    // Extract the entity name from the query for metadata purposes
+                    string[] stringSeparators = new string[] { " from ", " where ", " group by ", " order by " };
+                    string[] parts = entityNameToUse.ToLower().Split(stringSeparators, StringSplitOptions.None);
+                    if (parts.Length > 1)
+                    {
+                        inname = parts[1].Trim();
+                    }
+                }
+                else
+                {
+                    // This is a table name
+                    baseQuery = $"SELECT * FROM {entityNameToUse}";
+                    inname = entityNameToUse;
+                }
+
+                // Step 2: Get entity structure for metadata
+                EntityStructure ent = GetEntityStructure(inname);
+                if (ent != null && !string.IsNullOrEmpty(ent.CustomBuildQuery))
+                {
+                    baseQuery = ent.CustomBuildQuery;
+                    isQuery = true;
+                }
+
+                // Step 3: Build the query with filters
+                string countQuery = "";
+                string finalQuery = "";
+
+                if (isQuery && !baseQuery.ToLower().Contains("order by"))
+                {
+                    // When processing a complex query without ORDER BY, we need to ensure proper pagination
+                    // by adding a default ordering, ideally by primary key
+                    string orderByClause = "";
+                    if (ent != null && ent.PrimaryKeys != null && ent.PrimaryKeys.Count > 0)
+                    {
+                        orderByClause = $" ORDER BY {GetFieldName(ent.PrimaryKeys[0].fieldname)}";
+                    }
+
+                    baseQuery += orderByClause;
+                }
+
+                // Build the main query with filters
+                finalQuery = BuildQuery(baseQuery, Filter);
+
+                // Create a count query to get total records (for pagination metadata)
+                if (!isQuery)
+                {
+                    // Simple table query - we can COUNT(*)
+                    countQuery = $"SELECT COUNT(*) FROM {GetTableName(inname.ToLower())}";
+
+                    // Add WHERE clause if filters exist
+                    if (Filter != null && Filter.Count > 0)
+                    {
+                        string whereClause = ExtractWhereClause(finalQuery);
+                        if (!string.IsNullOrEmpty(whereClause))
+                        {
+                            countQuery += $" {whereClause}";
+                        }
+                    }
+                }
+
+                // Step 4: Apply database-specific pagination
+                // Get the appropriate paging syntax for this database type
+                string pagingSyntax = RDBMSHelper.GetPagingSyntax(DatasourceType, pageNumber, pageSize);
+                string pagingQuery = $"{finalQuery} {pagingSyntax}";
+
+                // Step 5: Execute query and get result
+                int totalRecords = 0;
+
+                // Get total count if count query is available
+                if (!string.IsNullOrEmpty(countQuery))
+                {
+                    try
+                    {
+                        var countResult = GetScalar(countQuery);
+                        totalRecords = Convert.ToInt32(countResult);
+                    }
+                    catch (Exception countEx)
+                    {
+                        DMEEditor.AddLogMessage("Warning", $"Could not get total record count: {countEx.Message}", DateTime.Now, 0, "", Errors.Warning);
+                        // Continue with query execution even if count fails
+                    }
+                }
+
+                // Execute the main query with pagination
+                IDataAdapter adp = GetDataAdapter(pagingQuery, Filter);
                 DataSet dataSet = new DataSet();
-                adp.Fill(dataSet);
+
+                try
+                {
+                    dataSet.EnforceConstraints = false;
+                    adp.Fill(dataSet);
+                }
+                catch (Exception fillEx)
+                {
+                    DMEEditor.AddLogMessage("Fail", $"Error executing paginated query: {fillEx.Message}", DateTime.Now, 0, pagingQuery, Errors.Failed);
+                    throw;
+                }
+
                 DataTable dt = dataSet.Tables[0];
 
-                return dt;//DMEEditor.Utilfunction.ConvertTableToList(dt,GetEntityStructure(EntityName),GetEntityType(EntityName));
-            }
+                // Step 6: Create and return the paged result
+                if (enttype == null)
+                {
+                    enttype = GetEntityType(inname);
+                }
 
+                // Create the result object with pagination metadata
+                Type uowGenericType = typeof(ObservableBindingList<>).MakeGenericType(enttype);
+                object[] constructorArgs = new object[] { dt };
+                object data = Activator.CreateInstance(uowGenericType, constructorArgs);
+
+                var result = new PagedResult
+                {
+                    Data = data,
+                    TotalRecords = totalRecords,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    TotalPages = totalRecords > 0 ? (int)Math.Ceiling((double)totalRecords / pageSize) : 0,
+                    HasNextPage = pageNumber * pageSize < totalRecords,
+                    HasPreviousPage = pageNumber > 1
+                };
+
+                return result;
+            }
             catch (Exception ex)
             {
-
-                DMEEditor.AddLogMessage("Fail", $"Error in getting entity Data({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
-
+                DMEEditor.AddLogMessage("Fail", $"Error in getting paginated entity data: {ex.Message}", DateTime.Now, 0, "", Errors.Failed);
                 return null;
             }
-
-
         }
+
         /// <summary>
         /// Asynchronously retrieves data for a specified entity from the database, with the option to apply filters.
         /// </summary>
@@ -1715,6 +2153,14 @@ namespace TheTechIdea.Beep.DataBase
         {
             return fieldType == "System.Decimal" || fieldType == "System.Float" || fieldType == "System.Double";
         }
+        // helper to read a typed column only if it exists (otherwise return default)
+        private static T SafeField<T>(DataRow row, string colName, T defaultValue = default)
+        {
+            if (row.Table.Columns.Contains(colName) && !row.IsNull(colName))
+                return row.Field<T>(colName);
+            return defaultValue;
+        }
+
         public virtual EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
         {
             DataTable tb = new DataTable();
@@ -1761,7 +2207,8 @@ namespace TheTechIdea.Beep.DataBase
                     fnd.Fields = new List<EntityField>();
                     fnd.PrimaryKeys = new List<EntityField>();
                     DataRow rt = tb.Rows[0];
-                    fnd.Created = true;
+                    fnd.IsCreated = true;
+                    fnd.EntityType = EntityType.Table;
                     fnd.Editable = false;
                     fnd.Drawn = true;
                     foreach (DataRow r in rt.Table.Rows)
@@ -1769,50 +2216,54 @@ namespace TheTechIdea.Beep.DataBase
                         EntityField x = new EntityField();
                         try
                         {
+                            x.fieldname = SafeField<string>(r, "ColumnName");
+                            x.fieldtype = SafeField<Type>(r, "DataType")?.ToString() ?? "System.String";
 
-                            x.fieldname = r.Field<string>("ColumnName");
-                            x.fieldtype = (r.Field<Type>("DataType")).ToString(); //"ColumnSize"
-                            if (DatasourceType == DataSourceType.Oracle)
+                            // Oracle FLOAT → .NET mapping
+                            if (DatasourceType == DataSourceType.Oracle
+                             && x.fieldtype.Equals("FLOAT", StringComparison.OrdinalIgnoreCase))
                             {
-                                if (x.fieldtype.Equals("FLOAT", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    int precision = GetFloatPrecision(x.EntityName, x.fieldname); // Implement GetFloatPrecision to retrieve the precision for the field
-                                    x.fieldtype = MapOracleFloatToDotNetType(precision);
-                                }
+                                int precision = GetFloatPrecision(x.EntityName, x.fieldname);
+                                x.fieldtype = MapOracleFloatToDotNetType(precision);
                             }
-                            x.Size1 = r.Field<int>("ColumnSize");
-                            x.IsAutoIncrement = GetBooleanField(r, "IsAutoIncrement");
-                            x.AllowDBNull = GetBooleanField(r, "AllowDBNull");
-                            x.IsIdentity = GetBooleanField(r, "IsIdentity");
-                            x.IsKey = GetBooleanField(r, "IsKey");
-                            x.IsUnique = GetBooleanField(r, "IsUnique");
-                            x.OrdinalPosition = r.Field<int>("OrdinalPosition");
-                            x.IsReadOnly = GetBooleanField(r, "IsReadOnly");
-                            x.IsRowVersion = GetBooleanField(r, "IsRowVersion");
-                            x.IsLong = GetBooleanField(r, "IsLong");
-                            x.DefaultValue = r["DefaultValue"] != DBNull.Value ? r["DefaultValue"].ToString() : null;
-                            x.Expression = r["Expression"] != DBNull.Value ? r["Expression"].ToString() : null;
-                            x.BaseTableName = r["BaseTableName"] != DBNull.Value ? r["BaseTableName"].ToString() : null;
-                            x.BaseColumnName = r["BaseColumnName"] != DBNull.Value ? r["BaseColumnName"].ToString() : null;
-                            x.MaxLength = r.Field<int>("ColumnSize"); // Ensure this matches your schema
-                            x.IsFixedLength = GetBooleanField(r, "IsFixedLength");
-                            x.IsHidden = GetBooleanField(r, "IsHidden");
 
+                            x.Size1 = SafeField<int>(r, "ColumnSize");
+                            x.IsAutoIncrement = SafeField<bool>(r, "IsAutoIncrement");
+                            x.AllowDBNull = SafeField<bool>(r, "AllowDBNull");
+                            x.IsIdentity = SafeField<bool>(r, "IsIdentity");
+                            x.IsKey = SafeField<bool>(r, "IsKey");
+                            x.IsUnique = SafeField<bool>(r, "IsUnique");
+                            x.OrdinalPosition = SafeField<int>(r, "OrdinalPosition");  // no more exception
+
+                            x.IsReadOnly = SafeField<bool>(r, "IsReadOnly");
+                            x.IsRowVersion = SafeField<bool>(r, "IsRowVersion");
+                            x.IsLong = SafeField<bool>(r, "IsLong");
+                            x.DefaultValue = SafeField<string>(r, "DefaultValue", null);
+                            x.Expression = SafeField<string>(r, "Expression", null);
+                            x.BaseTableName = SafeField<string>(r, "BaseTableName", null);
+                            x.BaseColumnName = SafeField<string>(r, "BaseColumnName", null);
+
+                            // MaxLength is same as ColumnSize
+                            x.MaxLength = x.Size1;
+                            x.IsFixedLength = SafeField<bool>(r, "IsFixedLength");
+                            x.IsHidden = SafeField<bool>(r, "IsHidden");
+
+                            // NumericPrecision/Scale only if the schema provides them
                             if (IsNumericType(x.fieldtype))
                             {
-                                var NumericPrecision = r["NumericPrecision"];
-                                var NumericScale = r["NumericScale"];
-                                if (NumericPrecision != DBNull.Value && NumericScale != DBNull.Value)
-                                {
-                                    x.NumericPrecision = (short)NumericPrecision;
-                                    x.NumericScale = (short)NumericScale;
-                                }
+                                x.NumericPrecision = SafeField<short>(r, "NumericPrecision");
+                                x.NumericScale = SafeField<short>(r, "NumericScale");
                             }
                         }
                         catch (Exception ex)
                         {
-                            DMEEditor.AddLogMessage("Fail", $"Error in Creating Field Type({ex.Message})", DateTime.Now, 0, entname, Errors.Failed);
+                            DMEEditor.AddLogMessage(
+                              "Fail",
+                              $"Error creating Field metadata for {entname}.{x.fieldname}: {ex.Message}",
+                              DateTime.Now, 0, entname, Errors.Failed
+                            );
                         }
+
                         if (x.IsKey)
                         {
                             fnd.PrimaryKeys.Add(x);
@@ -1837,7 +2288,7 @@ namespace TheTechIdea.Beep.DataBase
                     else
                     {
 
-                        Entities[idx].Created = true;
+                        Entities[idx].IsCreated = true;
                         Entities[idx].Editable = false;
                         Entities[idx].Drawn = true;
                         Entities[idx].Fields = fnd.Fields;
@@ -1848,7 +2299,7 @@ namespace TheTechIdea.Beep.DataBase
                 }
                 else
                 {
-                    fnd.Created = false;
+                    fnd.IsCreated = false;
                 }
 
             }
@@ -1998,7 +2449,14 @@ namespace TheTechIdea.Beep.DataBase
                     foreach (string item in EntitiesnotinEntitiesNames)
                     {
                         int idx = Entities.FindIndex(p => p.EntityName == item);
-                        Entities.RemoveAt(idx);
+                        Entities[idx].IsCreated=false;
+                        Entities[idx].EntityType= EntityType.InMemory;
+                        Entities[idx].Drawn = false;
+                        // update EntitiesNames and add to the list
+                        if (!EntitiesNames.Contains(item))
+                        {
+                            EntitiesNames.Add(item);
+                        }
                     }
                 }
 
@@ -2252,32 +2710,83 @@ namespace TheTechIdea.Beep.DataBase
         }
         #endregion
         #region "RDBSSource Database Methods"
+        // Helper method to extract WHERE clause from a query
+        private string ExtractWhereClause(string query)
+        {
+            string lowerQuery = query.ToLower();
+            int wherePos = lowerQuery.IndexOf(" where ");
+
+            if (wherePos >= 0)
+            {
+                // Find the position after "where"
+                int startPos = wherePos + 7; // length of " where "
+
+                // Find the next clause, if any
+                int endPos = lowerQuery.Length;
+                string[] endClauses = { " group by ", " having ", " order by " };
+
+                foreach (string clause in endClauses)
+                {
+                    int pos = lowerQuery.IndexOf(clause, startPos);
+                    if (pos >= 0 && pos < endPos)
+                    {
+                        endPos = pos;
+                    }
+                }
+
+                return "WHERE " + query.Substring(startPos, endPos - startPos).Trim();
+            }
+
+            return string.Empty;
+        }
         private string GenerateCreateEntityScript(EntityStructure t1)
         {
             string createtablestring = "Create table ";
             try
             {//-- Create Create string
-                int i = 1;
                 t1.EntityName = Regex.Replace(t1.EntityName, @"\s+", "_");
                 createtablestring += " " + t1.EntityName + "\n(";
+
                 if (t1.Fields.Count == 0)
                 {
-                    // t1=ds.GetEntityStructure()
+                    // Empty fields collection, add error log
+                    DMEEditor.AddLogMessage("Fail", $"No fields defined for entity {t1.EntityName}", DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                    return createtablestring + ")";
                 }
+
+                // Filter out fields with empty names before calculating total
+                var validFields = t1.Fields.Where(p => !string.IsNullOrEmpty(p.fieldname?.Trim())).ToList();
+                int totalValidFields = validFields.Count;
+
+                if (totalValidFields == 0)
+                {
+                    DMEEditor.AddLogMessage("Fail", $"All field names are empty for {t1.EntityName}", DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                    return createtablestring + ")";
+                }
+
+                int processedFields = 0;
+
                 foreach (EntityField dbf in t1.Fields)
                 {
-                    if (DatasourceType == DataSourceType.Mysql)
+                    // Skip fields with empty names
+                    if (string.IsNullOrEmpty(dbf.fieldname))
                     {
-                        dbf.fieldname = dbf.fieldname.Replace(" ", "_");
-                        dbf.fieldname = "`" + dbf.fieldname + "`";
+                        DMEEditor.AddLogMessage("Fail", $"Field Name is empty for {t1.EntityName}", DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                        continue;
                     }
 
-                    createtablestring += "\n " + dbf.fieldname + " " + DMEEditor.typesHelper.GetDataType(DatasourceName, dbf) + " ";
+                    string fieldName = dbf.fieldname;
+                    if (DatasourceType == DataSourceType.Mysql)
+                    {
+                        fieldName = fieldName.Replace(" ", "_");
+                        fieldName = "`" + fieldName + "`";
+                    }
+
+                    createtablestring += "\n " + fieldName + " " + DMEEditor.typesHelper.GetDataType(DatasourceName, dbf) + " ";
+
                     if (dbf.IsAutoIncrement)
                     {
-                        //  dbf.fieldname = Regex.Replace(dbf.fieldname, @"\s+", "_");
-                        string autonumberstring = "";
-                        autonumberstring = CreateAutoNumber(dbf);
+                        string autonumberstring = CreateAutoNumber(dbf);
                         if (DMEEditor.ErrorObject.Flag == Errors.Ok)
                         {
                             createtablestring += autonumberstring;
@@ -2285,7 +2794,6 @@ namespace TheTechIdea.Beep.DataBase
                         else
                         {
                             throw new Exception(ErrorObject.Message);
-
                         }
                     }
 
@@ -2293,40 +2801,44 @@ namespace TheTechIdea.Beep.DataBase
                     {
                         createtablestring += " NOT NULL ";
                     }
+
                     if (dbf.IsUnique == true)
                     {
                         createtablestring += " UNIQUE ";
                     }
-                    i += 1;
 
-                    if (i <= t1.Fields.Count)
+                    processedFields++;
+
+                    // Only add comma if this is not the last valid field
+                    if (processedFields < totalValidFields)
                     {
                         createtablestring += ",";
                     }
-
                 }
-                if (t1.PrimaryKeys != null)
+
+                // Add primary key constraint if there are primary keys
+                if (t1.PrimaryKeys != null && t1.PrimaryKeys.Count > 0)
                 {
-                    if (t1.PrimaryKeys.Count > 0)
+                    // Add comma before primary key only if we have valid fields
+                    if (totalValidFields > 0)
                     {
-                        createtablestring += $",\n" + CreatePrimaryKeyString(t1);
+                        createtablestring += ",";
                     }
-                }
-                if (createtablestring[createtablestring.Length - 1].Equals(","))
-                {
-                    createtablestring = createtablestring.Remove(createtablestring.Length);
+                    createtablestring += "\n" + CreatePrimaryKeyString(t1);
                 }
 
+                // Close the CREATE TABLE statement
                 createtablestring += ")";
-
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error Creating Entity {t1.EntityName}  ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+                DMEEditor.AddLogMessage("Fail", $"Error Creating Entity {t1.EntityName} ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
                 createtablestring = "";
             }
+
             return createtablestring;
         }
+
         public List<ETLScriptDet> GenerateCreatEntityScript(List<EntityStructure> entities)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
@@ -2396,7 +2908,7 @@ namespace TheTechIdea.Beep.DataBase
                 var t = Task.Run<EntityStructure>(() => { return GetEntityStructure(entity, true); });
                 t.Wait();
                 EntityStructure entstructure = t.Result;
-                entstructure.Created = false;
+                entstructure.IsCreated = false;
                 if (DMEEditor.ErrorObject.Flag == Errors.Ok)
                 {
                     Entities[Entities.FindIndex(x => x.EntityName == entity)] = entstructure;

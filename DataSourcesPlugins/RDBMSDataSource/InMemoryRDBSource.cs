@@ -10,6 +10,7 @@ using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.Editor.ETL;
 
 
 
@@ -246,6 +247,7 @@ namespace TheTechIdea.Beep
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             bool isdeleted = false;
+            ETLDataCopier etl = new ETLDataCopier(DMEEditor);
             try
             {
                 if (IsCreated)
@@ -299,6 +301,8 @@ namespace TheTechIdea.Beep
         public override bool CreateEntityAs(EntityStructure entity)
         {
             string ds = entity.DataSourceID;
+            entity.EntityName = entity.EntityName.Trim().ToUpper();
+            entity.DatasourceEntityName = entity.EntityName.Trim().ToUpper();
             if (EntitiesNames.Contains(entity.EntityName))
             {
                 return false;
@@ -307,20 +311,18 @@ namespace TheTechIdea.Beep
             {
                 return false;
             }
+            if (CheckEntityExist(entity.EntityName))
+            {
+                return false;
+            }
             bool created = base.CreateEntityAs(entity);
+            entity.IsCreated = created;
             entity.DataSourceID = ds;
             if (created)
             {
-                Entities.Add(entity);
-                EntitiesNames.Add(entity.EntityName);
-                InMemoryStructures.Add(entity);
+               
+                SyncEntitiesNameandEntities();
 
-                if (Dataconnection?.ConnectionProp?.Entities != null)
-                {
-                    Dataconnection.ConnectionProp.Entities = InMemoryStructures;
-                }
-
-                IsLoaded = IsCreated = IsStructureCreated = true;
             }
 
             return created;
@@ -426,8 +428,8 @@ namespace TheTechIdea.Beep
                 if (!IsStructureCreated)
                 {
                     
-                    GetEntitesList();
-                    for (int i = 0; i < Entities.Count-1; i++)
+           //         GetEntitesList();
+                    for (int i = 0; i <= Entities.Count-1; i++)
                     {
                     //    if (!string.IsNullOrEmpty(Entities[i].DataSourceID))
                     //    {

@@ -63,6 +63,9 @@ namespace TheTechIdea.Beep.MilvusDatasource
 
         public string ColumnDelimiter { get; set; }
         public string ParameterDelimiter { get; set; }
+
+        private JsonSerializerOptions _jsonOptions;
+
         public string GuidID { get; set; }
         public DataSourceType DatasourceType { get; set; }
         public DatasourceCategory Category { get; set; }
