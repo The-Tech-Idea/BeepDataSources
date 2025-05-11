@@ -21,7 +21,7 @@
   <ItemGroup>
     <PackageReference Include="Pinecone.Client" Version="3.1.0" />
     <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.30" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.63" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.64" />
   </ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
