@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+		<TargetFrameworks> net8.0;net9.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>Latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -39,8 +39,8 @@
  </ItemGroup>
  <ItemGroup>
    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.33" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.66" />
+   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.34" />
+   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.67" />
  </ItemGroup>
  <ItemGroup>
    <ProjectReference Include="..\..\DataSourcesPlugins\RDBMSDataSource\RDBDataSource.csproj" />
