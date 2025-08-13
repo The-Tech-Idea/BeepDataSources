@@ -229,7 +229,7 @@ namespace TheTechIdea.Beep.QdrantDatasource
 
                 throw;
             }
-          
+          return  ConnectionState.Open;
         }
 
         public object RunQuery(string qrystr)

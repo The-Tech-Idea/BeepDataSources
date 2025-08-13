@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>Latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -27,9 +27,9 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="Couchbase.Lite" Version="3.2.2" />
+	  <PackageReference Include="Couchbase.Lite" Version="3.2.4" />
 	  <PackageReference Include="Couchbase.Lite.Mapping" Version="1.1.0" />
-	  <PackageReference Include="Couchbase.Lite.Support.NetDesktop" Version="3.2.2" />
+	  <PackageReference Include="Couchbase.Lite.Support.NetDesktop" Version="3.2.4" />
 	</ItemGroup>
 
 </Project>

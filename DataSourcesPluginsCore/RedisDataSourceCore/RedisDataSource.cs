@@ -343,6 +343,41 @@ namespace TheTechIdea.Beep.Redis
         {
             throw new NotImplementedException();
         }
+
+        public IErrorsInfo LoadStructure(IProgress<PassedArgs> progress, CancellationToken token, bool copydata = false)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo CreateStructure(IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo LoadData(IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo SyncData(IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo SyncData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo RefreshData(IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo RefreshData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
         #endregion
     }
 }
