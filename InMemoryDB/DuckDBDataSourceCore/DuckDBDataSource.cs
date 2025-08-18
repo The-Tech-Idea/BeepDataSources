@@ -1,21 +1,22 @@
 ﻿using DuckDB.NET.Data;
+using System.ComponentModel;
 using System.Data;
+using System.Data.Common;
+using System.Data.SqlTypes;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Xml;
 using TheTechIdea.Beep;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
-using TheTechIdea.Beep.Vis;
-using TheTechIdea.Beep.Logger;
-using TheTechIdea.Beep.Utilities;
-using TheTechIdea.Beep.ConfigUtil;
-using TheTechIdea.Beep.Addin;
-using System.Reflection;
-using System.Xml;
-using System.Data.Common;
-using TheTechIdea.Beep.Report;
-using DateTime = System.DateTime;
-using System.Text.RegularExpressions;
 using TheTechIdea.Beep.Helpers;
-using System.Data.SqlTypes;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
+using DateTime = System.DateTime;
 
 
 
@@ -755,7 +756,7 @@ namespace DuckDBDataSourceCore
             }
             return fnd;
         }
-        public override object GetEntity(string EntityName, List<AppFilter> Filter)
+        public override IBindingList GetEntity(string EntityName, List<AppFilter> Filter)
         {
             ErrorObject.Flag = Errors.Ok;
             //  int LoadedRecord;
@@ -1271,7 +1272,7 @@ namespace DuckDBDataSourceCore
         //    return retval;
         //}
 
-        public override object RunQuery(string qrystr)
+        public override IBindingList RunQuery(string qrystr)
         {
             if (RDBMSHelper.IsSqlStatementValid(qrystr)) { return RunQueryOnDuckDb(qrystr); }
             else
@@ -1308,7 +1309,7 @@ namespace DuckDBDataSourceCore
                 return DMEEditor.ErrorObject; // Replace with your actual error implementation
             }
         }
-        public DataTable RunQueryOnDuckDb( string qryStr)
+        public IBindingList RunQueryOnDuckDb( string qryStr)
         {
             var dataTable = new DataTable();
             DuckDBCommand command = GetDataCommand();
@@ -1319,17 +1320,9 @@ namespace DuckDBDataSourceCore
             {
                 dataTable.Load(reader);
             }
-            //using (var command = new DuckDBCommand(qryStr, DuckConn))
-            //{
-               
-            //    using (var adapter = new OdbcDataAdapter(command))
-            //    {
-            //        adapter.Fill(dataTable);
-            //    }
-               
-            //}
+            
 
-            return dataTable;
+            return dataTable.DefaultView;
         }
         private DuckDBCommand CreateDeleteCommandParameters(DuckDBCommand command, DataRow r, EntityStructure DataStruct)
         {

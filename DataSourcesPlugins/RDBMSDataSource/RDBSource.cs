@@ -25,6 +25,7 @@ using TheTechIdea.Beep.Addin;
 using static TheTechIdea.Beep.Utilities.Util;
 using TheTechIdea.Beep.DriversConfigurations;
 using System.Text;
+using System.Collections;
 
 namespace TheTechIdea.Beep.DataBase
 {
@@ -266,40 +267,46 @@ namespace TheTechIdea.Beep.DataBase
         /// <remarks>
         /// This method is suitable for queries that return multiple rows.
         /// </remarks>
-        public virtual object RunQuery(string qrystr)
+        public virtual IBindingList RunQuery(string qrystr)
         {
             ErrorObject.Flag = Errors.Ok;
-            IDbCommand cmd = GetDataCommand();
+
             try
             {
-                DataTable dt = new DataTable();
-                cmd.CommandText = qrystr;
-                dt.Load(cmd.ExecuteReader(CommandBehavior.Default));
-                cmd.Dispose();
-                if (dt != null)
+                if (string.IsNullOrWhiteSpace(qrystr))
                 {
-                    if (dt.Rows.Count == 1)
+                    DMEEditor.AddLogMessage("Fail", "RunQuery: query string is null or empty", DateTime.Now, 0, "", Errors.Failed);
+                    return new DataTable().DefaultView;
+                }
+
+                if (Dataconnection.ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                using (var cmd = GetDataCommand())
+                {
+                    if (cmd == null)
                     {
-                        if (dt.Columns.Count == 1)
-                            return dt.Rows[0][0];
+                        DMEEditor.AddLogMessage("Fail", "RunQuery: failed to create data command", DateTime.Now, 0, "", Errors.Failed);
+                        return new DataTable().DefaultView;
                     }
-                    else if (dt.Rows.Count > 1)
+
+                    cmd.CommandText = qrystr;
+
+                    using (var reader = cmd.ExecuteReader(CommandBehavior.Default))
                     {
-                        //EntityStructure st = DMEEditor.Utilfunction.GetEntityStructure(dt);
-                        //Type type = DMEEditor.Utilfunction.GetEntityType("tab", st.Fields);
-                        return dt; // DMEEditor.Utilfunction.ConvertTableToList(dt, st, type);
+                        var dt = new DataTable();
+                        dt.Load(reader);
+                        return dt.DefaultView; // DataView implements IBindingList
                     }
                 }
-                return null;
-
             }
             catch (Exception ex)
             {
-                cmd.Dispose();
-                DMEEditor.AddLogMessage("Fail", $"Error in getting entity Data({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
-                return null;
+                DMEEditor.AddLogMessage("Fail", $"Error executing query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+                return new DataTable().DefaultView;
             }
-
         }
         /// <summary>
         /// Begins a database transaction.
@@ -1677,7 +1684,7 @@ namespace TheTechIdea.Beep.DataBase
         /// </remarks>
         /// <returns>An object representing the data retrieved, which could be a list or another type based on the entity structure.</returns>
         /// <exception cref="Exception">Catches and logs any exceptions that occur during the data retrieval process.</exception>
-        public virtual object GetEntity(string EntityName, List<AppFilter> Filter)
+        public virtual IBindingList GetEntity(string EntityName, List<AppFilter> Filter)
         {
             ErrorObject.Flag = Errors.Ok;
             //  int LoadedRecord;
@@ -1734,7 +1741,7 @@ namespace TheTechIdea.Beep.DataBase
                 // Create an instance of UnitOfWork<T> with the specific constructor
                 // Dynamically handle the instance since we can't cast to a specific IUnitofWork<T> at compile time
                 object uowInstance = Activator.CreateInstance(uowGenericType, constructorArgs);
-                return uowInstance;//DMEEditor.Utilfunction.ConvertTableToList(dt,GetEntityStructure(EntityName),GetEntityType(EntityName));
+                return (IBindingList)uowInstance;//DMEEditor.Utilfunction.ConvertTableToList(dt,GetEntityStructure(EntityName),GetEntityType(EntityName));
             }
 
             catch (Exception ex)
@@ -1751,7 +1758,7 @@ namespace TheTechIdea.Beep.DataBase
         /// <param name="pageNumber">The page number to retrieve (1-based).</param>
         /// <param name="pageSize">The number of records per page.</param>
         /// <returns>A PagedResult object containing the data and pagination metadata.</returns>
-        public virtual object GetEntity(string EntityName, List<AppFilter> Filter, int pageNumber, int pageSize)
+        public virtual PagedResult GetEntity(string EntityName, List<AppFilter> Filter, int pageNumber, int pageSize)
         {
             ErrorObject.Flag = Errors.Ok;
 
@@ -1922,9 +1929,9 @@ namespace TheTechIdea.Beep.DataBase
         /// This method is an asynchronous wrapper around GetEntity, providing the same functionality but in an async manner. It is particularly useful for operations that might take a longer time to complete, ensuring that the application remains responsive.
         /// </remarks>
         /// <returns>A task representing the asynchronous operation, which, when completed, will return an object representing the data retrieved.</returns>
-        public virtual Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public virtual Task<IBindingList> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            return (Task<object>)GetEntity(EntityName, Filter);
+            return (Task<IBindingList>)GetEntity(EntityName, Filter);
         }
         public virtual IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
