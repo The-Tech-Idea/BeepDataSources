@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>TheTechIdea.Beep.Connectors.SugarCRMDataSource</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>The Tech Idea</Authors>
+    <Description>SugarCRM Data Source for Beep Data Connectors</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BeepDM\DataManagementEngineStandard\DataManagementEngine.csproj" />
+    <ProjectReference Include="..\..\..\BeepDM\DataManagementModelsStandard\DataManagementModels.csproj" />
+    <ProjectReference Include="..\..\..\BeepDM\DMLoggerStandard\DMLogger.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- HTTP Client Extensions -->
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="8.0.0" />
+    <!-- JSON Handling -->
+    <PackageReference Include="System.Text.Json" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
