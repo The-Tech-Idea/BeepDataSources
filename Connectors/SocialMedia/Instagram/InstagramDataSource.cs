@@ -5,234 +5,182 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using DataManagementEngineStandard;
-using DataManagementModelsStandard;
+using TheTechIdea.Beep.InstagramDataSource.Config;
+using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.DataBase;
 
-namespace BeepDataSources.Connectors.SocialMedia.Instagram
+namespace TheTechIdea.Beep.InstagramDataSource
 {
     /// <summary>
-    /// Configuration class for Instagram data source
-    /// </summary>
-    public class InstagramConfig
-    {
-        /// <summary>
-        /// Instagram App ID from Facebook Developers Console
-        /// </summary>
-        public string AppId { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Instagram App Secret from Facebook Developers Console
-        /// </summary>
-        public string AppSecret { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Access token for Instagram Basic Display API
-        /// </summary>
-        public string AccessToken { get; set; } = string.Empty;
-
-        /// <summary>
-        /// User ID for the Instagram account
-        /// </summary>
-        public string UserId { get; set; } = string.Empty;
-
-        /// <summary>
-        /// API version for Instagram Graph API (default: v18.0)
-        /// </summary>
-        public string ApiVersion { get; set; } = "v18.0";
-
-        /// <summary>
-        /// Base URL for Instagram Graph API
-        /// </summary>
-        public string BaseUrl => $"https://graph.instagram.com/{ApiVersion}";
-
-        /// <summary>
-        /// Base URL for Instagram Basic Display API
-        /// </summary>
-        public string BasicDisplayUrl => "https://graph.instagram.com";
-
-        /// <summary>
-        /// Timeout for API requests in seconds
-        /// </summary>
-        public int TimeoutSeconds { get; set; } = 30;
-
-        /// <summary>
-        /// Maximum number of retries for failed requests
-        /// </summary>
-        public int MaxRetries { get; set; } = 3;
-
-        /// <summary>
-        /// Rate limit delay between requests in milliseconds
-        /// </summary>
-        public int RateLimitDelayMs { get; set; } = 1000;
-    }
-
-    /// <summary>
-    /// Instagram data source implementation for Beep framework
+    /// Instagram data source implementation using WebAPIDataSource as base class
     /// Supports Instagram Graph API and Basic Display API
     /// </summary>
-    public class InstagramDataSource : IDataSource
+    public class InstagramDataSource : WebAPIDataSource
     {
-        private readonly InstagramConfig _config;
-        private HttpClient _httpClient;
-        private bool _isConnected;
-        private readonly Dictionary<string, EntityMetadata> _entityMetadata;
+        private readonly InstagramDataSourceConfig _config;
+        private readonly JsonSerializerOptions _jsonOptions;
+        private Dictionary<string, EntityStructure> _entityMetadata;
 
         /// <summary>
-        /// Constructor for InstagramDataSource
+        /// Initializes a new instance of the InstagramDataSource class
         /// </summary>
-        /// <param name="config">Instagram configuration</param>
-        public InstagramDataSource(InstagramConfig config)
+        public InstagramDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per, InstagramDataSourceConfig config)
+            : base(datasourcename, logger, pDMEEditor, databasetype, per)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
-            _entityMetadata = InitializeEntityMetadata();
-        }
 
-        /// <summary>
-        /// Constructor for InstagramDataSource with connection string
-        /// </summary>
-        /// <param name="connectionString">Connection string in format: AppId=xxx;AppSecret=xxx;AccessToken=xxx;UserId=xxx</param>
-        public InstagramDataSource(string connectionString)
-        {
-            _config = ParseConnectionString(connectionString);
-            _entityMetadata = InitializeEntityMetadata();
-        }
-
-        /// <summary>
-        /// Parse connection string into InstagramConfig
-        /// </summary>
-        private InstagramConfig ParseConnectionString(string connectionString)
-        {
-            var config = new InstagramConfig();
-            var parts = connectionString.Split(';');
-
-            foreach (var part in parts)
+            if (!_config.IsValid())
             {
-                var keyValue = part.Split('=');
-                if (keyValue.Length == 2)
-                {
-                    var key = keyValue[0].Trim();
-                    var value = keyValue[1].Trim();
-
-                    switch (key.ToLower())
-                    {
-                        case "appid":
-                            config.AppId = value;
-                            break;
-                        case "appsecret":
-                            config.AppSecret = value;
-                            break;
-                        case "accesstoken":
-                            config.AccessToken = value;
-                            break;
-                        case "userid":
-                            config.UserId = value;
-                            break;
-                        case "apiversion":
-                            config.ApiVersion = value;
-                            break;
-                        case "timeoutseconds":
-                            if (int.TryParse(value, out var timeout))
-                                config.TimeoutSeconds = timeout;
-                            break;
-                        case "maxretries":
-                            if (int.TryParse(value, out var retries))
-                                config.MaxRetries = retries;
-                            break;
-                        case "ratelimitdelayms":
-                            if (int.TryParse(value, out var delay))
-                                config.RateLimitDelayMs = delay;
-                            break;
-                    }
-                }
+                throw new ArgumentException("Invalid Instagram configuration. Access token is required.");
             }
 
-            return config;
+            _jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            };
+
+            // Initialize entity metadata
+            _entityMetadata = InitializeEntityMetadata();
+            EntitiesNames = _entityMetadata.Keys.ToList();
+            Entities = _entityMetadata.Values.ToList();
+
+            // Set up connection properties from config
+            if (Dataconnection?.ConnectionProp is WebAPIConnectionProperties webApiProps)
+            {
+                // Copy config properties to connection properties
+                webApiProps.ApiKey = _config.AccessToken;
+                webApiProps.ClientId = _config.AppId;
+                webApiProps.ClientSecret = _config.AppSecret;
+                webApiProps.UserID = _config.UserId;
+                webApiProps.ConnectionString = _config.UseGraphApi ? _config.GraphApiUrl : _config.BasicDisplayUrl;
+                webApiProps.TimeoutMs = 30000; // 30 seconds default
+                webApiProps.MaxRetries = 3;
+                webApiProps.EnableRateLimit = true;
+                webApiProps.RateLimitRequestsPerMinute = 60; // Instagram rate limit
+            }
         }
+
+
 
         /// <summary>
         /// Initialize entity metadata for Instagram entities
         /// </summary>
-        private Dictionary<string, EntityMetadata> InitializeEntityMetadata()
+        private Dictionary<string, EntityStructure> InitializeEntityMetadata()
         {
-            var metadata = new Dictionary<string, EntityMetadata>();
+            var metadata = new Dictionary<string, EntityStructure>();
 
             // User Profile
-            metadata["user"] = new EntityMetadata
+            metadata["user"] = new EntityStructure
             {
                 EntityName = "user",
-                DisplayName = "User Profile",
+                DatasourceEntityName = "user",
+                Caption = "User Profile",
+                Viewtype = ViewType.Table,
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "User ID" },
-                    new EntityField { Name = "username", Type = "string", DisplayName = "Username" },
-                    new EntityField { Name = "account_type", Type = "string", DisplayName = "Account Type" },
-                    new EntityField { Name = "media_count", Type = "integer", DisplayName = "Media Count" },
-                    new EntityField { Name = "follows_count", Type = "integer", DisplayName = "Follows Count" },
-                    new EntityField { Name = "followed_by_count", Type = "integer", DisplayName = "Followers Count" }
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
+                    new EntityField { fieldname = "username", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "account_type", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "media_count", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "follows_count", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "followed_by_count", fieldtype = "System.Int32", AllowDBNull = true }
+                },
+                PrimaryKeys = new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
                 }
             };
 
             // Media (Posts)
-            metadata["media"] = new EntityMetadata
+            metadata["media"] = new EntityStructure
             {
                 EntityName = "media",
-                DisplayName = "Media Posts",
+                DatasourceEntityName = "media",
+                Caption = "Media Posts",
+                Viewtype = ViewType.Table,
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Media ID" },
-                    new EntityField { Name = "media_type", Type = "string", DisplayName = "Media Type" },
-                    new EntityField { Name = "media_url", Type = "string", DisplayName = "Media URL" },
-                    new EntityField { Name = "permalink", Type = "string", DisplayName = "Permalink" },
-                    new EntityField { Name = "thumbnail_url", Type = "string", DisplayName = "Thumbnail URL" },
-                    new EntityField { Name = "caption", Type = "string", DisplayName = "Caption" },
-                    new EntityField { Name = "timestamp", Type = "datetime", DisplayName = "Timestamp" },
-                    new EntityField { Name = "like_count", Type = "integer", DisplayName = "Like Count" },
-                    new EntityField { Name = "comments_count", Type = "integer", DisplayName = "Comments Count" }
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
+                    new EntityField { fieldname = "media_type", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "media_url", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "permalink", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "thumbnail_url", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "caption", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "timestamp", fieldtype = "System.DateTime", AllowDBNull = true },
+                    new EntityField { fieldname = "like_count", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "comments_count", fieldtype = "System.Int32", AllowDBNull = true }
+                },
+                PrimaryKeys = new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
                 }
             };
 
             // Stories
-            metadata["stories"] = new EntityMetadata
+            metadata["stories"] = new EntityStructure
             {
                 EntityName = "stories",
-                DisplayName = "Stories",
+                DatasourceEntityName = "stories",
+                Caption = "Stories",
+                Viewtype = ViewType.Table,
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Story ID" },
-                    new EntityField { Name = "media_type", Type = "string", DisplayName = "Media Type" },
-                    new EntityField { Name = "media_url", Type = "string", DisplayName = "Media URL" },
-                    new EntityField { Name = "thumbnail_url", Type = "string", DisplayName = "Thumbnail URL" },
-                    new EntityField { Name = "timestamp", Type = "datetime", DisplayName = "Timestamp" },
-                    new EntityField { Name = "expires_at", Type = "datetime", DisplayName = "Expires At" }
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
+                    new EntityField { fieldname = "media_type", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "media_url", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "thumbnail_url", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "timestamp", fieldtype = "System.DateTime", AllowDBNull = true },
+                    new EntityField { fieldname = "expires_at", fieldtype = "System.DateTime", AllowDBNull = true }
+                },
+                PrimaryKeys = new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
                 }
             };
 
             // Insights
-            metadata["insights"] = new EntityMetadata
+            metadata["insights"] = new EntityStructure
             {
                 EntityName = "insights",
-                DisplayName = "Insights",
+                DatasourceEntityName = "insights",
+                Caption = "Insights",
+                Viewtype = ViewType.Table,
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "media_id", Type = "string", IsPrimaryKey = true, DisplayName = "Media ID" },
-                    new EntityField { Name = "metric", Type = "string", IsPrimaryKey = true, DisplayName = "Metric" },
-                    new EntityField { Name = "value", Type = "integer", DisplayName = "Value" },
-                    new EntityField { Name = "title", Type = "string", DisplayName = "Title" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "period", Type = "string", DisplayName = "Period" }
+                    new EntityField { fieldname = "media_id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
+                    new EntityField { fieldname = "metric", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
+                    new EntityField { fieldname = "value", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "title", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "description", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "period", fieldtype = "System.String", AllowDBNull = true }
+                },
+                PrimaryKeys = new List<EntityField>
+                {
+                    new EntityField { fieldname = "media_id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
+                    new EntityField { fieldname = "metric", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
                 }
             };
 
             // Tags
-            metadata["tags"] = new EntityMetadata
+            metadata["tags"] = new EntityStructure
             {
                 EntityName = "tags",
-                DisplayName = "Tags",
+                DatasourceEntityName = "tags",
+                Caption = "Tags",
+                Viewtype = ViewType.Table,
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Tag ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Tag Name" },
-                    new EntityField { Name = "media_count", Type = "integer", DisplayName = "Media Count" }
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
+                    new EntityField { fieldname = "name", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "media_count", fieldtype = "System.Int32", AllowDBNull = true }
+                },
+                PrimaryKeys = new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
                 }
             };
 
@@ -242,7 +190,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Instagram
         /// <summary>
         /// Connect to Instagram API
         /// </summary>
-        public async Task<bool> ConnectAsync()
+        public override async Task<bool> ConnectAsync()
         {
             try
             {
@@ -251,31 +199,34 @@ namespace BeepDataSources.Connectors.SocialMedia.Instagram
                     throw new InvalidOperationException("Access token is required for Instagram connection");
                 }
 
-                // Initialize HTTP client
-                var handler = new HttpClientHandler();
-                _httpClient = new HttpClient(handler)
-                {
-                    Timeout = TimeSpan.FromSeconds(_config.TimeoutSeconds)
-                };
-
                 // Test connection by getting user profile
-                var testUrl = $"{_config.BasicDisplayUrl}/me?fields=id,username,account_type&access_token={_config.AccessToken}";
-                var response = await _httpClient.GetAsync(testUrl);
+                var baseUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? _config.BasicDisplayUrl;
+                var testUrl = $"{baseUrl}/me?fields=id,username,account_type&access_token={_config.AccessToken}";
+
+                // Use base class connection method
+                ConnectionStatus = ConnectionState.Connecting;
+
+                var response = await base.GetAsync(testUrl);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    _isConnected = true;
-                    return true;
+                    var content = await response.Content.ReadAsStringAsync();
+                    var userInfo = JsonSerializer.Deserialize<JsonElement>(content, _jsonOptions);
+
+                    if (userInfo.TryGetProperty("id", out var userId))
+                    {
+                        _config.UserId = userId.GetString();
+                        ConnectionStatus = ConnectionState.Open;
+                        return true;
+                    }
                 }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    throw new Exception($"Instagram API connection failed: {response.StatusCode} - {errorContent}");
-                }
+
+                ConnectionStatus = ConnectionState.Closed;
+                return false;
             }
             catch (Exception ex)
             {
-                _isConnected = false;
+                ConnectionStatus = ConnectionState.Closed;
                 throw new Exception($"Failed to connect to Instagram API: {ex.Message}", ex);
             }
         }
@@ -283,23 +234,26 @@ namespace BeepDataSources.Connectors.SocialMedia.Instagram
         /// <summary>
         /// Disconnect from Instagram API
         /// </summary>
-        public async Task<bool> DisconnectAsync()
+        public override async Task<bool> DisconnectAsync()
         {
-            if (_httpClient != null)
+            try
             {
-                _httpClient.Dispose();
-                _httpClient = null;
+                // Use base class disconnect method
+                ConnectionStatus = ConnectionState.Closed;
+                return true;
             }
-            _isConnected = false;
-            return true;
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to disconnect from Instagram API: {ex.Message}", ex);
+            }
         }
 
         /// <summary>
         /// Get data from Instagram API
         /// </summary>
-        public async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
+        public async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object>? parameters = null)
         {
-            if (!_isConnected)
+            if (ConnectionStatus != ConnectionState.Open)
             {
                 await ConnectAsync();
             }
@@ -314,27 +268,32 @@ namespace BeepDataSources.Connectors.SocialMedia.Instagram
                 switch (entityName.ToLower())
                 {
                     case "user":
-                        url = $"{_config.BasicDisplayUrl}/me?fields={fields}&access_token={_config.AccessToken}";
+                        var baseUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? _config.BasicDisplayUrl;
+                        url = $"{baseUrl}/me?fields={fields}&access_token={_config.AccessToken}";
                         break;
 
                     case "media":
                         var mediaLimit = parameters.ContainsKey("limit") ? parameters["limit"].ToString() : "25";
-                        url = $"{_config.BasicDisplayUrl}/me/media?fields={fields}&limit={mediaLimit}&access_token={_config.AccessToken}";
+                        var mediaBaseUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? _config.BasicDisplayUrl;
+                        url = $"{mediaBaseUrl}/me/media?fields={fields}&limit={mediaLimit}&access_token={_config.AccessToken}";
                         break;
 
                     case "stories":
-                        url = $"{_config.BasicDisplayUrl}/me/stories?fields={fields}&access_token={_config.AccessToken}";
+                        var storiesBaseUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? _config.BasicDisplayUrl;
+                        url = $"{storiesBaseUrl}/me/stories?fields={fields}&access_token={_config.AccessToken}";
                         break;
 
                     case "insights":
                         var mediaId = parameters.ContainsKey("media_id") ? parameters["media_id"].ToString() : "";
+                        var graphUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? _config.GraphApiUrl;
                         var metrics = parameters.ContainsKey("metrics") ? parameters["metrics"].ToString() : "engagement,impressions,reach,saved";
-                        url = $"{_config.BaseUrl}/{mediaId}/insights?metric={metrics}&access_token={_config.AccessToken}";
+                        url = $"{graphUrl}/{mediaId}/insights?metric={metrics}&access_token={_config.AccessToken}";
                         break;
 
                     case "tags":
                         var tagName = parameters.ContainsKey("tag_name") ? parameters["tag_name"].ToString() : "";
-                        url = $"{_config.BaseUrl}/ig_hashtag_search?user_id={_config.UserId}&q={tagName}&access_token={_config.AccessToken}";
+                        var tagsGraphUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? _config.GraphApiUrl;
+                        url = $"{tagsGraphUrl}/ig_hashtag_search?user_id={_config.UserId}&q={tagName}&access_token={_config.AccessToken}";
                         break;
 
                     default:
@@ -347,7 +306,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Instagram
                     await Task.Delay(_config.RateLimitDelayMs);
                 }
 
-                var response = await _httpClient.GetAsync(url);
+                var response = await base.GetAsync(url);
                 var jsonContent = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
@@ -409,7 +368,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Instagram
                 {
                     foreach (var field in metadata.Fields)
                     {
-                        dataTable.Columns.Add(field.Name, GetFieldType(field.Type));
+                        dataTable.Columns.Add(field.fieldname, GetFieldType(field.Type));
                     }
                 }
                 else if (dataElement.ValueKind == JsonValueKind.Object)
@@ -554,7 +513,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Instagram
         /// <summary>
         /// Get connection status
         /// </summary>
-        public bool IsConnected => _isConnected;
+        public override bool IsConnected => base.IsConnected;
 
         /// <summary>
         /// Get data source type
@@ -569,14 +528,9 @@ namespace BeepDataSources.Connectors.SocialMedia.Instagram
         /// <summary>
         /// Dispose resources
         /// </summary>
-        public void Dispose()
+        public override void Dispose()
         {
-            if (_httpClient != null)
-            {
-                _httpClient.Dispose();
-                _httpClient = null;
-            }
-            _isConnected = false;
+            base.Dispose();
         }
     }
 }

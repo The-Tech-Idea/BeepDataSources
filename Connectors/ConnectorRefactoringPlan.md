@@ -9,7 +9,10 @@ This document outlines the comprehensive plan to refactor all connector implemen
 - **Current Implementation**: Standalone classes implementing IDataSource directly
 - **Target Implementation**: Inherit from WebAPIDataSource,WEBAPIDataConnection, and use POCO classes, implement IDataSource properly
 - ** Learned Points**: FROM C:\Users\f_ald\source\repos\The-Tech-Idea\BeepDataSources\DataSourcesPlugins\RDBMSDataSource WHERE RDBDataSource.cs and RDBDataConnnection is.
-
+ Do not refernce RDBDataSource . learn how to implement IDataSource and how every function and classes work. and not use it.
+- ** dont add or refernce DataManagementEngineStandard and  DataManagementModelsStandard i did that already on all projects
+- **  also every constructor for every connector data source should be similar to RDBDataSource get DMEditor and other classes injected as paramater
+- ** t using WebAPIDataConnection and WebAPIConnectionProperties 
 ## Architecture Changes
 
 ### 1. Base Class Structure
@@ -94,9 +97,9 @@ Example:
 ## Implementation Strategy
 
 ### Phase 1: SocialMedia Connectors (12 platforms)
-1. **Facebook** - Graph API v18
-2. **Twitter** - Twitter API v2
-3. **Instagram** - Instagram Basic Display API
+1. **Facebook** - Graph API v18 ✅ **COMPLETED**
+2. **Twitter** - Twitter API v2 ✅ **COMPLETED** (Refactored to inherit from WebAPIDataSource, uses WebAPIConnectionProperties, proper IDataSource implementation)
+3. **Instagram** - Instagram Basic Display API ✅ **COMPLETED** (Refactored to inherit from WebAPIDataSource, uses WebAPIConnectionProperties, proper IDataSource implementation)
 4. **LinkedIn** - LinkedIn Marketing API
 5. **Pinterest** - Pinterest API v5
 6. **YouTube** - YouTube Data API v3

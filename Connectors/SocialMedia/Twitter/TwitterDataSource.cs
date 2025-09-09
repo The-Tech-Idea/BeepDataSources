@@ -7,224 +7,223 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using DataManagementEngineStandard;
-using DataManagementModelsStandard;
+using TheTechIdea.Beep.TwitterDataSource.Config;
+using TheTechIdea.Beep.TwitterDataSource.Entities;
+using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.DataBase;
 
-namespace BeepDataSources.Twitter
+namespace TheTechIdea.Beep.TwitterDataSource
 {
     /// <summary>
-    /// Configuration class for Twitter data source
+    /// Twitter data source implementation using WebAPIDataSource as base class
     /// </summary>
-    public class TwitterConfig
+    public class TwitterDataSource : WebAPIDataSource
     {
-        /// <summary>
-        /// Twitter API Key (Consumer Key)
-        /// </summary>
-        public string ApiKey { get; set; } = "";
+        private readonly TwitterDataSourceConfig _config;
+        private readonly JsonSerializerOptions _jsonOptions;
+        private Dictionary<string, EntityStructure> _entityMetadata;
 
         /// <summary>
-        /// Twitter API Secret (Consumer Secret)
+        /// Initializes a new instance of the TwitterDataSource class
         /// </summary>
-        public string ApiSecret { get; set; } = "";
-
-        /// <summary>
-        /// Access Token
-        /// </summary>
-        public string AccessToken { get; set; } = "";
-
-        /// <summary>
-        /// Access Token Secret
-        /// </summary>
-        public string AccessTokenSecret { get; set; } = "";
-
-        /// <summary>
-        /// Bearer Token for API v2
-        /// </summary>
-        public string BearerToken { get; set; } = "";
-
-        /// <summary>
-        /// Twitter User ID
-        /// </summary>
-        public string UserId { get; set; } = "";
-
-        /// <summary>
-        /// Twitter Username
-        /// </summary>
-        public string Username { get; set; } = "";
-
-        /// <summary>
-        /// API Version to use
-        /// </summary>
-        public string ApiVersion { get; set; } = "2";
-
-        /// <summary>
-        /// Twitter API endpoint URL
-        /// </summary>
-        public string BaseUrl { get; set; } = "https://api.twitter.com";
-
-        /// <summary>
-        /// Connection timeout in seconds
-        /// </summary>
-        public int TimeoutSeconds { get; set; } = 30;
-
-        /// <summary>
-        /// Maximum number of retry attempts
-        /// </summary>
-        public int MaxRetries { get; set; } = 3;
-    }
-
-    /// <summary>
-    /// Twitter data source implementation for Beep framework
-    /// </summary>
-    public class TwitterDataSource : IDataSource
-    {
-        private readonly TwitterConfig _config;
-        private HttpClient _httpClient;
-        private bool _isConnected;
-        private readonly Dictionary<string, EntityMetadata> _entityMetadata;
-
-        /// <summary>
-        /// Constructor for TwitterDataSource
-        /// </summary>
-        /// <param name="config">Configuration object</param>
-        public TwitterDataSource(object config)
+        public TwitterDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per, TwitterDataSourceConfig config)
+            : base(datasourcename, logger, pDMEEditor, databasetype, per)
         {
-            _config = config as TwitterConfig ?? new TwitterConfig();
+            _config = config ?? throw new ArgumentNullException(nameof(config));
+
+            if (!_config.IsValid())
+            {
+                throw new ArgumentException("Invalid Twitter configuration. Bearer token or OAuth credentials are required.");
+            }
+
+            _jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            };
+
+            // Initialize entity metadata
             _entityMetadata = InitializeEntityMetadata();
+            EntitiesNames = _entityMetadata.Keys.ToList();
+            Entities = _entityMetadata.Values.ToList();
+
+            // Set up connection properties from config
+            if (Dataconnection?.ConnectionProp is WebAPIConnectionProperties webApiProps)
+            {
+                // Copy config properties to connection properties
+                webApiProps.ApiKey = _config.BearerToken;
+                webApiProps.ClientId = _config.ConsumerKey;
+                webApiProps.ClientSecret = _config.ConsumerSecret;
+                webApiProps.UserID = _config.AccessToken;
+                webApiProps.Password = _config.AccessTokenSecret;
+                webApiProps.ConnectionString = $"https://api.twitter.com/{_config.ApiVersion}";
+                webApiProps.TimeoutMs = _config.TimeoutMs;
+                webApiProps.MaxRetries = _config.MaxRetries;
+                webApiProps.EnableRateLimit = _config.UseRateLimiting;
+                webApiProps.RateLimitRequestsPerMinute = _config.RateLimitPer15Min / 15 * 60; // Convert to per minute
+            }
         }
 
         /// <summary>
         /// Initialize entity metadata for Twitter entities
         /// </summary>
-        private Dictionary<string, EntityMetadata> InitializeEntityMetadata()
+        private Dictionary<string, EntityStructure> InitializeEntityMetadata()
         {
-            var metadata = new Dictionary<string, EntityMetadata>();
+            var metadata = new Dictionary<string, EntityStructure>();
 
             // Tweets entity
-            metadata["tweets"] = new EntityMetadata
+            metadata["tweets"] = new EntityStructure
             {
                 EntityName = "tweets",
-                DisplayName = "Tweets",
-                PrimaryKey = "id",
+                DatasourceEntityName = "tweets",
+                Caption = "Tweets",
+                Viewtype = ViewType.Table,
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Tweet ID" },
-                    new EntityField { Name = "text", Type = "string", DisplayName = "Tweet Text" },
-                    new EntityField { Name = "created_at", Type = "datetime", DisplayName = "Created At" },
-                    new EntityField { Name = "author_id", Type = "string", DisplayName = "Author ID" },
-                    new EntityField { Name = "conversation_id", Type = "string", DisplayName = "Conversation ID" },
-                    new EntityField { Name = "in_reply_to_user_id", Type = "string", DisplayName = "Reply To User ID" },
-                    new EntityField { Name = "referenced_tweets", Type = "string", DisplayName = "Referenced Tweets" },
-                    new EntityField { Name = "attachments", Type = "string", DisplayName = "Attachments" },
-                    new EntityField { Name = "geo", Type = "string", DisplayName = "Geo Location" },
-                    new EntityField { Name = "context_annotations", Type = "string", DisplayName = "Context Annotations" },
-                    new EntityField { Name = "entities", Type = "string", DisplayName = "Entities" },
-                    new EntityField { Name = "public_metrics", Type = "string", DisplayName = "Public Metrics" },
-                    new EntityField { Name = "non_public_metrics", Type = "string", DisplayName = "Non Public Metrics" },
-                    new EntityField { Name = "organic_metrics", Type = "string", DisplayName = "Organic Metrics" },
-                    new EntityField { Name = "promoted_metrics", Type = "string", DisplayName = "Promoted Metrics" },
-                    new EntityField { Name = "possibly_sensitive", Type = "boolean", DisplayName = "Possibly Sensitive" },
-                    new EntityField { Name = "lang", Type = "string", DisplayName = "Language" },
-                    new EntityField { Name = "source", Type = "string", DisplayName = "Source" },
-                    new EntityField { Name = "withheld", Type = "string", DisplayName = "Withheld" },
-                    new EntityField { Name = "reply_settings", Type = "string", DisplayName = "Reply Settings" }
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
+                    new EntityField { fieldname = "text", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "created_at", fieldtype = "System.DateTime", AllowDBNull = true },
+                    new EntityField { fieldname = "author_id", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "conversation_id", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "in_reply_to_user_id", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "referenced_tweets", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "attachments", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "geo", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "context_annotations", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "entities", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "public_metrics", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "non_public_metrics", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "organic_metrics", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "promoted_metrics", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "possibly_sensitive", fieldtype = "System.Boolean", AllowDBNull = true },
+                    new EntityField { fieldname = "lang", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "source", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "withheld", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "reply_settings", fieldtype = "System.String", AllowDBNull = true }
+                },
+                PrimaryKeys = new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
                 }
             };
 
             // Users entity
-            metadata["users"] = new EntityMetadata
+            metadata["users"] = new EntityStructure
             {
                 EntityName = "users",
-                DisplayName = "Users",
-                PrimaryKey = "id",
+                DatasourceEntityName = "users",
+                Caption = "Users",
+                Viewtype = ViewType.Table,
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "User ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Display Name" },
-                    new EntityField { Name = "username", Type = "string", DisplayName = "Username" },
-                    new EntityField { Name = "created_at", Type = "datetime", DisplayName = "Created At" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "entities", Type = "string", DisplayName = "Entities" },
-                    new EntityField { Name = "location", Type = "string", DisplayName = "Location" },
-                    new EntityField { Name = "pinned_tweet_id", Type = "string", DisplayName = "Pinned Tweet ID" },
-                    new EntityField { Name = "profile_image_url", Type = "string", DisplayName = "Profile Image URL" },
-                    new EntityField { Name = "protected", Type = "boolean", DisplayName = "Is Protected" },
-                    new EntityField { Name = "public_metrics", Type = "string", DisplayName = "Public Metrics" },
-                    new EntityField { Name = "url", Type = "string", DisplayName = "Website URL" },
-                    new EntityField { Name = "verified", Type = "boolean", DisplayName = "Is Verified" },
-                    new EntityField { Name = "verified_type", Type = "string", DisplayName = "Verified Type" },
-                    new EntityField { Name = "withheld", Type = "string", DisplayName = "Withheld" }
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
+                    new EntityField { fieldname = "name", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "username", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "created_at", fieldtype = "System.DateTime", AllowDBNull = true },
+                    new EntityField { fieldname = "description", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "entities", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "location", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "pinned_tweet_id", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "profile_image_url", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "protected", fieldtype = "System.Boolean", AllowDBNull = true },
+                    new EntityField { fieldname = "public_metrics", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "url", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "verified", fieldtype = "System.Boolean", AllowDBNull = true },
+                    new EntityField { fieldname = "verified_type", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "withheld", fieldtype = "System.String", AllowDBNull = true }
+                },
+                PrimaryKeys = new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
                 }
             };
 
             // Spaces entity
-            metadata["spaces"] = new EntityMetadata
+            metadata["spaces"] = new EntityStructure
             {
                 EntityName = "spaces",
-                DisplayName = "Spaces",
-                PrimaryKey = "id",
+                DatasourceEntityName = "spaces",
+                Caption = "Spaces",
+                Viewtype = ViewType.Table,
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Space ID" },
-                    new EntityField { Name = "state", Type = "string", DisplayName = "State" },
-                    new EntityField { Name = "title", Type = "string", DisplayName = "Title" },
-                    new EntityField { Name = "host_ids", Type = "string", DisplayName = "Host IDs" },
-                    new EntityField { Name = "created_at", Type = "datetime", DisplayName = "Created At" },
-                    new EntityField { Name = "started_at", Type = "datetime", DisplayName = "Started At" },
-                    new EntityField { Name = "ended_at", Type = "datetime", DisplayName = "Ended At" },
-                    new EntityField { Name = "updated_at", Type = "datetime", DisplayName = "Updated At" },
-                    new EntityField { Name = "is_ticketed", Type = "boolean", DisplayName = "Is Ticketed" },
-                    new EntityField { Name = "scheduled_start", Type = "datetime", DisplayName = "Scheduled Start" },
-                    new EntityField { Name = "speaker_ids", Type = "string", DisplayName = "Speaker IDs" },
-                    new EntityField { Name = "invited_user_ids", Type = "string", DisplayName = "Invited User IDs" },
-                    new EntityField { Name = "participant_count", Type = "int", DisplayName = "Participant Count" },
-                    new EntityField { Name = "subscriber_count", Type = "int", DisplayName = "Subscriber Count" },
-                    new EntityField { Name = "topic_ids", Type = "string", DisplayName = "Topic IDs" },
-                    new EntityField { Name = "lang", Type = "string", DisplayName = "Language" }
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
+                    new EntityField { fieldname = "state", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "title", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "host_ids", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "created_at", fieldtype = "System.DateTime", AllowDBNull = true },
+                    new EntityField { fieldname = "started_at", fieldtype = "System.DateTime", AllowDBNull = true },
+                    new EntityField { fieldname = "ended_at", fieldtype = "System.DateTime", AllowDBNull = true },
+                    new EntityField { fieldname = "updated_at", fieldtype = "System.DateTime", AllowDBNull = true },
+                    new EntityField { fieldname = "is_ticketed", fieldtype = "System.Boolean", AllowDBNull = true },
+                    new EntityField { fieldname = "scheduled_start", fieldtype = "System.DateTime", AllowDBNull = true },
+                    new EntityField { fieldname = "speaker_ids", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "invited_user_ids", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "participant_count", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "subscriber_count", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "topic_ids", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "lang", fieldtype = "System.String", AllowDBNull = true }
+                },
+                PrimaryKeys = new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
                 }
             };
 
             // Lists entity
-            metadata["lists"] = new EntityMetadata
+            metadata["lists"] = new EntityStructure
             {
                 EntityName = "lists",
-                DisplayName = "Lists",
-                PrimaryKey = "id",
+                DatasourceEntityName = "lists",
+                Caption = "Lists",
+                Viewtype = ViewType.Table,
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "List ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "List Name" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "owner_id", Type = "string", DisplayName = "Owner ID" },
-                    new EntityField { Name = "created_at", Type = "datetime", DisplayName = "Created At" },
-                    new EntityField { Name = "follower_count", Type = "int", DisplayName = "Follower Count" },
-                    new EntityField { Name = "member_count", Type = "int", DisplayName = "Member Count" },
-                    new EntityField { Name = "private", Type = "boolean", DisplayName = "Is Private" }
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
+                    new EntityField { fieldname = "name", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "description", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "owner_id", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "created_at", fieldtype = "System.DateTime", AllowDBNull = true },
+                    new EntityField { fieldname = "follower_count", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "member_count", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "private", fieldtype = "System.Boolean", AllowDBNull = true }
+                },
+                PrimaryKeys = new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
                 }
             };
 
             // Analytics entity
-            metadata["analytics"] = new EntityMetadata
+            metadata["analytics"] = new EntityStructure
             {
                 EntityName = "analytics",
-                DisplayName = "Analytics",
-                PrimaryKey = "id",
+                DatasourceEntityName = "analytics",
+                Caption = "Analytics",
+                Viewtype = ViewType.Table,
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Analytics ID" },
-                    new EntityField { Name = "tweet_id", Type = "string", DisplayName = "Tweet ID" },
-                    new EntityField { Name = "date", Type = "datetime", DisplayName = "Date" },
-                    new EntityField { Name = "impressions", Type = "int", DisplayName = "Impressions" },
-                    new EntityField { Name = "engagements", Type = "int", DisplayName = "Engagements" },
-                    new EntityField { Name = "engagement_rate", Type = "decimal", DisplayName = "Engagement Rate" },
-                    new EntityField { Name = "retweets", Type = "int", DisplayName = "Retweets" },
-                    new EntityField { Name = "replies", Type = "int", DisplayName = "Replies" },
-                    new EntityField { Name = "likes", Type = "int", DisplayName = "Likes" },
-                    new EntityField { Name = "clicks", Type = "int", DisplayName = "Clicks" },
-                    new EntityField { Name = "card_clicks", Type = "int", DisplayName = "Card Clicks" },
-                    new EntityField { Name = "follows", Type = "int", DisplayName = "Follows" },
-                    new EntityField { Name = "unfollows", Type = "int", DisplayName = "Unfollows" },
-                    new EntityField { Name = "qualified_impressions", Type = "int", DisplayName = "Qualified Impressions" }
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
+                    new EntityField { fieldname = "tweet_id", fieldtype = "System.String", AllowDBNull = true },
+                    new EntityField { fieldname = "date", fieldtype = "System.DateTime", AllowDBNull = true },
+                    new EntityField { fieldname = "impressions", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "engagements", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "engagement_rate", fieldtype = "System.Decimal", AllowDBNull = true },
+                    new EntityField { fieldname = "retweets", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "replies", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "likes", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "clicks", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "card_clicks", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "follows", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "unfollows", fieldtype = "System.Int32", AllowDBNull = true },
+                    new EntityField { fieldname = "qualified_impressions", fieldtype = "System.Int32", AllowDBNull = true }
+                },
+                PrimaryKeys = new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
                 }
             };
 
@@ -239,55 +238,42 @@ namespace BeepDataSources.Twitter
             try
             {
                 if (string.IsNullOrEmpty(_config.BearerToken) &&
-                    (string.IsNullOrEmpty(_config.ApiKey) || string.IsNullOrEmpty(_config.ApiSecret)))
+                    (string.IsNullOrEmpty(_config.ConsumerKey) || string.IsNullOrEmpty(_config.ConsumerSecret)))
                 {
                     throw new ArgumentException("Bearer Token or API Key/Secret are required");
                 }
 
-                // Initialize HTTP client
-                _httpClient = new HttpClient
-                {
-                    Timeout = TimeSpan.FromSeconds(_config.TimeoutSeconds)
-                };
-
-                // Set authorization header
-                if (!string.IsNullOrEmpty(_config.BearerToken))
-                {
-                    _httpClient.DefaultRequestHeaders.Authorization =
-                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.BearerToken);
-                }
-                else
-                {
-                    // Use API Key/Secret for authentication
-                    var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_config.ApiKey}:{_config.ApiSecret}"));
-                    _httpClient.DefaultRequestHeaders.Authorization =
-                        new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authHeader);
-                }
-
                 // Test connection by getting user info
-                var testUrl = $"{_config.BaseUrl}/{_config.ApiVersion}/users/me";
-                var response = await _httpClient.GetAsync(testUrl);
+                var baseUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? $"https://api.twitter.com/{_config.ApiVersion}";
+                var testUrl = $"{baseUrl}/users/me";
+
+                // Use base class connection method
+                ConnectionStatus = ConnectionState.Connecting;
+
+                // The authentication should be handled by the base class WebAPIDataSource
+                // Test connection
+                var response = await base.GetAsync(testUrl);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    var userInfo = JsonSerializer.Deserialize<JsonElement>(content);
+                    var userInfo = JsonSerializer.Deserialize<JsonElement>(content, _jsonOptions);
 
                     if (userInfo.TryGetProperty("data", out var data) &&
                         data.TryGetProperty("id", out var userId))
                     {
-                        _config.UserId = userId.GetString();
-                        _isConnected = true;
+                        _config.TwitterUserId = userId.GetString();
+                        ConnectionStatus = ConnectionState.Open;
                         return true;
                     }
                 }
 
-                _isConnected = false;
+                ConnectionStatus = ConnectionState.Closed;
                 return false;
             }
             catch (Exception ex)
             {
-                _isConnected = false;
+                ConnectionStatus = ConnectionState.Closed;
                 throw new Exception($"Failed to connect to Twitter: {ex.Message}", ex);
             }
         }
@@ -299,12 +285,8 @@ namespace BeepDataSources.Twitter
         {
             try
             {
-                if (_httpClient != null)
-                {
-                    _httpClient.Dispose();
-                    _httpClient = null;
-                }
-                _isConnected = false;
+                // Use base class disconnect method
+                ConnectionStatus = ConnectionState.Closed;
                 return true;
             }
             catch (Exception ex)
@@ -316,9 +298,9 @@ namespace BeepDataSources.Twitter
         /// <summary>
         /// Get entity data from Twitter
         /// </summary>
-        public async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
+        public async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object>? parameters = null)
         {
-            if (!_isConnected)
+            if (ConnectionStatus != ConnectionState.Open)
             {
                 throw new InvalidOperationException("Not connected to Twitter. Call ConnectAsync first.");
             }
@@ -331,7 +313,7 @@ namespace BeepDataSources.Twitter
             try
             {
                 var endpoint = GetEntityEndpoint(entityName, parameters);
-                var response = await _httpClient.GetAsync(endpoint);
+                var response = await base.GetAsync(endpoint);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -350,9 +332,9 @@ namespace BeepDataSources.Twitter
         /// <summary>
         /// Get entity endpoint URL
         /// </summary>
-        private string GetEntityEndpoint(string entityName, Dictionary<string, object> parameters = null)
+        private string GetEntityEndpoint(string entityName, Dictionary<string, object>? parameters = null)
         {
-            var baseUrl = $"{_config.BaseUrl}/{_config.ApiVersion}";
+            var baseUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? $"https://api.twitter.com/{_config.ApiVersion}";
             var endpoint = entityName.ToLower() switch
             {
                 "tweets" => $"{baseUrl}/tweets",
@@ -414,7 +396,7 @@ namespace BeepDataSources.Twitter
             // Add columns based on entity metadata
             foreach (var field in metadata.Fields)
             {
-                dataTable.Columns.Add(field.Name, GetFieldType(field.Type));
+                dataTable.Columns.Add(field.fieldname, GetFieldType(field.fieldtype));
             }
 
             try
@@ -430,9 +412,9 @@ namespace BeepDataSources.Twitter
                             var row = dataTable.NewRow();
                             foreach (var field in metadata.Fields)
                             {
-                                if (item.TryGetProperty(field.Name, out var value))
+                                if (item.TryGetProperty(field.fieldname, out var value))
                                 {
-                                    row[field.Name] = ParseJsonValue(value, field.Type);
+                                    row[field.fieldname] = ParseJsonValue(value, field.fieldtype);
                                 }
                             }
                             dataTable.Rows.Add(row);
@@ -443,9 +425,9 @@ namespace BeepDataSources.Twitter
                         var row = dataTable.NewRow();
                         foreach (var field in metadata.Fields)
                         {
-                            if (data.TryGetProperty(field.Name, out var value))
+                            if (data.TryGetProperty(field.fieldname, out var value))
                             {
-                                row[field.Name] = ParseJsonValue(value, field.Type);
+                                row[field.fieldname] = ParseJsonValue(value, field.fieldtype);
                             }
                         }
                         dataTable.Rows.Add(row);
@@ -507,7 +489,7 @@ namespace BeepDataSources.Twitter
         /// <summary>
         /// Get metadata for a specific entity
         /// </summary>
-        public EntityMetadata GetEntityMetadata(string entityName)
+        public EntityStructure GetEntityMetadata(string entityName)
         {
             if (_entityMetadata.TryGetValue(entityName.ToLower(), out var metadata))
             {
@@ -521,7 +503,7 @@ namespace BeepDataSources.Twitter
         /// </summary>
         public async Task<bool> CreateAsync(string entityName, Dictionary<string, object> data)
         {
-            if (!_isConnected)
+            if (ConnectionStatus != ConnectionState.Open)
             {
                 throw new InvalidOperationException("Not connected to Twitter. Call ConnectAsync first.");
             }
@@ -532,7 +514,7 @@ namespace BeepDataSources.Twitter
                 var jsonData = JsonSerializer.Serialize(data);
                 var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync(endpoint, content);
+                var response = await base.PostAsync(endpoint, content);
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
@@ -546,7 +528,7 @@ namespace BeepDataSources.Twitter
         /// </summary>
         private string GetCreateEndpoint(string entityName)
         {
-            var baseUrl = $"{_config.BaseUrl}/{_config.ApiVersion}";
+            var baseUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? $"https://api.twitter.com/{_config.ApiVersion}";
             return entityName.ToLower() switch
             {
                 "tweets" => $"{baseUrl}/tweets",
@@ -560,7 +542,7 @@ namespace BeepDataSources.Twitter
         /// </summary>
         public async Task<bool> UpdateAsync(string entityName, Dictionary<string, object> data, string id)
         {
-            if (!_isConnected)
+            if (ConnectionStatus != ConnectionState.Open)
             {
                 throw new InvalidOperationException("Not connected to Twitter. Call ConnectAsync first.");
             }
@@ -571,7 +553,7 @@ namespace BeepDataSources.Twitter
                 var jsonData = JsonSerializer.Serialize(data);
                 var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync(endpoint, content);
+                var response = await base.PutAsync(endpoint, content);
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
@@ -585,7 +567,7 @@ namespace BeepDataSources.Twitter
         /// </summary>
         public async Task<bool> DeleteAsync(string entityName, string id)
         {
-            if (!_isConnected)
+            if (ConnectionStatus != ConnectionState.Open)
             {
                 throw new InvalidOperationException("Not connected to Twitter. Call ConnectAsync first.");
             }
@@ -593,7 +575,7 @@ namespace BeepDataSources.Twitter
             try
             {
                 var endpoint = $"{GetEntityEndpoint(entityName)}/{id}";
-                var response = await _httpClient.DeleteAsync(endpoint);
+                var response = await base.DeleteAsync(endpoint);
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
@@ -607,7 +589,7 @@ namespace BeepDataSources.Twitter
         /// </summary>
         public bool IsConnected()
         {
-            return _isConnected;
+            return ConnectionStatus == ConnectionState.Open;
         }
 
         /// <summary>
@@ -623,19 +605,19 @@ namespace BeepDataSources.Twitter
         /// </summary>
         public void SetConfig(object config)
         {
-            var newConfig = config as TwitterConfig;
+            var newConfig = config as TwitterDataSourceConfig;
             if (newConfig != null)
             {
-                _config.ApiKey = newConfig.ApiKey;
-                _config.ApiSecret = newConfig.ApiSecret;
+                _config.BearerToken = newConfig.BearerToken;
+                _config.ConsumerKey = newConfig.ConsumerKey;
+                _config.ConsumerSecret = newConfig.ConsumerSecret;
                 _config.AccessToken = newConfig.AccessToken;
                 _config.AccessTokenSecret = newConfig.AccessTokenSecret;
-                _config.BearerToken = newConfig.BearerToken;
-                _config.UserId = newConfig.UserId;
-                _config.Username = newConfig.Username;
+                _config.TwitterUserId = newConfig.TwitterUserId;
+                _config.TwitterUsername = newConfig.TwitterUsername;
                 _config.ApiVersion = newConfig.ApiVersion;
-                _config.BaseUrl = newConfig.BaseUrl;
-                _config.TimeoutSeconds = newConfig.TimeoutSeconds;
+                _config.ConnectionString = newConfig.ConnectionString;
+                _config.TimeoutMs = newConfig.TimeoutMs;
                 _config.MaxRetries = newConfig.MaxRetries;
             }
         }
@@ -643,7 +625,7 @@ namespace BeepDataSources.Twitter
         /// <summary>
         /// Dispose resources
         /// </summary>
-        public void Dispose()
+        public new void Dispose()
         {
             DisconnectAsync().Wait();
         }
