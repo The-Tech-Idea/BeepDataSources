@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
-using BeepDM.DataManagementModelsStandard;
+
 using Microsoft.Extensions.Logging;
 
 namespace BeepDM.Connectors.CloudStorage.AmazonS3
