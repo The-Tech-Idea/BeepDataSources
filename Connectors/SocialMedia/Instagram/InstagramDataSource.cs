@@ -22,6 +22,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
     {
         private readonly InstagramDataSourceConfig _config;
         private readonly JsonSerializerOptions _jsonOptions;
+        private readonly HttpClient _httpClient;
         private Dictionary<string, EntityStructure> _entityMetadata;
 
         /// <summary>
@@ -42,6 +43,11 @@ namespace TheTechIdea.Beep.InstagramDataSource
                 PropertyNameCaseInsensitive = true,
                 DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
             };
+
+            // Initialize HttpClient for direct API calls
+            _httpClient = new HttpClient();
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_config.AccessToken}");
+            _httpClient.Timeout = TimeSpan.FromMilliseconds(30000); // 30 seconds default
 
             // Initialize entity metadata
             _entityMetadata = InitializeEntityMetadata();
@@ -206,7 +212,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
                 // Use base class connection method
                 ConnectionStatus = ConnectionState.Connecting;
 
-                var response = await base.GetAsync(testUrl);
+                var response = await _httpClient.GetAsync(testUrl);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -234,13 +240,13 @@ namespace TheTechIdea.Beep.InstagramDataSource
         /// <summary>
         /// Disconnect from Instagram API
         /// </summary>
-        public override async Task<bool> DisconnectAsync()
+        public override Task<bool> DisconnectAsync()
         {
             try
             {
                 // Use base class disconnect method
                 ConnectionStatus = ConnectionState.Closed;
-                return true;
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
@@ -306,7 +312,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
                     await Task.Delay(_config.RateLimitDelayMs);
                 }
 
-                var response = await base.GetAsync(url);
+                var response = await _httpClient.GetAsync(url);
                 var jsonContent = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
@@ -530,6 +536,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
         /// </summary>
         public override void Dispose()
         {
+            _httpClient?.Dispose();
             base.Dispose();
         }
     }

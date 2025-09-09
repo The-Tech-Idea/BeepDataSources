@@ -250,8 +250,7 @@ namespace TheTechIdea.Beep.TwitterDataSource
                 // Use base class connection method
                 ConnectionStatus = ConnectionState.Connecting;
 
-                // The authentication should be handled by the base class WebAPIDataSource
-                // Test connection
+                // Use WebAPIDataSource HTTP client - access through reflection or protected method
                 var response = await base.GetAsync(testUrl);
 
                 if (response.IsSuccessStatusCode)
@@ -281,13 +280,13 @@ namespace TheTechIdea.Beep.TwitterDataSource
         /// <summary>
         /// Disconnect from Twitter API
         /// </summary>
-        public async Task<bool> DisconnectAsync()
+        public Task<bool> DisconnectAsync()
         {
             try
             {
                 // Use base class disconnect method
                 ConnectionStatus = ConnectionState.Closed;
-                return true;
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
@@ -341,7 +340,7 @@ namespace TheTechIdea.Beep.TwitterDataSource
                 "users" => $"{baseUrl}/users",
                 "spaces" => $"{baseUrl}/spaces",
                 "lists" => $"{baseUrl}/lists",
-                "analytics" => $"{baseUrl}/tweets/{_config.UserId}/analytics",
+                "analytics" => $"{baseUrl}/tweets/{_config.TwitterUserId}/analytics",
                 _ => throw new ArgumentException($"Unknown entity: {entityName}")
             };
 
@@ -501,7 +500,7 @@ namespace TheTechIdea.Beep.TwitterDataSource
         /// <summary>
         /// Create a new record in the specified entity
         /// </summary>
-        public async Task<bool> CreateAsync(string entityName, Dictionary<string, object> data)
+        public Task<bool> CreateAsync(string entityName, Dictionary<string, object> data)
         {
             if (ConnectionStatus != ConnectionState.Open)
             {
@@ -510,12 +509,9 @@ namespace TheTechIdea.Beep.TwitterDataSource
 
             try
             {
-                var endpoint = GetCreateEndpoint(entityName);
-                var jsonData = JsonSerializer.Serialize(data);
-                var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-
-                var response = await base.PostAsync(endpoint, content);
-                return response.IsSuccessStatusCode;
+                // Use high-level InsertEntity method
+                var result = base.InsertEntity(entityName, data);
+                return Task.FromResult(result == null);
             }
             catch (Exception ex)
             {
