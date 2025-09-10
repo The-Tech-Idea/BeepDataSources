@@ -267,7 +267,7 @@ namespace TheTechIdea.Beep.DataBase
         /// <remarks>
         /// This method is suitable for queries that return multiple rows.
         /// </remarks>
-        public virtual IBindingList RunQuery(string qrystr)
+        public virtual IEnumerable<object> RunQuery(string qrystr)
         {
             ErrorObject.Flag = Errors.Ok;
 
@@ -276,7 +276,7 @@ namespace TheTechIdea.Beep.DataBase
                 if (string.IsNullOrWhiteSpace(qrystr))
                 {
                     DMEEditor.AddLogMessage("Fail", "RunQuery: query string is null or empty", DateTime.Now, 0, "", Errors.Failed);
-                    return new DataTable().DefaultView;
+                    return Enumerable.Empty<object>();
                 }
 
                 if (Dataconnection.ConnectionStatus != ConnectionState.Open)
@@ -289,7 +289,7 @@ namespace TheTechIdea.Beep.DataBase
                     if (cmd == null)
                     {
                         DMEEditor.AddLogMessage("Fail", "RunQuery: failed to create data command", DateTime.Now, 0, "", Errors.Failed);
-                        return new DataTable().DefaultView;
+                        return Enumerable.Empty<object>();
                     }
 
                     cmd.CommandText = qrystr;
@@ -298,14 +298,14 @@ namespace TheTechIdea.Beep.DataBase
                     {
                         var dt = new DataTable();
                         dt.Load(reader);
-                        return dt.DefaultView; // DataView implements IBindingList
+                        return dt.AsEnumerable().Select(row => row.ItemArray);
                     }
                 }
             }
             catch (Exception ex)
             {
                 DMEEditor.AddLogMessage("Fail", $"Error executing query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
-                return new DataTable().DefaultView;
+                return Enumerable.Empty<object>();
             }
         }
         /// <summary>
@@ -1684,17 +1684,17 @@ namespace TheTechIdea.Beep.DataBase
         /// </remarks>
         /// <returns>An object representing the data retrieved, which could be a list or another type based on the entity structure.</returns>
         /// <exception cref="Exception">Catches and logs any exceptions that occur during the data retrieval process.</exception>
-        public virtual IBindingList GetEntity(string EntityName, List<AppFilter> Filter)
+        public virtual IEnumerable<object> GetEntity(string EntityName, List<AppFilter> Filter)
         {
             ErrorObject.Flag = Errors.Ok;
-            //  int LoadedRecord;
-            bool IsQuery = false;
-            string inname = "";
+            string inname = string.Empty;
             string qrystr = "select * from ";
-            SetObjects(EntityName);
-            if (!string.IsNullOrEmpty(EntityName) && !string.IsNullOrWhiteSpace(EntityName))
+
+            // Determine base query (table name vs full select)
+            if (!string.IsNullOrWhiteSpace(EntityName))
             {
-                if (!EntityName.ToLower().Contains("select") && !EntityName.ToLower().Contains("from"))
+                if (!EntityName.Contains("select", StringComparison.OrdinalIgnoreCase) &&
+                    !EntityName.Contains("from", StringComparison.OrdinalIgnoreCase))
                 {
                     qrystr = "select * from " + EntityName;
                     qrystr = GetTableName(qrystr.ToLower());
@@ -1703,51 +1703,110 @@ namespace TheTechIdea.Beep.DataBase
                 else
                 {
                     EntityName = GetTableName(EntityName);
-                    string[] stringSeparators = new string[] { " from ", " where ", " group by ", " order by " };
-                    string[] sp = EntityName.ToLower().Split(stringSeparators, StringSplitOptions.None);
+                    string[] stringSeparators = { " from ", " where ", " group by ", " order by " };
+                    var sp = EntityName.ToLower().Split(stringSeparators, StringSplitOptions.None);
                     qrystr = EntityName;
-                    inname = sp[1].Trim();
+                    if (sp.Length > 1)
+                        inname = sp[1].Trim();
                 }
+            }
 
-            }
-            EntityStructure ent = GetEntityStructure(inname);
-            if (ent != null)
-            {
-                if (!string.IsNullOrEmpty(ent.CustomBuildQuery))
-                {
-                    qrystr = ent.CustomBuildQuery;
-                    IsQuery = true;
-                }
-                else
-                    IsQuery = false;
-            }
-            qrystr = BuildQuery(qrystr, Filter);
+            // Allow custom query from metadata
             try
             {
-                if (enttype == null)
+                var ent = GetEntityStructure(inname);
+                if (ent != null && !string.IsNullOrEmpty(ent.CustomBuildQuery))
                 {
-                    enttype = GetEntityType(inname);
+                    qrystr = ent.CustomBuildQuery;
                 }
-                IDataAdapter adp = GetDataAdapter(qrystr, Filter);
-                DataSet dataSet = new DataSet();
-                // Temporarily disable constraints during fill operation
-                dataSet.EnforceConstraints = false;
-                adp.Fill(dataSet);
-                DataTable dt = dataSet.Tables[0];
-                Type uowGenericType = typeof(ObservableBindingList<>).MakeGenericType(enttype);
-                // Prepare the arguments for the constructor
-                object[] constructorArgs = new object[] { dt };
-
-                // Create an instance of UnitOfWork<T> with the specific constructor
-                // Dynamically handle the instance since we can't cast to a specific IUnitofWork<T> at compile time
-                object uowInstance = Activator.CreateInstance(uowGenericType, constructorArgs);
-                return (IBindingList)uowInstance;//DMEEditor.Utilfunction.ConvertTableToList(dt,GetEntityStructure(EntityName),GetEntityType(EntityName));
             }
+            catch { /* ignore metadata errors for streaming */ }
 
+            // Inject filter placeholders (adds parameter tokens only)
+            qrystr = BuildQuery(qrystr, Filter);
+
+            if (Dataconnection.ConnectionStatus != ConnectionState.Open)
+                Openconnection();
+
+            IDbCommand cmd = null;
+            IDataReader reader = null;
+
+            // Prepare command & reader inside try (no yield here)
+            try
+            {
+                cmd = GetDataCommand();
+                if (cmd == null)
+                    yield break;
+
+                cmd.CommandText = qrystr;
+
+                // Add parameters matching placeholders
+                if (Filter != null)
+                {
+                    foreach (var f in Filter.Where(p =>
+                             !string.IsNullOrWhiteSpace(p.FieldName) &&
+                             !string.IsNullOrWhiteSpace(p.Operator) &&
+                             !string.IsNullOrWhiteSpace(p.FilterValue)))
+                    {
+                        string paramBase = SanitizeParameterName(f.FieldName);
+
+                        var p = cmd.CreateParameter();
+                        p.ParameterName = $"p_{paramBase}";
+                        if (f.valueType == "System.DateTime" && DateTime.TryParse(f.FilterValue, out var dt))
+                        {
+                            p.DbType = DbType.DateTime;
+                            p.Value = dt;
+                        }
+                        else
+                        {
+                            p.Value = f.FilterValue;
+                        }
+                        cmd.Parameters.Add(p);
+
+                        if (f.Operator.Equals("between", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var p2 = cmd.CreateParameter();
+                            p2.ParameterName = $"p_{paramBase}1";
+                            if (f.valueType == "System.DateTime" && DateTime.TryParse(f.FilterValue1, out var dt2))
+                            {
+                                p2.DbType = DbType.DateTime;
+                                p2.Value = dt2;
+                            }
+                            else
+                            {
+                                p2.Value = f.FilterValue1;
+                            }
+                            cmd.Parameters.Add(p2);
+                        }
+                    }
+                }
+
+                reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+            }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error in getting entity Data({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
-                return null;
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor.AddLogMessage("Fail", $"Error preparing entity stream ({ex.Message})", DateTime.Now, 0, inname, Errors.Failed);
+                if (reader != null) { try { reader.Close(); } catch { } }
+                cmd?.Dispose();
+                yield break;
+            }
+
+            // Streaming loop (no catch here to allow yield)
+            using (cmd)
+            using (reader)
+            {
+                int fieldCount = reader.FieldCount;
+                while (reader.Read())
+                {
+                    var row = new Dictionary<string, object>(fieldCount, StringComparer.OrdinalIgnoreCase);
+                    for (int i = 0; i < fieldCount; i++)
+                    {
+                        row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                    }
+                    yield return row;
+                }
             }
         }
         /// <summary>
@@ -1762,164 +1821,207 @@ namespace TheTechIdea.Beep.DataBase
         {
             ErrorObject.Flag = Errors.Ok;
 
+            if (string.IsNullOrWhiteSpace(EntityName))
+            {
+                DMEEditor.AddLogMessage("Fail", "Entity name cannot be null or empty", DateTime.Now, 0, "", Errors.Failed);
+                return null;
+            }
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            bool isCustomQuery = EntityName.Contains("select", StringComparison.OrdinalIgnoreCase)
+                                 && EntityName.Contains("from", StringComparison.OrdinalIgnoreCase);
+
+            string baseQuery = isCustomQuery ? EntityName : $"SELECT * FROM {EntityName}";
+            string inname = EntityName;
+
+            // Try to resolve structure (may override with CustomBuildQuery)
+            EntityStructure ent = null;
             try
             {
-                // Validate parameters
-                if (pageNumber < 1)
-                    pageNumber = 1;
-
-                if (pageSize < 1)
-                    pageSize = 20; // Set a reasonable default
-
-                string entityNameToUse = EntityName?.Trim();
-                bool isQuery = false;
-                string inname = "";
-                string baseQuery = "";
-
-                // Step 1: Determine if we're dealing with a table name or a query
-                if (string.IsNullOrEmpty(entityNameToUse))
-                {
-                    DMEEditor.AddLogMessage("Fail", "Entity name cannot be null or empty", DateTime.Now, 0, "", Errors.Failed);
-                    return null;
-                }
-
-                if (entityNameToUse.ToLower().Contains("select") && entityNameToUse.ToLower().Contains("from"))
-                {
-                    // This is a custom query
-                    isQuery = true;
-                    baseQuery = entityNameToUse;
-
-                    // Extract the entity name from the query for metadata purposes
-                    string[] stringSeparators = new string[] { " from ", " where ", " group by ", " order by " };
-                    string[] parts = entityNameToUse.ToLower().Split(stringSeparators, StringSplitOptions.None);
-                    if (parts.Length > 1)
-                    {
-                        inname = parts[1].Trim();
-                    }
-                }
-                else
-                {
-                    // This is a table name
-                    baseQuery = $"SELECT * FROM {entityNameToUse}";
-                    inname = entityNameToUse;
-                }
-
-                // Step 2: Get entity structure for metadata
-                EntityStructure ent = GetEntityStructure(inname);
+                string entityForStruct = isCustomQuery ? ExtractFirstTableName(baseQuery) ?? EntityName : EntityName;
+                ent = GetEntityStructure(entityForStruct);
                 if (ent != null && !string.IsNullOrEmpty(ent.CustomBuildQuery))
                 {
                     baseQuery = ent.CustomBuildQuery;
-                    isQuery = true;
+                    isCustomQuery = true;
                 }
+            }
+            catch { /* non-fatal */ }
 
-                // Step 3: Build the query with filters
-                string countQuery = "";
-                string finalQuery = "";
-
-                if (isQuery && !baseQuery.ToLower().Contains("order by"))
+            // Ensure deterministic ORDER BY for paging
+            if (!baseQuery.Contains("order by", StringComparison.OrdinalIgnoreCase))
+            {
+                if (ent?.PrimaryKeys != null && ent.PrimaryKeys.Count > 0)
                 {
-                    // When processing a complex query without ORDER BY, we need to ensure proper pagination
-                    // by adding a default ordering, ideally by primary key
-                    string orderByClause = "";
-                    if (ent != null && ent.PrimaryKeys != null && ent.PrimaryKeys.Count > 0)
-                    {
-                        orderByClause = $" ORDER BY {GetFieldName(ent.PrimaryKeys[0].fieldname)}";
-                    }
-
-                    baseQuery += orderByClause;
+                    baseQuery += $" ORDER BY {GetFieldName(ent.PrimaryKeys[0].fieldname)}";
                 }
-
-                // Build the main query with filters
-                finalQuery = BuildQuery(baseQuery, Filter);
-
-                // Create a count query to get total records (for pagination metadata)
-                if (!isQuery)
+                else
                 {
-                    // Simple table query - we can COUNT(*)
-                    countQuery = $"SELECT COUNT(*) FROM {GetTableName(inname.ToLower())}";
-
-                    // Add WHERE clause if filters exist
-                    if (Filter != null && Filter.Count > 0)
-                    {
-                        string whereClause = ExtractWhereClause(finalQuery);
-                        if (!string.IsNullOrEmpty(whereClause))
-                        {
-                            countQuery += $" {whereClause}";
-                        }
-                    }
+                    baseQuery += " ORDER BY 1";
                 }
+            }
 
-                // Step 4: Apply database-specific pagination
-                // Get the appropriate paging syntax for this database type
-                string pagingSyntax = RDBMSHelper.GetPagingSyntax(DatasourceType, pageNumber, pageSize);
-                string pagingQuery = $"{finalQuery} {pagingSyntax}";
+            // Build filtered query (adds WHERE and parameter placeholders)
+            string filteredQuery = BuildQuery(baseQuery, Filter);
 
-                // Step 5: Execute query and get result
-                int totalRecords = 0;
-
-                // Get total count if count query is available
-                if (!string.IsNullOrEmpty(countQuery))
+            // Count query
+            string countQuery;
+            if (!isCustomQuery)
+            {
+                string tablePart = ExtractFirstTableName(baseQuery) ?? EntityName;
+                countQuery = $"SELECT COUNT(*) FROM {tablePart}";
+                string whereClause = ExtractWhereClause(filteredQuery);
+                if (!string.IsNullOrEmpty(whereClause))
                 {
-                    try
-                    {
-                        var countResult = GetScalar(countQuery);
-                        totalRecords = Convert.ToInt32(countResult);
-                    }
-                    catch (Exception countEx)
-                    {
-                        DMEEditor.AddLogMessage("Warning", $"Could not get total record count: {countEx.Message}", DateTime.Now, 0, "", Errors.Warning);
-                        // Continue with query execution even if count fails
-                    }
+                    countQuery += " " + whereClause;
                 }
+            }
+            else
+            {
+                string noOrder = StripTrailingOrderBy(filteredQuery);
+                countQuery = $"SELECT COUNT(*) FROM ({noOrder}) __q";
+            }
 
-                // Execute the main query with pagination
-                IDataAdapter adp = GetDataAdapter(pagingQuery, Filter);
-                DataSet dataSet = new DataSet();
+            // Paging syntax (e.g. OFFSET/FETCH, LIMIT/OFFSET, etc.)
+            string pagingSyntax = RDBMSHelper.GetPagingSyntax(DatasourceType, pageNumber, pageSize);
+            string pagedQuery = $"{filteredQuery} {pagingSyntax}";
 
-                try
-                {
-                    dataSet.EnforceConstraints = false;
-                    adp.Fill(dataSet);
-                }
-                catch (Exception fillEx)
-                {
-                    DMEEditor.AddLogMessage("Fail", $"Error executing paginated query: {fillEx.Message}", DateTime.Now, 0, pagingQuery, Errors.Failed);
-                    throw;
-                }
+            int totalRecords = 0;
+            if (Dataconnection.ConnectionStatus != ConnectionState.Open)
+                Openconnection();
 
-                DataTable dt = dataSet.Tables[0];
-
-                // Step 6: Create and return the paged result
-                if (enttype == null)
-                {
-                    enttype = GetEntityType(inname);
-                }
-
-                // Create the result object with pagination metadata
-                Type uowGenericType = typeof(ObservableBindingList<>).MakeGenericType(enttype);
-                object[] constructorArgs = new object[] { dt };
-                object data = Activator.CreateInstance(uowGenericType, constructorArgs);
-
-                var result = new PagedResult
-                {
-                    Data = data,
-                    TotalRecords = totalRecords,
-                    PageNumber = pageNumber,
-                    PageSize = pageSize,
-                    TotalPages = totalRecords > 0 ? (int)Math.Ceiling((double)totalRecords / pageSize) : 0,
-                    HasNextPage = pageNumber * pageSize < totalRecords,
-                    HasPreviousPage = pageNumber > 1
-                };
-
-                return result;
+            // Execute count
+            try
+            {
+                using var countCmd = GetDataCommand();
+                if (countCmd == null) return null;
+                countCmd.CommandText = countQuery;
+                AddFilterParameters(countCmd, Filter);
+                totalRecords = (int)Convert.ToInt64(countCmd.ExecuteScalar());
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error in getting paginated entity data: {ex.Message}", DateTime.Now, 0, "", Errors.Failed);
+                DMEEditor.AddLogMessage("Warning", $"Count failed: {ex.Message}", DateTime.Now, 0, EntityName, Errors.Warning);
+            }
+
+            // Execute paged data query
+            var rows = new List<object>();
+            try
+            {
+                using var dataCmd = GetDataCommand();
+                if (dataCmd == null) return null;
+                dataCmd.CommandText = pagedQuery;
+                AddFilterParameters(dataCmd, Filter);
+
+                using var reader = dataCmd.ExecuteReader(CommandBehavior.SequentialAccess);
+                int fieldCount = reader.FieldCount;
+                while (reader.Read())
+                {
+                    var dict = new Dictionary<string, object>(fieldCount, StringComparer.OrdinalIgnoreCase);
+                    for (int i = 0; i < fieldCount; i++)
+                    {
+                        dict[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                    }
+                    rows.Add(dict);
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Fail", $"Error executing paginated query: {ex.Message}", DateTime.Now, 0, EntityName, Errors.Failed);
                 return null;
             }
+
+            return new PagedResult
+            {
+                Data = rows,                 // IEnumerable<object>
+                TotalRecords = totalRecords,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = totalRecords > 0 ? (int)Math.Ceiling((double)totalRecords / pageSize) : 0,
+                HasNextPage = pageNumber * pageSize < totalRecords,
+                HasPreviousPage = pageNumber > 1
+            };
         }
 
+        // Reuse the same parameter injection logic as streaming GetEntity
+        private void AddFilterParameters(IDbCommand cmd, List<AppFilter> filters)
+        {
+            if (filters == null || filters.Count == 0)
+                return;
+
+            foreach (var f in filters.Where(p =>
+                     !string.IsNullOrWhiteSpace(p.FieldName) &&
+                     !string.IsNullOrWhiteSpace(p.Operator) &&
+                     !string.IsNullOrWhiteSpace(p.FilterValue)))
+            {
+                string paramBase = SanitizeParameterName(f.FieldName);
+
+                var p = cmd.CreateParameter();
+                p.ParameterName = $"p_{paramBase}";
+                if (f.valueType == "System.DateTime" && DateTime.TryParse(f.FilterValue, out var dt))
+                {
+                    p.DbType = DbType.DateTime;
+                    p.Value = dt;
+                }
+                else
+                {
+                    p.Value = f.FilterValue;
+                }
+                cmd.Parameters.Add(p);
+
+                if (f.Operator.Equals("between", StringComparison.OrdinalIgnoreCase))
+                {
+                    var p2 = cmd.CreateParameter();
+                    p2.ParameterName = $"p_{paramBase}1";
+                    if (f.valueType == "System.DateTime" && DateTime.TryParse(f.FilterValue1, out var dt2))
+                    {
+                        p2.DbType = DbType.DateTime;
+                        p2.Value = dt2;
+                    }
+                    else
+                    {
+                        p2.Value = f.FilterValue1;
+                    }
+                    cmd.Parameters.Add(p2);
+                }
+            }
+        }
+        // Helper: remove trailing ORDER BY for wrapping in COUNT
+        private static string StripTrailingOrderBy(string sql)
+        {
+            int idx = sql.LastIndexOf(" order by ", StringComparison.OrdinalIgnoreCase);
+            if (idx >= 0)
+            {
+                // Ensure no closing parenthesis after (naive but sufficient here)
+                string tail = sql.Substring(idx);
+                if (!tail.Contains(")"))
+                {
+                    return sql.Substring(0, idx);
+                }
+            }
+            return sql;
+        }
+
+        // Helper: crude extraction of first table identifier (used only for fallback scenarios)
+        private static string ExtractFirstTableName(string sql)
+        {
+            try
+            {
+                var low = sql.ToLower();
+                int fromIdx = low.IndexOf(" from ");
+                if (fromIdx < 0) return null;
+                int start = fromIdx + 6;
+                int end = low.IndexOfAny(new[] { ' ', '\r', '\n', '\t', ',' }, start);
+                if (end < 0) end = sql.Length;
+                string token = sql.Substring(start, end - start).Trim();
+                // Remove schema alias patterns
+                if (token.Contains(")")) return null;
+                if (token.Equals("select", StringComparison.OrdinalIgnoreCase)) return null;
+                return token;
+            }
+            catch { return null; }
+        }
         /// <summary>
         /// Asynchronously retrieves data for a specified entity from the database, with the option to apply filters.
         /// </summary>
@@ -1929,9 +2031,9 @@ namespace TheTechIdea.Beep.DataBase
         /// This method is an asynchronous wrapper around GetEntity, providing the same functionality but in an async manner. It is particularly useful for operations that might take a longer time to complete, ensuring that the application remains responsive.
         /// </remarks>
         /// <returns>A task representing the asynchronous operation, which, when completed, will return an object representing the data retrieved.</returns>
-        public virtual Task<IBindingList> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public virtual Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            return (Task<IBindingList>)GetEntity(EntityName, Filter);
+            return Task.FromResult(GetEntity(EntityName, Filter));
         }
         public virtual IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
@@ -2282,7 +2384,7 @@ namespace TheTechIdea.Beep.DataBase
                         if ((fnd.Relations.Count == 0) || refresh)
                         {
                             fnd.Relations = new List<RelationShipKeys>();
-                            fnd.Relations = GetEntityforeignkeys(entname, Dataconnection.ConnectionProp.SchemaName);
+                            fnd.Relations = (List<RelationShipKeys>)GetEntityforeignkeys(entname, Dataconnection.ConnectionProp.SchemaName);
                         }
                     }
 
@@ -2406,7 +2508,7 @@ namespace TheTechIdea.Beep.DataBase
         /// and adapts to various database types as defined in the Dataconnection's properties.
         /// </remarks>
         /// <returns>A List of strings, each representing the name of a table in the database.</returns>
-        public virtual List<string> GetEntitesList()
+        public virtual IEnumerable<string> GetEntitesList()
         {
             ErrorObject.Flag = Errors.Ok;
             DataSet ds = new DataSet();
@@ -2615,7 +2717,7 @@ namespace TheTechIdea.Beep.DataBase
         /// <remarks>
         /// This method fetches foreign key information for the given entity from the database.
         /// </remarks>
-        public virtual List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        public virtual IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
             List<RelationShipKeys> fk = new List<RelationShipKeys>();
             ErrorObject.Flag = Errors.Ok;
@@ -2667,7 +2769,7 @@ namespace TheTechIdea.Beep.DataBase
         /// <remarks>
         /// This method provides information about child tables related to a specified table.
         /// </remarks>
-        public virtual List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public virtual IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
             ErrorObject.Flag = Errors.Ok;
             try
@@ -2711,7 +2813,7 @@ namespace TheTechIdea.Beep.DataBase
         /// <remarks>
         /// This method is useful for generating database creation scripts from entity structures.
         /// </remarks>
-        public virtual List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities)
+        public virtual IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities)
         {
             return GetDDLScriptfromDatabase(entities);
         }
