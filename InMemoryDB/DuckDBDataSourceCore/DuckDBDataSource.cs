@@ -726,7 +726,7 @@ namespace DuckDBDataSourceCore
                         if ((fnd.Relations.Count == 0) || refresh)
                         {
                             fnd.Relations = new List<RelationShipKeys>();
-                            fnd.Relations = GetEntityforeignkeys(entname, Dataconnection.ConnectionProp.SchemaName);
+                            fnd.Relations = (List<RelationShipKeys>)GetEntityforeignkeys(entname, Dataconnection.ConnectionProp.SchemaName);
                         }
                     }
 
@@ -756,7 +756,7 @@ namespace DuckDBDataSourceCore
             }
             return fnd;
         }
-        public override IBindingList GetEntity(string EntityName, List<AppFilter> Filter)
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> Filter)
         {
             ErrorObject.Flag = Errors.Ok;
             //  int LoadedRecord;
@@ -1272,7 +1272,7 @@ namespace DuckDBDataSourceCore
         //    return retval;
         //}
 
-        public override IBindingList RunQuery(string qrystr)
+        public override IEnumerable<object> RunQuery(string qrystr)
         {
             if (RDBMSHelper.IsSqlStatementValid(qrystr)) { return RunQueryOnDuckDb(qrystr); }
             else
@@ -1309,20 +1309,41 @@ namespace DuckDBDataSourceCore
                 return DMEEditor.ErrorObject; // Replace with your actual error implementation
             }
         }
-        public IBindingList RunQueryOnDuckDb( string qryStr)
+        public IEnumerable<object> RunQueryOnDuckDb(string qryStr)
         {
-            var dataTable = new DataTable();
-            DuckDBCommand command = GetDataCommand();
-
-            command.CommandText = qryStr;
-            //command.Parameters.Add(new DuckDBParameter("table_name", tableName));
-            using (var reader = command.ExecuteReader())
+            // Ensure connection/command availability
+            var command = GetDataCommand();
+            if (command == null)
             {
-                dataTable.Load(reader);
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Message = "DuckDB connection is not open.";
+                yield break;
             }
-            
 
-            return dataTable.DefaultView;
+            using (command)
+            {
+                command.CommandText = qryStr;
+                var dataTable = new DataTable();
+                try
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        dataTable.Load(reader);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.ErrorObject.Ex = ex;
+                    DMEEditor.ErrorObject.Message = ex.Message;
+                    yield break;
+                }
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    yield return row;
+                }
+            }
         }
         private DuckDBCommand CreateDeleteCommandParameters(DuckDBCommand command, DataRow r, EntityStructure DataStruct)
         {
