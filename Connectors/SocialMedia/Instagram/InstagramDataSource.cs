@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Net.Http;
-using System.Net.Http.Json;
+// ...existing code...
 using System.Text.Json;
 using System.Threading.Tasks;
 using TheTechIdea.Beep.InstagramDataSource.Config;
@@ -11,6 +10,7 @@ using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.ConfigUtil;
 
 namespace TheTechIdea.Beep.InstagramDataSource
 {
@@ -22,7 +22,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
     {
         private readonly InstagramDataSourceConfig _config;
         private readonly JsonSerializerOptions _jsonOptions;
-        private readonly HttpClient _httpClient;
+    // ...existing code...
         private Dictionary<string, EntityStructure> _entityMetadata;
 
         /// <summary>
@@ -44,10 +44,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
                 DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
             };
 
-            // Initialize HttpClient for direct API calls
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_config.AccessToken}");
-            _httpClient.Timeout = TimeSpan.FromMilliseconds(30000); // 30 seconds default
+            // Use WebAPIDataSource's HTTP helpers; configuration headers/auth will be applied by the base
 
             // Initialize entity metadata
             _entityMetadata = InitializeEntityMetadata();
@@ -55,6 +52,22 @@ namespace TheTechIdea.Beep.InstagramDataSource
             Entities = _entityMetadata.Values.ToList();
 
             // Set up connection properties from config
+            // Defensive: ensure Dataconnection is a WebAPIDataConnection and ConnectionProp is WebAPIConnectionProperties
+            if (!(Dataconnection is WebAPIDataConnection))
+            {
+                Dataconnection = new WebAPIDataConnection()
+                {
+                    Logger = Logger,
+                    ErrorObject = ErrorObject,
+                    DMEEditor = DMEEditor
+                };
+            }
+
+            if (!(Dataconnection.ConnectionProp is WebAPIConnectionProperties))
+            {
+                Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+            }
+
             if (Dataconnection?.ConnectionProp is WebAPIConnectionProperties webApiProps)
             {
                 // Copy config properties to connection properties
@@ -196,7 +209,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
         /// <summary>
         /// Connect to Instagram API
         /// </summary>
-        public override async Task<bool> ConnectAsync()
+    public async Task<bool> ConnectAsync()
         {
             try
             {
@@ -212,7 +225,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
                 // Use base class connection method
                 ConnectionStatus = ConnectionState.Connecting;
 
-                var response = await _httpClient.GetAsync(testUrl);
+                var response = await base.GetAsync(testUrl);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -240,7 +253,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
         /// <summary>
         /// Disconnect from Instagram API
         /// </summary>
-        public override Task<bool> DisconnectAsync()
+    public Task<bool> DisconnectAsync()
         {
             try
             {
@@ -312,7 +325,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
                     await Task.Delay(_config.RateLimitDelayMs);
                 }
 
-                var response = await _httpClient.GetAsync(url);
+                var response = await base.GetAsync(url);
                 var jsonContent = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
@@ -374,7 +387,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
                 {
                     foreach (var field in metadata.Fields)
                     {
-                        dataTable.Columns.Add(field.fieldname, GetFieldType(field.Type));
+                        dataTable.Columns.Add(field.fieldname, GetFieldType(field.fieldtype));
                     }
                 }
                 else if (dataElement.ValueKind == JsonValueKind.Object)
@@ -435,14 +448,17 @@ namespace TheTechIdea.Beep.InstagramDataSource
         /// </summary>
         private Type GetFieldType(string fieldType)
         {
-            return fieldType.ToLower() switch
+            if (string.IsNullOrEmpty(fieldType)) return typeof(string);
+            var t = fieldType.ToLower().Trim();
+            if (t.StartsWith("system.")) t = t.Substring("system.".Length);
+            return t switch
             {
                 "string" => typeof(string),
-                "integer" => typeof(int),
-                "long" => typeof(long),
-                "decimal" => typeof(decimal),
-                "boolean" => typeof(bool),
-                "datetime" => typeof(DateTime),
+                "int32" or "integer" => typeof(int),
+                "int64" or "long" => typeof(long),
+                "decimal" or "double" or "float" => typeof(decimal),
+                "boolean" or "bool" => typeof(bool),
+                "datetime" or "datetimeoffset" => typeof(DateTime),
                 _ => typeof(string)
             };
         }
@@ -474,7 +490,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
         /// <summary>
         /// Get entity metadata
         /// </summary>
-        public EntityMetadata GetEntityMetadata(string entityName)
+        public EntityStructure GetEntityMetadata(string entityName)
         {
             if (_entityMetadata.ContainsKey(entityName.ToLower()))
             {
@@ -486,7 +502,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
         /// <summary>
         /// Insert data (not supported for Instagram API)
         /// </summary>
-        public async Task<int> InsertEntityAsync(string entityName, DataTable data)
+        public Task<int> InsertEntityAsync(string entityName, DataTable data)
         {
             throw new NotSupportedException("Insert operations are not supported for Instagram API");
         }
@@ -494,7 +510,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
         /// <summary>
         /// Update data (not supported for Instagram API)
         /// </summary>
-        public async Task<int> UpdateEntityAsync(string entityName, DataTable data, Dictionary<string, object> filter)
+        public Task<int> UpdateEntityAsync(string entityName, DataTable data, Dictionary<string, object> filter)
         {
             throw new NotSupportedException("Update operations are not supported for Instagram API");
         }
@@ -502,7 +518,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
         /// <summary>
         /// Delete data (not supported for Instagram API)
         /// </summary>
-        public async Task<int> DeleteEntityAsync(string entityName, Dictionary<string, object> filter)
+        public Task<int> DeleteEntityAsync(string entityName, Dictionary<string, object> filter)
         {
             throw new NotSupportedException("Delete operations are not supported for Instagram API");
         }
@@ -510,7 +526,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
         /// <summary>
         /// Execute custom query
         /// </summary>
-        public async Task<DataTable> ExecuteQueryAsync(string query, Dictionary<string, object> parameters = null)
+        public async Task<DataTable> ExecuteQueryAsync(string query, Dictionary<string, object>? parameters = null)
         {
             // For Instagram, we'll treat query as entity name with parameters
             return await GetEntityAsync(query, parameters);
@@ -519,7 +535,7 @@ namespace TheTechIdea.Beep.InstagramDataSource
         /// <summary>
         /// Get connection status
         /// </summary>
-        public override bool IsConnected => base.IsConnected;
+    public bool IsConnected => ConnectionStatus == ConnectionState.Open;
 
         /// <summary>
         /// Get data source type
@@ -534,9 +550,9 @@ namespace TheTechIdea.Beep.InstagramDataSource
         /// <summary>
         /// Dispose resources
         /// </summary>
-        public override void Dispose()
+    public new void Dispose()
         {
-            _httpClient?.Dispose();
+            // No local HttpClient to dispose; base class manages HTTP lifecycle
             base.Dispose();
         }
     }

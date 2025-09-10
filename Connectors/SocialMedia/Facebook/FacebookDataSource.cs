@@ -17,8 +17,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
     /// </summary>
     public class FacebookDataSource : WebAPIDataSource
     {
-        private readonly FacebookDataSourceConfig _config;
-        private readonly HttpClient _httpClient;
+    private readonly FacebookDataSourceConfig _config;
         private readonly JsonSerializerOptions _jsonOptions;
         private bool _isConnected;
         private Dictionary<string, EntityMetadata> _entityMetadata;
@@ -35,7 +34,32 @@ namespace TheTechIdea.Beep.FacebookDataSource
                 throw new ArgumentException("Invalid Facebook configuration. Access token or App credentials are required.");
             }
 
-            _httpClient = CreateHttpClient();
+            // Ensure Dataconnection uses WebAPIDataConnection and ConnectionProp is WebAPIConnectionProperties
+            if (!(Dataconnection is WebAPIDataConnection))
+            {
+                Dataconnection = new WebAPIDataConnection()
+                {
+                    Logger = null,
+                    ErrorObject = ErrorObject,
+                    DMEEditor = null
+                };
+            }
+
+            if (!(Dataconnection.ConnectionProp is WebAPIConnectionProperties))
+            {
+                Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+            }
+
+            if (Dataconnection?.ConnectionProp is WebAPIConnectionProperties webApiProps)
+            {
+                webApiProps.ConnectionString = _config.ConnectionString;
+                webApiProps.ApiVersion = _config.ApiVersion;
+                webApiProps.TimeoutMs = _config.TimeoutMs;
+                webApiProps.MaxRetries = _config.MaxRetries;
+                webApiProps.RetryDelayMs = _config.RetryDelayMs;
+                webApiProps.EnableCaching = _config.EnableCaching;
+                webApiProps.CacheDurationMinutes = _config.CacheExpiryMinutes;
+            }
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
@@ -60,31 +84,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Creates and configures the HTTP client
         /// </summary>
-        private HttpClient CreateHttpClient()
-        {
-            var client = new HttpClient();
-
-            // Set default headers
-            client.DefaultRequestHeaders.Add("User-Agent", "FacebookDataSource/1.0");
-            client.Timeout = TimeSpan.FromMilliseconds(_config.TimeoutMs);
-
-            // Configure proxy if specified
-            if (_config.UseProxy)
-            {
-                var proxy = new System.Net.WebProxy(_config.ProxyUrl);
-                if (!string.IsNullOrEmpty(_config.ProxyUser))
-                {
-                    proxy.Credentials = new System.Net.NetworkCredential(
-                        _config.ProxyUser,
-                        _config.ProxyPassword,
-                        _config.ProxyDomain);
-                }
-                var handler = new HttpClientHandler { Proxy = proxy };
-                client = new HttpClient(handler);
-            }
-
-            return client;
-        }
+    // ... existing code ...
 
         #region IDataSource Implementation
 
@@ -369,13 +369,9 @@ namespace TheTechIdea.Beep.FacebookDataSource
                     throw new ArgumentException("Access Token is required");
                 }
 
-                // Set authorization header
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.AccessToken);
-
-                // Test connection by getting user info
+                // Test connection by getting user info via base WebAPI helpers (auth applied by base)
                 var testUrl = $"{_config.ConnectionString}/{_config.ApiVersion}/me?fields=id,name";
-                var response = await _httpClient.GetAsync(testUrl);
+                var response = await base.GetAsync(testUrl);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -407,11 +403,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         {
             try
             {
-                if (_httpClient != null)
-                {
-                    _httpClient.Dispose();
-                    _httpClient = null;
-                }
+                // Connection lifecycle managed by base class; no local client to dispose
                 _isConnected = false;
                 return true;
             }
@@ -439,7 +431,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
             try
             {
                 var endpoint = GetEntityEndpoint(entityName, parameters);
-                var response = await _httpClient.GetAsync(endpoint);
+                var response = await base.GetAsync(endpoint);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -644,7 +636,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
                     formData.Add(new StringContent(item.Value?.ToString() ?? ""), item.Key);
                 }
 
-                var response = await _httpClient.PostAsync(endpoint, formData);
+                var response = await base.PostAsync(endpoint, formData);
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
@@ -689,7 +681,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
                     formData.Add(new StringContent(item.Value?.ToString() ?? ""), item.Key);
                 }
 
-                var response = await _httpClient.PostAsync(endpoint, formData);
+                var response = await base.PostAsync(endpoint, formData);
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
@@ -711,7 +703,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
             try
             {
                 var endpoint = $"{GetEntityEndpoint(entityName)}/{id}";
-                var response = await _httpClient.DeleteAsync(endpoint);
+                var response = await base.DeleteAsync(endpoint);
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)

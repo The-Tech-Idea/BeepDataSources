@@ -509,9 +509,9 @@ namespace TheTechIdea.Beep.TwitterDataSource
 
             try
             {
-                // Use high-level InsertEntity method
-                var result = base.InsertEntity(entityName, data);
-                return Task.FromResult(result == null);
+                // Use high-level InsertEntity method from base
+                var res = base.InsertEntity(entityName, data);
+                return Task.FromResult(res != null && !string.Equals(res.Flag.ToString(), "Failed", StringComparison.OrdinalIgnoreCase));
             }
             catch (Exception ex)
             {
@@ -545,12 +545,10 @@ namespace TheTechIdea.Beep.TwitterDataSource
 
             try
             {
-                var endpoint = $"{GetEntityEndpoint(entityName)}/{id}";
-                var jsonData = JsonSerializer.Serialize(data);
-                var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-
-                var response = await base.PutAsync(endpoint, content);
-                return response.IsSuccessStatusCode;
+                // Use base UpdateEntity helper which accepts an object
+                var payload = new Dictionary<string, object>(data) { { "id", id } } as object;
+                var res = base.UpdateEntity(entityName, payload);
+                return await Task.FromResult(res != null && !string.Equals(res.Flag.ToString(), "Failed", StringComparison.OrdinalIgnoreCase));
             }
             catch (Exception ex)
             {
@@ -570,9 +568,10 @@ namespace TheTechIdea.Beep.TwitterDataSource
 
             try
             {
-                var endpoint = $"{GetEntityEndpoint(entityName)}/{id}";
-                var response = await base.DeleteAsync(endpoint);
-                return response.IsSuccessStatusCode;
+                // Use base DeleteEntity helper
+                var payload = new { id = id } as object;
+                var res = base.DeleteEntity(entityName, payload);
+                return await Task.FromResult(res != null && !string.Equals(res.Flag.ToString(), "Failed", StringComparison.OrdinalIgnoreCase));
             }
             catch (Exception ex)
             {
