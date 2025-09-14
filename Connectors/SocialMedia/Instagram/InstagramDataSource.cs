@@ -1,559 +1,268 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
-// ...existing code...
+using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
-using TheTechIdea.Beep.InstagramDataSource.Config;
-using TheTechIdea.Beep.WebAPI;
-using TheTechIdea.Beep.Logger;
-using TheTechIdea.Beep.Utilities;
-using TheTechIdea.Beep.Editor;
-using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
 
-namespace TheTechIdea.Beep.InstagramDataSource
+namespace TheTechIdea.Beep.Connectors.Instagram
 {
     /// <summary>
-    /// Instagram data source implementation using WebAPIDataSource as base class
-    /// Supports Instagram Graph API and Basic Display API
+    /// Instagram Data Source built on WebAPIDataSource (Graph API / Basic Display).
+    /// Configure WebAPIConnectionProperties externally (Url like https://graph.facebook.com/v18.0/ and OAuth2/Bearer).
     /// </summary>
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Instagram)]
     public class InstagramDataSource : WebAPIDataSource
     {
-        private readonly InstagramDataSourceConfig _config;
-        private readonly JsonSerializerOptions _jsonOptions;
-    // ...existing code...
-        private Dictionary<string, EntityStructure> _entityMetadata;
-
-        /// <summary>
-        /// Initializes a new instance of the InstagramDataSource class
-        /// </summary>
-        public InstagramDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per, InstagramDataSourceConfig config)
-            : base(datasourcename, logger, pDMEEditor, databasetype, per)
+        // Fixed, supported entities (Graph-like)
+        private static readonly List<string> KnownEntities = new()
         {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
+            // Users / Accounts
+            "me",                 // GET me?fields=...
+            "me.accounts",        // GET me/accounts?fields=...
+            "me.media",           // GET me/media?fields=...
+            "me.stories",         // GET me/stories?fields=...
+            "users.by_id",        // GET {id}?fields=...
+            "users.media",        // GET {id}/media?fields=...
+            "users.stories",      // GET {id}/stories?fields=...
 
-            if (!_config.IsValid())
-            {
-                throw new ArgumentException("Invalid Instagram configuration. Access token is required.");
-            }
+            // Media / Comments / Insights
+            "media.by_id",        // GET {id}?fields=...
+            "media.children",     // GET {id}/children?fields=...
+            "media.comments",     // GET {id}/comments?fields=...
+            "comments.replies",   // GET {id}/replies?fields=...
+            "media.insights"      // GET {id}/insights?metric=...&period=...  (Graph)
+        };
 
-            _jsonOptions = new JsonSerializerOptions
+        // entity -> (endpoint template, root property, required filters)
+        private static readonly Dictionary<string, (string endpoint, string root, string[] requiredFilters)> Map
+            = new(StringComparer.OrdinalIgnoreCase)
             {
-                PropertyNameCaseInsensitive = true,
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                ["me"] = ("me", null, Array.Empty<string>()),
+                ["me.accounts"] = ("me/accounts", "data", Array.Empty<string>()),
+                ["me.media"] = ("me/media", "data", Array.Empty<string>()),
+                ["me.stories"] = ("me/stories", "data", Array.Empty<string>()),
+
+                ["users.by_id"] = ("{id}", null, new[] { "id" }),
+                ["users.media"] = ("{id}/media", "data", new[] { "id" }),
+                ["users.stories"] = ("{id}/stories", "data", new[] { "id" }),
+
+                ["media.by_id"] = ("{id}", null, new[] { "id" }),
+                ["media.children"] = ("{id}/children", "data", new[] { "id" }),
+                ["media.comments"] = ("{id}/comments", "data", new[] { "id" }),
+                ["comments.replies"] = ("{id}/replies", "data", new[] { "id" }),
+
+                // insights require metric; period optional depending on metric
+                ["media.insights"] = ("{id}/insights", "data", new[] { "id", "metric" })
             };
 
-            // Use WebAPIDataSource's HTTP helpers; configuration headers/auth will be applied by the base
-
-            // Initialize entity metadata
-            _entityMetadata = InitializeEntityMetadata();
-            EntitiesNames = _entityMetadata.Keys.ToList();
-            Entities = _entityMetadata.Values.ToList();
-
-            // Set up connection properties from config
-            // Defensive: ensure Dataconnection is a WebAPIDataConnection and ConnectionProp is WebAPIConnectionProperties
-            if (!(Dataconnection is WebAPIDataConnection))
-            {
-                Dataconnection = new WebAPIDataConnection()
-                {
-                    Logger = Logger,
-                    ErrorObject = ErrorObject,
-                    DMEEditor = DMEEditor
-                };
-            }
-
-            if (!(Dataconnection.ConnectionProp is WebAPIConnectionProperties))
-            {
+        public InstagramDataSource(
+            string datasourcename,
+            IDMLogger logger,
+            IDMEEditor dmeEditor,
+            DataSourceType databasetype,
+            IErrorsInfo errorObject)
+            : base(datasourcename, logger, dmeEditor, databasetype, errorObject)
+        {
+            // Ensure WebAPI props (Url/Auth) exist (configure outside this class)
+            if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
                 Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
-            }
 
-            if (Dataconnection?.ConnectionProp is WebAPIConnectionProperties webApiProps)
-            {
-                // Copy config properties to connection properties
-                webApiProps.ApiKey = _config.AccessToken;
-                webApiProps.ClientId = _config.AppId;
-                webApiProps.ClientSecret = _config.AppSecret;
-                webApiProps.UserID = _config.UserId;
-                webApiProps.ConnectionString = _config.UseGraphApi ? _config.GraphApiUrl : _config.BasicDisplayUrl;
-                webApiProps.TimeoutMs = 30000; // 30 seconds default
-                webApiProps.MaxRetries = 3;
-                webApiProps.EnableRateLimit = true;
-                webApiProps.RateLimitRequestsPerMinute = 60; // Instagram rate limit
-            }
+            // Register fixed entities
+            EntitiesNames = KnownEntities.ToList();
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+                .ToList();
         }
 
+        // Keep the exact IDataSource signatures
 
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
 
-        /// <summary>
-        /// Initialize entity metadata for Instagram entities
-        /// </summary>
-        private Dictionary<string, EntityStructure> InitializeEntityMetadata()
+        // -------------------- Overrides --------------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
-            var metadata = new Dictionary<string, EntityStructure>();
-
-            // User Profile
-            metadata["user"] = new EntityStructure
-            {
-                EntityName = "user",
-                DatasourceEntityName = "user",
-                Caption = "User Profile",
-                Viewtype = ViewType.Table,
-                Fields = new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
-                    new EntityField { fieldname = "username", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "account_type", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "media_count", fieldtype = "System.Int32", AllowDBNull = true },
-                    new EntityField { fieldname = "follows_count", fieldtype = "System.Int32", AllowDBNull = true },
-                    new EntityField { fieldname = "followed_by_count", fieldtype = "System.Int32", AllowDBNull = true }
-                },
-                PrimaryKeys = new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
-                }
-            };
-
-            // Media (Posts)
-            metadata["media"] = new EntityStructure
-            {
-                EntityName = "media",
-                DatasourceEntityName = "media",
-                Caption = "Media Posts",
-                Viewtype = ViewType.Table,
-                Fields = new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
-                    new EntityField { fieldname = "media_type", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "media_url", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "permalink", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "thumbnail_url", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "caption", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "timestamp", fieldtype = "System.DateTime", AllowDBNull = true },
-                    new EntityField { fieldname = "like_count", fieldtype = "System.Int32", AllowDBNull = true },
-                    new EntityField { fieldname = "comments_count", fieldtype = "System.Int32", AllowDBNull = true }
-                },
-                PrimaryKeys = new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
-                }
-            };
-
-            // Stories
-            metadata["stories"] = new EntityStructure
-            {
-                EntityName = "stories",
-                DatasourceEntityName = "stories",
-                Caption = "Stories",
-                Viewtype = ViewType.Table,
-                Fields = new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
-                    new EntityField { fieldname = "media_type", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "media_url", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "thumbnail_url", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "timestamp", fieldtype = "System.DateTime", AllowDBNull = true },
-                    new EntityField { fieldname = "expires_at", fieldtype = "System.DateTime", AllowDBNull = true }
-                },
-                PrimaryKeys = new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
-                }
-            };
-
-            // Insights
-            metadata["insights"] = new EntityStructure
-            {
-                EntityName = "insights",
-                DatasourceEntityName = "insights",
-                Caption = "Insights",
-                Viewtype = ViewType.Table,
-                Fields = new List<EntityField>
-                {
-                    new EntityField { fieldname = "media_id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
-                    new EntityField { fieldname = "metric", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
-                    new EntityField { fieldname = "value", fieldtype = "System.Int32", AllowDBNull = true },
-                    new EntityField { fieldname = "title", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "description", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "period", fieldtype = "System.String", AllowDBNull = true }
-                },
-                PrimaryKeys = new List<EntityField>
-                {
-                    new EntityField { fieldname = "media_id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
-                    new EntityField { fieldname = "metric", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
-                }
-            };
-
-            // Tags
-            metadata["tags"] = new EntityStructure
-            {
-                EntityName = "tags",
-                DatasourceEntityName = "tags",
-                Caption = "Tags",
-                Viewtype = ViewType.Table,
-                Fields = new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false },
-                    new EntityField { fieldname = "name", fieldtype = "System.String", AllowDBNull = true },
-                    new EntityField { fieldname = "media_count", fieldtype = "System.Int32", AllowDBNull = true }
-                },
-                PrimaryKeys = new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true, AllowDBNull = false }
-                }
-            };
-
-            return metadata;
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
         }
 
-        /// <summary>
-        /// Connect to Instagram API
-        /// </summary>
-    public async Task<bool> ConnectAsync()
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
+            if (!Map.TryGetValue(EntityName, out var m))
+                throw new InvalidOperationException($"Unknown Instagram entity '{EntityName}'.");
+
+            var q = FiltersToQuery(Filter);
+            RequireFilters(EntityName, q, m.requiredFilters);
+
+            // Support field selection (fields=...), paging (limit, after), metrics, etc. via AppFilter passthrough.
+            var endpoint = ResolveEndpoint(m.endpoint, q);
+
+            using var resp = await GetAsync(endpoint, q).ConfigureAwait(false);
+            if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
+
+            return ExtractArray(resp, m.root);
+        }
+
+        // Paged (cursor-based via paging.cursors.after)
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            if (!Map.TryGetValue(EntityName, out var m))
+                throw new InvalidOperationException($"Unknown Instagram entity '{EntityName}'.");
+
+            var q = FiltersToQuery(filter);
+            RequireFilters(EntityName, q, m.requiredFilters);
+
+            // Graph-style pagination: limit + after
+            int limit = Math.Max(1, Math.Min(pageSize <= 0 ? 25 : pageSize, 100));
+            q["limit"] = limit.ToString();
+
+            string endpoint = ResolveEndpoint(m.endpoint, q);
+            string after = q.TryGetValue("after", out var a) ? a : null;
+
+            // step cursors up to requested page
+            for (int i = 1; i < Math.Max(1, pageNumber); i++)
+            {
+                var stepResp = GetAsync(endpoint, MergeAfter(q, after)).ConfigureAwait(false).GetAwaiter().GetResult();
+                after = GetNextAfter(stepResp);
+                if (string.IsNullOrEmpty(after)) break;
+            }
+
+            var finalResp = GetAsync(endpoint, MergeAfter(q, after)).ConfigureAwait(false).GetAwaiter().GetResult();
+            var items = ExtractArray(finalResp, m.root);
+            var nextAfter = GetNextAfter(finalResp);
+
+            // We don’t get a grand total; best-effort counters
+            int pageIdx = Math.Max(1, pageNumber);
+            int pageCount = items.Count;
+            int totalSoFar = (pageIdx - 1) * limit + pageCount;
+
+            return new PagedResult
+            {
+                Data = items,
+                PageNumber = pageIdx,
+                PageSize = limit,
+                TotalRecords = totalSoFar,
+                TotalPages = string.IsNullOrEmpty(nextAfter) ? pageIdx : pageIdx + 1,
+                HasPreviousPage = pageIdx > 1,
+                HasNextPage = !string.IsNullOrEmpty(nextAfter)
+            };
+        }
+
+        // ---------------------------- helpers ----------------------------
+
+        private static Dictionary<string, string> FiltersToQuery(List<AppFilter> filters)
+        {
+            var q = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (filters == null) return q;
+
+            foreach (var f in filters)
+            {
+                if (f == null || string.IsNullOrWhiteSpace(f.FieldName)) continue;
+                q[f.FieldName.Trim()] = f.FilterValue?.ToString() ?? string.Empty;
+            }
+            return q;
+        }
+
+        private static void RequireFilters(string entity, Dictionary<string, string> q, string[] required)
+        {
+            if (required == null || required.Length == 0) return;
+            var missing = required.Where(r => !q.ContainsKey(r) || string.IsNullOrWhiteSpace(q[r])).ToList();
+            if (missing.Count > 0)
+                throw new ArgumentException($"Instagram entity '{entity}' requires parameter(s): {string.Join(", ", missing)}.");
+        }
+
+        private static string ResolveEndpoint(string template, Dictionary<string, string> q)
+        {
+            if (template.Contains("{id}", StringComparison.Ordinal))
+            {
+                if (!q.TryGetValue("id", out var id) || string.IsNullOrWhiteSpace(id))
+                    throw new ArgumentException("Missing required 'id' filter for this endpoint.");
+                template = template.Replace("{id}", Uri.EscapeDataString(id));
+                // keep 'id' in query; harmless
+            }
+            return template;
+        }
+
+        private static Dictionary<string, string> MergeAfter(Dictionary<string, string> q, string after)
+        {
+            var m = new Dictionary<string, string>(q, StringComparer.OrdinalIgnoreCase);
+            if (!string.IsNullOrWhiteSpace(after)) m["after"] = after;
+            else m.Remove("after");
+            return m;
+        }
+
+        private async Task<HttpResponseMessage> GetAsync(string endpoint, Dictionary<string, string> query, CancellationToken ct = default)
+            => await base.GetAsync(endpoint, query, cancellationToken: ct).ConfigureAwait(false);
+
+        private static List<object> ExtractArray(HttpResponseMessage resp, string root)
+        {
+            var list = new List<object>();
+            if (resp == null) return list;
+
+            var json = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            using var doc = JsonDocument.Parse(json);
+
+            // Graph responses often use { "data": [...] } plus "paging"
+            JsonElement node = doc.RootElement;
+            if (!string.IsNullOrWhiteSpace(root))
+            {
+                if (!node.TryGetProperty(root, out node))
+                    return list;
+            }
+
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+            if (node.ValueKind == JsonValueKind.Array)
+            {
+                list.Capacity = node.GetArrayLength();
+                foreach (var el in node.EnumerateArray())
+                {
+                    var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(el.GetRawText(), opts);
+                    if (obj != null) list.Add(obj);
+                }
+            }
+            else if (node.ValueKind == JsonValueKind.Object)
+            {
+                var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(node.GetRawText(), opts);
+                if (obj != null) list.Add(obj);
+            }
+
+            return list;
+        }
+
+        private static string GetNextAfter(HttpResponseMessage resp)
+        {
+            if (resp == null) return null;
             try
             {
-                if (string.IsNullOrEmpty(_config.AccessToken))
+                var json = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("paging", out var paging) &&
+                    paging.ValueKind == JsonValueKind.Object &&
+                    paging.TryGetProperty("cursors", out var cursors) &&
+                    cursors.ValueKind == JsonValueKind.Object &&
+                    cursors.TryGetProperty("after", out var after) &&
+                    after.ValueKind == JsonValueKind.String)
                 {
-                    throw new InvalidOperationException("Access token is required for Instagram connection");
-                }
-
-                // Test connection by getting user profile
-                var baseUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? _config.BasicDisplayUrl;
-                var testUrl = $"{baseUrl}/me?fields=id,username,account_type&access_token={_config.AccessToken}";
-
-                // Use base class connection method
-                ConnectionStatus = ConnectionState.Connecting;
-
-                var response = await base.GetAsync(testUrl);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var userInfo = JsonSerializer.Deserialize<JsonElement>(content, _jsonOptions);
-
-                    if (userInfo.TryGetProperty("id", out var userId))
-                    {
-                        _config.UserId = userId.GetString();
-                        ConnectionStatus = ConnectionState.Open;
-                        return true;
-                    }
-                }
-
-                ConnectionStatus = ConnectionState.Closed;
-                return false;
-            }
-            catch (Exception ex)
-            {
-                ConnectionStatus = ConnectionState.Closed;
-                throw new Exception($"Failed to connect to Instagram API: {ex.Message}", ex);
-            }
-        }
-
-        /// <summary>
-        /// Disconnect from Instagram API
-        /// </summary>
-    public Task<bool> DisconnectAsync()
-        {
-            try
-            {
-                // Use base class disconnect method
-                ConnectionStatus = ConnectionState.Closed;
-                return Task.FromResult(true);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to disconnect from Instagram API: {ex.Message}", ex);
-            }
-        }
-
-        /// <summary>
-        /// Get data from Instagram API
-        /// </summary>
-        public async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object>? parameters = null)
-        {
-            if (ConnectionStatus != ConnectionState.Open)
-            {
-                await ConnectAsync();
-            }
-
-            parameters ??= new Dictionary<string, object>();
-
-            try
-            {
-                string url;
-                var fields = parameters.ContainsKey("fields") ? parameters["fields"].ToString() : GetDefaultFields(entityName);
-
-                switch (entityName.ToLower())
-                {
-                    case "user":
-                        var baseUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? _config.BasicDisplayUrl;
-                        url = $"{baseUrl}/me?fields={fields}&access_token={_config.AccessToken}";
-                        break;
-
-                    case "media":
-                        var mediaLimit = parameters.ContainsKey("limit") ? parameters["limit"].ToString() : "25";
-                        var mediaBaseUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? _config.BasicDisplayUrl;
-                        url = $"{mediaBaseUrl}/me/media?fields={fields}&limit={mediaLimit}&access_token={_config.AccessToken}";
-                        break;
-
-                    case "stories":
-                        var storiesBaseUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? _config.BasicDisplayUrl;
-                        url = $"{storiesBaseUrl}/me/stories?fields={fields}&access_token={_config.AccessToken}";
-                        break;
-
-                    case "insights":
-                        var mediaId = parameters.ContainsKey("media_id") ? parameters["media_id"].ToString() : "";
-                        var graphUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? _config.GraphApiUrl;
-                        var metrics = parameters.ContainsKey("metrics") ? parameters["metrics"].ToString() : "engagement,impressions,reach,saved";
-                        url = $"{graphUrl}/{mediaId}/insights?metric={metrics}&access_token={_config.AccessToken}";
-                        break;
-
-                    case "tags":
-                        var tagName = parameters.ContainsKey("tag_name") ? parameters["tag_name"].ToString() : "";
-                        var tagsGraphUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? _config.GraphApiUrl;
-                        url = $"{tagsGraphUrl}/ig_hashtag_search?user_id={_config.UserId}&q={tagName}&access_token={_config.AccessToken}";
-                        break;
-
-                    default:
-                        throw new ArgumentException($"Unsupported entity: {entityName}");
-                }
-
-                // Rate limiting delay
-                if (_config.RateLimitDelayMs > 0)
-                {
-                    await Task.Delay(_config.RateLimitDelayMs);
-                }
-
-                var response = await base.GetAsync(url);
-                var jsonContent = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"Instagram API request failed: {response.StatusCode} - {jsonContent}");
-                }
-
-                return ParseJsonToDataTable(jsonContent, entityName);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to get {entityName} data: {ex.Message}", ex);
-            }
-        }
-
-        /// <summary>
-        /// Get default fields for entity
-        /// </summary>
-        private string GetDefaultFields(string entityName)
-        {
-            return entityName.ToLower() switch
-            {
-                "user" => "id,username,account_type,media_count",
-                "media" => "id,media_type,media_url,permalink,thumbnail_url,caption,timestamp,like_count,comments_count",
-                "stories" => "id,media_type,media_url,thumbnail_url,timestamp,expires_at",
-                "insights" => "value,title,description,period",
-                "tags" => "id,name,media_count",
-                _ => "*"
-            };
-        }
-
-        /// <summary>
-        /// Parse JSON response to DataTable
-        /// </summary>
-        private DataTable ParseJsonToDataTable(string jsonContent, string entityName)
-        {
-            var dataTable = new DataTable(entityName);
-            var metadata = _entityMetadata.ContainsKey(entityName.ToLower()) ? _entityMetadata[entityName.ToLower()] : null;
-
-            try
-            {
-                using var document = JsonDocument.Parse(jsonContent);
-                var root = document.RootElement;
-
-                // Handle different response structures
-                JsonElement dataElement;
-                if (root.TryGetProperty("data", out var dataProp))
-                {
-                    dataElement = dataProp;
-                }
-                else
-                {
-                    // Single object response
-                    dataElement = root;
-                }
-
-                // Create columns based on metadata or first object
-                if (metadata != null)
-                {
-                    foreach (var field in metadata.Fields)
-                    {
-                        dataTable.Columns.Add(field.fieldname, GetFieldType(field.fieldtype));
-                    }
-                }
-                else if (dataElement.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var property in dataElement.EnumerateObject())
-                    {
-                        dataTable.Columns.Add(property.Name, typeof(string));
-                    }
-                }
-                else if (dataElement.ValueKind == JsonValueKind.Array && dataElement.GetArrayLength() > 0)
-                {
-                    var firstItem = dataElement[0];
-                    foreach (var property in firstItem.EnumerateObject())
-                    {
-                        dataTable.Columns.Add(property.Name, typeof(string));
-                    }
-                }
-
-                // Add rows
-                if (dataElement.ValueKind == JsonValueKind.Object)
-                {
-                    var row = dataTable.NewRow();
-                    foreach (var property in dataElement.EnumerateObject())
-                    {
-                        if (dataTable.Columns.Contains(property.Name))
-                        {
-                            row[property.Name] = GetJsonValue(property.Value);
-                        }
-                    }
-                    dataTable.Rows.Add(row);
-                }
-                else if (dataElement.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var item in dataElement.EnumerateArray())
-                    {
-                        var row = dataTable.NewRow();
-                        foreach (var property in item.EnumerateObject())
-                        {
-                            if (dataTable.Columns.Contains(property.Name))
-                            {
-                                row[property.Name] = GetJsonValue(property.Value);
-                            }
-                        }
-                        dataTable.Rows.Add(row);
-                    }
+                    var s = after.GetString();
+                    return string.IsNullOrWhiteSpace(s) ? null : s;
                 }
             }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to parse JSON response: {ex.Message}", ex);
-            }
-
-            return dataTable;
-        }
-
-        /// <summary>
-        /// Get .NET type from field type string
-        /// </summary>
-        private Type GetFieldType(string fieldType)
-        {
-            if (string.IsNullOrEmpty(fieldType)) return typeof(string);
-            var t = fieldType.ToLower().Trim();
-            if (t.StartsWith("system.")) t = t.Substring("system.".Length);
-            return t switch
-            {
-                "string" => typeof(string),
-                "int32" or "integer" => typeof(int),
-                "int64" or "long" => typeof(long),
-                "decimal" or "double" or "float" => typeof(decimal),
-                "boolean" or "bool" => typeof(bool),
-                "datetime" or "datetimeoffset" => typeof(DateTime),
-                _ => typeof(string)
-            };
-        }
-
-        /// <summary>
-        /// Get value from JSON element
-        /// </summary>
-        private object GetJsonValue(JsonElement element)
-        {
-            return element.ValueKind switch
-            {
-                JsonValueKind.String => element.GetString(),
-                JsonValueKind.Number => element.TryGetInt32(out var intValue) ? intValue : element.GetDouble(),
-                JsonValueKind.True => true,
-                JsonValueKind.False => false,
-                JsonValueKind.Null => null,
-                _ => element.GetRawText()
-            };
-        }
-
-        /// <summary>
-        /// Get available entities
-        /// </summary>
-        public List<string> GetEntities()
-        {
-            return new List<string> { "user", "media", "stories", "insights", "tags" };
-        }
-
-        /// <summary>
-        /// Get entity metadata
-        /// </summary>
-        public EntityStructure GetEntityMetadata(string entityName)
-        {
-            if (_entityMetadata.ContainsKey(entityName.ToLower()))
-            {
-                return _entityMetadata[entityName.ToLower()];
-            }
-            throw new ArgumentException($"Entity '{entityName}' not found");
-        }
-
-        /// <summary>
-        /// Insert data (not supported for Instagram API)
-        /// </summary>
-        public Task<int> InsertEntityAsync(string entityName, DataTable data)
-        {
-            throw new NotSupportedException("Insert operations are not supported for Instagram API");
-        }
-
-        /// <summary>
-        /// Update data (not supported for Instagram API)
-        /// </summary>
-        public Task<int> UpdateEntityAsync(string entityName, DataTable data, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Update operations are not supported for Instagram API");
-        }
-
-        /// <summary>
-        /// Delete data (not supported for Instagram API)
-        /// </summary>
-        public Task<int> DeleteEntityAsync(string entityName, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Delete operations are not supported for Instagram API");
-        }
-
-        /// <summary>
-        /// Execute custom query
-        /// </summary>
-        public async Task<DataTable> ExecuteQueryAsync(string query, Dictionary<string, object>? parameters = null)
-        {
-            // For Instagram, we'll treat query as entity name with parameters
-            return await GetEntityAsync(query, parameters);
-        }
-
-        /// <summary>
-        /// Get connection status
-        /// </summary>
-    public bool IsConnected => ConnectionStatus == ConnectionState.Open;
-
-        /// <summary>
-        /// Get data source type
-        /// </summary>
-        public string DataSourceType => "Instagram";
-
-        /// <summary>
-        /// Get data source name
-        /// </summary>
-        public string DataSourceName => "Instagram Data Source";
-
-        /// <summary>
-        /// Dispose resources
-        /// </summary>
-    public new void Dispose()
-        {
-            // No local HttpClient to dispose; base class manages HTTP lifecycle
-            base.Dispose();
+            catch { /* ignore */ }
+            return null;
         }
     }
 }

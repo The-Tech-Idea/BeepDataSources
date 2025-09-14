@@ -84,7 +84,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaFire", "Cloud-Storage\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CitrixShareFile", "Cloud-Storage\CitrixShareFile\CitrixShareFile.csproj", "{DF9FC3C7-D73A-4D6D-9CC4-956906D98C58}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Twitter", "SocialMedia\Twitter\Twitter.csproj", "{CBCA769D-B233-22C0-8119-2058692DE9E9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwitterDataSource", "SocialMedia\Twitter\TwitterDataSource.csproj", "{CBCA769D-B233-22C0-8119-2058692DE9E9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Instagram", "SocialMedia\Instagram\Instagram.csproj", "{2DF77250-E6D4-36EE-1109-F91D30438387}"
 EndProject

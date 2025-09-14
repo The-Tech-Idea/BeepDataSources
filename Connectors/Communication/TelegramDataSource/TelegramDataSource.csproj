@@ -4,21 +4,22 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PackageId>Beep.Connectors.Communication.Telegram</PackageId>
+    <PackageId>Beep.Connectors.Communication.TelegramDataSource</PackageId>
     <Version>1.0.0</Version>
     <Authors>The-Tech-Idea</Authors>
     <Company>The-Tech-Idea</Company>
     <Description>Telegram communication platform data source for Beep Data Connectors</Description>
     <RepositoryUrl>https://github.com/The-Tech-Idea/BeepDataSources</RepositoryUrl>
     <PackageTags>beep, data-connector, telegram, communication, api</PackageTags>
+    <RootNamespace>TheTechIdea.Beep.Connectors.Communication.Telegram</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="9.0.9" />
-    <PackageReference Include="System.Text.Json" Version="9.0.8" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.41" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.83" />
+    <PackageReference Include="System.Text.Json" Version="9.0.9" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.43" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.88" />
   </ItemGroup>
 
 </Project>
