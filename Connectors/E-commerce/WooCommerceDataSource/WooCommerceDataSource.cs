@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,7 +23,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WooCommerce
 
         // Map entity -> (endpoint template, root array/property, required filter keys)
         // Endpoints are relative to base URL, e.g., https://example.com/wp-json/wc/v3/
-        private static readonly Dictionary<string, (string endpoint, string root, string[] required)>
+        private static readonly Dictionary<string, (string endpoint, string? root, string[] required)>
             Map = new(StringComparer.OrdinalIgnoreCase)
             {
                 ["Products"] = ("products", null, Array.Empty<string>()),

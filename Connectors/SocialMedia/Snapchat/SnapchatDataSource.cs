@@ -10,66 +10,6 @@ using DataManagementModelsStandard;
 
 namespace BeepDataSources.Connectors.SocialMedia.Snapchat
 {
-    /// <summary>
-    /// Configuration class for Snapchat data source
-    /// </summary>
-    public class SnapchatConfig
-    {
-        /// <summary>
-        /// Snapchat App Client ID
-        /// </summary>
-        public string ClientId { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Snapchat App Client Secret
-        /// </summary>
-        public string ClientSecret { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Access token for Snapchat API
-        /// </summary>
-        public string AccessToken { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Refresh token for Snapchat API
-        /// </summary>
-        public string RefreshToken { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Snapchat Organization ID
-        /// </summary>
-        public string OrganizationId { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Snapchat Ad Account ID
-        /// </summary>
-        public string AdAccountId { get; set; } = string.Empty;
-
-        /// <summary>
-        /// API version for Snapchat Marketing API (default: v1)
-        /// </summary>
-        public string ApiVersion { get; set; } = "v1";
-
-        /// <summary>
-        /// Base URL for Snapchat Marketing API
-        /// </summary>
-        public string BaseUrl => $"https://adsapi.snapchat.com/{ApiVersion}";
-
-        /// <summary>
-        /// Timeout for API requests in seconds
-        /// </summary>
-        public int TimeoutSeconds { get; set; } = 30;
-
-        /// <summary>
-        /// Maximum number of retries for failed requests
-        /// </summary>
-        public int MaxRetries { get; set; } = 3;
-
-        /// <summary>
-        /// Rate limit delay between requests in milliseconds
-        /// </summary>
-        public int RateLimitDelayMs { get; set; } = 1000;
-    }
 
     /// <summary>
     /// Snapchat data source implementation for Beep framework

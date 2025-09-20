@@ -1,627 +1,214 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
-using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.Connectors.HubSpot
 {
+    /// <summary>
+    /// HubSpot data source implementation using WebAPIDataSource as base class
+    /// </summary>
     [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot)]
-    public class HubSpotDataSource : IDataSource
+    public class HubSpotDataSource : WebAPIDataSource
     {
-        #region "Properties"
-        public string GuidID { get; set; } = Guid.NewGuid().ToString();
-        public DataSourceType DatasourceType { get; set; } = DataSourceType.HubSpot;
-        public DatasourceCategory Category { get; set; } = DatasourceCategory.Connector;
-        public IDataConnection Dataconnection { get; set; }
-        public string DatasourceName { get; set; }
-        public IErrorsInfo ErrorObject { get; set; }
-        public string Id { get; set; }
-        public IDMLogger Logger { get; set; }
-        public List<string> EntitiesNames { get; set; } = new List<string>();
-        public List<EntityStructure> Entities { get; set; } = new List<EntityStructure>();
-        public IDMEEditor DMEEditor { get; set; }
-        public ConnectionState ConnectionStatus { get; set; } = ConnectionState.Closed;
-        public string ColumnDelimiter { get; set; }
-        public string ParameterDelimiter { get; set; }
-        public event EventHandler<PassedArgs> PassEvent;
-
-        // HubSpot-specific properties
-        private readonly HttpClient _httpClient;
-        private HubSpotConfig _config;
-        private bool _isConnected;
-        #endregion
-
-        #region "Constructor"
-        public HubSpotDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType pDatasourceType, IErrorsInfo per)
+        // -------- Fixed, known entities (HubSpot CRM API v3) --------
+        private static readonly List<string> KnownEntities = new()
         {
-            DatasourceName = datasourcename;
-            Logger = logger;
-            ErrorObject = per;
-            DMEEditor = pDMEEditor;
-            DatasourceType = pDatasourceType;
+            "contacts",
+            "companies", 
+            "deals",
+            "tickets",
+            "products",
+            "line_items",
+            "quotes",
+            "owners",
+            "pipelines.deals",
+            "properties.contacts"
+        };
 
-            _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("https://api.hubapi.com/");
-
-            // Initialize HubSpot configuration from connection properties
-            InitializeConfiguration();
-        }
-        #endregion
-
-        #region "Configuration"
-        private void InitializeConfiguration()
-        {
-            _config = new HubSpotConfig();
-
-            // Get configuration from DMEEditor connection properties
-            if (DMEEditor?.ConfigEditor?.DataConnections != null)
+        // entity -> (endpoint template, root path, required filter keys)
+        private static readonly Dictionary<string, (string endpoint, string root, string[] requiredFilters)> Map
+            = new(StringComparer.OrdinalIgnoreCase)
             {
-                var connection = DMEEditor.ConfigEditor.DataConnections
-                    .Find(c => c.ConnectionName.Equals(DatasourceName, StringComparison.InvariantCultureIgnoreCase));
-
-                if (connection != null)
-                {
-                    _config.AccessToken = connection.Password;
-                    _config.ApiKey = connection.UserID;
-                }
-            }
-        }
-        #endregion
-
-        #region "Connection Methods"
-        public ConnectionState Openconnection()
-        {
-            try
-            {
-                Logger.WriteLog("Opening connection to HubSpot");
-                ConnectAsync().Wait();
-                ConnectionStatus = ConnectionState.Open;
-                Logger.WriteLog("Successfully connected to HubSpot");
-                return ConnectionStatus;
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLog($"Failed to connect to HubSpot: {ex.Message}");
-                ErrorObject.AddError("HubSpot Connection", ex.Message);
-                ConnectionStatus = ConnectionState.Broken;
-                return ConnectionStatus;
-            }
-        }
-
-        public ConnectionState Closeconnection()
-        {
-            try
-            {
-                Logger.WriteLog("Closing connection to HubSpot");
-                DisconnectAsync().Wait();
-                ConnectionStatus = ConnectionState.Closed;
-                Logger.WriteLog("Successfully disconnected from HubSpot");
-                return ConnectionStatus;
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLog($"Error closing HubSpot connection: {ex.Message}");
-                ConnectionStatus = ConnectionState.Broken;
-                return ConnectionStatus;
-            }
-        }
-
-        private async Task<bool> ConnectAsync()
-        {
-            try
-            {
-                // Set authorization header
-                if (!string.IsNullOrEmpty(_config.AccessToken))
-                {
-                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _config.AccessToken);
-                }
-                else if (!string.IsNullOrEmpty(_config.ApiKey))
-                {
-                    // Alternative: Use API key as query parameter
-                    _httpClient.DefaultRequestHeaders.Add("hapikey", _config.ApiKey);
-                }
-                else
-                {
-                    throw new InvalidOperationException("No authentication method provided for HubSpot");
-                }
-
-                _isConnected = true;
-
-                // Load entity names
-                await LoadEntityNamesAsync();
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                throw new CRMDriverException("Failed to connect to HubSpot", ex);
-            }
-        }
-
-        private async Task DisconnectAsync()
-        {
-            _isConnected = false;
-            _httpClient.DefaultRequestHeaders.Authorization = null;
-            _httpClient.DefaultRequestHeaders.Remove("hapikey");
-        }
-
-        private async Task LoadEntityNamesAsync()
-        {
-            try
-            {
-                var response = await _httpClient.GetAsync("crm/v3/objects");
-                response.EnsureSuccessStatusCode();
-
-                var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<dynamic>(content);
-
-                EntitiesNames.Clear();
-                if (result.results != null)
-                {
-                    foreach (var entity in result.results)
-                    {
-                        EntitiesNames.Add(entity.name.ToString());
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLog($"Failed to load entity names: {ex.Message}");
-            }
-        }
-        #endregion
-
-        #region "Data Operations"
-        public bool CheckEntityExist(string EntityName) => EntitiesNames.Contains(EntityName);
-
-        public IErrorsInfo CreateEntities(List<EntityStructure> entities)
-        {
-            Logger.WriteLog("Creating entities in HubSpot");
-            return ErrorObject;
-        }
-
-        public bool CreateEntityAs(EntityStructure entity)
-        {
-            Logger.WriteLog($"Creating entity: {entity.EntityName}");
-            return true;
-        }
-
-        public TheTechIdea.Beep.DataBase.PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
-        {
-            try
-            {
-                Logger.WriteLog($"Retrieving paginated entity: {EntityName}");
-                var task = GetEntityAsync(EntityName, filter);
-                task.Wait();
-                var result = task.Result;
-
-                return new TheTechIdea.Beep.DataBase.PagedResult
-                {
-                    Data = result,
-                    PageNumber = pageNumber,
-                    PageSize = pageSize,
-                    TotalCount = result.Count
-                };
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLog($"Error retrieving entity {EntityName}: {ex.Message}");
-                ErrorObject.AddError("HubSpot GetEntity", ex.Message);
-                return new TheTechIdea.Beep.DataBase.PagedResult();
-            }
-        }
-
-        public IBindingList GetEntity(string EntityName, List<AppFilter> filter)
-        {
-            try
-            {
-                Logger.WriteLog($"Retrieving entity: {EntityName}");
-                var task = GetEntityAsync(EntityName, filter);
-                task.Wait();
-                return new BindingList<object>(task.Result.Cast<object>().ToList());
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLog($"Error retrieving entity {EntityName}: {ex.Message}");
-                ErrorObject.AddError("HubSpot GetEntity", ex.Message);
-                return new BindingList<object>();
-            }
-        }
-
-        public Task<IBindingList> GetEntityAsync(string EntityName, List<AppFilter> Filter)
-        {
-            return Task.FromResult(GetEntity(EntityName, Filter));
-        }
-
-        public EntityStructure GetEntityStructure(string EntityName, bool refresh)
-        {
-            try
-            {
-                Logger.WriteLog($"Retrieving entity structure: {EntityName}");
-                var task = GetEntityStructureAsync(EntityName);
-                task.Wait();
-                return task.Result;
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLog($"Error retrieving entity structure {EntityName}: {ex.Message}");
-                ErrorObject.AddError("HubSpot GetEntityStructure", ex.Message);
-                return new EntityStructure();
-            }
-        }
-
-        public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
-        {
-            return GetEntityStructure(fnd?.EntityName, refresh);
-        }
-
-        public Type GetEntityType(string EntityName)
-        {
-            Logger.WriteLog($"Getting entity type: {EntityName}");
-            return typeof(object);
-        }
-
-        public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
-        {
-            try
-            {
-                Logger.WriteLog($"Inserting data into entity: {EntityName}");
-                var task = InsertEntityAsync(EntityName, InsertedData);
-                task.Wait();
-                return ErrorObject;
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLog($"Error inserting entity {EntityName}: {ex.Message}");
-                ErrorObject.AddError("HubSpot InsertEntity", ex.Message);
-                return ErrorObject;
-            }
-        }
-
-        public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
-        {
-            try
-            {
-                Logger.WriteLog($"Updating entity: {EntityName}");
-                var task = UpdateEntityAsync(EntityName, UploadDataRow);
-                task.Wait();
-                return ErrorObject;
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLog($"Error updating entity {EntityName}: {ex.Message}");
-                ErrorObject.AddError("HubSpot UpdateEntity", ex.Message);
-                return ErrorObject;
-            }
-        }
-
-        public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
-        {
-            try
-            {
-                Logger.WriteLog($"Deleting entity: {EntityName}");
-                var task = DeleteEntityAsync(EntityName, UploadDataRow);
-                task.Wait();
-                return ErrorObject;
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLog($"Error deleting entity {EntityName}: {ex.Message}");
-                ErrorObject.AddError("HubSpot DeleteEntity", ex.Message);
-                return ErrorObject;
-            }
-        }
-        #endregion
-
-        #region "Async Data Operations"
-        private async Task<IEnumerable<dynamic>> GetEntityAsync(string entityName, List<AppFilter> filters = null)
-        {
-            if (!_isConnected)
-                throw new InvalidOperationException("Not connected to HubSpot");
-
-            try
-            {
-                var endpoint = $"crm/v3/objects/{entityName}";
-                var queryString = BuildQueryString(filters);
-
-                var response = await _httpClient.GetAsync($"{endpoint}?{queryString}");
-                response.EnsureSuccessStatusCode();
-
-                var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<dynamic>(content);
-
-                return ExtractRecordsFromResponse(result);
-            }
-            catch (Exception ex)
-            {
-                throw new CRMDriverException($"Failed to retrieve {entityName} entities", ex);
-            }
-        }
-
-        private async Task<EntityStructure> GetEntityStructureAsync(string entityName)
-        {
-            if (!_isConnected)
-                throw new InvalidOperationException("Not connected to HubSpot");
-
-            try
-            {
-                var response = await _httpClient.GetAsync($"crm/v3/objects/{entityName}");
-                response.EnsureSuccessStatusCode();
-
-                var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<dynamic>(content);
-
-                return ConvertToEntityStructure(result);
-            }
-            catch (Exception ex)
-            {
-                throw new CRMDriverException($"Failed to retrieve metadata for {entityName}", ex);
-            }
-        }
-
-        private async Task<dynamic> InsertEntityAsync(string entityName, object data)
-        {
-            if (!_isConnected)
-                throw new InvalidOperationException("Not connected to HubSpot");
-
-            try
-            {
-                var endpoint = $"crm/v3/objects/{entityName}";
-                var jsonContent = JsonSerializer.Serialize(new { properties = data });
-                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PostAsync(endpoint, content);
-                response.EnsureSuccessStatusCode();
-
-                var responseContent = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<dynamic>(responseContent);
-            }
-            catch (Exception ex)
-            {
-                throw new CRMDriverException($"Failed to create {entityName} entity", ex);
-            }
-        }
-
-        private async Task<bool> UpdateEntityAsync(string entityName, object data)
-        {
-            if (!_isConnected)
-                throw new InvalidOperationException("Not connected to HubSpot");
-
-            try
-            {
-                var dataDict = data as Dictionary<string, object>;
-                if (dataDict != null && dataDict.ContainsKey("id"))
-                {
-                    var entityId = dataDict["id"].ToString();
-                    dataDict.Remove("id");
-
-                    var endpoint = $"crm/v3/objects/{entityName}/{entityId}";
-                    var jsonContent = JsonSerializer.Serialize(new { properties = dataDict });
-                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
-                    var response = await _httpClient.PatchAsync(endpoint, content);
-                    response.EnsureSuccessStatusCode();
-
-                    return true;
-                }
-                return false;
-            }
-            catch (Exception ex)
-            {
-                throw new CRMDriverException($"Failed to update {entityName} entity", ex);
-            }
-        }
-
-        private async Task<bool> DeleteEntityAsync(string entityName, object data)
-        {
-            if (!_isConnected)
-                throw new InvalidOperationException("Not connected to HubSpot");
-
-            try
-            {
-                var dataDict = data as Dictionary<string, object>;
-                if (dataDict != null && dataDict.ContainsKey("id"))
-                {
-                    var entityId = dataDict["id"].ToString();
-                    var endpoint = $"crm/v3/objects/{entityName}/{entityId}";
-
-                    var response = await _httpClient.DeleteAsync(endpoint);
-                    response.EnsureSuccessStatusCode();
-
-                    return true;
-                }
-                return false;
-            }
-            catch (Exception ex)
-            {
-                throw new CRMDriverException($"Failed to delete {entityName} entity", ex);
-            }
-        }
-        #endregion
-
-        #region "Utility Methods"
-        private string BuildQueryString(List<AppFilter> filters)
-        {
-            if (filters == null || filters.Count == 0)
-                return string.Empty;
-
-            var queryParams = new List<string>();
-            foreach (var filter in filters)
-            {
-                queryParams.Add($"properties={Uri.EscapeDataString(filter.FieldName)}");
-            }
-            return string.Join("&", queryParams);
-        }
-
-        private IEnumerable<dynamic> ExtractRecordsFromResponse(dynamic response)
-        {
-            var records = new List<dynamic>();
-            if (response.results != null)
-            {
-                foreach (var record in response.results)
-                {
-                    records.Add(record);
-                }
-            }
-            return records;
-        }
-
-        private EntityStructure ConvertToEntityStructure(dynamic metadata)
-        {
-            var entityStructure = new EntityStructure
-            {
-                EntityName = metadata.name,
-                Caption = metadata.label ?? metadata.name
+                ["contacts"] = ("/crm/v3/objects/contacts", "results", Array.Empty<string>()),
+                ["companies"] = ("/crm/v3/objects/companies", "results", Array.Empty<string>()),
+                ["deals"] = ("/crm/v3/objects/deals", "results", Array.Empty<string>()),
+                ["tickets"] = ("/crm/v3/objects/tickets", "results", Array.Empty<string>()),
+                ["products"] = ("/crm/v3/objects/products", "results", Array.Empty<string>()),
+                ["line_items"] = ("/crm/v3/objects/line_items", "results", Array.Empty<string>()),
+                ["quotes"] = ("/crm/v3/objects/quotes", "results", Array.Empty<string>()),
+                ["owners"] = ("/crm/v3/owners", "results", Array.Empty<string>()),
+                ["pipelines.deals"] = ("/crm/v3/pipelines/deals", "results", Array.Empty<string>()),
+                ["properties.contacts"] = ("/crm/v3/properties/contacts", "results", Array.Empty<string>()),
             };
 
-            if (metadata.properties != null)
+        public HubSpotDataSource(
+            string datasourcename,
+            IDMLogger logger,
+            IDMEEditor dmeEditor,
+            DataSourceType databasetype,
+            IErrorsInfo errorObject)
+            : base(datasourcename, logger, dmeEditor, databasetype, errorObject)
+        {
+            // Ensure WebAPI connection props exist (API Key configuration is provided externally)
+            if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
+                Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+
+            // Register fixed entities
+            EntitiesNames = KnownEntities.ToList();
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+                .ToList();
+        }
+
+        // Return the fixed list (use 'new' if base is virtual; otherwise this hides the base)
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // -------------------- Overrides (same signatures) --------------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        {
+            if (!Map.TryGetValue(EntityName, out var m))
+                throw new InvalidOperationException($"Unknown HubSpot entity '{EntityName}'.");
+
+            var q = FiltersToQuery(Filter);
+            RequireFilters(EntityName, q, m.requiredFilters);
+
+            var endpoint = ResolveEndpoint(m.endpoint, q);
+
+            using var resp = await GetAsync(endpoint, q).ConfigureAwait(false);
+            if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
+
+            return ExtractArray(resp, m.root);
+        }
+
+        // Paged (HubSpot uses offset-based pagination with "after" parameter)
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            if (!Map.TryGetValue(EntityName, out var m))
+                throw new InvalidOperationException($"Unknown HubSpot entity '{EntityName}'.");
+
+            var q = FiltersToQuery(filter);
+            RequireFilters(EntityName, q, m.requiredFilters);
+
+            // HubSpot pagination
+            q["limit"] = Math.Max(1, Math.Min(pageSize, 100)).ToString();
+            if (pageNumber > 1)
             {
-                foreach (var property in metadata.properties)
-                {
-                    entityStructure.Fields.Add(new EntityField
-                    {
-                        FieldName = property.name,
-                        FieldType = MapHubSpotTypeToSystemType(property.type),
-                        Caption = property.label ?? property.name,
-                        IsKey = property.name == "id",
-                        AllowNull = !property.required,
-                        IsAutoIncrement = false
-                    });
-                }
+                // HubSpot uses "after" token for pagination, simplified to offset calculation
+                q["after"] = ((pageNumber - 1) * pageSize).ToString();
             }
 
-            return entityStructure;
-        }
+            var endpoint = ResolveEndpoint(m.endpoint, q);
 
-        private Type MapHubSpotTypeToSystemType(string hubSpotType)
-        {
-            return hubSpotType.ToLower() switch
+            var finalResp = CallHubSpot(endpoint, q).ConfigureAwait(false).GetAwaiter().GetResult();
+            var items = ExtractArray(finalResp, m.root);
+
+            return new PagedResult
             {
-                "string" => typeof(string),
-                "number" => typeof(double),
-                "bool" => typeof(bool),
-                "date" => typeof(DateTime),
-                "datetime" => typeof(DateTime),
-                "enumeration" => typeof(string),
-                _ => typeof(string)
+                Data = items,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = items.Count, // HubSpot doesn't provide total count in standard response
+                TotalPages = pageNumber, // Conservative estimate
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = items.Count == pageSize // Assume more data if we got a full page
             };
         }
-        #endregion
 
-        #region "Standard Interface Methods"
-        public IErrorsInfo ExecuteSql(string sql)
+        // ---------------------------- helpers ----------------------------
+
+        private static Dictionary<string, string> FiltersToQuery(List<AppFilter> filters)
         {
-            Logger.WriteLog("Executing SQL command");
-            return ErrorObject;
+            var q = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (filters == null) return q;
+            foreach (var f in filters)
+            {
+                if (f == null || string.IsNullOrWhiteSpace(f.FieldName)) continue;
+                q[f.FieldName] = f.FilterValue?.ToString() ?? string.Empty;
+            }
+            return q;
         }
 
-        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
+        private static void RequireFilters(string entity, Dictionary<string, string> q, string[] required)
         {
-            Logger.WriteLog("Running script");
-            return ErrorObject;
+            if (required == null || required.Length == 0) return;
+            var missing = required.Where(r => !q.ContainsKey(r) || string.IsNullOrWhiteSpace(q[r])).ToList();
+            if (missing.Count > 0)
+                throw new ArgumentException($"HubSpot entity '{entity}' requires parameter(s): {string.Join(", ", missing)}.");
         }
 
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        private static string ResolveEndpoint(string template, Dictionary<string, string> q)
         {
-            Logger.WriteLog("Getting child tables list");
-            return new List<ChildRelation>();
+            // Substitute any {parameter} placeholders from filters if present
+            foreach (var kvp in q)
+            {
+                if (template.Contains($"{{{kvp.Key}}}", StringComparison.Ordinal))
+                {
+                    template = template.Replace($"{{{kvp.Key}}}", Uri.EscapeDataString(kvp.Value));
+                }
+            }
+            return template;
         }
 
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
-        {
-            Logger.WriteLog("Getting create entity script");
-            return new List<ETLScriptDet>();
-        }
+        private async Task<HttpResponseMessage> CallHubSpot(string endpoint, Dictionary<string, string> query, CancellationToken ct = default)
+            => await GetAsync(endpoint, query, cancellationToken: ct).ConfigureAwait(false);
 
-        public List<string> GetEntitesList()
+        // Extracts "results" (array) into a List<object> (Dictionary<string,object> per item).
+        // If root is null, wraps whole payload as a single object.
+        private static List<object> ExtractArray(HttpResponseMessage resp, string root)
         {
-            Logger.WriteLog("Getting entities list");
-            return EntitiesNames;
-        }
+            var list = new List<object>();
+            if (resp == null) return list;
 
-        public int GetEntityIdx(string entityName)
-        {
-            Logger.WriteLog($"Getting entity index: {entityName}");
-            return EntitiesNames.IndexOf(entityName);
-        }
+            var json = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            using var doc = JsonDocument.Parse(json);
 
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
-        {
-            Logger.WriteLog("Getting entity foreign keys");
-            return new List<RelationShipKeys>();
-        }
+            JsonElement node = doc.RootElement;
 
-        public double GetScalar(string query)
-        {
-            Logger.WriteLog("Getting scalar value");
-            return 0.0;
-        }
+            if (!string.IsNullOrWhiteSpace(root))
+            {
+                if (!node.TryGetProperty(root, out node))
+                    return list; // no "results" -> empty
+            }
 
-        public Task<double> GetScalarAsync(string query)
-        {
-            return Task.FromResult(0.0);
-        }
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-        public IBindingList RunQuery(string qrystr)
-        {
-            Logger.WriteLog("Running query");
-            return new BindingList<object>();
-        }
+            if (node.ValueKind == JsonValueKind.Array)
+            {
+                list.Capacity = node.GetArrayLength();
+                foreach (var el in node.EnumerateArray())
+                {
+                    var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(el.GetRawText(), opts);
+                    if (obj != null) list.Add(obj);
+                }
+            }
+            else if (node.ValueKind == JsonValueKind.Object)
+            {
+                var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(node.GetRawText(), opts);
+                if (obj != null) list.Add(obj);
+            }
 
-        public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
-        {
-            Logger.WriteLog("Updating entities");
-            return ErrorObject;
+            return list;
         }
-
-        public IErrorsInfo BeginTransaction(PassedArgs args)
-        {
-            Logger.WriteLog("Beginning transaction");
-            return ErrorObject;
-        }
-
-        public IErrorsInfo Commit(PassedArgs args)
-        {
-            Logger.WriteLog("Committing transaction");
-            return ErrorObject;
-        }
-
-        public IErrorsInfo EndTransaction(PassedArgs args)
-        {
-            Logger.WriteLog("Ending transaction");
-            return ErrorObject;
-        }
-
-        public void Dispose()
-        {
-            Closeconnection();
-        }
-        #endregion
     }
-
-    #region "Configuration and Helper Classes"
-    public class HubSpotConfig
-    {
-        public string AccessToken { get; set; }
-        public string ApiKey { get; set; } // Alternative authentication method
-    }
-
-    public class CRMDriverException : Exception
-    {
-        public CRMDriverException(string message) : base(message) { }
-        public CRMDriverException(string message, Exception innerException) : base(message, innerException) { }
-    }
-    #endregion
 }

@@ -1,626 +1,287 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
-using DataManagementEngineStandard;
-using DataManagementModelsStandard;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
 
-namespace BeepDataSources.Connectors.SocialMedia.Buffer
+namespace TheTechIdea.Beep.BufferDataSource
 {
     /// <summary>
-    /// Configuration class for Buffer data source
+    /// Buffer data source implementation using WebAPIDataSource as base class
     /// </summary>
-    public class BufferConfig
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Buffer)]
+    public class BufferDataSource : WebAPIDataSource
     {
-        /// <summary>
-        /// Buffer App Client ID
-        /// </summary>
-        public string ClientId { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Buffer App Client Secret
-        /// </summary>
-        public string ClientSecret { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Buffer API Key
-        /// </summary>
-        public string ApiKey { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Access token for Buffer API
-        /// </summary>
-        public string AccessToken { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Refresh token for Buffer API
-        /// </summary>
-        public string RefreshToken { get; set; } = string.Empty;
-
-        /// <summary>
-        /// API version for Buffer API (default: v1)
-        /// </summary>
-        public string ApiVersion { get; set; } = "v1";
-
-        /// <summary>
-        /// Base URL for Buffer API
-        /// </summary>
-        public string BaseUrl => $"https://api.bufferapp.com/{ApiVersion}";
-
-        /// <summary>
-        /// Timeout for API requests in seconds
-        /// </summary>
-        public int TimeoutSeconds { get; set; } = 30;
-
-        /// <summary>
-        /// Maximum number of retries for failed requests
-        /// </summary>
-        public int MaxRetries { get; set; } = 3;
-
-        /// <summary>
-        /// Rate limit delay between requests in milliseconds
-        /// </summary>
-        public int RateLimitDelayMs { get; set; } = 1000;
-    }
-
-    /// <summary>
-    /// Buffer data source implementation for Beep framework
-    /// Supports Buffer API v1
-    /// </summary>
-    public class BufferDataSource : IDataSource
-    {
-        private readonly BufferConfig _config;
-        private HttpClient _httpClient;
-        private bool _isConnected;
-        private readonly Dictionary<string, EntityMetadata> _entityMetadata;
-
-        /// <summary>
-        /// Constructor for BufferDataSource
-        /// </summary>
-        /// <param name="config">Buffer configuration</param>
-        public BufferDataSource(BufferConfig config)
+        // -------- Fixed, known entities (Buffer API v1) --------
+        private static readonly List<string> KnownEntities = new()
         {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
-            _entityMetadata = InitializeEntityMetadata();
-        }
+            // Posts
+            "posts",              // GET /updates.json
+            "posts.pending",      // GET /updates/pending.json
+            "posts.sent",         // GET /updates/sent.json
+            // Profiles
+            "profiles",           // GET /profiles.json
+            // Analytics
+            "analytics",          // GET /analytics/{profile_id}.json
+            // Campaigns
+            "campaigns",          // GET /campaigns.json
+            // Links
+            "links"               // GET /links.json
+        };
 
-        /// <summary>
-        /// Constructor for BufferDataSource with connection string
-        /// </summary>
-        /// <param name="connectionString">Connection string in format: ClientId=xxx;ClientSecret=xxx;ApiKey=xxx;AccessToken=xxx</param>
-        public BufferDataSource(string connectionString)
-        {
-            _config = ParseConnectionString(connectionString);
-            _entityMetadata = InitializeEntityMetadata();
-        }
-
-        /// <summary>
-        /// Parse connection string into BufferConfig
-        /// </summary>
-        private BufferConfig ParseConnectionString(string connectionString)
-        {
-            var config = new BufferConfig();
-            var parts = connectionString.Split(';');
-
-            foreach (var part in parts)
+        // entity -> (endpoint template, root path, required filter keys)
+        // endpoint supports {id} substitution taken from filters.
+        private static readonly Dictionary<string, (string endpoint, string root, string[] requiredFilters)> Map
+            = new(StringComparer.OrdinalIgnoreCase)
             {
-                var keyValue = part.Split('=');
-                if (keyValue.Length == 2)
-                {
-                    var key = keyValue[0].Trim();
-                    var value = keyValue[1].Trim();
+                ["posts"] = ("updates", "", new string[] { }),
+                ["posts.pending"] = ("updates/pending", "", new string[] { }),
+                ["posts.sent"] = ("updates/sent", "", new string[] { }),
+                ["profiles"] = ("profiles", "", new string[] { }),
+                ["analytics"] = ("analytics/{profile_id}", "", new[] { "profile_id" }),
+                ["campaigns"] = ("campaigns", "", new string[] { }),
+                ["links"] = ("links", "", new string[] { })
+            };
 
-                    switch (key.ToLower())
-                    {
-                        case "clientid":
-                            config.ClientId = value;
-                            break;
-                        case "clientsecret":
-                            config.ClientSecret = value;
-                            break;
-                        case "apikey":
-                            config.ApiKey = value;
-                            break;
-                        case "accesstoken":
-                            config.AccessToken = value;
-                            break;
-                        case "refreshtoken":
-                            config.RefreshToken = value;
-                            break;
-                        case "apiversion":
-                            config.ApiVersion = value;
-                            break;
-                        case "timeoutseconds":
-                            if (int.TryParse(value, out var timeout))
-                                config.TimeoutSeconds = timeout;
-                            break;
-                        case "maxretries":
-                            if (int.TryParse(value, out var retries))
-                                config.MaxRetries = retries;
-                            break;
-                        case "ratelimitdelayms":
-                            if (int.TryParse(value, out var delay))
-                                config.RateLimitDelayMs = delay;
-                            break;
-                    }
-                }
+        public BufferDataSource(
+            string datasourcename,
+            IDMLogger logger,
+            IDMEEditor dmeEditor,
+            DataSourceType databasetype,
+            IErrorsInfo errorObject)
+            : base(datasourcename, logger, dmeEditor, databasetype, errorObject)
+        {
+            // Ensure WebAPI connection props exist (URL/Auth configured outside this class)
+            if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
+                Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+
+            // Register fixed entities
+            EntitiesNames = KnownEntities.ToList();
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+                .ToList();
+        }
+
+        // Return the fixed list (use 'override' if base is virtual; otherwise this hides the base)
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // -------------------- Overrides (same signatures) --------------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        {
+            if (!Map.TryGetValue(EntityName, out var m))
+                throw new InvalidOperationException($"Unknown Buffer entity '{EntityName}'.");
+
+            var q = FiltersToQuery(Filter);
+            RequireFilters(EntityName, q, m.requiredFilters);
+
+            // Build the full URL
+            var endpoint = m.endpoint;
+            if (endpoint.Contains("{profile_id}"))
+            {
+                var profileId = q.FirstOrDefault(f => f.FieldName == "profile_id")?.FieldValue?.ToString();
+                if (string.IsNullOrEmpty(profileId))
+                    throw new InvalidOperationException("profile_id is required for analytics entity");
+                endpoint = endpoint.Replace("{profile_id}", profileId);
             }
 
-            return config;
+            var fullUrl = $"{BaseURL}/v1/{endpoint}.json{q}";
+
+            // Make the request
+            var response = await GetAsync(fullUrl);
+            if (!response.IsSuccessStatusCode)
+                throw new InvalidOperationException($"Buffer API request failed: {response.StatusCode}");
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            // Parse based on entity type
+            var result = EntityName switch
+            {
+                "posts" or "posts.pending" or "posts.sent" => ParsePosts(json),
+                "profiles" => ParseProfiles(json),
+                "analytics" => ParseAnalytics(json),
+                "campaigns" => ParseCampaigns(json),
+                "links" => ParseLinks(json),
+                _ => throw new InvalidOperationException($"Unsupported entity: {EntityName}")
+            };
+
+            return result;
         }
 
-        /// <summary>
-        /// Initialize entity metadata for Buffer entities
-        /// </summary>
-        private Dictionary<string, EntityMetadata> InitializeEntityMetadata()
-        {
-            var metadata = new Dictionary<string, EntityMetadata>();
+        // -------------------- Entity-specific parsers --------------------
 
-            // Posts
-            metadata["posts"] = new EntityMetadata
-            {
-                EntityName = "posts",
-                DisplayName = "Posts",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Post ID" },
-                    new EntityField { Name = "text", Type = "string", DisplayName = "Post Text" },
-                    new EntityField { Name = "profile_id", Type = "string", DisplayName = "Profile ID" },
-                    new EntityField { Name = "profile_service", Type = "string", DisplayName = "Social Network" },
-                    new EntityField { Name = "status", Type = "string", DisplayName = "Status" },
-                    new EntityField { Name = "scheduled_at", Type = "datetime", DisplayName = "Scheduled At" },
-                    new EntityField { Name = "created_at", Type = "datetime", DisplayName = "Created At" },
-                    new EntityField { Name = "sent_at", Type = "datetime", DisplayName = "Sent At" },
-                    new EntityField { Name = "media", Type = "string", DisplayName = "Media" },
-                    new EntityField { Name = "statistics", Type = "string", DisplayName = "Statistics" },
-                    new EntityField { Name = "is_draft", Type = "boolean", DisplayName = "Is Draft" },
-                    new EntityField { Name = "is_pinned", Type = "boolean", DisplayName = "Is Pinned" },
-                    new EntityField { Name = "via", Type = "string", DisplayName = "Posted Via" }
-                }
-            };
-
-            // Profiles
-            metadata["profiles"] = new EntityMetadata
-            {
-                EntityName = "profiles",
-                DisplayName = "Social Profiles",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Profile ID" },
-                    new EntityField { Name = "service", Type = "string", DisplayName = "Social Network" },
-                    new EntityField { Name = "service_id", Type = "string", DisplayName = "Service ID" },
-                    new EntityField { Name = "service_username", Type = "string", DisplayName = "Username" },
-                    new EntityField { Name = "service_name", Type = "string", DisplayName = "Display Name" },
-                    new EntityField { Name = "avatar", Type = "string", DisplayName = "Avatar URL" },
-                    new EntityField { Name = "timezone", Type = "string", DisplayName = "Timezone" },
-                    new EntityField { Name = "is_connected", Type = "boolean", DisplayName = "Is Connected" },
-                    new EntityField { Name = "is_disabled", Type = "boolean", DisplayName = "Is Disabled" },
-                    new EntityField { Name = "created_at", Type = "datetime", DisplayName = "Created At" },
-                    new EntityField { Name = "updated_at", Type = "datetime", DisplayName = "Updated At" }
-                }
-            };
-
-            // Analytics
-            metadata["analytics"] = new EntityMetadata
-            {
-                EntityName = "analytics",
-                DisplayName = "Analytics",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "profile_id", Type = "string", IsPrimaryKey = true, DisplayName = "Profile ID" },
-                    new EntityField { Name = "date", Type = "datetime", IsPrimaryKey = true, DisplayName = "Date" },
-                    new EntityField { Name = "impressions", Type = "integer", DisplayName = "Impressions" },
-                    new EntityField { Name = "clicks", Type = "integer", DisplayName = "Clicks" },
-                    new EntityField { Name = "likes", Type = "integer", DisplayName = "Likes" },
-                    new EntityField { Name = "shares", Type = "integer", DisplayName = "Shares" },
-                    new EntityField { Name = "comments", Type = "integer", DisplayName = "Comments" },
-                    new EntityField { Name = "reach", Type = "integer", DisplayName = "Reach" },
-                    new EntityField { Name = "engagement_rate", Type = "decimal", DisplayName = "Engagement Rate" },
-                    new EntityField { Name = "follower_count", Type = "integer", DisplayName = "Follower Count" },
-                    new EntityField { Name = "following_count", Type = "integer", DisplayName = "Following Count" }
-                }
-            };
-
-            // Campaigns
-            metadata["campaigns"] = new EntityMetadata
-            {
-                EntityName = "campaigns",
-                DisplayName = "Campaigns",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Campaign ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Campaign Name" },
-                    new EntityField { Name = "color", Type = "string", DisplayName = "Color" },
-                    new EntityField { Name = "is_active", Type = "boolean", DisplayName = "Is Active" },
-                    new EntityField { Name = "created_at", Type = "datetime", DisplayName = "Created At" },
-                    new EntityField { Name = "updated_at", Type = "datetime", DisplayName = "Updated At" }
-                }
-            };
-
-            // Links
-            metadata["links"] = new EntityMetadata
-            {
-                EntityName = "links",
-                DisplayName = "Links",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Link ID" },
-                    new EntityField { Name = "url", Type = "string", DisplayName = "URL" },
-                    new EntityField { Name = "shortened_url", Type = "string", DisplayName = "Shortened URL" },
-                    new EntityField { Name = "title", Type = "string", DisplayName = "Title" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "thumbnail", Type = "string", DisplayName = "Thumbnail" },
-                    new EntityField { Name = "clicks", Type = "integer", DisplayName = "Clicks" },
-                    new EntityField { Name = "created_at", Type = "datetime", DisplayName = "Created At" }
-                }
-            };
-
-            return metadata;
-        }
-
-        /// <summary>
-        /// Connect to Buffer API
-        /// </summary>
-        public async Task<bool> ConnectAsync()
+        private IEnumerable<BufferPost> ParsePosts(string json)
         {
             try
             {
-                if (string.IsNullOrEmpty(_config.AccessToken) && string.IsNullOrEmpty(_config.ApiKey))
+                var options = new JsonSerializerOptions
                 {
-                    throw new InvalidOperationException("Access token or API key is required for Buffer connection");
-                }
-
-                // Initialize HTTP client
-                var handler = new HttpClientHandler();
-                _httpClient = new HttpClient(handler)
-                {
-                    Timeout = TimeSpan.FromSeconds(_config.TimeoutSeconds)
+                    PropertyNameCaseInsensitive = true,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
                 };
 
-                // Add authorization header
-                if (!string.IsNullOrEmpty(_config.AccessToken))
-                {
-                    _httpClient.DefaultRequestHeaders.Authorization =
-                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.AccessToken);
-                }
-                else if (!string.IsNullOrEmpty(_config.ApiKey))
-                {
-                    _httpClient.DefaultRequestHeaders.Add("X-API-KEY", _config.ApiKey);
-                }
-
-                // Test connection by getting user info
-                var testUrl = $"{_config.BaseUrl}/user.json";
-                var response = await _httpClient.GetAsync(testUrl);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    _isConnected = true;
-                    return true;
-                }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    throw new Exception($"Buffer API connection failed: {response.StatusCode} - {errorContent}");
-                }
+                // Buffer API returns updates array
+                var response = JsonSerializer.Deserialize<BufferPostsResponse>(json, options);
+                return response?.Updates ?? Array.Empty<BufferPost>();
             }
             catch (Exception ex)
             {
-                _isConnected = false;
-                throw new Exception($"Failed to connect to Buffer API: {ex.Message}", ex);
+                DMEEditor.AddLogMessage("Beep", $"Error parsing Buffer posts: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return Array.Empty<BufferPost>();
             }
         }
 
-        /// <summary>
-        /// Disconnect from Buffer API
-        /// </summary>
-        public async Task<bool> DisconnectAsync()
+        private IEnumerable<BufferProfile> ParseProfiles(string json)
         {
-            if (_httpClient != null)
-            {
-                _httpClient.Dispose();
-                _httpClient = null;
-            }
-            _isConnected = false;
-            return true;
-        }
-
-        /// <summary>
-        /// Get data from Buffer API
-        /// </summary>
-        public async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
-        {
-            if (!_isConnected)
-            {
-                await ConnectAsync();
-            }
-
-            parameters ??= new Dictionary<string, object>();
-
             try
             {
-                string url;
-
-                switch (entityName.ToLower())
+                var options = new JsonSerializerOptions
                 {
-                    case "posts":
-                        var profileId = parameters.ContainsKey("profile_id") ? parameters["profile_id"].ToString() : "";
-                        var page = parameters.ContainsKey("page") ? (int)parameters["page"] : 1;
-                        var count = parameters.ContainsKey("count") ? (int)parameters["count"] : 25;
-                        var status = parameters.ContainsKey("status") ? parameters["status"].ToString() : "";
-                        var profileParam = string.IsNullOrEmpty(profileId) ? "" : $"&profile_id={profileId}";
-                        var statusParam = string.IsNullOrEmpty(status) ? "" : $"&status={status}";
-                        url = $"{_config.BaseUrl}/updates.json?page={page}&count={count}{profileParam}{statusParam}";
-                        break;
+                    PropertyNameCaseInsensitive = true,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                };
 
-                    case "profiles":
-                        url = $"{_config.BaseUrl}/profiles.json";
-                        break;
-
-                    case "analytics":
-                        var analyticsProfileId = parameters.ContainsKey("profile_id") ? parameters["profile_id"].ToString() : "";
-                        var startDate = parameters.ContainsKey("start_date") ? parameters["start_date"].ToString() : DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd");
-                        var endDate = parameters.ContainsKey("end_date") ? parameters["end_date"].ToString() : DateTime.Now.ToString("yyyy-MM-dd");
-                        url = $"{_config.BaseUrl}/analytics/{analyticsProfileId}.json?start_date={startDate}&end_date={endDate}";
-                        break;
-
-                    case "campaigns":
-                        url = $"{_config.BaseUrl}/campaigns.json";
-                        break;
-
-                    case "links":
-                        var linkId = parameters.ContainsKey("id") ? parameters["id"].ToString() : "";
-                        url = $"{_config.BaseUrl}/links/{linkId}.json";
-                        break;
-
-                    default:
-                        throw new ArgumentException($"Unsupported entity: {entityName}");
-                }
-
-                // Rate limiting delay
-                if (_config.RateLimitDelayMs > 0)
-                {
-                    await Task.Delay(_config.RateLimitDelayMs);
-                }
-
-                var response = await _httpClient.GetAsync(url);
-                var jsonContent = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"Buffer API request failed: {response.StatusCode} - {jsonContent}");
-                }
-
-                return ParseJsonToDataTable(jsonContent, entityName);
+                var response = JsonSerializer.Deserialize<BufferProfilesResponse>(json, options);
+                return response?.Profiles ?? Array.Empty<BufferProfile>();
             }
             catch (Exception ex)
             {
-                throw new Exception($"Failed to get {entityName} data: {ex.Message}", ex);
+                DMEEditor.AddLogMessage("Beep", $"Error parsing Buffer profiles: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return Array.Empty<BufferProfile>();
             }
         }
 
-        /// <summary>
-        /// Parse JSON response to DataTable
-        /// </summary>
-        private DataTable ParseJsonToDataTable(string jsonContent, string entityName)
+        private IEnumerable<BufferAnalytics> ParseAnalytics(string json)
         {
-            var dataTable = new DataTable(entityName);
-            var metadata = _entityMetadata.ContainsKey(entityName.ToLower()) ? _entityMetadata[entityName.ToLower()] : null;
-
             try
             {
-                using var document = JsonDocument.Parse(jsonContent);
-                var root = document.RootElement;
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                };
 
-                // Handle Buffer API response structure
-                JsonElement dataElement;
-                if (root.ValueKind == JsonValueKind.Array)
-                {
-                    dataElement = root;
-                }
-                else if (root.TryGetProperty("updates", out var updatesProp))
-                {
-                    dataElement = updatesProp;
-                }
-                else if (root.TryGetProperty("profiles", out var profilesProp))
-                {
-                    dataElement = profilesProp;
-                }
-                else if (root.TryGetProperty("campaigns", out var campaignsProp))
-                {
-                    dataElement = campaignsProp;
-                }
-                else if (root.TryGetProperty("links", out var linksProp))
-                {
-                    dataElement = linksProp;
-                }
-                else
-                {
-                    dataElement = root;
-                }
-
-                // Create columns based on metadata or first object
-                if (metadata != null)
-                {
-                    foreach (var field in metadata.Fields)
-                    {
-                        dataTable.Columns.Add(field.Name, GetFieldType(field.Type));
-                    }
-                }
-                else if (dataElement.ValueKind == JsonValueKind.Array && dataElement.GetArrayLength() > 0)
-                {
-                    var firstItem = dataElement[0];
-                    foreach (var property in firstItem.EnumerateObject())
-                    {
-                        dataTable.Columns.Add(property.Name, typeof(string));
-                    }
-                }
-                else if (dataElement.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var property in dataElement.EnumerateObject())
-                    {
-                        dataTable.Columns.Add(property.Name, typeof(string));
-                    }
-                }
-
-                // Add rows
-                if (dataElement.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var item in dataElement.EnumerateArray())
-                    {
-                        var row = dataTable.NewRow();
-                        foreach (var property in item.EnumerateObject())
-                        {
-                            if (dataTable.Columns.Contains(property.Name))
-                            {
-                                row[property.Name] = GetJsonValue(property.Value);
-                            }
-                        }
-                        dataTable.Rows.Add(row);
-                    }
-                }
-                else if (dataElement.ValueKind == JsonValueKind.Object)
-                {
-                    var row = dataTable.NewRow();
-                    foreach (var property in dataElement.EnumerateObject())
-                    {
-                        if (dataTable.Columns.Contains(property.Name))
-                        {
-                            row[property.Name] = GetJsonValue(property.Value);
-                        }
-                    }
-                    dataTable.Rows.Add(row);
-                }
+                var response = JsonSerializer.Deserialize<BufferAnalyticsResponse>(json, options);
+                return response != null ? new[] { response } : Array.Empty<BufferAnalytics>();
             }
             catch (Exception ex)
             {
-                throw new Exception($"Failed to parse JSON response: {ex.Message}", ex);
+                DMEEditor.AddLogMessage("Beep", $"Error parsing Buffer analytics: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return Array.Empty<BufferAnalytics>();
+            }
+        }
+
+        private IEnumerable<BufferCampaign> ParseCampaigns(string json)
+        {
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                };
+
+                var response = JsonSerializer.Deserialize<BufferCampaignsResponse>(json, options);
+                return response?.Campaigns ?? Array.Empty<BufferCampaign>();
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Beep", $"Error parsing Buffer campaigns: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return Array.Empty<BufferCampaign>();
+            }
+        }
+
+        private IEnumerable<BufferLink> ParseLinks(string json)
+        {
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                };
+
+                var response = JsonSerializer.Deserialize<BufferLinksResponse>(json, options);
+                return response?.Links ?? Array.Empty<BufferLink>();
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Beep", $"Error parsing Buffer links: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return Array.Empty<BufferLink>();
+            }
+        }
+
+        // -------------------- Helper methods --------------------
+
+        private string FiltersToQuery(List<AppFilter> filters)
+        {
+            if (filters == null || !filters.Any())
+                return string.Empty;
+
+            var queryParts = new List<string>();
+            foreach (var f in filters)
+            {
+                if (f.FieldName != null && f.FieldValue != null)
+                {
+                    var value = Uri.EscapeDataString(f.FieldValue.ToString() ?? "");
+                    queryParts.Add($"{f.FieldName}={value}");
+                }
             }
 
-            return dataTable;
+            return queryParts.Any() ? "?" + string.Join("&", queryParts) : string.Empty;
         }
 
-        /// <summary>
-        /// Get .NET type from field type string
-        /// </summary>
-        private Type GetFieldType(string fieldType)
+        private void RequireFilters(string entityName, string query, string[] required)
         {
-            return fieldType.ToLower() switch
+            foreach (var req in required)
             {
-                "string" => typeof(string),
-                "integer" => typeof(int),
-                "long" => typeof(long),
-                "decimal" => typeof(decimal),
-                "boolean" => typeof(bool),
-                "datetime" => typeof(DateTime),
-                _ => typeof(string)
-            };
-        }
-
-        /// <summary>
-        /// Get value from JSON element
-        /// </summary>
-        private object GetJsonValue(JsonElement element)
-        {
-            return element.ValueKind switch
-            {
-                JsonValueKind.String => element.GetString(),
-                JsonValueKind.Number => element.TryGetInt32(out var intValue) ? intValue : element.GetDouble(),
-                JsonValueKind.True => true,
-                JsonValueKind.False => false,
-                JsonValueKind.Null => null,
-                _ => element.GetRawText()
-            };
-        }
-
-        /// <summary>
-        /// Get available entities
-        /// </summary>
-        public List<string> GetEntities()
-        {
-            return new List<string> { "posts", "profiles", "analytics", "campaigns", "links" };
-        }
-
-        /// <summary>
-        /// Get entity metadata
-        /// </summary>
-        public EntityMetadata GetEntityMetadata(string entityName)
-        {
-            if (_entityMetadata.ContainsKey(entityName.ToLower()))
-            {
-                return _entityMetadata[entityName.ToLower()];
+                if (!query.Contains(req))
+                    throw new InvalidOperationException($"Entity '{entityName}' requires filter '{req}'");
             }
-            throw new ArgumentException($"Entity '{entityName}' not found");
         }
 
-        /// <summary>
-        /// Insert data (limited support for Buffer API)
-        /// </summary>
-        public async Task<int> InsertEntityAsync(string entityName, DataTable data)
-        {
-            if (entityName.ToLower() != "posts")
-            {
-                throw new NotSupportedException($"Insert operations are not supported for {entityName}");
-            }
+        // -------------------- Response classes for JSON parsing --------------------
 
-            // Implementation for creating posts would go here
-            // This is a placeholder as Buffer API has specific requirements for post creation
-            throw new NotImplementedException("Post creation not yet implemented");
+        private class BufferPostsResponse
+        {
+            [JsonPropertyName("updates")]
+            public List<BufferPost>? Updates { get; set; }
         }
 
-        /// <summary>
-        /// Update data (limited support for Buffer API)
-        /// </summary>
-        public async Task<int> UpdateEntityAsync(string entityName, DataTable data, Dictionary<string, object> filter)
+        private class BufferProfilesResponse
         {
-            throw new NotSupportedException("Update operations are not supported for Buffer API");
+            [JsonPropertyName("profiles")]
+            public List<BufferProfile>? Profiles { get; set; }
         }
 
-        /// <summary>
-        /// Delete data (limited support for Buffer API)
-        /// </summary>
-        public async Task<int> DeleteEntityAsync(string entityName, Dictionary<string, object> filter)
+        private class BufferCampaignsResponse
         {
-            throw new NotSupportedException("Delete operations are not supported for Buffer API");
+            [JsonPropertyName("campaigns")]
+            public List<BufferCampaign>? Campaigns { get; set; }
         }
 
-        /// <summary>
-        /// Execute custom query
-        /// </summary>
-        public async Task<DataTable> ExecuteQueryAsync(string query, Dictionary<string, object> parameters = null)
+        private class BufferLinksResponse
         {
-            // For Buffer, we'll treat query as entity name with parameters
-            return await GetEntityAsync(query, parameters);
-        }
-
-        /// <summary>
-        /// Get connection status
-        /// </summary>
-        public bool IsConnected => _isConnected;
-
-        /// <summary>
-        /// Get data source type
-        /// </summary>
-        public string DataSourceType => "Buffer";
-
-        /// <summary>
-        /// Get data source name
-        /// </summary>
-        public string DataSourceName => "Buffer Data Source";
-
-        /// <summary>
-        /// Dispose resources
-        /// </summary>
-        public void Dispose()
-        {
-            if (_httpClient != null)
-            {
-                _httpClient.Dispose();
-                _httpClient = null;
-            }
-            _isConnected = false;
+            [JsonPropertyName("links")]
+            public List<BufferLink>? Links { get; set; }
         }
     }
 }

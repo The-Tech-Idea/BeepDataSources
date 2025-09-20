@@ -22,41 +22,39 @@ namespace TheTechIdea.Beep.Connectors.Twitter
     [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Twitter)]
     public class TwitterDataSource : WebAPIDataSource
     {
-        // -------- Fixed, known entities (Twitter API v2) --------
-        private static readonly List<string> KnownEntities = new()
+        // Entity endpoints mapping for Twitter API v2
+        private static readonly Dictionary<string, string> EntityEndpoints = new(StringComparer.OrdinalIgnoreCase)
         {
             // Tweets
-            "tweets.search",       // GET tweets/search/recent   (requires query)
-            "tweets.by_id",        // GET tweets?ids=...
+            ["tweets.search"] = "tweets/search/recent",
+            ["tweets.by_id"] = "tweets",
             // Users
-            "users.by_username",   // GET users/by?usernames=...
-            "users.by_id",         // GET users?ids=...
-            "users.tweets",        // GET users/{id}/tweets      (requires id)
-            "users.followers",     // GET users/{id}/followers   (requires id)
-            "users.following",     // GET users/{id}/following   (requires id)
+            ["users.by_username"] = "users/by",
+            ["users.by_id"] = "users",
+            ["users.tweets"] = "users/{id}/tweets",
+            ["users.followers"] = "users/{id}/followers",
+            ["users.following"] = "users/{id}/following",
             // Lists
-            "lists.by_user",       // GET users/{id}/owned_lists (requires id)
-            "lists.tweets",        // GET lists/{id}/tweets      (requires id)
+            ["lists.by_user"] = "users/{id}/owned_lists",
+            ["lists.tweets"] = "lists/{id}/tweets",
             // Spaces
-            "spaces.search"        // GET spaces/search          (requires query)
+            ["spaces.search"] = "spaces/search"
         };
 
-        // entity -> (endpoint template, root path, required filter keys)
-        // endpoint supports {id} substitution taken from filters.
-        private static readonly Dictionary<string, (string endpoint, string root, string[] requiredFilters)> Map
-            = new(StringComparer.OrdinalIgnoreCase)
-            {
-                ["tweets.search"] = ("tweets/search/recent", "data", new[] { "query" }),
-                ["tweets.by_id"] = ("tweets", "data", new[] { "ids" }),
-                ["users.by_username"] = ("users/by", "data", new[] { "usernames" }),
-                ["users.by_id"] = ("users", "data", new[] { "ids" }),
-                ["users.tweets"] = ("users/{id}/tweets", "data", new[] { "id" }),
-                ["users.followers"] = ("users/{id}/followers", "data", new[] { "id" }),
-                ["users.following"] = ("users/{id}/following", "data", new[] { "id" }),
-                ["lists.by_user"] = ("users/{id}/owned_lists", "data", new[] { "id" }),
-                ["lists.tweets"] = ("lists/{id}/tweets", "data", new[] { "id" }),
-                ["spaces.search"] = ("spaces/search", "data", new[] { "query" }),
-            };
+        // Required filters for each entity
+        private static readonly Dictionary<string, string[]> RequiredFilters = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["tweets.search"] = new[] { "query" },
+            ["tweets.by_id"] = new[] { "ids" },
+            ["users.by_username"] = new[] { "usernames" },
+            ["users.by_id"] = new[] { "ids" },
+            ["users.tweets"] = new[] { "id" },
+            ["users.followers"] = new[] { "id" },
+            ["users.following"] = new[] { "id" },
+            ["lists.by_user"] = new[] { "id" },
+            ["lists.tweets"] = new[] { "id" },
+            ["spaces.search"] = new[] { "query" }
+        };
 
         public TwitterDataSource(
             string datasourcename,
@@ -66,18 +64,21 @@ namespace TheTechIdea.Beep.Connectors.Twitter
             IErrorsInfo errorObject)
             : base(datasourcename, logger, dmeEditor, databasetype, errorObject)
         {
-            // Ensure WebAPI connection props exist (URL/Auth configured outside this class)
+            // Ensure WebAPI connection props exist
             if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
-                Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+            {
+                if (Dataconnection != null)
+                    Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+            }
 
-            // Register fixed entities
-            EntitiesNames = KnownEntities.ToList();
+            // Register entities
+            EntitiesNames = EntityEndpoints.Keys.ToList();
             Entities = EntitiesNames
                 .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
                 .ToList();
         }
 
-        // Return the fixed list (use 'override' if base is virtual; otherwise this hides the base)
+        // Return the fixed list
         public new IEnumerable<string> GetEntitesList() => EntitiesNames;
 
         // -------------------- Overrides (same signatures) --------------------
@@ -92,42 +93,42 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         // Async
         public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            if (!Map.TryGetValue(EntityName, out var m))
+            if (!EntityEndpoints.TryGetValue(EntityName, out var endpoint))
                 throw new InvalidOperationException($"Unknown Twitter entity '{EntityName}'.");
 
             var q = FiltersToQuery(Filter);
-            RequireFilters(EntityName, q, m.requiredFilters);
+            RequireFilters(EntityName, q, RequiredFilters.GetValueOrDefault(EntityName, Array.Empty<string>()));
 
-            var endpoint = ResolveEndpoint(m.endpoint, q);
+            var resolvedEndpoint = ResolveEndpoint(endpoint, q);
 
-            using var resp = await GetAsync(endpoint, q).ConfigureAwait(false);
+            using var resp = await GetAsync(resolvedEndpoint, q).ConfigureAwait(false);
             if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
 
-            return ExtractArray(resp, m.root);
+            return ExtractArray(resp, "data");
         }
 
         // Paged (Twitter uses cursor-based via meta.next_token / pagination_token)
         public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            if (!Map.TryGetValue(EntityName, out var m))
+            if (!EntityEndpoints.TryGetValue(EntityName, out var endpoint))
                 throw new InvalidOperationException($"Unknown Twitter entity '{EntityName}'.");
 
             var q = FiltersToQuery(filter);
-            RequireFilters(EntityName, q, m.requiredFilters);
+            RequireFilters(EntityName, q, RequiredFilters.GetValueOrDefault(EntityName, Array.Empty<string>()));
             q["max_results"] = Math.Max(10, Math.Min(pageSize, 100)).ToString();
 
-            string endpoint = ResolveEndpoint(m.endpoint, q);
-            string cursor = q.TryGetValue("pagination_token", out var tok) ? tok : null;
+            string resolvedEndpoint = ResolveEndpoint(endpoint, q);
+            string? cursor = q.TryGetValue("pagination_token", out var tok) ? tok : null;
 
             for (int i = 1; i < Math.Max(1, pageNumber); i++)
             {
-                var step = CallTwitter(endpoint, MergeCursor(q, cursor)).ConfigureAwait(false).GetAwaiter().GetResult();
+                var step = CallTwitter(resolvedEndpoint, MergeCursor(q, cursor)).ConfigureAwait(false).GetAwaiter().GetResult();
                 cursor = GetNextToken(step);
                 if (string.IsNullOrEmpty(cursor)) break;
             }
 
-            var finalResp = CallTwitter(endpoint, MergeCursor(q, cursor)).ConfigureAwait(false).GetAwaiter().GetResult();
-            var items = ExtractArray(finalResp, m.root);
+            var finalResp = CallTwitter(resolvedEndpoint, MergeCursor(q, cursor)).ConfigureAwait(false).GetAwaiter().GetResult();
+            var items = ExtractArray(finalResp, "data");
             var nextTok = GetNextToken(finalResp);
 
             int totalRecordsSoFar = (pageNumber - 1) * Math.Max(1, pageSize) + items.Count;
@@ -174,7 +175,6 @@ namespace TheTechIdea.Beep.Connectors.Twitter
                 if (!q.TryGetValue("id", out var id) || string.IsNullOrWhiteSpace(id))
                     throw new ArgumentException("Missing required 'id' filter for this endpoint.");
                 template = template.Replace("{id}", Uri.EscapeDataString(id));
-                // Do not remove 'id' from query; leaving it is harmless (Twitter ignores unknowns for most endpoints).
             }
             return template;
         }
@@ -182,14 +182,14 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         private async Task<HttpResponseMessage> CallTwitter(string endpoint, Dictionary<string, string> query, CancellationToken ct = default)
             => await GetAsync(endpoint, query, cancellationToken: ct).ConfigureAwait(false);
 
-        private static Dictionary<string, string> MergeCursor(Dictionary<string, string> q, string cursor)
+        private static Dictionary<string, string> MergeCursor(Dictionary<string, string> q, string? cursor)
         {
             var m = new Dictionary<string, string>(q, StringComparer.OrdinalIgnoreCase);
             if (!string.IsNullOrWhiteSpace(cursor)) m["pagination_token"] = cursor;
             return m;
         }
 
-        private static string GetNextToken(HttpResponseMessage resp)
+        private static string? GetNextToken(HttpResponseMessage resp)
         {
             if (resp == null) return null;
             try

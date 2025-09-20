@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
+using TheTechIdea.Beep;
+using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
@@ -13,207 +13,207 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource.Models;
 
-namespace TheTechIdea.Beep.Connectors.Wix
+namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
 {
-    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix)]
     public class WixDataSource : WebAPIDataSource
     {
-        // ---- Fixed Wix entities you want to expose ----
-        private static readonly List<string> KnownEntities = new()
+        // Wix API Map with endpoints, roots, and required filters
+        public static readonly Dictionary<string, (string endpoint, string? root, string[] requiredFilters)> Map = new()
         {
-            "Products","Orders","Collections","Contacts","Coupons","InventoryItems"
-        };
+            // Core Commerce
+            ["products"] = ("stores/v1/products", "products", new[] { "" }),
+            ["product_variants"] = ("stores/v1/products/{product_id}/variants", "variants", new[] { "product_id" }),
+            ["collections"] = ("stores/v1/collections", "collections", new[] { "" }),
+            ["orders"] = ("stores/v1/orders", "orders", new[] { "" }),
+            ["order_line_items"] = ("stores/v1/orders/{order_id}/lineItems", "lineItems", new[] { "order_id" }),
+            ["inventory"] = ("stores/v1/inventoryItems", "inventoryItems", new[] { "" }),
+            ["abandoned_carts"] = ("stores/v1/abandonedCarts", "abandonedCarts", new[] { "" }),
 
-        // Map entity -> (endpoint, root property)
-        // NOTE: These are common Wix v1/v2/v3 styles. Adjust to your exact API/version if needed.
-        private static readonly Dictionary<string, (string endpoint, string root)> Map
-            = new(StringComparer.OrdinalIgnoreCase)
-            {
-                ["Products"] = ("stores/v1/products/query", "products"),
-                ["Orders"] = ("stores/v1/orders/query", "orders"),
-                ["Collections"] = ("stores/v1/collections/query", "collections"),
-                ["Contacts"] = ("crm/v1/contacts/query", "contacts"),
-                ["Coupons"] = ("stores/v1/coupons/query", "coupons"),
-                ["InventoryItems"] = ("stores/v1/inventoryItems/query", "inventoryItems")
-            };
+            // Content Management
+            ["sites"] = ("sites/v1/sites", "sites", new[] { "" }),
+            ["pages"] = ("sites/v1/pages", "pages", new[] { "" }),
+            ["blogs"] = ("blogs/v1/blogs", "blogs", new[] { "" }),
+            ["blog_posts"] = ("blogs/v1/posts", "posts", new[] { "" }),
+            ["events"] = ("events/v1/events", "events", new[] { "" }),
+
+            // Marketing
+            ["contacts"] = ("contacts/v1/contacts", "contacts", new[] { "" }),
+            ["campaigns"] = ("marketing/v1/campaigns", "campaigns", new[] { "" }),
+            ["email_subscribers"] = ("marketing/v1/email-subscribers", "subscribers", new[] { "" }),
+
+            // Bookings
+            ["bookings_services"] = ("bookings/v1/services", "services", new[] { "" }),
+            ["bookings_sessions"] = ("bookings/v1/sessions", "sessions", new[] { "" }),
+            ["bookings_appointments"] = ("bookings/v1/appointments", "appointments", new[] { "" }),
+
+            // Store Settings
+            ["store_info"] = ("stores/v1/store/info", "", new[] { "" }),
+            ["currencies"] = ("stores/v1/currencies", "currencies", new[] { "" }),
+            ["taxes"] = ("stores/v1/taxes", "taxes", new[] { "" }),
+            ["shipping_rates"] = ("stores/v1/shipping/rates", "rates", new[] { "" }),
+
+            // Analytics
+            ["analytics_sales"] = ("analytics/v1/sales", "data", new[] { "" }),
+            ["analytics_traffic"] = ("analytics/v1/traffic", "data", new[] { "" }),
+
+            // Forms
+            ["forms"] = ("forms/v1/forms", "forms", new[] { "" }),
+            ["form_submissions"] = ("forms/v1/submissions", "submissions", new[] { "" }),
+
+            // Media
+            ["media_files"] = ("media/v1/files", "files", new[] { "" }),
+            ["media_folders"] = ("media/v1/folders", "folders", new[] { "" })
+        };
 
         public WixDataSource(
             string datasourcename,
             IDMLogger logger,
-            IDMEEditor dmeEditor,
-            DataSourceType databasetype,
-            IErrorsInfo errorObject)
-            : base(datasourcename, logger, dmeEditor, databasetype, errorObject)
+            IDMEEditor editor,
+            DataSourceType type,
+            IErrorsInfo errors)
+            : base(datasourcename, logger, editor, type, errors)
         {
-            // Ensure we’re using WebAPI connection properties (no implicit defaults here)
+            // Ensure we're on WebAPI connection properties
             if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
-                Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+            {
+                if (Dataconnection != null)
+                    Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+            }
 
-            // Register fixed entities
-            EntitiesNames = KnownEntities.ToList();
+            // Register entities from Map
+            EntitiesNames = Map.Keys.ToList();
             Entities = EntitiesNames
                 .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
                 .ToList();
         }
 
-        // Return the fixed list (use 'override' if base is virtual; otherwise this hides the base)
-        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
-
-        // -------------------- Overrides (same signatures) --------------------
-
-        // Sync
-        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        // Helper method to resolve endpoints with parameters
+        private static string ResolveEndpoint(string template, Dictionary<string, string> q)
         {
-            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
-            return data ?? Array.Empty<object>();
-        }
-
-        // Async
-        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
-        {
-            if (!Map.TryGetValue(EntityName, out var m))
-                throw new InvalidOperationException($"Unknown Wix entity '{EntityName}'.");
-
-            var body = BuildQueryPayload(Filter, limit: 100, offset: 0);
-            using var resp = await PostAsync(m.endpoint, body).ConfigureAwait(false);
-            if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
-
-            return ExtractArray(resp, m.root);
-        }
-
-        // Paged (Wix query endpoints support paging { limit, offset })
-        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
-        {
-            if (!Map.TryGetValue(EntityName, out var m))
-                throw new InvalidOperationException($"Unknown Wix entity '{EntityName}'.");
-
-            int limit = Math.Max(1, pageSize);
-            int offset = Math.Max(0, (Math.Max(1, pageNumber) - 1) * limit);
-
-            var body = BuildQueryPayload(filter, limit, offset);
-            var resp = PostAsync(m.endpoint, body).ConfigureAwait(false).GetAwaiter().GetResult();
-            var items = ExtractArray(resp, m.root);
-
-            // Wix `/query` typically doesn’t return a grand total unless you request it separately.
-            // Provide best-effort counters.
-            int page = Math.Max(1, pageNumber);
-            int pageCount = items.Count;
-            int totalSoFar = offset + pageCount;
-
-            return new PagedResult
+            // Substitute {param} from filters if present
+            var result = template;
+            foreach (var param in new[] { "product_id", "order_id" })
             {
-                Data = items,
-                PageNumber = page,
-                PageSize = pageSize,
-                TotalRecords = totalSoFar,
-                TotalPages = pageCount < limit ? page : page + 1, // heuristic
-                HasPreviousPage = page > 1,
-                HasNextPage = pageCount == limit                   // if we filled the page, assume there might be more
-            };
+                if (result.Contains($"{{{param}}}", StringComparison.Ordinal))
+                {
+                    if (!q.TryGetValue(param, out var value) || string.IsNullOrWhiteSpace(value))
+                        throw new ArgumentException($"Missing required '{param}' filter for this endpoint.");
+                    result = result.Replace($"{{{param}}}", Uri.EscapeDataString(value));
+                }
+            }
+            return result;
         }
 
-
-        // ---------------------------- helpers ----------------------------
-
-        // Build Wix POST /query body:
-        // {
-        //   "query": {
-        //     "filter": { ... },     // built from AppFilter (basic eq/gt/lt/in/contains mapping)
-        //     "paging": { "limit": n, "offset": m },
-        //     "sort":   [ { "fieldName": "...", "order": "ASC"/"DESC" } ]  // optional, not set here
-        //   }
-        // }
-        private static object BuildQueryPayload(List<AppFilter> filters, int? limit, int? offset)
+        private static void RequireFilters(string entity, Dictionary<string, string> q, string[] required)
         {
-            var filterObj = BuildFilter(filters);
-            var pagingObj = new Dictionary<string, int>();
-            if (limit.HasValue) pagingObj["limit"] = limit.Value;
-            if (offset.HasValue) pagingObj["offset"] = offset.Value;
-
-            var query = new Dictionary<string, object>();
-            if (filterObj != null) query["filter"] = filterObj;
-            if (pagingObj.Count > 0) query["paging"] = pagingObj;
-
-            return new Dictionary<string, object> { ["query"] = query };
+            if (required == null || required.Length == 0) return;
+            var missing = required.Where(r => !q.ContainsKey(r) || string.IsNullOrWhiteSpace(q[r])).ToList();
+            if (missing.Count > 0)
+                throw new ArgumentException($"Wix entity '{entity}' requires parameter(s): {string.Join(", ", missing)}.");
         }
 
-        // Very basic filter mapping to Wix-style operators (adjust as needed):
-        // =  -> { "$eq": value }
-        // != -> { "$ne": value }
-        // >  -> { "$gt": value },  >= -> { "$ge": value }
-        // <  -> { "$lt": value },  <= -> { "$le": value }
-        // in -> { "$in": [v1,v2,...] }   (comma/semicolon-separated)
-        // contains -> { "$contains": value }
-        private static Dictionary<string, object> BuildFilter(List<AppFilter> filters)
+        private static Dictionary<string, string> FiltersToQuery(List<AppFilter> filters)
         {
-            if (filters == null || filters.Count == 0) return null;
-
-            var filter = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-
+            var q = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (filters == null) return q;
             foreach (var f in filters)
             {
                 if (f == null || string.IsNullOrWhiteSpace(f.FieldName)) continue;
-
-                var op = (f.Operator ?? "=").Trim().ToLowerInvariant();
-                var val = f.FilterValue?.ToString();
-
-                object literal = BuildLiteral(val);
-
-                object expr = op switch
-                {
-                    "!=" or "<>" => new Dictionary<string, object> { ["$ne"] = literal },
-                    ">" => new Dictionary<string, object> { ["$gt"] = literal },
-                    ">=" => new Dictionary<string, object> { ["$ge"] = literal },
-                    "<" => new Dictionary<string, object> { ["$lt"] = literal },
-                    "<=" => new Dictionary<string, object> { ["$le"] = literal },
-                    "in" => new Dictionary<string, object> { ["$in"] = SplitList(val) },
-                    "contains" => new Dictionary<string, object> { ["$contains"] = literal },
-                    _ => new Dictionary<string, object> { ["$eq"] = literal }
-                };
-
-                filter[f.FieldName.Trim()] = expr;
+                q[f.FieldName.Trim()] = f.FilterValue?.ToString() ?? string.Empty;
             }
-
-            return filter.Count == 0 ? null : filter;
+            return q;
         }
 
-        private static List<object> SplitList(string s)
+        // Override GetEntity to handle Wix API specifics
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter>? Filter)
         {
-            if (string.IsNullOrWhiteSpace(s)) return new List<object>();
-            var parts = s.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
-                         .Select(p => p.Trim())
-                         .Where(p => p.Length > 0)
-                         .Select(BuildLiteral)
-                         .ToList();
-            return parts;
+            if (!Map.TryGetValue(EntityName, out var mapping))
+                throw new InvalidOperationException($"Unknown Wix entity '{EntityName}'.");
+
+            var (endpoint, root, requiredFilters) = mapping;
+            var q = FiltersToQuery(Filter ?? new List<AppFilter>());
+            RequireFilters(EntityName, q, requiredFilters);
+
+            var resolvedEndpoint = ResolveEndpoint(endpoint, q);
+
+            using var resp = await GetAsync(resolvedEndpoint, q).ConfigureAwait(false);
+            if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
+
+            return ExtractArray(resp, root);
         }
 
-        // Try to coerce strings to bool/number/date, else keep as string
-        private static object BuildLiteral(string s)
+        // Helper method to get entity type for deserialization
+        public override Type GetEntityType(string entityName) => entityName switch
         {
-            if (s == null) return null;
+            "products" => typeof(WixProduct),
+            "product_variants" => typeof(WixProductVariant),
+            "collections" => typeof(WixCollection),
+            "orders" => typeof(WixOrder),
+            "order_line_items" => typeof(WixOrderLineItem),
+            "inventory" => typeof(WixInventoryItem),
+            "abandoned_carts" => typeof(WixAbandonedCart),
+            "sites" => typeof(WixSite),
+            "pages" => typeof(WixPage),
+            "blogs" => typeof(WixBlog),
+            "blog_posts" => typeof(WixBlogPost),
+            "events" => typeof(WixEvent),
+            "contacts" => typeof(WixContact),
+            "campaigns" => typeof(WixCampaign),
+            "email_subscribers" => typeof(WixEmailSubscriber),
+            "bookings_services" => typeof(WixBookingService),
+            "bookings_sessions" => typeof(WixBookingSession),
+            "bookings_appointments" => typeof(WixBookingAppointment),
+            "store_info" => typeof(WixStoreInfo),
+            "currencies" => typeof(WixCurrency),
+            "taxes" => typeof(WixTax),
+            "shipping_rates" => typeof(WixShippingRate),
+            "analytics_traffic" => typeof(WixAnalyticsTraffic),
+            "forms" => typeof(WixForm),
+            "form_submissions" => typeof(WixFormSubmission),
+            "media_files" => typeof(WixMediaFile),
+            "media_folders" => typeof(WixMediaFolder),
+            _ => typeof(Dictionary<string, object>)
+        };
 
-            if (bool.TryParse(s, out var b)) return b;
+        // Helper method to get entity list type for deserialization
+        private Type GetEntityListType(string entityName) => entityName switch
+        {
+            "products" => typeof(List<WixProduct>),
+            "product_variants" => typeof(List<WixProductVariant>),
+            "collections" => typeof(List<WixCollection>),
+            "orders" => typeof(List<WixOrder>),
+            "order_line_items" => typeof(List<WixOrderLineItem>),
+            "inventory" => typeof(List<WixInventoryItem>),
+            "abandoned_carts" => typeof(List<WixAbandonedCart>),
+            "sites" => typeof(List<WixSite>),
+            "pages" => typeof(List<WixPage>),
+            "blogs" => typeof(List<WixBlog>),
+            "blog_posts" => typeof(List<WixBlogPost>),
+            "events" => typeof(List<WixEvent>),
+            "contacts" => typeof(List<WixContact>),
+            "campaigns" => typeof(List<WixCampaign>),
+            "email_subscribers" => typeof(List<WixEmailSubscriber>),
+            "bookings_services" => typeof(List<WixBookingService>),
+            "bookings_sessions" => typeof(List<WixBookingSession>),
+            "bookings_appointments" => typeof(List<WixBookingAppointment>),
+            "currencies" => typeof(List<WixCurrency>),
+            "taxes" => typeof(List<WixTax>),
+            "shipping_rates" => typeof(List<WixShippingRate>),
+            "analytics_traffic" => typeof(List<WixAnalyticsTraffic>),
+            "forms" => typeof(List<WixForm>),
+            "form_submissions" => typeof(List<WixFormSubmission>),
+            "media_files" => typeof(List<WixMediaFile>),
+            "media_folders" => typeof(List<WixMediaFolder>),
+            _ => typeof(List<Dictionary<string, object>>)
+        };
 
-            if (long.TryParse(s, System.Globalization.NumberStyles.Integer,
-                              System.Globalization.CultureInfo.InvariantCulture, out var l))
-                return l;
+        // Properties for Wix authentication
+        private new string? ApiKey => (Dataconnection?.ConnectionProp as WebAPIConnectionProperties)?.ApiKey;
+        private string? BaseURL => (Dataconnection?.ConnectionProp as WebAPIConnectionProperties)?.Url;
 
-            if (decimal.TryParse(s, System.Globalization.NumberStyles.Float,
-                                 System.Globalization.CultureInfo.InvariantCulture, out var d))
-                return d;
-
-            if (DateTimeOffset.TryParse(s, System.Globalization.CultureInfo.InvariantCulture,
-                    System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
-                    out var dto))
-                return dto.UtcDateTime.ToString("o"); // ISO8601; Wix accepts ISO strings
-
-            return s; // fallback string
-        }
-
-        // Read JSON and extract an array under 'root'; if object, wrap as single item
-        private static List<object> ExtractArray(HttpResponseMessage resp, string root)
+        private static List<object> ExtractArray(HttpResponseMessage resp, string? root)
         {
             var list = new List<object>();
             if (resp == null) return list;
@@ -222,10 +222,11 @@ namespace TheTechIdea.Beep.Connectors.Wix
             using var doc = JsonDocument.Parse(json);
 
             JsonElement node = doc.RootElement;
+
             if (!string.IsNullOrWhiteSpace(root))
             {
                 if (!node.TryGetProperty(root, out node))
-                    return list; // root not found
+                    return list;
             }
 
             var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -247,9 +248,5 @@ namespace TheTechIdea.Beep.Connectors.Wix
 
             return list;
         }
-
-        // Convenience wrapper to issue POST via base (auth/headers handled centrally)
-        private async Task<HttpResponseMessage> PostAsync(string relativeEndpoint, object body, CancellationToken ct = default)
-            => await base.PostAsync(relativeEndpoint, body, cancellationToken: ct).ConfigureAwait(false);
     }
 }

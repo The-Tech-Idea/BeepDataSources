@@ -1,711 +1,200 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using DataManagementEngineStandard;
-using DataManagementModelsStandard;
+using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Utilities;
 
-namespace BeepDataSources.Connectors.CustomerSupport.LiveAgent
+namespace TheTechIdea.Beep.DataSources
 {
-    /// <summary>
-    /// Configuration class for LiveAgent data source
-    /// </summary>
-    public class LiveAgentConfig
+    [AddinAttribute(Catagory = "Connector", DatasourceType = DatasourceType.LiveAgent)]
+    public class LiveAgentDataSource : WebAPIDataSource
     {
-        /// <summary>
-        /// LiveAgent Domain (e.g., 'yourcompany' for yourcompany.ladesk.com)
-        /// </summary>
-        public string Domain { get; set; } = string.Empty;
-
-        /// <summary>
-        /// LiveAgent API Key
-        /// </summary>
-        public string ApiKey { get; set; } = string.Empty;
-
-        /// <summary>
-        /// API version for LiveAgent API (default: v3)
-        /// </summary>
-        public string ApiVersion { get; set; } = "v3";
-
-        /// <summary>
-        /// Base URL for LiveAgent API
-        /// </summary>
-        public string BaseUrl => $"https://{Domain}.ladesk.com/api/{ApiVersion}";
-
-        /// <summary>
-        /// Timeout for API requests in seconds
-        /// </summary>
-        public int TimeoutSeconds { get; set; } = 30;
-
-        /// <summary>
-        /// Maximum number of retries for failed requests
-        /// </summary>
-        public int MaxRetries { get; set; } = 3;
-
-        /// <summary>
-        /// Rate limit delay between requests in milliseconds
-        /// </summary>
-        public int RateLimitDelayMs { get; set; } = 1000;
-    }
-
-    /// <summary>
-    /// LiveAgent data source implementation for Beep framework
-    /// Supports LiveAgent REST API v3
-    /// </summary>
-    public class LiveAgentDataSource : IDataSource
-    {
-        private readonly LiveAgentConfig _config;
-        private HttpClient _httpClient;
-        private bool _isConnected;
-        private readonly Dictionary<string, EntityMetadata> _entityMetadata;
-
-        /// <summary>
-        /// Constructor for LiveAgentDataSource
-        /// </summary>
-        /// <param name="config">LiveAgent configuration</param>
-        public LiveAgentDataSource(LiveAgentConfig config)
+        public LiveAgentDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
         {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
-            _entityMetadata = InitializeEntityMetadata();
         }
 
-        /// <summary>
-        /// Constructor for LiveAgentDataSource with connection string
-        /// </summary>
-        /// <param name="connectionString">Connection string in format: Domain=xxx;ApiKey=xxx;ApiVersion=xxx</param>
-        public LiveAgentDataSource(string connectionString)
+        private record EntityMapping(string endpoint, string root, string[] requiredFilters);
+
+        private static readonly Dictionary<string, EntityMapping> Map = new()
         {
-            _config = ParseConnectionString(connectionString);
-            _entityMetadata = InitializeEntityMetadata();
+            ["tickets"] = new("/api/v3/tickets", "tickets", Array.Empty<string>()),
+            ["chats"] = new("/api/v3/chats", "chats", Array.Empty<string>()),
+            ["calls"] = new("/api/v3/calls", "calls", Array.Empty<string>()),
+            ["customers"] = new("/api/v3/customers", "customers", Array.Empty<string>()),
+            ["agents"] = new("/api/v3/agents", "agents", Array.Empty<string>()),
+            ["departments"] = new("/api/v3/departments", "departments", Array.Empty<string>()),
+            ["messages"] = new("/api/v3/conversations/{conversationId}/messages", "messages", new[] { "conversationId" }),
+            ["conversations"] = new("/api/v3/conversations", "conversations", Array.Empty<string>()),
+        };
+
+        public override string GetConnectionString()
+        {
+            return $"LiveAgent:{DatasourceName}";
         }
 
-        /// <summary>
-        /// Parse connection string into LiveAgentConfig
-        /// </summary>
-        private LiveAgentConfig ParseConnectionString(string connectionString)
-        {
-            var config = new LiveAgentConfig();
-            var parts = connectionString.Split(';');
+        public override string ColumnDelimiter { get => ","; set => base.ColumnDelimiter = value; }
+        public override string ParameterDelimiter { get => ":"; set => base.ParameterDelimiter = value; }
+        public override string RowDelimiter { get => "\n"; set => base.RowDelimiter = value; }
 
-            foreach (var part in parts)
+        public override List<string> GetEntitiesList()
+        {
+            return Map.Keys.ToList();
+        }
+
+        public override List<EntityStructure> GetEntityStructure(string EntityName, bool refresh)
+        {
+            return GetEntityStructureAsync(EntityName, refresh).GetAwaiter().GetResult();
+        }
+
+        public override async Task<List<EntityStructure>> GetEntityStructureAsync(string EntityName, bool refresh)
+        {
+            if (!Map.TryGetValue(EntityName, out var m))
+                throw new InvalidOperationException($"Unknown LiveAgent entity '{EntityName}'.");
+
+            var endpoint = m.endpoint;
+            using var resp = await GetAsync(endpoint).ConfigureAwait(false);
+            if (resp is null || !resp.IsSuccessStatusCode) return new List<EntityStructure>();
+
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var doc = JsonDocument.Parse(json);
+            var root = GetJsonProperty(doc.RootElement, m.root.Split('.'));
+
+            if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() == 0)
+                return new List<EntityStructure>();
+
+            var sample = root[0];
+            var structure = new EntityStructure
             {
-                var keyValue = part.Split('=');
-                if (keyValue.Length == 2)
-                {
-                    var key = keyValue[0].Trim();
-                    var value = keyValue[1].Trim();
-
-                    switch (key.ToLower())
-                    {
-                        case "domain":
-                            config.Domain = value;
-                            break;
-                        case "apikey":
-                            config.ApiKey = value;
-                            break;
-                        case "apiversion":
-                            config.ApiVersion = value;
-                            break;
-                        case "timeoutseconds":
-                            if (int.TryParse(value, out var timeout))
-                                config.TimeoutSeconds = timeout;
-                            break;
-                        case "maxretries":
-                            if (int.TryParse(value, out var retries))
-                                config.MaxRetries = retries;
-                            break;
-                        case "ratelimitdelayms":
-                            if (int.TryParse(value, out var delay))
-                                config.RateLimitDelayMs = delay;
-                            break;
-                    }
-                }
-            }
-
-            return config;
-        }
-
-        /// <summary>
-        /// Initialize entity metadata for LiveAgent entities
-        /// </summary>
-        private Dictionary<string, EntityMetadata> InitializeEntityMetadata()
-        {
-            var metadata = new Dictionary<string, EntityMetadata>();
-
-            // Tickets
-            metadata["tickets"] = new EntityMetadata
-            {
-                EntityName = "tickets",
-                DisplayName = "Tickets",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Ticket ID" },
-                    new EntityField { Name = "code", Type = "string", DisplayName = "Ticket Code" },
-                    new EntityField { Name = "subject", Type = "string", DisplayName = "Subject" },
-                    new EntityField { Name = "status", Type = "string", DisplayName = "Status" },
-                    new EntityField { Name = "priority", Type = "string", DisplayName = "Priority" },
-                    new EntityField { Name = "departmentid", Type = "string", DisplayName = "Department ID" },
-                    new EntityField { Name = "departmentname", Type = "string", DisplayName = "Department Name" },
-                    new EntityField { Name = "agentid", Type = "string", DisplayName = "Agent ID" },
-                    new EntityField { Name = "agentname", Type = "string", DisplayName = "Agent Name" },
-                    new EntityField { Name = "customerid", Type = "string", DisplayName = "Customer ID" },
-                    new EntityField { Name = "customername", Type = "string", DisplayName = "Customer Name" },
-                    new EntityField { Name = "customeremail", Type = "string", DisplayName = "Customer Email" },
-                    new EntityField { Name = "channeltype", Type = "string", DisplayName = "Channel Type" },
-                    new EntityField { Name = "tags", Type = "string", DisplayName = "Tags" },
-                    new EntityField { Name = "datecreated", Type = "datetime", DisplayName = "Date Created" },
-                    new EntityField { Name = "datelastactivity", Type = "datetime", DisplayName = "Date Last Activity" },
-                    new EntityField { Name = "datechanged", Type = "datetime", DisplayName = "Date Changed" },
-                    new EntityField { Name = "dateclosed", Type = "datetime", DisplayName = "Date Closed" },
-                    new EntityField { Name = "lastmessage", Type = "string", DisplayName = "Last Message" },
-                    new EntityField { Name = "lastmessagedate", Type = "datetime", DisplayName = "Last Message Date" },
-                    new EntityField { Name = "lastmessageauthor", Type = "string", DisplayName = "Last Message Author" },
-                    new EntityField { Name = "messagecount", Type = "integer", DisplayName = "Message Count" },
-                    new EntityField { Name = "unreadmessagecount", Type = "integer", DisplayName = "Unread Message Count" },
-                    new EntityField { Name = "customerwaiting", Type = "boolean", DisplayName = "Customer Waiting" },
-                    new EntityField { Name = "customerwaitingtime", Type = "integer", DisplayName = "Customer Waiting Time" },
-                    new EntityField { Name = "customerwaitingstarttime", Type = "datetime", DisplayName = "Customer Waiting Start Time" },
-                    new EntityField { Name = "sla", Type = "string", DisplayName = "SLA" },
-                    new EntityField { Name = "slaviolation", Type = "boolean", DisplayName = "SLA Violation" },
-                    new EntityField { Name = "customfields", Type = "string", DisplayName = "Custom Fields" }
-                }
+                EntityName = EntityName,
+                ViewID = EntityName,
+                DataSourceID = DatasourceName,
+                Fields = new List<EntityField>()
             };
 
-            // Chats
-            metadata["chats"] = new EntityMetadata
+            foreach (var prop in sample.EnumerateObject())
             {
-                EntityName = "chats",
-                DisplayName = "Chats",
-                Fields = new List<EntityField>
+                structure.Fields.Add(new EntityField
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Chat ID" },
-                    new EntityField { Name = "code", Type = "string", DisplayName = "Chat Code" },
-                    new EntityField { Name = "status", Type = "string", DisplayName = "Status" },
-                    new EntityField { Name = "channeltype", Type = "string", DisplayName = "Channel Type" },
-                    new EntityField { Name = "departmentid", Type = "string", DisplayName = "Department ID" },
-                    new EntityField { Name = "departmentname", Type = "string", DisplayName = "Department Name" },
-                    new EntityField { Name = "agentid", Type = "string", DisplayName = "Agent ID" },
-                    new EntityField { Name = "agentname", Type = "string", DisplayName = "Agent Name" },
-                    new EntityField { Name = "customerid", Type = "string", DisplayName = "Customer ID" },
-                    new EntityField { Name = "customername", Type = "string", DisplayName = "Customer Name" },
-                    new EntityField { Name = "customeremail", Type = "string", DisplayName = "Customer Email" },
-                    new EntityField { Name = "customerip", Type = "string", DisplayName = "Customer IP" },
-                    new EntityField { Name = "customeruseragent", Type = "string", DisplayName = "Customer User Agent" },
-                    new EntityField { Name = "datecreated", Type = "datetime", DisplayName = "Date Created" },
-                    new EntityField { Name = "datechanged", Type = "datetime", DisplayName = "Date Changed" },
-                    new EntityField { Name = "datefinished", Type = "datetime", DisplayName = "Date Finished" },
-                    new EntityField { Name = "waitingtime", Type = "integer", DisplayName = "Waiting Time" },
-                    new EntityField { Name = "chattime", Type = "integer", DisplayName = "Chat Time" },
-                    new EntityField { Name = "messagecount", Type = "integer", DisplayName = "Message Count" },
-                    new EntityField { Name = "rating", Type = "integer", DisplayName = "Rating" },
-                    new EntityField { Name = "ratingcomment", Type = "string", DisplayName = "Rating Comment" },
-                    new EntityField { Name = "tags", Type = "string", DisplayName = "Tags" },
-                    new EntityField { Name = "customfields", Type = "string", DisplayName = "Custom Fields" }
-                }
-            };
+                    fieldname = prop.Name,
+                    fieldtype = MapJsonType(prop.Value.ValueKind),
+                    ValueRetrievedFromParent = false,
+                    AllowDBNull = true,
+                    IsAutoIncrement = false,
+                    IsIdentity = false,
+                    IsKey = false,
+                    IsUnique = false
+                });
+            }
 
-            // Calls
-            metadata["calls"] = new EntityMetadata
-            {
-                EntityName = "calls",
-                DisplayName = "Calls",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Call ID" },
-                    new EntityField { Name = "code", Type = "string", DisplayName = "Call Code" },
-                    new EntityField { Name = "status", Type = "string", DisplayName = "Status" },
-                    new EntityField { Name = "direction", Type = "string", DisplayName = "Direction" },
-                    new EntityField { Name = "departmentid", Type = "string", DisplayName = "Department ID" },
-                    new EntityField { Name = "departmentname", Type = "string", DisplayName = "Department Name" },
-                    new EntityField { Name = "agentid", Type = "string", DisplayName = "Agent ID" },
-                    new EntityField { Name = "agentname", Type = "string", DisplayName = "Agent Name" },
-                    new EntityField { Name = "customerid", Type = "string", DisplayName = "Customer ID" },
-                    new EntityField { Name = "customername", Type = "string", DisplayName = "Customer Name" },
-                    new EntityField { Name = "customerphone", Type = "string", DisplayName = "Customer Phone" },
-                    new EntityField { Name = "callerid", Type = "string", DisplayName = "Caller ID" },
-                    new EntityField { Name = "datecreated", Type = "datetime", DisplayName = "Date Created" },
-                    new EntityField { Name = "dateanswered", Type = "datetime", DisplayName = "Date Answered" },
-                    new EntityField { Name = "datefinished", Type = "datetime", DisplayName = "Date Finished" },
-                    new EntityField { Name = "waitingtime", Type = "integer", DisplayName = "Waiting Time" },
-                    new EntityField { Name = "calltime", Type = "integer", DisplayName = "Call Time" },
-                    new EntityField { Name = "recordingurl", Type = "string", DisplayName = "Recording URL" },
-                    new EntityField { Name = "tags", Type = "string", DisplayName = "Tags" },
-                    new EntityField { Name = "customfields", Type = "string", DisplayName = "Custom Fields" }
-                }
-            };
-
-            // Customers
-            metadata["customers"] = new EntityMetadata
-            {
-                EntityName = "customers",
-                DisplayName = "Customers",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Customer ID" },
-                    new EntityField { Name = "firstname", Type = "string", DisplayName = "First Name" },
-                    new EntityField { Name = "lastname", Type = "string", DisplayName = "Last Name" },
-                    new EntityField { Name = "fullname", Type = "string", DisplayName = "Full Name" },
-                    new EntityField { Name = "email", Type = "string", DisplayName = "Email" },
-                    new EntityField { Name = "phone", Type = "string", DisplayName = "Phone" },
-                    new EntityField { Name = "company", Type = "string", DisplayName = "Company" },
-                    new EntityField { Name = "city", Type = "string", DisplayName = "City" },
-                    new EntityField { Name = "country", Type = "string", DisplayName = "Country" },
-                    new EntityField { Name = "gender", Type = "string", DisplayName = "Gender" },
-                    new EntityField { Name = "datecreated", Type = "datetime", DisplayName = "Date Created" },
-                    new EntityField { Name = "datechanged", Type = "datetime", DisplayName = "Date Changed" },
-                    new EntityField { Name = "lastactivity", Type = "datetime", DisplayName = "Last Activity" },
-                    new EntityField { Name = "avatar", Type = "string", DisplayName = "Avatar" },
-                    new EntityField { Name = "socialnetworks", Type = "string", DisplayName = "Social Networks" },
-                    new EntityField { Name = "groups", Type = "string", DisplayName = "Groups" },
-                    new EntityField { Name = "tags", Type = "string", DisplayName = "Tags" },
-                    new EntityField { Name = "customfields", Type = "string", DisplayName = "Custom Fields" }
-                }
-            };
-
-            // Agents
-            metadata["agents"] = new EntityMetadata
-            {
-                EntityName = "agents",
-                DisplayName = "Agents",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Agent ID" },
-                    new EntityField { Name = "firstname", Type = "string", DisplayName = "First Name" },
-                    new EntityField { Name = "lastname", Type = "string", DisplayName = "Last Name" },
-                    new EntityField { Name = "fullname", Type = "string", DisplayName = "Full Name" },
-                    new EntityField { Name = "email", Type = "string", DisplayName = "Email" },
-                    new EntityField { Name = "phone", Type = "string", DisplayName = "Phone" },
-                    new EntityField { Name = "departmentid", Type = "string", DisplayName = "Department ID" },
-                    new EntityField { Name = "departmentname", Type = "string", DisplayName = "Department Name" },
-                    new EntityField { Name = "role", Type = "string", DisplayName = "Role" },
-                    new EntityField { Name = "status", Type = "string", DisplayName = "Status" },
-                    new EntityField { Name = "datecreated", Type = "datetime", DisplayName = "Date Created" },
-                    new EntityField { Name = "datechanged", Type = "datetime", DisplayName = "Date Changed" },
-                    new EntityField { Name = "lastactivity", Type = "datetime", DisplayName = "Last Activity" },
-                    new EntityField { Name = "avatar", Type = "string", DisplayName = "Avatar" },
-                    new EntityField { Name = "permissions", Type = "string", DisplayName = "Permissions" },
-                    new EntityField { Name = "tags", Type = "string", DisplayName = "Tags" },
-                    new EntityField { Name = "customfields", Type = "string", DisplayName = "Custom Fields" }
-                }
-            };
-
-            // Departments
-            metadata["departments"] = new EntityMetadata
-            {
-                EntityName = "departments",
-                DisplayName = "Departments",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Department ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Name" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "status", Type = "string", DisplayName = "Status" },
-                    new EntityField { Name = "parentdepartmentid", Type = "string", DisplayName = "Parent Department ID" },
-                    new EntityField { Name = "parentdepartmentname", Type = "string", DisplayName = "Parent Department Name" },
-                    new EntityField { Name = "datecreated", Type = "datetime", DisplayName = "Date Created" },
-                    new EntityField { Name = "datechanged", Type = "datetime", DisplayName = "Date Changed" },
-                    new EntityField { Name = "agentcount", Type = "integer", DisplayName = "Agent Count" },
-                    new EntityField { Name = "onlineagentcount", Type = "integer", DisplayName = "Online Agent Count" },
-                    new EntityField { Name = "tags", Type = "string", DisplayName = "Tags" },
-                    new EntityField { Name = "customfields", Type = "string", DisplayName = "Custom Fields" }
-                }
-            };
-
-            // Messages
-            metadata["messages"] = new EntityMetadata
-            {
-                EntityName = "messages",
-                DisplayName = "Messages",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Message ID" },
-                    new EntityField { Name = "conversationid", Type = "string", DisplayName = "Conversation ID" },
-                    new EntityField { Name = "authorid", Type = "string", DisplayName = "Author ID" },
-                    new EntityField { Name = "authorname", Type = "string", DisplayName = "Author Name" },
-                    new EntityField { Name = "authoremail", Type = "string", DisplayName = "Author Email" },
-                    new EntityField { Name = "authortype", Type = "string", DisplayName = "Author Type" },
-                    new EntityField { Name = "channeltype", Type = "string", DisplayName = "Channel Type" },
-                    new EntityField { Name = "messagetype", Type = "string", DisplayName = "Message Type" },
-                    new EntityField { Name = "content", Type = "string", DisplayName = "Content" },
-                    new EntityField { Name = "content_html", Type = "string", DisplayName = "Content HTML" },
-                    new EntityField { Name = "content_text", Type = "string", DisplayName = "Content Text" },
-                    new EntityField { Name = "datecreated", Type = "datetime", DisplayName = "Date Created" },
-                    new EntityField { Name = "datechanged", Type = "datetime", DisplayName = "Date Changed" },
-                    new EntityField { Name = "isprivate", Type = "boolean", DisplayName = "Is Private" },
-                    new EntityField { Name = "isread", Type = "boolean", DisplayName = "Is Read" },
-                    new EntityField { Name = "attachments", Type = "string", DisplayName = "Attachments" },
-                    new EntityField { Name = "customfields", Type = "string", DisplayName = "Custom Fields" }
-                }
-            };
-
-            return metadata;
+            return new List<EntityStructure> { structure };
         }
 
-        /// <summary>
-        /// Connect to LiveAgent API
-        /// </summary>
-        public async Task<bool> ConnectAsync()
+        public override object GetEntity(string EntityName, List<AppFilter> Filter)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(_config.Domain))
-                {
-                    throw new InvalidOperationException("Domain is required for LiveAgent connection");
-                }
-
-                if (string.IsNullOrEmpty(_config.ApiKey))
-                {
-                    throw new InvalidOperationException("API Key is required for LiveAgent connection");
-                }
-
-                // Initialize HTTP client
-                var handler = new HttpClientHandler();
-                _httpClient = new HttpClient(handler)
-                {
-                    Timeout = TimeSpan.FromSeconds(_config.TimeoutSeconds)
-                };
-
-                // Add authentication header
-                _httpClient.DefaultRequestHeaders.Add("apikey", _config.ApiKey);
-
-                // Test connection by getting departments
-                var testUrl = $"{_config.BaseUrl}/departments";
-                var response = await _httpClient.GetAsync(testUrl);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    _isConnected = true;
-                    return true;
-                }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    throw new Exception($"LiveAgent API connection failed: {response.StatusCode} - {errorContent}");
-                }
-            }
-            catch (Exception ex)
-            {
-                _isConnected = false;
-                throw new Exception($"Failed to connect to LiveAgent API: {ex.Message}", ex);
-            }
+            return GetEntityAsync(EntityName, Filter).GetAwaiter().GetResult();
         }
 
-        /// <summary>
-        /// Disconnect from LiveAgent API
-        /// </summary>
-        public async Task<bool> DisconnectAsync()
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            if (_httpClient != null)
-            {
-                _httpClient.Dispose();
-                _httpClient = null;
-            }
-            _isConnected = false;
-            return true;
+            if (!Map.TryGetValue(EntityName, out var m))
+                throw new InvalidOperationException($"Unknown LiveAgent entity '{EntityName}'.");
+
+            var q = FiltersToQuery(Filter);
+            RequireFilters(EntityName, q, m.requiredFilters);
+
+            var endpoint = ResolveEndpoint(m.endpoint, q);
+
+            using var resp = await GetAsync(endpoint, q).ConfigureAwait(false);
+            if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
+
+            return ExtractArray(resp, m.root);
         }
 
-        /// <summary>
-        /// Get data from LiveAgent API
-        /// </summary>
-        public async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
+        // Paged (LiveAgent uses offset-based pagination)
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            if (!_isConnected)
+            if (!Map.TryGetValue(EntityName, out var m))
+                throw new InvalidOperationException($"Unknown LiveAgent entity '{EntityName}'.");
+
+            var q = FiltersToQuery(filter);
+            RequireFilters(EntityName, q, m.requiredFilters);
+
+            // LiveAgent pagination
+            q["offset"] = ((pageNumber - 1) * pageSize).ToString();
+            q["limit"] = Math.Max(1, Math.Min(pageSize, 100)).ToString();
+
+            var endpoint = ResolveEndpoint(m.endpoint, q);
+
+            using var resp = Get(endpoint, q);
+            if (resp is null || !resp.IsSuccessStatusCode) return new PagedResult();
+
+            var data = ExtractArray(resp, m.root);
+            return new PagedResult
             {
-                await ConnectAsync();
-            }
-
-            parameters ??= new Dictionary<string, object>();
-
-            try
-            {
-                string url;
-
-                switch (entityName.ToLower())
-                {
-                    case "tickets":
-                        var ticketId = parameters.ContainsKey("id") ? parameters["id"].ToString() : "";
-                        var ticketStatus = parameters.ContainsKey("status") ? parameters["status"].ToString() : "";
-                        var ticketDepartment = parameters.ContainsKey("department") ? parameters["department"].ToString() : "";
-
-                        if (!string.IsNullOrEmpty(ticketId))
-                        {
-                            url = $"{_config.BaseUrl}/tickets/{ticketId}";
-                        }
-                        else
-                        {
-                            var queryParams = new List<string>();
-                            if (!string.IsNullOrEmpty(ticketStatus)) queryParams.Add($"status={ticketStatus}");
-                            if (!string.IsNullOrEmpty(ticketDepartment)) queryParams.Add($"departmentid={ticketDepartment}");
-
-                            var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
-                            url = $"{_config.BaseUrl}/tickets{queryString}";
-                        }
-                        break;
-
-                    case "chats":
-                        var chatId = parameters.ContainsKey("id") ? parameters["id"].ToString() : "";
-                        url = string.IsNullOrEmpty(chatId) ? $"{_config.BaseUrl}/chats" : $"{_config.BaseUrl}/chats/{chatId}";
-                        break;
-
-                    case "calls":
-                        var callId = parameters.ContainsKey("id") ? parameters["id"].ToString() : "";
-                        url = string.IsNullOrEmpty(callId) ? $"{_config.BaseUrl}/calls" : $"{_config.BaseUrl}/calls/{callId}";
-                        break;
-
-                    case "customers":
-                        var customerId = parameters.ContainsKey("id") ? parameters["id"].ToString() : "";
-                        url = string.IsNullOrEmpty(customerId) ? $"{_config.BaseUrl}/customers" : $"{_config.BaseUrl}/customers/{customerId}";
-                        break;
-
-                    case "agents":
-                        var agentId = parameters.ContainsKey("id") ? parameters["id"].ToString() : "";
-                        url = string.IsNullOrEmpty(agentId) ? $"{_config.BaseUrl}/agents" : $"{_config.BaseUrl}/agents/{agentId}";
-                        break;
-
-                    case "departments":
-                        var departmentId = parameters.ContainsKey("id") ? parameters["id"].ToString() : "";
-                        url = string.IsNullOrEmpty(departmentId) ? $"{_config.BaseUrl}/departments" : $"{_config.BaseUrl}/departments/{departmentId}";
-                        break;
-
-                    case "messages":
-                        var conversationId = parameters.ContainsKey("conversation_id") ? parameters["conversation_id"].ToString() : "";
-                        if (string.IsNullOrEmpty(conversationId))
-                        {
-                            throw new ArgumentException("conversation_id parameter is required for messages");
-                        }
-                        url = $"{_config.BaseUrl}/conversations/{conversationId}/messages";
-                        break;
-
-                    default:
-                        throw new ArgumentException($"Unsupported entity: {entityName}");
-                }
-
-                // Rate limiting delay
-                if (_config.RateLimitDelayMs > 0)
-                {
-                    await Task.Delay(_config.RateLimitDelayMs);
-                }
-
-                var response = await _httpClient.GetAsync(url);
-                var jsonContent = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"LiveAgent API request failed: {response.StatusCode} - {jsonContent}");
-                }
-
-                return ParseJsonToDataTable(jsonContent, entityName);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to get {entityName} data: {ex.Message}", ex);
-            }
-        }
-
-        /// <summary>
-        /// Parse JSON response to DataTable
-        /// </summary>
-        private DataTable ParseJsonToDataTable(string jsonContent, string entityName)
-        {
-            var dataTable = new DataTable(entityName);
-            var metadata = _entityMetadata.ContainsKey(entityName.ToLower()) ? _entityMetadata[entityName.ToLower()] : null;
-
-            try
-            {
-                using var document = JsonDocument.Parse(jsonContent);
-                var root = document.RootElement;
-
-                // Handle LiveAgent API response structure
-                JsonElement dataElement;
-                if (root.ValueKind == JsonValueKind.Array)
-                {
-                    dataElement = root;
-                }
-                else if (root.TryGetProperty("response", out var responseElement))
-                {
-                    dataElement = responseElement;
-                }
-                else
-                {
-                    dataElement = root;
-                }
-
-                // Create columns based on metadata or first object
-                if (metadata != null)
-                {
-                    foreach (var field in metadata.Fields)
-                    {
-                        dataTable.Columns.Add(field.Name, GetFieldType(field.Type));
-                    }
-                }
-                else if (dataElement.ValueKind == JsonValueKind.Array && dataElement.GetArrayLength() > 0)
-                {
-                    var firstItem = dataElement[0];
-                    foreach (var property in firstItem.EnumerateObject())
-                    {
-                        dataTable.Columns.Add(property.Name, typeof(string));
-                    }
-                }
-                else if (dataElement.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var property in dataElement.EnumerateObject())
-                    {
-                        dataTable.Columns.Add(property.Name, typeof(string));
-                    }
-                }
-
-                // Add rows
-                if (dataElement.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var item in dataElement.EnumerateArray())
-                    {
-                        var row = dataTable.NewRow();
-                        foreach (var property in item.EnumerateObject())
-                        {
-                            if (dataTable.Columns.Contains(property.Name))
-                            {
-                                row[property.Name] = GetJsonValue(property.Value);
-                            }
-                        }
-                        dataTable.Rows.Add(row);
-                    }
-                }
-                else if (dataElement.ValueKind == JsonValueKind.Object)
-                {
-                    var row = dataTable.NewRow();
-                    foreach (var property in dataElement.EnumerateObject())
-                    {
-                        if (dataTable.Columns.Contains(property.Name))
-                        {
-                            row[property.Name] = GetJsonValue(property.Value);
-                        }
-                    }
-                    dataTable.Rows.Add(row);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to parse JSON response: {ex.Message}", ex);
-            }
-
-            return dataTable;
-        }
-
-        /// <summary>
-        /// Get .NET type from field type string
-        /// </summary>
-        private Type GetFieldType(string fieldType)
-        {
-            return fieldType.ToLower() switch
-            {
-                "string" => typeof(string),
-                "integer" => typeof(int),
-                "long" => typeof(long),
-                "decimal" => typeof(decimal),
-                "boolean" => typeof(bool),
-                "datetime" => typeof(DateTime),
-                _ => typeof(string)
+                Data = data,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = 1, // LiveAgent doesn't provide total count in response
+                TotalRecords = data.Count()
             };
         }
 
-        /// <summary>
-        /// Get value from JSON element
-        /// </summary>
-        private object GetJsonValue(JsonElement element)
+        private void RequireFilters(string entity, Dictionary<string, string> q, string[] required)
         {
-            return element.ValueKind switch
-            {
-                JsonValueKind.String => element.GetString(),
-                JsonValueKind.Number => element.TryGetInt32(out var intValue) ? intValue : element.GetDouble(),
-                JsonValueKind.True => true,
-                JsonValueKind.False => false,
-                JsonValueKind.Null => null,
-                _ => element.GetRawText()
-            };
+            var missing = required.Where(r => !q.ContainsKey(r) || string.IsNullOrEmpty(q[r])).ToArray();
+            if (missing.Length > 0)
+                throw new ArgumentException($"LiveAgent entity '{entity}' requires parameter(s): {string.Join(", ", missing)}.");
         }
 
-        /// <summary>
-        /// Get available entities
-        /// </summary>
-        public List<string> GetEntities()
+        private string ResolveEndpoint(string endpoint, Dictionary<string, string> q)
         {
-            return new List<string> { "tickets", "chats", "calls", "customers", "agents", "departments", "messages" };
-        }
-
-        /// <summary>
-        /// Get entity metadata
-        /// </summary>
-        public EntityMetadata GetEntityMetadata(string entityName)
-        {
-            if (_entityMetadata.ContainsKey(entityName.ToLower()))
+            var result = endpoint;
+            foreach (var (key, value) in q.Where(kv => endpoint.Contains($"{{{kv.Key}}}")))
             {
-                return _entityMetadata[entityName.ToLower()];
+                result = result.Replace($"{{{key}}}", value);
             }
-            throw new ArgumentException($"Entity '{entityName}' not found");
+            return result;
         }
 
-        /// <summary>
-        /// Insert data (limited support for LiveAgent API)
-        /// </summary>
-        public async Task<int> InsertEntityAsync(string entityName, DataTable data)
+        private IEnumerable<object> ExtractArray(HttpResponseMessage resp, string rootPath)
         {
-            throw new NotSupportedException("Insert operations are not supported for LiveAgent API");
+            var json = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var doc = JsonDocument.Parse(json);
+            var root = GetJsonProperty(doc.RootElement, rootPath.Split('.'));
+
+            if (root.ValueKind != JsonValueKind.Array) return Array.Empty<object>();
+
+            return root.EnumerateArray().Select(item => item.Deserialize<object>());
         }
 
-        /// <summary>
-        /// Update data (limited support for LiveAgent API)
-        /// </summary>
-        public async Task<int> UpdateEntityAsync(string entityName, DataTable data, Dictionary<string, object> filter)
+        private JsonElement GetJsonProperty(JsonElement element, string[] path)
         {
-            throw new NotSupportedException("Update operations are not supported for LiveAgent API");
-        }
-
-        /// <summary>
-        /// Delete data (limited support for LiveAgent API)
-        /// </summary>
-        public async Task<int> DeleteEntityAsync(string entityName, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Delete operations are not supported for LiveAgent API");
-        }
-
-        /// <summary>
-        /// Execute custom query
-        /// </summary>
-        public async Task<DataTable> ExecuteQueryAsync(string query, Dictionary<string, object> parameters = null)
-        {
-            // For LiveAgent, we'll treat query as entity name with parameters
-            return await GetEntityAsync(query, parameters);
-        }
-
-        /// <summary>
-        /// Get connection status
-        /// </summary>
-        public bool IsConnected => _isConnected;
-
-        /// <summary>
-        /// Get data source type
-        /// </summary>
-        public string DataSourceType => "LiveAgent";
-
-        /// <summary>
-        /// Get data source name
-        /// </summary>
-        public string DataSourceName => "LiveAgent Data Source";
-
-        /// <summary>
-        /// Dispose resources
-        /// </summary>
-        public void Dispose()
-        {
-            if (_httpClient != null)
+            var current = element;
+            foreach (var part in path)
             {
-                _httpClient.Dispose();
-                _httpClient = null;
+                if (current.ValueKind != JsonValueKind.Object || !current.TryGetProperty(part, out current))
+                    return default;
             }
-            _isConnected = false;
+            return current;
         }
+
+        private string MapJsonType(JsonValueKind kind) => kind switch
+        {
+            JsonValueKind.String => "System.String",
+            JsonValueKind.Number => "System.Decimal",
+            JsonValueKind.True or JsonValueKind.False => "System.Boolean",
+            JsonValueKind.Array => "System.Object[]",
+            JsonValueKind.Object => "System.Object",
+            _ => "System.String"
+        };
     }
 }

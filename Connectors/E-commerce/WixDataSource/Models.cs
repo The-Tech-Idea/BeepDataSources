@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using TheTechIdea.Beep.DataBase;
 
-namespace TheTechIdea.Beep.Connectors.Wix.Models
+namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource.Models
 {
     // -------------------------------------------------------
     // Base
@@ -248,16 +248,287 @@ namespace TheTechIdea.Beep.Connectors.Wix.Models
     // =======================================================
     // REGISTRY (optional mapping entity name -> CLR type)
     // =======================================================
+    // PRODUCT VARIANTS
+    // =======================================================
+    public sealed class WixProductVariant : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("productId")] public string? ProductId { get; set; }
+        [JsonPropertyName("price")] public decimal? Price { get; set; }
+        [JsonPropertyName("sku")] public string? Sku { get; set; }
+        [JsonPropertyName("visible")] public bool? Visible { get; set; }
+        [JsonPropertyName("weight")] public decimal? Weight { get; set; }
+        [JsonPropertyName("options")] public Dictionary<string, string> Options { get; set; } = new();
+    }
+
+    // =======================================================
+    // ORDER LINE ITEMS
+    // =======================================================
+    // ABANDONED CARTS
+    // =======================================================
+    public sealed class WixAbandonedCart : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("contactId")] public string? ContactId { get; set; }
+        [JsonPropertyName("total")] public decimal? Total { get; set; }
+        [JsonPropertyName("createdDate")] public DateTime? CreatedDate { get; set; }
+        [JsonPropertyName("abandonedDate")] public DateTime? AbandonedDate { get; set; }
+        [JsonPropertyName("items")] public List<WixCartItem> Items { get; set; } = new();
+    }
+
+    public sealed class WixCartItem
+    {
+        [JsonPropertyName("productId")] public string? ProductId { get; set; }
+        [JsonPropertyName("variantId")] public string? VariantId { get; set; }
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("quantity")] public int? Quantity { get; set; }
+        [JsonPropertyName("price")] public decimal? Price { get; set; }
+    }
+
+    // =======================================================
+    // SITES
+    // =======================================================
+    public sealed class WixSite : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("url")] public string? Url { get; set; }
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("description")] public string? Description { get; set; }
+        [JsonPropertyName("createdDate")] public DateTime? CreatedDate { get; set; }
+        [JsonPropertyName("published")] public bool? Published { get; set; }
+    }
+
+    // =======================================================
+    // PAGES
+    // =======================================================
+    public sealed class WixPage : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("title")] public string? Title { get; set; }
+        [JsonPropertyName("url")] public string? Url { get; set; }
+        [JsonPropertyName("visible")] public bool? Visible { get; set; }
+        [JsonPropertyName("createdDate")] public DateTime? CreatedDate { get; set; }
+    }
+
+    // =======================================================
+    // BLOGS
+    // =======================================================
+    public sealed class WixBlog : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("description")] public string? Description { get; set; }
+        [JsonPropertyName("createdDate")] public DateTime? CreatedDate { get; set; }
+    }
+
+    public sealed class WixBlogPost : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("title")] public string? Title { get; set; }
+        [JsonPropertyName("content")] public string? Content { get; set; }
+        [JsonPropertyName("excerpt")] public string? Excerpt { get; set; }
+        [JsonPropertyName("published")] public bool? Published { get; set; }
+        [JsonPropertyName("publishDate")] public DateTime? PublishDate { get; set; }
+        [JsonPropertyName("createdDate")] public DateTime? CreatedDate { get; set; }
+    }
+
+    // =======================================================
+    // EVENTS
+    // =======================================================
+    public sealed class WixEvent : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("title")] public string? Title { get; set; }
+        [JsonPropertyName("description")] public string? Description { get; set; }
+        [JsonPropertyName("startDate")] public DateTime? StartDate { get; set; }
+        [JsonPropertyName("endDate")] public DateTime? EndDate { get; set; }
+        [JsonPropertyName("location")] public string? Location { get; set; }
+        [JsonPropertyName("createdDate")] public DateTime? CreatedDate { get; set; }
+    }
+
+    // =======================================================
+    // MARKETING
+    // =======================================================
+    public sealed class WixCampaign : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("type")] public string? Type { get; set; }
+        [JsonPropertyName("status")] public string? Status { get; set; }
+        [JsonPropertyName("createdDate")] public DateTime? CreatedDate { get; set; }
+        [JsonPropertyName("startDate")] public DateTime? StartDate { get; set; }
+        [JsonPropertyName("endDate")] public DateTime? EndDate { get; set; }
+    }
+
+    public sealed class WixEmailSubscriber : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("email")] public string? Email { get; set; }
+        [JsonPropertyName("firstName")] public string? FirstName { get; set; }
+        [JsonPropertyName("lastName")] public string? LastName { get; set; }
+        [JsonPropertyName("status")] public string? Status { get; set; }
+        [JsonPropertyName("subscriptionDate")] public DateTime? SubscriptionDate { get; set; }
+    }
+
+    // =======================================================
+    // BOOKINGS
+    // =======================================================
+    public sealed class WixBookingService : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("description")] public string? Description { get; set; }
+        [JsonPropertyName("price")] public decimal? Price { get; set; }
+        [JsonPropertyName("duration")] public int? Duration { get; set; }
+        [JsonPropertyName("createdDate")] public DateTime? CreatedDate { get; set; }
+    }
+
+    public sealed class WixBookingSession : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("serviceId")] public string? ServiceId { get; set; }
+        [JsonPropertyName("staffId")] public string? StaffId { get; set; }
+        [JsonPropertyName("startTime")] public DateTime? StartTime { get; set; }
+        [JsonPropertyName("endTime")] public DateTime? EndTime { get; set; }
+        [JsonPropertyName("status")] public string? Status { get; set; }
+    }
+
+    public sealed class WixBookingAppointment : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("serviceId")] public string? ServiceId { get; set; }
+        [JsonPropertyName("contactId")] public string? ContactId { get; set; }
+        [JsonPropertyName("startTime")] public DateTime? StartTime { get; set; }
+        [JsonPropertyName("endTime")] public DateTime? EndTime { get; set; }
+        [JsonPropertyName("status")] public string? Status { get; set; }
+        [JsonPropertyName("price")] public decimal? Price { get; set; }
+        [JsonPropertyName("createdDate")] public DateTime? CreatedDate { get; set; }
+    }
+
+    // =======================================================
+    // STORE CONFIGURATION
+    // =======================================================
+    public sealed class WixStoreInfo : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("description")] public string? Description { get; set; }
+        [JsonPropertyName("storeType")] public string? StoreType { get; set; }
+        [JsonPropertyName("currency")] public string? Currency { get; set; }
+        [JsonPropertyName("weightUnit")] public string? WeightUnit { get; set; }
+        [JsonPropertyName("createdDate")] public DateTime? CreatedDate { get; set; }
+    }
+
+    public sealed class WixCurrency : WixEntityBase
+    {
+        [JsonPropertyName("code")] public string? Code { get; set; }
+        [JsonPropertyName("symbol")] public string? Symbol { get; set; }
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("decimalPlaces")] public int? DecimalPlaces { get; set; }
+    }
+
+    public sealed class WixTax : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("rate")] public decimal? Rate { get; set; }
+        [JsonPropertyName("enabled")] public bool? Enabled { get; set; }
+        [JsonPropertyName("createdDate")] public DateTime? CreatedDate { get; set; }
+    }
+
+    public sealed class WixShippingRate : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("price")] public decimal? Price { get; set; }
+        [JsonPropertyName("enabled")] public bool? Enabled { get; set; }
+        [JsonPropertyName("createdDate")] public DateTime? CreatedDate { get; set; }
+    }
+
+    // =======================================================
+    // ANALYTICS
+    // =======================================================
+    // ANALYTICS
+    // =======================================================
+    public sealed class WixAnalyticsTraffic : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("date")] public DateTimeOffset? Date { get; set; }
+        [JsonPropertyName("pageViews")] public int? PageViews { get; set; }
+        [JsonPropertyName("uniqueVisitors")] public int? UniqueVisitors { get; set; }
+        [JsonPropertyName("bounceRate")] public decimal? BounceRate { get; set; }
+    }
+
+    // =======================================================
+    // FORMS
+    // =======================================================
+    public sealed class WixForm : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("description")] public string? Description { get; set; }
+        [JsonPropertyName("createdDate")] public DateTimeOffset? CreatedDate { get; set; }
+        [JsonPropertyName("updatedDate")] public DateTimeOffset? UpdatedDate { get; set; }
+    }
+
+    public sealed class WixFormSubmission : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("formId")] public string? FormId { get; set; }
+        [JsonPropertyName("submissionData")] public Dictionary<string, object> SubmissionData { get; set; } = new();
+        [JsonPropertyName("submittedDate")] public DateTimeOffset? SubmittedDate { get; set; }
+    }
+
+    // =======================================================
+    // MEDIA
+    // =======================================================
+    public sealed class WixMediaFile : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("fileName")] public string? FileName { get; set; }
+        [JsonPropertyName("fileType")] public string? FileType { get; set; }
+        [JsonPropertyName("fileSize")] public long? FileSize { get; set; }
+        [JsonPropertyName("url")] public string? Url { get; set; }
+        [JsonPropertyName("createdDate")] public DateTimeOffset? CreatedDate { get; set; }
+        [JsonPropertyName("updatedDate")] public DateTimeOffset? UpdatedDate { get; set; }
+    }
+
+    public sealed class WixMediaFolder : WixEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("parentFolderId")] public string? ParentFolderId { get; set; }
+        [JsonPropertyName("createdDate")] public DateTimeOffset? CreatedDate { get; set; }
+        [JsonPropertyName("updatedDate")] public DateTimeOffset? UpdatedDate { get; set; }
+    }
+
+    // =======================================================
     public static class WixEntityRegistry
     {
         public static readonly Dictionary<string, Type> Types = new(StringComparer.OrdinalIgnoreCase)
         {
-            ["Products"] = typeof(WixProduct),
-            ["Orders"] = typeof(WixOrder),
-            ["Collections"] = typeof(WixCollection),
-            ["Contacts"] = typeof(WixContact),
-            ["Coupons"] = typeof(WixCoupon),
-            ["InventoryItems"] = typeof(WixInventoryItem)
+            ["products"] = typeof(WixProduct),
+            ["product_variants"] = typeof(WixVariant),
+            ["collections"] = typeof(WixCollection),
+            ["orders"] = typeof(WixOrder),
+            ["order_line_items"] = typeof(WixOrderLineItem),
+            ["inventory"] = typeof(WixInventoryItem),
+            ["abandoned_carts"] = typeof(WixAbandonedCart),
+            ["sites"] = typeof(WixSite),
+            ["pages"] = typeof(WixPage),
+            ["blogs"] = typeof(WixBlog),
+            ["blog_posts"] = typeof(WixBlogPost),
+            ["events"] = typeof(WixEvent),
+            ["contacts"] = typeof(WixContact),
+            ["campaigns"] = typeof(WixCampaign),
+            ["email_subscribers"] = typeof(WixEmailSubscriber),
+            ["bookings_services"] = typeof(WixBookingService),
+            ["bookings_sessions"] = typeof(WixBookingSession),
+            ["analytics_traffic"] = typeof(WixAnalyticsTraffic),
+            ["forms"] = typeof(WixForm),
+            ["form_submissions"] = typeof(WixFormSubmission),
+            ["media_files"] = typeof(WixMediaFile),
+            ["media_folders"] = typeof(WixMediaFolder)
         };
 
         public static IReadOnlyList<string> Names => new List<string>(Types.Keys);

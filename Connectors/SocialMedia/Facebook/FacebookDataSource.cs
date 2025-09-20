@@ -2,745 +2,266 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
-using TheTechIdea.Beep.FacebookDataSource.Config;
-using TheTechIdea.Beep.FacebookDataSource.Entities;
-using DataManagementEngineStandard;
-using DataManagementModelsStandard;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.FacebookDataSource
 {
     /// <summary>
     /// Facebook data source implementation using WebAPIDataSource as base class
     /// </summary>
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook)]
     public class FacebookDataSource : WebAPIDataSource
     {
-    private readonly FacebookDataSourceConfig _config;
-        private readonly JsonSerializerOptions _jsonOptions;
-        private bool _isConnected;
-        private Dictionary<string, EntityMetadata> _entityMetadata;
+        private readonly FacebookDataSourceConfig _config;
 
         /// <summary>
         /// Initializes a new instance of the FacebookDataSource class
         /// </summary>
         public FacebookDataSource(FacebookDataSourceConfig config)
+            : base(config?.BaseUrl ?? "https://graph.facebook.com/v18.0",
+                   config?.AccessToken ?? throw new ArgumentNullException(nameof(config.AccessToken)),
+                   config?.Logger,
+                   config?.ConfigEditor,
+                   config?.DMLogger,
+                   config?.ErrorObject,
+                   config?.VisManager,
+                   config?.ProgressReport)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
 
             if (!_config.IsValid())
             {
-                throw new ArgumentException("Invalid Facebook configuration. Access token or App credentials are required.");
+                throw new ArgumentException("Invalid Facebook configuration");
             }
 
-            // Ensure Dataconnection uses WebAPIDataConnection and ConnectionProp is WebAPIConnectionProperties
-            if (!(Dataconnection is WebAPIDataConnection))
+            // Set up entity mappings
+            EntityMappings = new Dictionary<string, string>
             {
-                Dataconnection = new WebAPIDataConnection()
-                {
-                    Logger = null,
-                    ErrorObject = ErrorObject,
-                    DMEEditor = null
-                };
-            }
-
-            if (!(Dataconnection.ConnectionProp is WebAPIConnectionProperties))
-            {
-                Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
-            }
-
-            if (Dataconnection?.ConnectionProp is WebAPIConnectionProperties webApiProps)
-            {
-                webApiProps.ConnectionString = _config.ConnectionString;
-                webApiProps.ApiVersion = _config.ApiVersion;
-                webApiProps.TimeoutMs = _config.TimeoutMs;
-                webApiProps.MaxRetries = _config.MaxRetries;
-                webApiProps.RetryDelayMs = _config.RetryDelayMs;
-                webApiProps.EnableCaching = _config.EnableCaching;
-                webApiProps.CacheDurationMinutes = _config.CacheExpiryMinutes;
-            }
-            _jsonOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                { "posts", "posts" },
+                { "pages", "pages" },
+                { "groups", "groups" },
+                { "events", "events" },
+                { "ads", "ads" },
+                { "insights", "insights" }
             };
 
-            // Initialize entity metadata
-            _entityMetadata = InitializeEntityMetadata();
-
-            // Set up base class properties from config
-            BaseUrl = _config.ConnectionString;
-            ApiVersion = _config.ApiVersion;
-            TimeoutSeconds = _config.TimeoutMs / 1000; // Convert ms to seconds
-            MaxRetries = _config.MaxRetries;
-            RetryDelayMs = _config.RetryDelayMs;
-            EnableCaching = _config.EnableCaching;
-            CacheExpirationMinutes = _config.CacheExpiryMinutes;
-
-            _isConnected = false;
+            // Set up default headers
+            DefaultHeaders = new Dictionary<string, string>
+            {
+                { "Authorization", $"Bearer {_config.AccessToken}" },
+                { "Content-Type", "application/json" }
+            };
         }
 
         /// <summary>
-        /// Creates and configures the HTTP client
+        /// Gets the list of available entities
         /// </summary>
-    // ... existing code ...
-
-        #region IDataSource Implementation
-
-        /// <summary>
-        /// Gets the data source name
-        /// </summary>
-        public override string DataSourceName => "Facebook";
-
-        /// <summary>
-        /// Gets the data source type
-        /// </summary>
-        public override string DataSourceType => "SocialMedia";
-
-        /// <summary>
-        /// Initializes the entity metadata for Facebook entities
-        /// </summary>
-        protected override void InitializeEntityMetadata()
+        public override List<string> GetEntities()
         {
-            var metadata = new Dictionary<string, EntityMetadata>();
-
-            // Posts entity
-            metadata["posts"] = new EntityMetadata
-            {
-                EntityName = "posts",
-                DisplayName = "Posts",
-                PrimaryKey = "id",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Post ID" },
-                    new EntityField { Name = "message", Type = "string", DisplayName = "Message" },
-                    new EntityField { Name = "story", Type = "string", DisplayName = "Story" },
-                    new EntityField { Name = "created_time", Type = "datetime", DisplayName = "Created Time" },
-                    new EntityField { Name = "updated_time", Type = "datetime", DisplayName = "Updated Time" },
-                    new EntityField { Name = "type", Type = "string", DisplayName = "Post Type" },
-                    new EntityField { Name = "status_type", Type = "string", DisplayName = "Status Type" },
-                    new EntityField { Name = "permalink_url", Type = "string", DisplayName = "Permalink URL" },
-                    new EntityField { Name = "full_picture", Type = "string", DisplayName = "Full Picture URL" },
-                    new EntityField { Name = "picture", Type = "string", DisplayName = "Picture URL" },
-                    new EntityField { Name = "source", Type = "string", DisplayName = "Source URL" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Name" },
-                    new EntityField { Name = "caption", Type = "string", DisplayName = "Caption" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "link", Type = "string", DisplayName = "Link" },
-                    new EntityField { Name = "likes", Type = "int", DisplayName = "Likes Count" },
-                    new EntityField { Name = "comments", Type = "int", DisplayName = "Comments Count" },
-                    new EntityField { Name = "shares", Type = "int", DisplayName = "Shares Count" },
-                    new EntityField { Name = "reactions", Type = "int", DisplayName = "Reactions Count" },
-                    new EntityField { Name = "is_published", Type = "boolean", DisplayName = "Is Published" },
-                    new EntityField { Name = "is_hidden", Type = "boolean", DisplayName = "Is Hidden" },
-                    new EntityField { Name = "is_expired", Type = "boolean", DisplayName = "Is Expired" },
-                    new EntityField { Name = "scheduled_publish_time", Type = "datetime", DisplayName = "Scheduled Publish Time" }
-                }
-            };
-
-            // Pages entity
-            metadata["pages"] = new EntityMetadata
-            {
-                EntityName = "pages",
-                DisplayName = "Pages",
-                PrimaryKey = "id",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Page ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Page Name" },
-                    new EntityField { Name = "category", Type = "string", DisplayName = "Category" },
-                    new EntityField { Name = "about", Type = "string", DisplayName = "About" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "website", Type = "string", DisplayName = "Website" },
-                    new EntityField { Name = "phone", Type = "string", DisplayName = "Phone" },
-                    new EntityField { Name = "emails", Type = "string", DisplayName = "Emails" },
-                    new EntityField { Name = "location", Type = "string", DisplayName = "Location" },
-                    new EntityField { Name = "hours", Type = "string", DisplayName = "Hours" },
-                    new EntityField { Name = "parking", Type = "string", DisplayName = "Parking" },
-                    new EntityField { Name = "cover", Type = "string", DisplayName = "Cover Photo" },
-                    new EntityField { Name = "picture", Type = "string", DisplayName = "Profile Picture" },
-                    new EntityField { Name = "likes", Type = "int", DisplayName = "Likes Count" },
-                    new EntityField { Name = "followers_count", Type = "int", DisplayName = "Followers Count" },
-                    new EntityField { Name = "checkins", Type = "int", DisplayName = "Checkins Count" },
-                    new EntityField { Name = "were_here_count", Type = "int", DisplayName = "Were Here Count" },
-                    new EntityField { Name = "talking_about_count", Type = "int", DisplayName = "Talking About Count" },
-                    new EntityField { Name = "is_published", Type = "boolean", DisplayName = "Is Published" },
-                    new EntityField { Name = "is_unclaimed", Type = "boolean", DisplayName = "Is Unclaimed" },
-                    new EntityField { Name = "is_permanently_closed", Type = "boolean", DisplayName = "Is Permanently Closed" }
-                }
-            };
-
-            // Groups entity
-            metadata["groups"] = new EntityMetadata
-            {
-                EntityName = "groups",
-                DisplayName = "Groups",
-                PrimaryKey = "id",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Group ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Group Name" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "email", Type = "string", DisplayName = "Email" },
-                    new EntityField { Name = "privacy", Type = "string", DisplayName = "Privacy" },
-                    new EntityField { Name = "icon", Type = "string", DisplayName = "Icon URL" },
-                    new EntityField { Name = "cover", Type = "string", DisplayName = "Cover Photo URL" },
-                    new EntityField { Name = "member_count", Type = "int", DisplayName = "Member Count" },
-                    new EntityField { Name = "member_request_count", Type = "int", DisplayName = "Member Request Count" },
-                    new EntityField { Name = "administrator", Type = "boolean", DisplayName = "Is Administrator" },
-                    new EntityField { Name = "moderator", Type = "boolean", DisplayName = "Is Moderator" },
-                    new EntityField { Name = "updated_time", Type = "datetime", DisplayName = "Updated Time" },
-                    new EntityField { Name = "archived", Type = "boolean", DisplayName = "Is Archived" }
-                }
-            };
-
-            // Events entity
-            metadata["events"] = new EntityMetadata
-            {
-                EntityName = "events",
-                DisplayName = "Events",
-                PrimaryKey = "id",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Event ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Event Name" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "link", Type = "string", DisplayName = "Link" },
-                    new EntityField { Name = "likes", Type = "int", DisplayName = "Likes Count" },
-                    new EntityField { Name = "comments", Type = "int", DisplayName = "Comments Count" },
-                    new EntityField { Name = "shares", Type = "int", DisplayName = "Shares Count" },
-                    new EntityField { Name = "reactions", Type = "int", DisplayName = "Reactions Count" },
-                    new EntityField { Name = "is_published", Type = "boolean", DisplayName = "Is Published" },
-                    new EntityField { Name = "is_hidden", Type = "boolean", DisplayName = "Is Hidden" },
-                    new EntityField { Name = "is_expired", Type = "boolean", DisplayName = "Is Expired" },
-                    new EntityField { Name = "scheduled_publish_time", Type = "datetime", DisplayName = "Scheduled Publish Time" }
-                }
-            };
-
-            // Pages entity
-            metadata["pages"] = new EntityMetadata
-            {
-                EntityName = "pages",
-                DisplayName = "Pages",
-                PrimaryKey = "id",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Page ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Page Name" },
-                    new EntityField { Name = "category", Type = "string", DisplayName = "Category" },
-                    new EntityField { Name = "about", Type = "string", DisplayName = "About" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "website", Type = "string", DisplayName = "Website" },
-                    new EntityField { Name = "phone", Type = "string", DisplayName = "Phone" },
-                    new EntityField { Name = "emails", Type = "string", DisplayName = "Emails" },
-                    new EntityField { Name = "location", Type = "string", DisplayName = "Location" },
-                    new EntityField { Name = "hours", Type = "string", DisplayName = "Hours" },
-                    new EntityField { Name = "parking", Type = "string", DisplayName = "Parking" },
-                    new EntityField { Name = "cover", Type = "string", DisplayName = "Cover Photo" },
-                    new EntityField { Name = "picture", Type = "string", DisplayName = "Profile Picture" },
-                    new EntityField { Name = "likes", Type = "int", DisplayName = "Likes Count" },
-                    new EntityField { Name = "followers_count", Type = "int", DisplayName = "Followers Count" },
-                    new EntityField { Name = "checkins", Type = "int", DisplayName = "Checkins Count" },
-                    new EntityField { Name = "were_here_count", Type = "int", DisplayName = "Were Here Count" },
-                    new EntityField { Name = "talking_about_count", Type = "int", DisplayName = "Talking About Count" },
-                    new EntityField { Name = "is_published", Type = "boolean", DisplayName = "Is Published" },
-                    new EntityField { Name = "is_unclaimed", Type = "boolean", DisplayName = "Is Unclaimed" },
-                    new EntityField { Name = "is_permanently_closed", Type = "boolean", DisplayName = "Is Permanently Closed" }
-                }
-            };
-
-            // Groups entity
-            metadata["groups"] = new EntityMetadata
-            {
-                EntityName = "groups",
-                DisplayName = "Groups",
-                PrimaryKey = "id",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Group ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Group Name" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "email", Type = "string", DisplayName = "Email" },
-                    new EntityField { Name = "privacy", Type = "string", DisplayName = "Privacy" },
-                    new EntityField { Name = "icon", Type = "string", DisplayName = "Icon URL" },
-                    new EntityField { Name = "cover", Type = "string", DisplayName = "Cover Photo URL" },
-                    new EntityField { Name = "member_count", Type = "int", DisplayName = "Member Count" },
-                    new EntityField { Name = "member_request_count", Type = "int", DisplayName = "Member Request Count" },
-                    new EntityField { Name = "administrator", Type = "boolean", DisplayName = "Is Administrator" },
-                    new EntityField { Name = "moderator", Type = "boolean", DisplayName = "Is Moderator" },
-                    new EntityField { Name = "updated_time", Type = "datetime", DisplayName = "Updated Time" },
-                    new EntityField { Name = "archived", Type = "boolean", DisplayName = "Is Archived" }
-                }
-            };
-
-            // Events entity
-            metadata["events"] = new EntityMetadata
-            {
-                EntityName = "events",
-                DisplayName = "Events",
-                PrimaryKey = "id",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Event ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Event Name" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "start_time", Type = "datetime", DisplayName = "Start Time" },
-                    new EntityField { Name = "end_time", Type = "datetime", DisplayName = "End Time" },
-                    new EntityField { Name = "timezone", Type = "string", DisplayName = "Timezone" },
-                    new EntityField { Name = "location", Type = "string", DisplayName = "Location" },
-                    new EntityField { Name = "venue", Type = "string", DisplayName = "Venue" },
-                    new EntityField { Name = "cover", Type = "string", DisplayName = "Cover Photo" },
-                    new EntityField { Name = "picture", Type = "string", DisplayName = "Picture" },
-                    new EntityField { Name = "attending_count", Type = "int", DisplayName = "Attending Count" },
-                    new EntityField { Name = "declined_count", Type = "int", DisplayName = "Declined Count" },
-                    new EntityField { Name = "interested_count", Type = "int", DisplayName = "Interested Count" },
-                    new EntityField { Name = "noreply_count", Type = "int", DisplayName = "No Reply Count" },
-                    new EntityField { Name = "maybe_count", Type = "int", DisplayName = "Maybe Count" },
-                    new EntityField { Name = "is_canceled", Type = "boolean", DisplayName = "Is Canceled" },
-                    new EntityField { Name = "ticket_uri", Type = "string", DisplayName = "Ticket URI" },
-                    new EntityField { Name = "category", Type = "string", DisplayName = "Category" },
-                    new EntityField { Name = "type", Type = "string", DisplayName = "Event Type" }
-                }
-            };
-
-            // Ads entity
-            metadata["ads"] = new EntityMetadata
-            {
-                EntityName = "ads",
-                DisplayName = "Ads",
-                PrimaryKey = "id",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Ad ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Ad Name" },
-                    new EntityField { Name = "status", Type = "string", DisplayName = "Status" },
-                    new EntityField { Name = "creative", Type = "string", DisplayName = "Creative" },
-                    new EntityField { Name = "created_time", Type = "datetime", DisplayName = "Created Time" },
-                    new EntityField { Name = "updated_time", Type = "datetime", DisplayName = "Updated Time" },
-                    new EntityField { Name = "campaign_id", Type = "string", DisplayName = "Campaign ID" },
-                    new EntityField { Name = "adset_id", Type = "string", DisplayName = "Ad Set ID" },
-                    new EntityField { Name = "account_id", Type = "string", DisplayName = "Account ID" },
-                    new EntityField { Name = "tracking_specs", Type = "string", DisplayName = "Tracking Specs" },
-                    new EntityField { Name = "conversion_specs", Type = "string", DisplayName = "Conversion Specs" },
-                    new EntityField { Name = "bid_amount", Type = "int", DisplayName = "Bid Amount" },
-                    new EntityField { Name = "bid_type", Type = "string", DisplayName = "Bid Type" },
-                    new EntityField { Name = "daily_budget", Type = "string", DisplayName = "Daily Budget" },
-                    new EntityField { Name = "lifetime_budget", Type = "string", DisplayName = "Lifetime Budget" }
-                }
-            };
-
-            // Insights entity
-            metadata["insights"] = new EntityMetadata
-            {
-                EntityName = "insights",
-                DisplayName = "Insights",
-                PrimaryKey = "id",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Insight ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Metric Name" },
-                    new EntityField { Name = "period", Type = "string", DisplayName = "Period" },
-                    new EntityField { Name = "values", Type = "string", DisplayName = "Values" },
-                    new EntityField { Name = "title", Type = "string", DisplayName = "Title" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "account_id", Type = "string", DisplayName = "Account ID" },
-                    new EntityField { Name = "campaign_id", Type = "string", DisplayName = "Campaign ID" },
-                    new EntityField { Name = "adset_id", Type = "string", DisplayName = "Ad Set ID" },
-                    new EntityField { Name = "ad_id", Type = "string", DisplayName = "Ad ID" },
-                    new EntityField { Name = "date_start", Type = "datetime", DisplayName = "Date Start" },
-                    new EntityField { Name = "date_stop", Type = "datetime", DisplayName = "Date Stop" }
-                }
-            };
-
-            return metadata;
+            return EntityMappings.Keys.ToList();
         }
 
         /// <summary>
-        /// Connect to Facebook Graph API
+        /// Gets entity metadata
         /// </summary>
-        public async Task<bool> ConnectAsync()
+        public override EntityMetadata GetEntityMetadata(string entityName)
         {
-            try
+            if (!EntityMappings.ContainsKey(entityName))
             {
-                if (string.IsNullOrEmpty(_config.AccessToken))
-                {
-                    throw new ArgumentException("Access Token is required");
-                }
-
-                // Test connection by getting user info via base WebAPI helpers (auth applied by base)
-                var testUrl = $"{_config.ConnectionString}/{_config.ApiVersion}/me?fields=id,name";
-                var response = await base.GetAsync(testUrl);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var userInfo = JsonSerializer.Deserialize<JsonElement>(content);
-
-                    if (userInfo.TryGetProperty("id", out var userId))
-                    {
-                        _config.UserId = userId.GetString();
-                        _isConnected = true;
-                        return true;
-                    }
-                }
-
-                _isConnected = false;
-                return false;
+                throw new ArgumentException($"Entity '{entityName}' not found");
             }
-            catch (Exception ex)
+
+            return new EntityMetadata
             {
-                _isConnected = false;
-                throw new Exception($"Failed to connect to Facebook: {ex.Message}", ex);
-            }
+                EntityName = entityName,
+                Fields = GetEntityFields(entityName)
+            };
         }
 
         /// <summary>
-        /// Disconnect from Facebook Graph API
+        /// Gets entity data asynchronously
         /// </summary>
-        public async Task<bool> DisconnectAsync()
+        public override async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
         {
-            try
+            if (!EntityMappings.ContainsKey(entityName))
             {
-                // Connection lifecycle managed by base class; no local client to dispose
-                _isConnected = false;
-                return true;
+                throw new ArgumentException($"Entity '{entityName}' not found");
             }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to disconnect from Facebook: {ex.Message}", ex);
-            }
+
+            string endpoint = GetEntityEndpoint(entityName, parameters);
+            string jsonResponse = await GetAsync(endpoint);
+
+            return FacebookHelpers.ParseEntityData(jsonResponse, entityName);
         }
 
         /// <summary>
-        /// Get entity data from Facebook
+        /// Creates a new entity record
         /// </summary>
-        public async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
+        public override async Task<bool> CreateAsync(string entityName, Dictionary<string, object> data)
         {
-            if (!_isConnected)
+            if (!EntityMappings.ContainsKey(entityName))
             {
-                throw new InvalidOperationException("Not connected to Facebook. Call ConnectAsync first.");
+                throw new ArgumentException($"Entity '{entityName}' not found");
             }
 
-            if (!_entityMetadata.ContainsKey(entityName.ToLower()))
-            {
-                throw new ArgumentException($"Entity '{entityName}' is not supported");
-            }
+            string endpoint = GetCreateEndpoint(entityName);
+            string jsonData = JsonSerializer.Serialize(data);
 
-            try
-            {
-                var endpoint = GetEntityEndpoint(entityName, parameters);
-                var response = await base.GetAsync(endpoint);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"Facebook API request failed: {response.StatusCode} - {response.ReasonPhrase}");
-                }
-
-                var content = await response.Content.ReadAsStringAsync();
-                return ParseJsonToDataTable(content, entityName);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to get entity '{entityName}': {ex.Message}", ex);
-            }
+            string response = await PostAsync(endpoint, jsonData);
+            return !string.IsNullOrEmpty(response);
         }
 
         /// <summary>
-        /// Get entity endpoint URL
+        /// Updates an existing entity record
+        /// </summary>
+        public override async Task<bool> UpdateAsync(string entityName, Dictionary<string, object> data, string id)
+        {
+            if (!EntityMappings.ContainsKey(entityName))
+            {
+                throw new ArgumentException($"Entity '{entityName}' not found");
+            }
+
+            string endpoint = $"{GetCreateEndpoint(entityName)}/{id}";
+            string jsonData = JsonSerializer.Serialize(data);
+
+            string response = await PostAsync(endpoint, jsonData);
+            return !string.IsNullOrEmpty(response);
+        }
+
+        /// <summary>
+        /// Deletes an entity record
+        /// </summary>
+        public override async Task<bool> DeleteAsync(string entityName, string id)
+        {
+            if (!EntityMappings.ContainsKey(entityName))
+            {
+                throw new ArgumentException($"Entity '{entityName}' not found");
+            }
+
+            string endpoint = $"{GetCreateEndpoint(entityName)}/{id}";
+            string response = await DeleteAsync(endpoint);
+
+            return !string.IsNullOrEmpty(response);
+        }
+
+        /// <summary>
+        /// Gets the entity endpoint
         /// </summary>
         private string GetEntityEndpoint(string entityName, Dictionary<string, object> parameters = null)
         {
-            var baseUrl = $"{_config.ConnectionString}/{_config.ApiVersion}";
-            var endpoint = entityName.ToLower() switch
-            {
-                "posts" => _config.PageId != null ? $"{baseUrl}/{_config.PageId}/posts" : $"{baseUrl}/me/posts",
-                "pages" => $"{baseUrl}/me/accounts",
-                "groups" => $"{baseUrl}/me/groups",
-                "events" => _config.PageId != null ? $"{baseUrl}/{_config.PageId}/events" : $"{baseUrl}/me/events",
-                "ads" => $"{baseUrl}/act_{_config.UserId}/ads",
-                "insights" => $"{baseUrl}/me/insights",
-                _ => throw new ArgumentException($"Unknown entity: {entityName}")
-            };
+            string baseEndpoint = $"{_config.UserId}/{EntityMappings[entityName]}";
+            string fields = GetDefaultFields(entityName);
 
-            var queryParams = new List<string>();
+            string endpoint = $"{baseEndpoint}?fields={fields}";
+
             if (parameters != null)
             {
                 foreach (var param in parameters)
                 {
-                    queryParams.Add($"{param.Key}={Uri.EscapeDataString(param.Value?.ToString() ?? "")}");
+                    endpoint += $"&{param.Key}={param.Value}";
                 }
-            }
-
-            // Add default fields for better data retrieval
-            var fields = GetDefaultFields(entityName);
-            if (!string.IsNullOrEmpty(fields))
-            {
-                queryParams.Add($"fields={fields}");
-            }
-
-            if (queryParams.Count > 0)
-            {
-                endpoint += "?" + string.Join("&", queryParams);
             }
 
             return endpoint;
         }
 
         /// <summary>
-        /// Get default fields for entity
-        /// </summary>
-        private string GetDefaultFields(string entityName)
-        {
-            return entityName.ToLower() switch
-            {
-                "posts" => "id,message,story,created_time,updated_time,type,status_type,permalink_url,full_picture,picture,source,name,caption,description,link,likes.summary(true),comments.summary(true),shares,reactions.summary(true),is_published,is_hidden,is_expired,scheduled_publish_time",
-                "pages" => "id,name,category,about,description,website,phone,emails,location,hours,parking,cover,picture,likes,followers_count,checkins,were_here_count,talking_about_count,is_published,is_unclaimed,is_permanently_closed",
-                "groups" => "id,name,description,email,privacy,icon,cover,member_count,member_request_count,administrator,moderator,updated_time,archived",
-                "events" => "id,name,description,start_time,end_time,timezone,location,venue,cover,picture,attending_count,declined_count,interested_count,noreply_count,maybe_count,is_canceled,ticket_uri,category,type",
-                "ads" => "id,name,status,creative,created_time,updated_time,campaign_id,adset_id,account_id,tracking_specs,conversion_specs,bid_amount,bid_type,daily_budget,lifetime_budget",
-                "insights" => "account_id,campaign_id,adset_id,ad_id,date_start,date_stop,impressions,clicks,spend,reach,frequency,cpp,cpm,ctr,cpc",
-                _ => ""
-            };
-        }
-
-        /// <summary>
-        /// Parse JSON response to DataTable
-        /// </summary>
-        private DataTable ParseJsonToDataTable(string jsonContent, string entityName)
-        {
-            var dataTable = new DataTable(entityName);
-            var metadata = _entityMetadata[entityName.ToLower()];
-
-            // Add columns based on entity metadata
-            foreach (var field in metadata.Fields)
-            {
-                dataTable.Columns.Add(field.Name, GetFieldType(field.Type));
-            }
-
-            try
-            {
-                var jsonDoc = JsonSerializer.Deserialize<JsonElement>(jsonContent);
-
-                if (jsonDoc.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var item in data.EnumerateArray())
-                    {
-                        var row = dataTable.NewRow();
-                        foreach (var field in metadata.Fields)
-                        {
-                            if (item.TryGetProperty(field.Name, out var value))
-                            {
-                                row[field.Name] = ParseJsonValue(value, field.Type);
-                            }
-                        }
-                        dataTable.Rows.Add(row);
-                    }
-                }
-                else if (jsonDoc.ValueKind == JsonValueKind.Object)
-                {
-                    var row = dataTable.NewRow();
-                    foreach (var field in metadata.Fields)
-                    {
-                        if (jsonDoc.TryGetProperty(field.Name, out var value))
-                        {
-                            row[field.Name] = ParseJsonValue(value, field.Type);
-                        }
-                    }
-                    dataTable.Rows.Add(row);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to parse JSON response: {ex.Message}", ex);
-            }
-
-            return dataTable;
-        }
-
-        /// <summary>
-        /// Parse JSON value based on field type
-        /// </summary>
-        private object ParseJsonValue(JsonElement value, string fieldType)
-        {
-            return fieldType.ToLower() switch
-            {
-                "string" => value.ValueKind == JsonValueKind.String ? value.GetString() : value.ToString(),
-                "int" => value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var intVal) ? intVal : 0,
-                "long" => value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var longVal) ? longVal : 0L,
-                "boolean" => value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False ? value.GetBoolean() : false,
-                "datetime" => value.ValueKind == JsonValueKind.String && DateTime.TryParse(value.GetString(), out var dateVal) ? dateVal : DBNull.Value,
-                "decimal" => value.ValueKind == JsonValueKind.Number && value.TryGetDecimal(out var decimalVal) ? decimalVal : 0m,
-                "double" => value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var doubleVal) ? doubleVal : 0.0,
-                _ => value.ToString()
-            };
-        }
-
-        /// <summary>
-        /// Get .NET type from field type string
-        /// </summary>
-        private Type GetFieldType(string fieldType)
-        {
-            return fieldType.ToLower() switch
-            {
-                "string" => typeof(string),
-                "int" => typeof(int),
-                "long" => typeof(long),
-                "boolean" => typeof(bool),
-                "datetime" => typeof(DateTime),
-                "decimal" => typeof(decimal),
-                "double" => typeof(double),
-                _ => typeof(string)
-            };
-        }
-
-        /// <summary>
-        /// Get list of available entities
-        /// </summary>
-        public List<string> GetEntities()
-        {
-            return _entityMetadata.Keys.ToList();
-        }
-
-        /// <summary>
-        /// Get metadata for a specific entity
-        /// </summary>
-        public EntityMetadata GetEntityMetadata(string entityName)
-        {
-            if (_entityMetadata.TryGetValue(entityName.ToLower(), out var metadata))
-            {
-                return metadata;
-            }
-            throw new ArgumentException($"Entity '{entityName}' not found");
-        }
-
-        /// <summary>
-        /// Create a new record in the specified entity
-        /// </summary>
-        public async Task<bool> CreateAsync(string entityName, Dictionary<string, object> data)
-        {
-            if (!_isConnected)
-            {
-                throw new InvalidOperationException("Not connected to Facebook. Call ConnectAsync first.");
-            }
-
-            try
-            {
-                var endpoint = GetCreateEndpoint(entityName);
-                var formData = new MultipartFormDataContent();
-
-                // Add data fields
-                foreach (var item in data)
-                {
-                    formData.Add(new StringContent(item.Value?.ToString() ?? ""), item.Key);
-                }
-
-                var response = await base.PostAsync(endpoint, formData);
-                return response.IsSuccessStatusCode;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to create record in '{entityName}': {ex.Message}", ex);
-            }
-        }
-
-        /// <summary>
-        /// Get create endpoint for entity
+        /// Gets the create endpoint
         /// </summary>
         private string GetCreateEndpoint(string entityName)
         {
-            var baseUrl = $"{_config.BaseUrl}/{_config.ApiVersion}";
-            return entityName.ToLower() switch
+            return $"{_config.UserId}/{EntityMappings[entityName]}";
+        }
+
+        /// <summary>
+        /// Gets default fields for an entity
+        /// </summary>
+        private string GetDefaultFields(string entityName)
+        {
+            return entityName switch
             {
-                "posts" => _config.PageId != null ? $"{baseUrl}/{_config.PageId}/feed" : $"{baseUrl}/me/feed",
-                "events" => _config.PageId != null ? $"{baseUrl}/{_config.PageId}/events" : $"{baseUrl}/me/events",
-                "ads" => $"{baseUrl}/act_{_config.UserId}/ads",
-                _ => throw new ArgumentException($"Create not supported for entity: {entityName}")
+                "posts" => "id,message,created_time,updated_time,likes.summary(true),comments.summary(true)",
+                "pages" => "id,name,category,description,website,phone,emails,location",
+                "groups" => "id,name,description,privacy,updated_time",
+                "events" => "id,name,description,start_time,end_time,place,attending_count,interested_count",
+                "ads" => "id,name,status,created_time,updated_time,insights",
+                "insights" => "id,name,period,values,title,description",
+                _ => "id,name"
             };
         }
 
         /// <summary>
-        /// Update an existing record in the specified entity
+        /// Gets entity fields
         /// </summary>
-        public async Task<bool> UpdateAsync(string entityName, Dictionary<string, object> data, string id)
+        private List<EntityField> GetEntityFields(string entityName)
         {
-            if (!_isConnected)
+            return entityName switch
             {
-                throw new InvalidOperationException("Not connected to Facebook. Call ConnectAsync first.");
-            }
-
-            try
-            {
-                var endpoint = $"{GetEntityEndpoint(entityName)}/{id}";
-                var formData = new MultipartFormDataContent();
-
-                // Add data fields
-                foreach (var item in data)
+                "posts" => new List<EntityField>
                 {
-                    formData.Add(new StringContent(item.Value?.ToString() ?? ""), item.Key);
-                }
-
-                var response = await base.PostAsync(endpoint, formData);
-                return response.IsSuccessStatusCode;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to update record in '{entityName}': {ex.Message}", ex);
-            }
-        }
-
-        /// <summary>
-        /// Delete a record from the specified entity
-        /// </summary>
-        public async Task<bool> DeleteAsync(string entityName, string id)
-        {
-            if (!_isConnected)
-            {
-                throw new InvalidOperationException("Not connected to Facebook. Call ConnectAsync first.");
-            }
-
-            try
-            {
-                var endpoint = $"{GetEntityEndpoint(entityName)}/{id}";
-                var response = await base.DeleteAsync(endpoint);
-                return response.IsSuccessStatusCode;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to delete record from '{entityName}': {ex.Message}", ex);
-            }
-        }
-
-        /// <summary>
-        /// Get connection status
-        /// </summary>
-        public bool IsConnected()
-        {
-            return _isConnected;
-        }
-
-        /// <summary>
-        /// Get data source configuration
-        /// </summary>
-        public object GetConfig()
-        {
-            return _config;
-        }
-
-        /// <summary>
-        /// Set data source configuration
-        /// </summary>
-        public void SetConfig(object config)
-        {
-            var newConfig = config as FacebookDataSourceConfig;
-            if (newConfig != null)
-            {
-                // Update configuration properties
-                // Note: Since _config is readonly, we need to update individual properties
-                // This is a limitation when using readonly fields
-                throw new NotSupportedException("Configuration update not supported for readonly config. Create a new instance instead.");
-            }
+                    new EntityField { fieldname = "id", fieldtype = "string" },
+                    new EntityField { fieldname = "message", fieldtype = "string" },
+                    new EntityField { fieldname = "created_time", fieldtype = "datetime" },
+                    new EntityField { fieldname = "updated_time", fieldtype = "datetime" },
+                    new EntityField { fieldname = "likes_count", fieldtype = "int" },
+                    new EntityField { fieldname = "comments_count", fieldtype = "int" }
+                },
+                "pages" => new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "string" },
+                    new EntityField { fieldname = "name", fieldtype = "string" },
+                    new EntityField { fieldname = "category", fieldtype = "string" },
+                    new EntityField { fieldname = "description", fieldtype = "string" },
+                    new EntityField { fieldname = "website", fieldtype = "string" },
+                    new EntityField { fieldname = "phone", fieldtype = "string" }
+                },
+                "groups" => new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "string" },
+                    new EntityField { fieldname = "name", fieldtype = "string" },
+                    new EntityField { fieldname = "description", fieldtype = "string" },
+                    new EntityField { fieldname = "privacy", fieldtype = "string" },
+                    new EntityField { fieldname = "updated_time", fieldtype = "datetime" }
+                },
+                "events" => new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "string" },
+                    new EntityField { fieldname = "name", fieldtype = "string" },
+                    new EntityField { fieldname = "description", fieldtype = "string" },
+                    new EntityField { fieldname = "start_time", fieldtype = "datetime" },
+                    new EntityField { fieldname = "end_time", fieldtype = "datetime" },
+                    new EntityField { fieldname = "attending_count", fieldtype = "int" },
+                    new EntityField { fieldname = "interested_count", fieldtype = "int" }
+                },
+                "ads" => new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "string" },
+                    new EntityField { fieldname = "name", fieldtype = "string" },
+                    new EntityField { fieldname = "status", fieldtype = "string" },
+                    new EntityField { fieldname = "created_time", fieldtype = "datetime" },
+                    new EntityField { fieldname = "updated_time", fieldtype = "datetime" }
+                },
+                "insights" => new List<EntityField>
+                {
+                    new EntityField { fieldname = "id", fieldtype = "string" },
+                    new EntityField { fieldname = "name", fieldtype = "string" },
+                    new EntityField { fieldname = "period", fieldtype = "string" },
+                    new EntityField { fieldname = "values", fieldtype = "string" },
+                    new EntityField { fieldname = "title", fieldtype = "string" },
+                    new EntityField { fieldname = "description", fieldtype = "string" }
+                },
+                _ => new List<EntityField>()
+            };
         }
 
         /// <summary>
@@ -750,6 +271,5 @@ namespace TheTechIdea.Beep.FacebookDataSource
         {
             DisconnectAsync().Wait();
         }
-        #endregion
     }
 }
