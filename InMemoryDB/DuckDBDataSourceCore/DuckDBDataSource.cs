@@ -12,6 +12,8 @@ using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Helpers;
+using TheTechIdea.Beep.Helpers.DataTypesHelpers;
+using TheTechIdea.Beep.Helpers.RDBMSHelpers;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;

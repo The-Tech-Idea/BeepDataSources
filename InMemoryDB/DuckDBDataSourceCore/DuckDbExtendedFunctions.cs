@@ -5,6 +5,7 @@ using System.Data;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Helpers;
+using TheTechIdea.Beep.Helpers.FileandFolderHelpers;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using static DuckDB.NET.Native.NativeMethods;

@@ -1,5 +1,6 @@
 using System;
 using TheTechIdea.Beep.Helpers;
+using TheTechIdea.Beep.Helpers.RDBMSHelpers;
 using TheTechIdea.Beep.Utilities;
 
 namespace TheTechIdea.Beep.DataBase.Helpers
