@@ -18,7 +18,7 @@ using TheTechIdea.Beep.Vis;
 
 namespace TheTechIdea.Beep.PineConeDatasource
 {
-    [AddinAttribute(Category = DatasourceCategory.VectorDB, DatasourceType = DataSourceType.PineCone)]
+    //[AddinAttribute(Category = DatasourceCategory.VectorDB, DatasourceType = DataSourceType.PineCone)]
     public class PineConeDatasource : IDataSource, IInMemoryDB
     {
         private HttpClient _httpClient;
@@ -308,19 +308,19 @@ namespace TheTechIdea.Beep.PineConeDatasource
             return ErrorObject;
         }
 
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
             // Pinecone doesn't have traditional parent-child relationships
             return new List<ChildRelation>();
         }
 
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
             // Not applicable for Pinecone
             return new List<ETLScriptDet>();
         }
 
-        public List<string> GetEntitesList()
+        public IEnumerable<string> GetEntitesList()
         {
             try
             {
@@ -339,7 +339,7 @@ namespace TheTechIdea.Beep.PineConeDatasource
             }
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter)
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
             try
             {
@@ -350,27 +350,36 @@ namespace TheTechIdea.Beep.PineConeDatasource
 
                 // For Pinecone, we'll return information about the index
                 var indexStats = GetIndexStats(EntityName).Result;
-                return indexStats;
+                return indexStats != null ? new[] { indexStats } : Array.Empty<object>();
             }
             catch (Exception ex)
             {
                 DMEEditor.AddLogMessage("Error", $"Error getting index: {ex.Message}", DateTime.Now, -1, "", Errors.Failed);
-                return null;
+                return Array.Empty<object>();
             }
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            // Pinecone doesn't support traditional pagination
-            return GetEntity(EntityName, filter);
+            var allData = GetEntity(EntityName, filter).ToList();
+            var pagedData = allData.Skip(pageNumber * pageSize).Take(pageSize).ToList();
+            
+            return new PagedResult
+            {
+                Data = pagedData,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalRecords = allData.Count,
+                TotalPages = (int)Math.Ceiling((double)allData.Count / pageSize)
+            };
         }
 
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
             return Task.FromResult(GetEntity(EntityName, Filter));
         }
 
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
             // Pinecone doesn't have foreign keys
             return new List<RelationShipKeys>();
@@ -537,7 +546,7 @@ namespace TheTechIdea.Beep.PineConeDatasource
             return ErrorObject;
         }
 
-        public object RunQuery(string qrystr)
+        public IEnumerable<object> RunQuery(string qrystr)
         {
             // Not applicable for traditional SQL queries
             throw new NotImplementedException("SQL queries are not supported by Pinecone");

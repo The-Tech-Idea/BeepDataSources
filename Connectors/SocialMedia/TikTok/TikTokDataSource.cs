@@ -75,101 +75,32 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
     /// TikTok data source implementation for Beep framework
     /// Supports TikTok for Developers API
     /// </summary>
-    public class TikTokDataSource : IDataSource
+    [AddinAttribute("TikTok", "SocialMedia", "TikTok API Data Source", "1.0", "TikTok for Developers API integration")]
+    public class TikTokDataSource : WebAPIDataSource
     {
         private readonly TikTokConfig _config;
-        private HttpClient _httpClient;
-        private bool _isConnected;
-        private readonly Dictionary<string, EntityMetadata> _entityMetadata;
 
         /// <summary>
         /// Constructor for TikTokDataSource
         /// </summary>
-        /// <param name="config">TikTok configuration</param>
-        public TikTokDataSource(TikTokConfig config)
+        public TikTokDataSource(string datasourcename, IDMLogger logger, IDMEEditor editor, DataSourceType type, IErrorsInfo errors)
+            : base(datasourcename, logger, editor, type, errors)
         {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
+            _config = new TikTokConfig();
             _entityMetadata = InitializeEntityMetadata();
+            InitializeEntities();
         }
 
         /// <summary>
-        /// Constructor for TikTokDataSource with connection string
+        /// Initialize entities for TikTok data source
         /// </summary>
-        /// <param name="connectionString">Connection string in format: AppId=xxx;AppSecret=xxx;AccessToken=xxx;OpenId=xxx</param>
-        public TikTokDataSource(string connectionString)
+        private void InitializeEntities()
         {
-            _config = ParseConnectionString(connectionString);
-            _entityMetadata = InitializeEntityMetadata();
-        }
-
-        /// <summary>
-        /// Parse connection string into TikTokConfig
-        /// </summary>
-        private TikTokConfig ParseConnectionString(string connectionString)
-        {
-            var config = new TikTokConfig();
-            var parts = connectionString.Split(';');
-
-            foreach (var part in parts)
-            {
-                var keyValue = part.Split('=');
-                if (keyValue.Length == 2)
-                {
-                    var key = keyValue[0].Trim();
-                    var value = keyValue[1].Trim();
-
-                    switch (key.ToLower())
-                    {
-                        case "appid":
-                            config.AppId = value;
-                            break;
-                        case "appsecret":
-                            config.AppSecret = value;
-                            break;
-                        case "accesstoken":
-                            config.AccessToken = value;
-                            break;
-                        case "openid":
-                            config.OpenId = value;
-                            break;
-                        case "username":
-                            config.Username = value;
-                            break;
-                        case "apiversion":
-                            config.ApiVersion = value;
-                            break;
-                        case "timeoutseconds":
-                            if (int.TryParse(value, out var timeout))
-                                config.TimeoutSeconds = timeout;
-                            break;
-                        case "maxretries":
-                            if (int.TryParse(value, out var retries))
-                                config.MaxRetries = retries;
-                            break;
-                        case "ratelimitdelayms":
-                            if (int.TryParse(value, out var delay))
-                                config.RateLimitDelayMs = delay;
-                            break;
-                        case "maxresults":
-                            if (int.TryParse(value, out var maxResults))
-                                config.MaxResults = maxResults;
-                            break;
-                    }
-                }
-            }
-
-            return config;
-        }
-
-        /// <summary>
-        /// Initialize entity metadata for TikTok entities
-        /// </summary>
-        private Dictionary<string, EntityMetadata> InitializeEntityMetadata()
-        {
-            var metadata = new Dictionary<string, EntityMetadata>();
+            base.Entities.Clear();
+            base.EntitiesNames.Clear();
 
             // User Info
-            metadata["user"] = new EntityMetadata
+            var userEntity = new EntityStructure
             {
                 EntityName = "user",
                 DisplayName = "User Info",
@@ -190,9 +121,11 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
                     new EntityField { Name = "video_count", Type = "integer", DisplayName = "Video Count" }
                 }
             };
+            base.Entities.Add("user", userEntity);
+            base.EntitiesNames.Add("user");
 
             // Videos
-            metadata["videos"] = new EntityMetadata
+            var videosEntity = new EntityStructure
             {
                 EntityName = "videos",
                 DisplayName = "Videos",
@@ -216,9 +149,11 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
                     new EntityField { Name = "play_count", Type = "integer", DisplayName = "Play Count" }
                 }
             };
+            base.Entities.Add("videos", videosEntity);
+            base.EntitiesNames.Add("videos");
 
             // Video List
-            metadata["videolist"] = new EntityMetadata
+            var videolistEntity = new EntityStructure
             {
                 EntityName = "videolist",
                 DisplayName = "Video List",
@@ -238,9 +173,11 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
                     new EntityField { Name = "play_count", Type = "integer", DisplayName = "Play Count" }
                 }
             };
+            base.Entities.Add("videolist", videolistEntity);
+            base.EntitiesNames.Add("videolist");
 
             // Comments
-            metadata["comments"] = new EntityMetadata
+            var commentsEntity = new EntityStructure
             {
                 EntityName = "comments",
                 DisplayName = "Comments",
@@ -256,9 +193,11 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
                     new EntityField { Name = "reply_to_reply_id", Type = "string", DisplayName = "Reply To Reply ID" }
                 }
             };
+            base.Entities.Add("comments", commentsEntity);
+            base.EntitiesNames.Add("comments");
 
             // Analytics
-            metadata["analytics"] = new EntityMetadata
+            var analyticsEntity = new EntityStructure
             {
                 EntityName = "analytics",
                 DisplayName = "Analytics",
@@ -277,9 +216,11 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
                     new EntityField { Name = "video_views_organic", Type = "integer", DisplayName = "Organic Views" }
                 }
             };
+            base.Entities.Add("analytics", analyticsEntity);
+            base.EntitiesNames.Add("analytics");
 
             // Followers
-            metadata["followers"] = new EntityMetadata
+            var followersEntity = new EntityStructure
             {
                 EntityName = "followers",
                 DisplayName = "Followers",
@@ -296,83 +237,101 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
                     new EntityField { Name = "video_count", Type = "integer", DisplayName = "Video Count" }
                 }
             };
-
-            return metadata;
+            base.Entities.Add("followers", followersEntity);
+            base.EntitiesNames.Add("followers");
         }
 
         /// <summary>
         /// Connect to TikTok API
         /// </summary>
-        public async Task<bool> ConnectAsync()
+        public override async Task<ErrorObject> ConnectAsync()
         {
+            var errorObject = new ErrorObject();
+
             try
             {
                 if (string.IsNullOrEmpty(_config.AccessToken))
                 {
-                    throw new InvalidOperationException("Access token is required for TikTok connection");
+                    errorObject.Flag = Errors.Failed;
+                    errorObject.Message = "Access token is required for TikTok connection";
+                    return errorObject;
                 }
 
                 // Initialize HTTP client
                 var handler = new HttpClientHandler();
-                _httpClient = new HttpClient(handler)
+                HttpClient = new HttpClient(handler)
                 {
                     Timeout = TimeSpan.FromSeconds(_config.TimeoutSeconds)
                 };
 
                 // Add authorization header
-                _httpClient.DefaultRequestHeaders.Authorization =
+                HttpClient.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.AccessToken);
 
                 // Test connection by getting user info
                 var testUrl = $"{_config.BaseUrl}/user/info/?open_id={_config.OpenId}";
-                var response = await _httpClient.GetAsync(testUrl);
+                var response = await HttpClient.GetAsync(testUrl);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    _isConnected = true;
-                    return true;
+                    errorObject.Flag = Errors.Ok;
+                    errorObject.Message = "Successfully connected to TikTok API";
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    throw new Exception($"TikTok API connection failed: {response.StatusCode} - {errorContent}");
+                    errorObject.Flag = Errors.Failed;
+                    errorObject.Message = $"TikTok API connection failed: {response.StatusCode} - {errorContent}";
                 }
             }
             catch (Exception ex)
             {
-                _isConnected = false;
-                throw new Exception($"Failed to connect to TikTok API: {ex.Message}", ex);
+                errorObject.Flag = Errors.Failed;
+                errorObject.Message = $"Failed to connect to TikTok API: {ex.Message}";
             }
+
+            return errorObject;
         }
 
         /// <summary>
         /// Disconnect from TikTok API
         /// </summary>
-        public async Task<bool> DisconnectAsync()
+        public override async Task<ErrorObject> DisconnectAsync()
         {
-            if (_httpClient != null)
+            var errorObject = new ErrorObject();
+
+            try
             {
-                _httpClient.Dispose();
-                _httpClient = null;
+                if (HttpClient != null)
+                {
+                    HttpClient.Dispose();
+                    HttpClient = null;
+                }
+
+                errorObject.Flag = Errors.Ok;
+                errorObject.Message = "Successfully disconnected from TikTok API";
             }
-            _isConnected = false;
-            return true;
+            catch (Exception ex)
+            {
+                errorObject.Flag = Errors.Failed;
+                errorObject.Message = $"Failed to disconnect from TikTok API: {ex.Message}";
+            }
+
+            return errorObject;
         }
 
         /// <summary>
         /// Get data from TikTok API
         /// </summary>
-        public async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
+        public override async Task<(DataTable, ErrorObject)> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
         {
-            if (!_isConnected)
-            {
-                await ConnectAsync();
-            }
-
-            parameters ??= new Dictionary<string, object>();
+            var errorObject = new ErrorObject();
+            DataTable dataTable = null;
 
             try
             {
+                parameters ??= new Dictionary<string, object>();
+
                 string url;
                 var maxResults = parameters.ContainsKey("max_count") ? parameters["max_count"].ToString() : _config.MaxResults.ToString();
                 var cursor = parameters.ContainsKey("cursor") ? parameters["cursor"].ToString() : "0";
@@ -407,7 +366,9 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
                         break;
 
                     default:
-                        throw new ArgumentException($"Unsupported entity: {entityName}");
+                        errorObject.Flag = Errors.Failed;
+                        errorObject.Message = $"Unsupported entity: {entityName}";
+                        return (null, errorObject);
                 }
 
                 // Rate limiting delay
@@ -416,20 +377,27 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
                     await Task.Delay(_config.RateLimitDelayMs);
                 }
 
-                var response = await _httpClient.GetAsync(url);
+                var response = await HttpClient.GetAsync(url);
                 var jsonContent = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw new Exception($"TikTok API request failed: {response.StatusCode} - {jsonContent}");
+                    errorObject.Flag = Errors.Failed;
+                    errorObject.Message = $"TikTok API request failed: {response.StatusCode} - {jsonContent}";
+                    return (null, errorObject);
                 }
 
-                return ParseJsonToDataTable(jsonContent, entityName);
+                dataTable = ParseJsonToDataTable(jsonContent, entityName);
+                errorObject.Flag = Errors.Ok;
+                errorObject.Message = $"Successfully retrieved {entityName} data";
             }
             catch (Exception ex)
             {
-                throw new Exception($"Failed to get {entityName} data: {ex.Message}", ex);
+                errorObject.Flag = Errors.Failed;
+                errorObject.Message = $"Failed to get {entityName} data: {ex.Message}";
             }
+
+            return (dataTable, errorObject);
         }
 
         /// <summary>
@@ -569,87 +537,6 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
                 JsonValueKind.Null => null,
                 _ => element.GetRawText()
             };
-        }
-
-        /// <summary>
-        /// Get available entities
-        /// </summary>
-        public List<string> GetEntities()
-        {
-            return new List<string> { "user", "videos", "videolist", "comments", "analytics", "followers" };
-        }
-
-        /// <summary>
-        /// Get entity metadata
-        /// </summary>
-        public EntityMetadata GetEntityMetadata(string entityName)
-        {
-            if (_entityMetadata.ContainsKey(entityName.ToLower()))
-            {
-                return _entityMetadata[entityName.ToLower()];
-            }
-            throw new ArgumentException($"Entity '{entityName}' not found");
-        }
-
-        /// <summary>
-        /// Insert data (not supported for TikTok API)
-        /// </summary>
-        public async Task<int> InsertEntityAsync(string entityName, DataTable data)
-        {
-            throw new NotSupportedException("Insert operations are not supported for TikTok API");
-        }
-
-        /// <summary>
-        /// Update data (not supported for TikTok API)
-        /// </summary>
-        public async Task<int> UpdateEntityAsync(string entityName, DataTable data, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Update operations are not supported for TikTok API");
-        }
-
-        /// <summary>
-        /// Delete data (not supported for TikTok API)
-        /// </summary>
-        public async Task<int> DeleteEntityAsync(string entityName, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Delete operations are not supported for TikTok API");
-        }
-
-        /// <summary>
-        /// Execute custom query
-        /// </summary>
-        public async Task<DataTable> ExecuteQueryAsync(string query, Dictionary<string, object> parameters = null)
-        {
-            // For TikTok, we'll treat query as entity name with parameters
-            return await GetEntityAsync(query, parameters);
-        }
-
-        /// <summary>
-        /// Get connection status
-        /// </summary>
-        public bool IsConnected => _isConnected;
-
-        /// <summary>
-        /// Get data source type
-        /// </summary>
-        public string DataSourceType => "TikTok";
-
-        /// <summary>
-        /// Get data source name
-        /// </summary>
-        public string DataSourceName => "TikTok Data Source";
-
-        /// <summary>
-        /// Dispose resources
-        /// </summary>
-        public void Dispose()
-        {
-            if (_httpClient != null)
-            {
-                _httpClient.Dispose();
-                _httpClient = null;
-            }
-            _isConnected = false;
         }
     }
 }

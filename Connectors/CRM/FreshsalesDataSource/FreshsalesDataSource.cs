@@ -2,239 +2,165 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
-using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
-using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.DataSources.CRM.Freshsales;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Vis;
 
 namespace TheTechIdea.Beep.Connectors.Freshsales
 {
     /// <summary>
-    /// Freshsales data source implementation using WebAPIDataSource as base class
+    /// Freshsales data source aligned with the shared WebAPIDataSource ("Twitter") pattern.
     /// </summary>
     [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales)]
-    public class FreshsalesDataSource : WebAPIDataSource
+    public sealed class FreshsalesDataSource : WebAPIDataSource
     {
-        // Known Freshsales entities with their API endpoints
-        private static readonly Dictionary<string, string> EntityEndpoints = new(StringComparer.OrdinalIgnoreCase)
+        private sealed record EntityDefinition(string Endpoint, Type ModelType, string[] RequiredFilters);
+
+        private static readonly Dictionary<string, EntityDefinition> Map = new(StringComparer.OrdinalIgnoreCase)
         {
-            ["leads"] = "leads",
-            ["contacts"] = "contacts", 
-            ["accounts"] = "sales_accounts",
-            ["deals"] = "deals",
-            ["tasks"] = "tasks",
-            ["appointments"] = "appointments",
-            ["notes"] = "notes",
-            ["products"] = "products",
-            ["sales_activities"] = "sales_activities",
-            ["users"] = "users",
-            ["territories"] = "territories",
-            ["teams"] = "teams",
-            ["currencies"] = "currencies"
+            ["leads"] = new("crm/sales/api/leads", typeof(FreshsalesLead), Array.Empty<string>()),
+            ["contacts"] = new("crm/sales/api/contacts", typeof(FreshsalesContact), Array.Empty<string>()),
+            ["accounts"] = new("crm/sales/api/sales_accounts", typeof(FreshsalesAccount), Array.Empty<string>()),
+            ["deals"] = new("crm/sales/api/deals", typeof(FreshsalesDeal), Array.Empty<string>()),
+            ["tasks"] = new("crm/sales/api/tasks", typeof(FreshsalesTask), Array.Empty<string>()),
+            ["appointments"] = new("crm/sales/api/appointments", typeof(FreshsalesAppointment), Array.Empty<string>()),
+            ["notes"] = new("crm/sales/api/notes", typeof(FreshsalesNote), Array.Empty<string>()),
+            ["products"] = new("crm/sales/api/products", typeof(FreshsalesProduct), Array.Empty<string>()),
+            ["sales_activities"] = new("crm/sales/api/sales_activities", typeof(FreshsalesSalesActivity), Array.Empty<string>()),
+            ["users"] = new("crm/sales/api/users", typeof(FreshsalesUser), Array.Empty<string>()),
+            ["territories"] = new("crm/sales/api/territories", typeof(FreshsalesTerritory), Array.Empty<string>()),
+            ["teams"] = new("crm/sales/api/teams", typeof(FreshsalesTeam), Array.Empty<string>()),
+            ["currencies"] = new("crm/sales/api/currencies", typeof(FreshsalesCurrency), Array.Empty<string>())
         };
 
-        public FreshsalesDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
+        private static readonly List<string> KnownEntities = Map.Keys.ToList();
+
+        public FreshsalesDataSource(
+            string datasourcename,
+            IDMLogger logger,
+            IDMEEditor dmeEditor,
+            DataSourceType databasetype,
+            IErrorsInfo errorObject)
+            : base(datasourcename, logger, dmeEditor, databasetype, errorObject)
         {
-            // Initialize WebAPI connection properties if needed
             if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
             {
                 if (Dataconnection != null)
+                {
                     Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+                }
             }
 
-            // Set up entity list
-            EntitiesNames = EntityEndpoints.Keys.ToList();
-            Entities = EntitiesNames.Select(name => new EntityStructure 
-            { 
-                EntityName = name, 
-                DatasourceEntityName = name 
-            }).ToList();
+            EntitiesNames = KnownEntities.ToList();
+            Entities = EntitiesNames
+                .Select(name => new EntityStructure { EntityName = name, DatasourceEntityName = name })
+                .ToList();
         }
 
-        // Entity list method following Twitter pattern
-        public override List<string> GetEntitesList()
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        public override EntityStructure GetEntityStructure(string EntityName, bool refresh)
         {
-            return EntityEndpoints.Keys.ToList();
+            var definition = GetDefinition(EntityName);
+            return FreshsalesHelpers.BuildEntityStructure(EntityName, definition.ModelType, DatasourceName);
         }
 
-        // Sync method following Twitter pattern
-        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> Filter)
         {
-            var result = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
-            return result ?? new List<object>();
+            return GetEntityAsync(EntityName, Filter).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
-        // Async method following Twitter pattern
-        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> filter)
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            try
+            var definition = GetDefinition(EntityName);
+            var query = FreshsalesHelpers.FiltersToQuery(Filter);
+            FreshsalesHelpers.RequireFilters(EntityName, query, definition.RequiredFilters);
+
+            var endpoint = FreshsalesHelpers.ResolveEndpoint(definition.Endpoint, query);
+
+            using var response = await GetAsync(endpoint, query).ConfigureAwait(false);
+            if (response is null || !response.IsSuccessStatusCode)
             {
-                if (!EntityEndpoints.TryGetValue(EntityName, out string? endpoint) || endpoint == null)
-                {
-                    Logger?.WriteLog($"Unknown entity: {EntityName}");
-                    return new List<object>();
-                }
-
-                var queryParams = BuildFreshsalesQuery(filter);
-                
-                // Handle pagination similar to Twitter pattern
-                var allResults = new List<object>();
-                int page = 1;
-                int perPage = 100; // Freshsales default page size
-                bool hasMore = true;
-
-                while (hasMore)
-                {
-                    var paginatedQuery = new Dictionary<string, string>(queryParams)
-                    {
-                        ["page"] = page.ToString(),
-                        ["per_page"] = perPage.ToString()
-                    };
-
-                    using var response = await GetAsync(endpoint, paginatedQuery).ConfigureAwait(false);
-                    if (response?.IsSuccessStatusCode != true)
-                    {
-                        Logger?.WriteLog($"Failed to fetch {EntityName} from Freshsales API");
-                        break;
-                    }
-
-                    var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    var results = ExtractFreshsalesData(content);
-                    
-                    if (results?.Any() == true)
-                    {
-                        allResults.AddRange(results);
-                        page++;
-                        
-                        // Check if we got fewer results than requested (indicates last page)
-                        hasMore = results.Count() >= perPage;
-                    }
-                    else
-                    {
-                        hasMore = false;
-                    }
-                }
-
-                return allResults;
+                return Array.Empty<object>();
             }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"Error fetching {EntityName}: {ex.Message}");
-                if (ErrorObject != null)
-                    ErrorObject.Flag = Errors.Failed;
-                return new List<object>();
-            }
+
+            var parsed = await FreshsalesHelpers.ParseResponseAsync(response, EntityName, definition.ModelType).ConfigureAwait(false);
+            return parsed.Items;
         }
 
-        // Build query parameters for Freshsales API
-        private Dictionary<string, string> BuildFreshsalesQuery(List<AppFilter> filters)
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            var queryParams = new Dictionary<string, string>();
+            var definition = GetDefinition(EntityName);
+            var page = Math.Max(1, pageNumber);
+            var size = Math.Max(1, Math.Min(pageSize, 200));
 
-            if (filters?.Any() != true) return queryParams;
+            var query = FreshsalesHelpers.FiltersToQuery(filter);
+            FreshsalesHelpers.RequireFilters(EntityName, query, definition.RequiredFilters);
 
-            // Handle basic filters - Freshsales supports various filter formats
-            foreach (var filter in filters)
+            query["page"] = page.ToString();
+            query["per_page"] = size.ToString();
+
+            var endpoint = FreshsalesHelpers.ResolveEndpoint(definition.Endpoint, query);
+
+            using var response = CallFreshsales(endpoint, query).ConfigureAwait(false).GetAwaiter().GetResult();
+            if (response is null || !response.IsSuccessStatusCode)
             {
-                if (string.IsNullOrWhiteSpace(filter.FieldName) || filter.FilterValue == null)
-                    continue;
-
-                // Map common filter operations to Freshsales format
-                switch (filter.Operator?.ToLowerInvariant())
+                return new PagedResult
                 {
-                    case "=":
-                    case "eq":
-                        queryParams[$"filter[{filter.FieldName}]"] = filter.FilterValue.ToString();
-                        break;
-                    case "like":
-                    case "contains":
-                        // Freshsales search parameter
-                        queryParams["q"] = filter.FilterValue.ToString();
-                        break;
-                    case ">":
-                    case "gt":
-                        queryParams[$"filter[{filter.FieldName}][gt]"] = filter.FilterValue.ToString();
-                        break;
-                    case "<":
-                    case "lt":
-                        queryParams[$"filter[{filter.FieldName}][lt]"] = filter.FilterValue.ToString();
-                        break;
-                    default:
-                        // Default to equality
-                        queryParams[$"filter[{filter.FieldName}]"] = filter.FilterValue.ToString();
-                        break;
-                }
+                    Data = Array.Empty<object>(),
+                    PageNumber = page,
+                    PageSize = size,
+                    TotalPages = page,
+                    TotalRecords = 0,
+                    HasNextPage = false,
+                    HasPreviousPage = page > 1
+                };
             }
 
-            return queryParams;
+            var parsed = FreshsalesHelpers.ParseResponseAsync(response, EntityName, definition.ModelType).ConfigureAwait(false).GetAwaiter().GetResult();
+
+            var pagination = parsed.Meta?.Pagination;
+            var totalRecords = pagination?.Total ?? parsed.Items.Count;
+            var totalPages = pagination?.TotalPages ?? (pagination?.PerPage.HasValue == true && pagination.PerPage.Value > 0
+                ? (int)Math.Ceiling((double)totalRecords / pagination.PerPage.Value)
+                : Math.Max(page, parsed.Items.Count > 0 ? page : 0));
+
+            return new PagedResult
+            {
+                Data = parsed.Items,
+                PageNumber = page,
+                PageSize = size,
+                TotalRecords = totalRecords,
+                TotalPages = totalPages,
+                HasPreviousPage = page > 1,
+                HasNextPage = pagination?.CurrentPage.HasValue == true && pagination?.TotalPages.HasValue == true
+                    ? pagination.CurrentPage.Value < pagination.TotalPages.Value
+                    : parsed.Items.Count >= size
+            };
         }
 
-        // Extract data from Freshsales JSON response
-        private IEnumerable<object> ExtractFreshsalesData(string jsonContent)
+        private static EntityDefinition GetDefinition(string entityName)
         {
-            try
+            if (!Map.TryGetValue(entityName, out var definition))
             {
-                if (string.IsNullOrWhiteSpace(jsonContent))
-                    return Enumerable.Empty<object>();
-
-                using var document = JsonDocument.Parse(jsonContent);
-                var root = document.RootElement;
-
-                // Freshsales typically returns data in: { "data": [...] }
-                if (root.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Array)
-                {
-                    return ExtractArrayItems(dataElement);
-                }
-
-                // If root is an array
-                if (root.ValueKind == JsonValueKind.Array)
-                {
-                    return ExtractArrayItems(root);
-                }
-
-                // If single object, wrap in array
-                if (root.ValueKind == JsonValueKind.Object)
-                {
-                    var obj = JsonSerializer.Deserialize<object>(root.GetRawText());
-                    return obj != null ? new[] { obj } : Enumerable.Empty<object>();
-                }
-
-                return Enumerable.Empty<object>();
+                throw new InvalidOperationException($"Unknown Freshsales entity '{entityName}'.");
             }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"Error parsing Freshsales response: {ex.Message}");
-                return Enumerable.Empty<object>();
-            }
+
+            return definition;
         }
 
-        // Helper method to extract items from JSON array
-        private IEnumerable<object> ExtractArrayItems(JsonElement arrayElement)
+        private async Task<HttpResponseMessage> CallFreshsales(string endpoint, Dictionary<string, string> query, CancellationToken cancellationToken = default)
         {
-            var results = new List<object>();
-            
-            foreach (var item in arrayElement.EnumerateArray())
-            {
-                try
-                {
-                    var obj = JsonSerializer.Deserialize<object>(item.GetRawText());
-                    if (obj != null)
-                        results.Add(obj);
-                }
-                catch (Exception ex)
-                {
-                    Logger?.WriteLog($"Error deserializing array item: {ex.Message}");
-                }
-            }
-
-            return results;
+            return await GetAsync(endpoint, query, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
 }

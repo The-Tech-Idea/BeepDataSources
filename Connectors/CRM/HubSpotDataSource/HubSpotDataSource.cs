@@ -26,7 +26,7 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
         private static readonly List<string> KnownEntities = new()
         {
             "contacts",
-            "companies", 
+            "companies",
             "deals",
             "tickets",
             "products",

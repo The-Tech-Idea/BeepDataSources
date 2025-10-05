@@ -70,32 +70,316 @@ namespace BeepDataSources.Connectors.SocialMedia.YouTube
     /// YouTube data source implementation for Beep framework
     /// Supports YouTube Data API v3
     /// </summary>
-    public class YouTubeDataSource : IDataSource
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.YouTube)]
+    public class YouTubeDataSource : WebAPIDataSource
     {
+        #region Configuration Classes
+
+        /// <summary>
+        /// Configuration for YouTube connection
+        /// </summary>
+        public class YouTubeConfig
+        {
+            public string ApiKey { get; set; } = string.Empty;
+            public string AccessToken { get; set; } = string.Empty;
+            public string ChannelId { get; set; } = string.Empty;
+            public string Username { get; set; } = string.Empty;
+            public string ApiVersion { get; set; } = "v3";
+            public string BaseUrl { get; set; } = "https://www.googleapis.com/youtube";
+
+            /// <summary>
+            /// Request timeout in seconds
+            /// </summary>
+            public int TimeoutSeconds { get; set; } = 30;
+
+            /// <summary>
+            /// Maximum number of retries for failed requests
+            /// </summary>
+            public int MaxRetries { get; set; } = 3;
+
+            /// <summary>
+            /// Rate limit delay between requests in milliseconds
+            /// </summary>
+            public int RateLimitDelayMs { get; set; } = 1000;
+
+            /// <summary>
+            /// Maximum results per request (default: 25, max: 50)
+            /// </summary>
+            public int MaxResults { get; set; } = 25;
+        }
+
+        /// <summary>
+        /// YouTube entity metadata
+        /// </summary>
+        public class YouTubeEntity
+        {
+            public string EntityName { get; set; } = string.Empty;
+            public string DisplayName { get; set; } = string.Empty;
+            public string ApiEndpoint { get; set; } = string.Empty;
+            public Dictionary<string, string> Fields { get; set; } = new();
+        }
+
+        #endregion
+
+        #region Private Fields
+
         private readonly YouTubeConfig _config;
-        private HttpClient _httpClient;
-        private bool _isConnected;
-        private readonly Dictionary<string, EntityMetadata> _entityMetadata;
+        private readonly Dictionary<string, YouTubeEntity> _entityCache = new();
 
-        /// <summary>
-        /// Constructor for YouTubeDataSource
-        /// </summary>
-        /// <param name="config">YouTube configuration</param>
-        public YouTubeDataSource(YouTubeConfig config)
+        #endregion
+
+        #region Constructor
+
+        public YouTubeDataSource(
+            string datasourcename,
+            IDMLogger logger,
+            IDMEEditor editor,
+            DataSourceType type,
+            IErrorsInfo errors)
+            : base(datasourcename, logger, editor, type, errors)
         {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
-            _entityMetadata = InitializeEntityMetadata();
+            _config = new YouTubeConfig();
+
+            // Ensure we're on WebAPI connection properties
+            if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
+            {
+                if (Dataconnection != null)
+                    Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+            }
+
+            // Initialize entities
+            InitializeEntities();
         }
 
-        /// <summary>
-        /// Constructor for YouTubeDataSource with connection string
-        /// </summary>
-        /// <param name="connectionString">Connection string in format: ApiKey=xxx;ChannelId=xxx;AccessToken=xxx</param>
-        public YouTubeDataSource(string connectionString)
+        #endregion
+
+        #region Private Methods
+
+        private void InitializeEntities()
         {
-            _config = ParseConnectionString(connectionString);
-            _entityMetadata = InitializeEntityMetadata();
+            // YouTube API v3 entities
+            var entities = new[]
+            {
+                new YouTubeEntity
+                {
+                    EntityName = "channels",
+                    DisplayName = "Channels",
+                    ApiEndpoint = "channels",
+                    Fields = new Dictionary<string, string>
+                    {
+                        ["id"] = "string",
+                        ["title"] = "string",
+                        ["description"] = "string",
+                        ["publishedAt"] = "datetime",
+                        ["subscriberCount"] = "long",
+                        ["videoCount"] = "long",
+                        ["viewCount"] = "long"
+                    }
+                },
+                new YouTubeEntity
+                {
+                    EntityName = "videos",
+                    DisplayName = "Videos",
+                    ApiEndpoint = "videos",
+                    Fields = new Dictionary<string, string>
+                    {
+                        ["id"] = "string",
+                        ["title"] = "string",
+                        ["description"] = "string",
+                        ["publishedAt"] = "datetime",
+                        ["duration"] = "string",
+                        ["viewCount"] = "long",
+                        ["likeCount"] = "long",
+                        ["commentCount"] = "long"
+                    }
+                },
+                new YouTubeEntity
+                {
+                    EntityName = "playlists",
+                    DisplayName = "Playlists",
+                    ApiEndpoint = "playlists",
+                    Fields = new Dictionary<string, string>
+                    {
+                        ["id"] = "string",
+                        ["title"] = "string",
+                        ["description"] = "string",
+                        ["publishedAt"] = "datetime",
+                        ["itemCount"] = "long"
+                    }
+                },
+                new YouTubeEntity
+                {
+                    EntityName = "playlistItems",
+                    DisplayName = "Playlist Items",
+                    ApiEndpoint = "playlistItems",
+                    Fields = new Dictionary<string, string>
+                    {
+                        ["id"] = "string",
+                        ["title"] = "string",
+                        ["description"] = "string",
+                        ["publishedAt"] = "datetime",
+                        ["position"] = "long"
+                    }
+                },
+                new YouTubeEntity
+                {
+                    EntityName = "search",
+                    DisplayName = "Search Results",
+                    ApiEndpoint = "search",
+                    Fields = new Dictionary<string, string>
+                    {
+                        ["id"] = "string",
+                        ["title"] = "string",
+                        ["description"] = "string",
+                        ["publishedAt"] = "datetime",
+                        ["channelTitle"] = "string"
+                    }
+                }
+            };
+
+            foreach (var entity in entities)
+            {
+                _entityCache[entity.EntityName] = entity;
+            }
+
+            // Register entities with base class
+            EntitiesNames = _entityCache.Keys.ToList();
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure
+                {
+                    EntityName = n,
+                    DatasourceEntityName = n,
+                    Caption = _entityCache[n].DisplayName,
+                    Fields = _entityCache[n].Fields.Select(f => new EntityField
+                    {
+                        fieldname = f.Key,
+                        fieldtype = f.Value
+                    }).ToList()
+                })
+                .ToList();
         }
+
+        #endregion
+
+        #region IDataSource Implementation
+
+        public override async Task<bool> ConnectAsync()
+        {
+            try
+            {
+                Logger.WriteLog($"Connecting to YouTube API: {_config.BaseUrl}");
+
+                // Get API key from connection properties
+                if (Dataconnection?.ConnectionProp is WebAPIConnectionProperties webApiProps)
+                {
+                    _config.ApiKey = webApiProps.ApiKey ?? string.Empty;
+                    _config.AccessToken = webApiProps.AccessToken ?? string.Empty;
+                }
+
+                if (string.IsNullOrEmpty(_config.ApiKey))
+                {
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = "API key is required for YouTube connection";
+                    return false;
+                }
+
+                // Test connection by getting channel info if ChannelId is provided
+                if (!string.IsNullOrEmpty(_config.ChannelId))
+                {
+                    var testUrl = $"{_config.BaseUrl}/{_config.ApiVersion}/channels?part=snippet&id={_config.ChannelId}&key={_config.ApiKey}";
+                    var response = await GetAsync(testUrl);
+
+                    if (response?.IsSuccessStatusCode == true)
+                    {
+                        ConnectionStatus = ConnectionState.Open;
+                        Logger.WriteLog("Successfully connected to YouTube API");
+                        return true;
+                    }
+                    else
+                    {
+                        var errorContent = response != null ? await response.Content.ReadAsStringAsync() : "No response";
+                        ErrorObject.Flag = Errors.Failed;
+                        ErrorObject.Message = $"YouTube API connection test failed: {response?.StatusCode} - {errorContent}";
+                        return false;
+                    }
+                }
+
+                // If no ChannelId, just test basic connectivity
+                ConnectionStatus = ConnectionState.Open;
+                Logger.WriteLog("Connected to YouTube API (no channel validation)");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to connect to YouTube API: {ex.Message}";
+                Logger.WriteLog($"YouTube connection error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public override Task<bool> DisconnectAsync()
+        {
+            try
+            {
+                ConnectionStatus = ConnectionState.Closed;
+                _entityCache.Clear();
+                Logger.WriteLog("Disconnected from YouTube API");
+                return Task.FromResult(true);
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Disconnect failed: {ex.Message}";
+                return Task.FromResult(false);
+            }
+        }
+
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        {
+            try
+            {
+                if (!_entityCache.TryGetValue(EntityName, out var entity))
+                {
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = $"Unknown YouTube entity: {EntityName}";
+                    return Array.Empty<object>();
+                }
+
+                var q = FiltersToQuery(Filter);
+                var endpoint = $"{_config.BaseUrl}/{_config.ApiVersion}/{entity.ApiEndpoint}";
+
+                // Add API key to query parameters
+                if (!string.IsNullOrEmpty(_config.ApiKey))
+                {
+                    q["key"] = _config.ApiKey;
+                }
+
+                var response = await GetAsync(endpoint, q);
+                if (response?.IsSuccessStatusCode != true)
+                {
+                    var errorContent = response != null ? await response.Content.ReadAsStringAsync() : "No response";
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = $"Failed to get {EntityName}: {response?.StatusCode} - {errorContent}";
+                    return Array.Empty<object>();
+                }
+
+                return ExtractArray(response, "items");
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get entity data: {ex.Message}";
+                return Array.Empty<object>();
+            }
+        }
+
+        public override object? GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            return GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        #endregion
 
         /// <summary>
         /// Parse connection string into YouTubeConfig
@@ -555,87 +839,6 @@ namespace BeepDataSources.Connectors.SocialMedia.YouTube
                 JsonValueKind.Null => null,
                 _ => element.GetRawText()
             };
-        }
-
-        /// <summary>
-        /// Get available entities
-        /// </summary>
-        public List<string> GetEntities()
-        {
-            return new List<string> { "channels", "videos", "channelvideos", "playlists", "playlistitems", "comments", "search" };
-        }
-
-        /// <summary>
-        /// Get entity metadata
-        /// </summary>
-        public EntityMetadata GetEntityMetadata(string entityName)
-        {
-            if (_entityMetadata.ContainsKey(entityName.ToLower()))
-            {
-                return _entityMetadata[entityName.ToLower()];
-            }
-            throw new ArgumentException($"Entity '{entityName}' not found");
-        }
-
-        /// <summary>
-        /// Insert data (not supported for YouTube API)
-        /// </summary>
-        public async Task<int> InsertEntityAsync(string entityName, DataTable data)
-        {
-            throw new NotSupportedException("Insert operations are not supported for YouTube API");
-        }
-
-        /// <summary>
-        /// Update data (not supported for YouTube API)
-        /// </summary>
-        public async Task<int> UpdateEntityAsync(string entityName, DataTable data, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Update operations are not supported for YouTube API");
-        }
-
-        /// <summary>
-        /// Delete data (not supported for YouTube API)
-        /// </summary>
-        public async Task<int> DeleteEntityAsync(string entityName, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Delete operations are not supported for YouTube API");
-        }
-
-        /// <summary>
-        /// Execute custom query
-        /// </summary>
-        public async Task<DataTable> ExecuteQueryAsync(string query, Dictionary<string, object> parameters = null)
-        {
-            // For YouTube, we'll treat query as entity name with parameters
-            return await GetEntityAsync(query, parameters);
-        }
-
-        /// <summary>
-        /// Get connection status
-        /// </summary>
-        public bool IsConnected => _isConnected;
-
-        /// <summary>
-        /// Get data source type
-        /// </summary>
-        public string DataSourceType => "YouTube";
-
-        /// <summary>
-        /// Get data source name
-        /// </summary>
-        public string DataSourceName => "YouTube Data Source";
-
-        /// <summary>
-        /// Dispose resources
-        /// </summary>
-        public void Dispose()
-        {
-            if (_httpClient != null)
-            {
-                _httpClient.Dispose();
-                _httpClient = null;
-            }
-            _isConnected = false;
         }
     }
 }

@@ -7,21 +7,23 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Http;
+using TheTechIdea.Beep;
 using TheTechIdea.Beep.DataBase;
-using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.WebAPI;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Workflow;
-using TheTechIdea.Logger;
-using TheTechIdea.Util;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.ConfigUtil;
 
 namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
 {
     /// <summary>
     /// Insightly CRM Data Source implementation using Insightly REST API
     /// </summary>
-    public class InsightlyDataSource : IDataSource
+    public class InsightlyDataSource : WebAPIDataSource
     {
         #region Configuration Classes
 
@@ -51,11 +53,6 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
 
         private readonly InsightlyConfig _config;
         private HttpClient? _httpClient;
-        private readonly IDMEEditor _dmeEditor;
-        private readonly IErrorsInfo _errorsInfo;
-        private readonly IJsonLoader _jsonLoader;
-        private readonly IDMLogger _logger;
-        private readonly IUtil _util;
         private ConnectionState _connectionState = ConnectionState.Closed;
         private string _connectionString = string.Empty;
         private readonly Dictionary<string, InsightlyEntity> _entityCache = new();
@@ -64,22 +61,21 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
 
         #region Constructor
 
-        public InsightlyDataSource(string datasourcename, IDMEEditor dmeEditor, IDataConnection cn, IErrorsInfo per)
+        public InsightlyDataSource(
+            string datasourcename,
+            IDMLogger logger,
+            IDMEEditor editor,
+            DataSourceType type,
+            IErrorsInfo errors)
+            : base(datasourcename, logger, editor, type, errors)
         {
-            DatasourceName = datasourcename;
-            _dmeEditor = dmeEditor;
-            _errorsInfo = per;
-            _jsonLoader = new JsonLoader();
-            _logger = new DMLogger();
-            _util = new Util();
             _config = new InsightlyConfig();
 
             // Initialize connection properties
-            Dataconnection = cn;
-            if (cn != null)
+            if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
             {
-                _connectionString = cn.ConnectionString;
-                ParseConnectionString();
+                if (Dataconnection != null)
+                    Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
             }
 
             // Initialize HTTP client
@@ -92,26 +88,11 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
 
         #region IDataSource Implementation
 
-        public string DatasourceName { get; set; } = string.Empty;
-        public string DatasourceType { get; set; } = "Insightly";
-        public DatasourceCategory Category { get; set; } = DatasourceCategory.CRM;
-        public IDataConnection? Dataconnection { get; set; }
-        public object? DatasourceConnection { get; set; }
-        public ConnectionState ConnectionStatus => _connectionState;
-        public bool InMemory { get; set; } = false;
-        public List<string> EntitiesNames { get; set; } = new();
-        public List<EntityStructure> Entities { get; set; } = new();
-        public IDMLogger Logger => _logger;
-        public IErrorsInfo ErrorObject => _errorsInfo;
-        public IUtil util => _util;
-        public IJsonLoader jsonLoader => _jsonLoader;
-        public IDMEEditor DMEEditor => _dmeEditor;
-
         public async Task<bool> ConnectAsync()
         {
             try
             {
-                _logger.WriteLog($"Connecting to Insightly: {_config.BaseUrl}");
+                Logger.WriteLog($"Connecting to Insightly: {_config.BaseUrl}");
 
                 // Set authorization header with API key
                 _httpClient.DefaultRequestHeaders.Authorization =
@@ -122,40 +103,41 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                 var testResponse = await _httpClient.GetAsync($"{_config.BaseUrl}/Contacts");
                 if (testResponse.IsSuccessStatusCode)
                 {
-                    _connectionState = ConnectionState.Open;
-                    DatasourceConnection = _httpClient;
-                    _logger.WriteLog("Successfully connected to Insightly");
+                    ConnectionStatus = ConnectionState.Open;
+                    Logger.WriteLog("Successfully connected to Insightly");
                     return true;
                 }
 
                 var errorContent = await testResponse.Content.ReadAsStringAsync();
-                _errorsInfo.AddError("Insightly", $"Connection test failed: {testResponse.StatusCode} - {errorContent}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Connection test failed: {testResponse.StatusCode} - {errorContent}";
                 return false;
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Insightly", $"Connection failed: {ex.Message}", ex);
-                _logger.WriteLog($"Insightly connection error: {ex.Message}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Connection failed: {ex.Message}";
+                Logger.WriteLog($"Insightly connection error: {ex.Message}");
                 return false;
             }
         }
 
-        public async Task<bool> DisconnectAsync()
+        public Task<bool> DisconnectAsync()
         {
             try
             {
                 _httpClient?.Dispose();
                 _httpClient = null;
-                _connectionState = ConnectionState.Closed;
-                DatasourceConnection = null;
+                ConnectionStatus = ConnectionState.Closed;
                 _entityCache.Clear();
-                _logger.WriteLog("Disconnected from Insightly");
-                return true;
+                Logger.WriteLog("Disconnected from Insightly");
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Insightly", $"Disconnect failed: {ex.Message}", ex);
-                return false;
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Disconnect failed: {ex.Message}";
+                return Task.FromResult(false);
             }
         }
 
@@ -169,7 +151,7 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             return await DisconnectAsync();
         }
 
-        public async Task<List<string>> GetEntitiesNamesAsync()
+        public Task<List<string>> GetEntitiesNamesAsync()
         {
             try
             {
@@ -177,18 +159,19 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                     throw new InvalidOperationException("Not connected to Insightly");
 
                 // Get available entities from Insightly
-                var entities = await GetInsightlyEntitiesAsync();
+                var entities = GetInsightlyEntitiesAsync();
                 EntitiesNames = entities.Select(e => e.EntityName).ToList();
-                return EntitiesNames;
+                return Task.FromResult(EntitiesNames);
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Insightly", $"Failed to get entities: {ex.Message}", ex);
-                return new List<string>();
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get entities: {ex.Message}";
+                return Task.FromResult(new List<string>());
             }
         }
 
-        public async Task<List<EntityStructure>> GetEntityStructuresAsync(bool refresh = false)
+        public Task<List<EntityStructure>> GetEntityStructuresAsync(bool refresh = false)
         {
             try
             {
@@ -196,9 +179,9 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                     throw new InvalidOperationException("Not connected to Insightly");
 
                 if (!refresh && Entities.Any())
-                    return Entities;
+                    return Task.FromResult(Entities);
 
-                var insightlyEntities = await GetInsightlyEntitiesAsync();
+                var insightlyEntities = GetInsightlyEntitiesAsync();
                 Entities = new List<EntityStructure>();
 
                 foreach (var entity in insightlyEntities)
@@ -206,8 +189,7 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                     var structure = new EntityStructure
                     {
                         EntityName = entity.EntityName,
-                        DisplayName = entity.DisplayName,
-                        SchemaName = "Insightly",
+                        Caption = entity.DisplayName,
                         Fields = new List<EntityField>()
                     };
 
@@ -216,24 +198,24 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                         structure.Fields.Add(new EntityField
                         {
                             fieldname = field.Key,
-                            fieldtype = field.Value,
-                            FieldDisplayName = field.Key
+                            fieldtype = field.Value
                         });
                     }
 
                     Entities.Add(structure);
                 }
 
-                return Entities;
+                return Task.FromResult(Entities);
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Insightly", $"Failed to get entity structures: {ex.Message}", ex);
-                return new List<EntityStructure>();
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get entity structures: {ex.Message}";
+                return Task.FromResult(new List<EntityStructure>());
             }
         }
 
-        public async Task<object?> GetEntityAsync(string entityName, List<AppFilter>? filter = null)
+        public new async Task<object?> GetEntityAsync(string entityName, List<AppFilter>? filter = null)
         {
             try
             {
@@ -251,12 +233,14 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _errorsInfo.AddError("Insightly", $"Failed to get {entityName}: {response.StatusCode} - {errorContent}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get {entityName}: {response.StatusCode} - {errorContent}";
                 return null;
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Insightly", $"Failed to get entity data: {ex.Message}", ex);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get entity data: {ex.Message}";
                 return null;
             }
         }
@@ -278,12 +262,14 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _errorsInfo.AddError("Insightly", $"Failed to insert {entityName}: {response.StatusCode} - {errorContent}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to insert {entityName}: {response.StatusCode} - {errorContent}";
                 return false;
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Insightly", $"Failed to insert entity: {ex.Message}", ex);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to insert entity: {ex.Message}";
                 return false;
             }
         }
@@ -305,12 +291,14 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _errorsInfo.AddError("Insightly", $"Failed to update {entityName}: {response.StatusCode} - {errorContent}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to update {entityName}: {response.StatusCode} - {errorContent}";
                 return false;
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Insightly", $"Failed to update entity: {ex.Message}", ex);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to update entity: {ex.Message}";
                 return false;
             }
         }
@@ -329,12 +317,14 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _errorsInfo.AddError("Insightly", $"Failed to delete {entityName}: {response.StatusCode} - {errorContent}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to delete {entityName}: {response.StatusCode} - {errorContent}";
                 return false;
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Insightly", $"Failed to delete entity: {ex.Message}", ex);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to delete entity: {ex.Message}";
                 return false;
             }
         }
@@ -371,7 +361,7 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             }
         }
 
-        private async Task<List<InsightlyEntity>> GetInsightlyEntitiesAsync()
+        private List<InsightlyEntity> GetInsightlyEntitiesAsync()
         {
             if (_entityCache.Any())
                 return _entityCache.Values.ToList();
@@ -503,7 +493,7 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             return Task.Run(() => DeleteEntityAsync(entityname, entityid)).GetAwaiter().GetResult();
         }
 
-        public object GetEntity(string entityname, List<AppFilter> filter)
+        public new object GetEntity(string entityname, List<AppFilter> filter)
         {
             return Task.Run(() => GetEntityAsync(entityname, filter)).GetAwaiter().GetResult();
         }
@@ -513,17 +503,17 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             return Task.Run(() => GetEntityStructuresAsync(refresh)).GetAwaiter().GetResult();
         }
 
-        public List<string> GetEntitesList()
+        public new List<string> GetEntitesList()
         {
             return Task.Run(() => GetEntitiesNamesAsync()).GetAwaiter().GetResult();
         }
 
-        public bool Openconnection()
+        public new bool Openconnection()
         {
             return Task.Run(() => OpenconnectionAsync()).GetAwaiter().GetResult();
         }
 
-        public bool Closeconnection()
+        public new bool Closeconnection()
         {
             return Task.Run(() => CloseconnectionAsync()).GetAwaiter().GetResult();
         }
@@ -533,21 +523,23 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             return CreateEntityAsAsync(entityname, entitydata);
         }
 
-        public object RunQuery(string qrystr)
+        public new IErrorsInfo RunQuery(string qrystr)
         {
             // Insightly doesn't support arbitrary SQL queries
             // This would need to be implemented using Insightly's filter API
-            _errorsInfo.AddError("Insightly", "RunQuery not supported. Use GetEntity with filters instead.");
-            return null;
+            ErrorObject.Flag = Errors.Failed;
+            ErrorObject.Message = "RunQuery not supported. Use GetEntity with filters instead.";
+            return ErrorObject;
         }
 
-        public object RunScript(ETLScriptDet dDLScripts)
+        public new IErrorsInfo RunScript(ETLScriptDet dDLScripts)
         {
-            _errorsInfo.AddError("Insightly", "RunScript not supported for Insightly");
-            return null;
+            ErrorObject.Flag = Errors.Failed;
+            ErrorObject.Message = "RunScript not supported for Insightly";
+            return ErrorObject;
         }
 
-        public void Dispose()
+        public new void Dispose()
         {
             Task.Run(() => DisconnectAsync()).GetAwaiter().GetResult();
             _entityCache.Clear();

@@ -1,768 +1,617 @@
-using System;using System;
-
-using System.Collections.Generic;using System.Collections.Generic;
-
-using System.Linq;using System.Linq;
-
-using System.Net.Http;using System.Net.Http;
-
-using System.Text.Json;using System.Text.Json;
-
-using System.Threading;using System.Threading;
-
-using System.Threading.Tasks;using System.Threading.Tasks;
-
-using TheTechIdea.Beep.ConfigUtil;using TheTechIdea.Beep.ConfigUtil;
-
-using TheTechIdea.Beep.DataBase;using TheTechIdea.Beep.DataBase;
-
-using TheTechIdea.Beep.Editor;using TheTechIdea.Beep.Editor;
-
-using TheTechIdea.Beep.Logger;using TheTechIdea.Beep.Logger;
-
-using TheTechIdea.Beep.Report;using TheTechIdea.Beep.Report;
-
-using TheTechIdea.Beep.Utilities;using TheTechIdea.Beep.Utilities;
-
-using TheTechIdea.Beep.Vis;using TheTechIdea.Beep.Vis;
-
-using TheTechIdea.Beep.WebAPI;using TheTechIdea.Beep.WebAPI;
-
-
-
-namespace TheTechIdea.Beep.Connectors.Zohonamespace TheTechIdea.Beep.Connectors.Zoho
-
-{{
-
-    /// <summary>    /// <summary>
-
-    /// Zoho CRM data source implementation using WebAPIDataSource as base class    /// Zoho CRM data source implementation using WebAPIDataSource as base class
-
-    /// </summary>    /// </summary>
-
-    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho)]    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho)]
-
-    public class ZohoDataSource : WebAPIDataSource    public class ZohoDataSource : WebAPIDataSource
-
-    {    {
-
-        // Known Zoho CRM entities with their API endpoints        // Known Zoho CRM entities with their API endpoints
-
-        private static readonly Dictionary<string, string> EntityEndpoints = new(StringComparer.OrdinalIgnoreCase)        private static readonly Dictionary<string, string> EntityEndpoints = new(StringComparer.OrdinalIgnoreCase)
-
-        {        {
-
-            ["leads"] = "Leads",            ["leads"] = "Leads",
-
-            ["contacts"] = "Contacts",            ["contacts"] = "Contacts",
-
-            ["accounts"] = "Accounts",            ["accounts"] = "Accounts",
-
-            ["deals"] = "Deals",            ["deals"] = "Deals",
-
-            ["campaigns"] = "Campaigns",            ["campaigns"] = "Campaigns",
-
-            ["tasks"] = "Tasks",            ["tasks"] = "Tasks",
-
-            ["events"] = "Events",            ["events"] = "Events",
-
-            ["calls"] = "Calls",            ["calls"] = "Calls",
-
-            ["notes"] = "Notes",            ["notes"] = "Notes",
-
-            ["products"] = "Products",            ["products"] = "Products",
-
-            ["price_books"] = "Price_Books",            ["price_books"] = "Price_Books",
-
-            ["quotes"] = "Quotes",            ["quotes"] = "Quotes",
-
-            ["sales_orders"] = "Sales_Orders",            ["sales_orders"] = "Sales_Orders",
-
-            ["invoices"] = "Invoices",            ["invoices"] = "Invoices",
-
-            ["vendors"] = "Vendors",            ["vendors"] = "Vendors",
-
-            ["users"] = "users"            ["users"] = "users"
-
-        };        };
-
-
-
-        public ZohoDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)        public ZohoDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
-
-        {        {
-
-            // Initialize WebAPI connection properties if needed            // Initialize WebAPI connection properties if needed
-
-            if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)            if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
-
-            {            {
-
-                if (Dataconnection != null)                if (Dataconnection != null)
-
-                    Dataconnection.ConnectionProp = new WebAPIConnectionProperties();                    Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
-
-            }            }
-
-
-
-            // Set up entity list            // Set up entity list
-
-            EntitiesNames = EntityEndpoints.Keys.ToList();            EntitiesNames = EntityEndpoints.Keys.ToList();
-
-            Entities = EntitiesNames.Select(name => new EntityStructure             Entities = EntitiesNames.Select(name => new EntityStructure 
-
-            {             { 
-
-                EntityName = name,                 EntityName = name, 
-
-                DatasourceEntityName = name                 DatasourceEntityName = name 
-
-            }).ToList();            }).ToList();
-
-        }        }
-
-
-
-        // Entity list method following Twitter pattern        // Entity list method following Twitter pattern
-
-        public override List<string> GetEntitesList()        public override List<string> GetEntitesList()
-
-        {        {
-
-            return EntityEndpoints.Keys.ToList();            return EntityEndpoints.Keys.ToList();
-
-        }        }
-
-
-
-        // Sync method following Twitter pattern        // Sync method following Twitter pattern
-
-        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
-
-        {        {
-
-            var result = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();            var result = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
-
-            return result ?? new List<object>();            return result ?? new List<object>();
-
-        }        }
-
-
-
-        // Async method following Twitter pattern        // Async method following Twitter pattern
-
-        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> filter)        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> filter)
-
-        {        {
-
-            try            try
-
-            {            {
-
-                if (!EntityEndpoints.TryGetValue(EntityName, out string? endpoint) || endpoint == null)                if (!EntityEndpoints.TryGetValue(EntityName, out string? endpoint) || endpoint == null)
-
-                {                {
-
-                    Logger?.WriteLog($"Unknown entity: {EntityName}");                    Logger?.WriteLog($"Unknown entity: {EntityName}");
-
-                    return new List<object>();                    return new List<object>();
-
-                }                }
-
-
-
-                var queryParams = BuildZohoQuery(filter);                var queryParams = BuildZohoQuery(filter);
-
-                                
-
-                // Zoho uses different endpoints for search vs. regular queries                // Zoho uses different endpoints for search vs. regular queries
-
-                var useSearch = filter?.Any(f => !string.IsNullOrWhiteSpace(f.FieldName)) == true;                var useSearch = filter?.Any(f => !string.IsNullOrWhiteSpace(f.FieldName)) == true;
-
-                var finalEndpoint = useSearch && !endpoint.Equals("users", StringComparison.OrdinalIgnoreCase)                 var finalEndpoint = useSearch && !endpoint.Equals("users", StringComparison.OrdinalIgnoreCase) 
-
-                    ? $"{endpoint}/search"                     ? $"{endpoint}/search" 
-
-                    : endpoint;                    : endpoint;
-
-
-
-                // Handle pagination similar to Twitter pattern                // Handle pagination similar to Twitter pattern
-
-                var allResults = new List<object>();                var allResults = new List<object>();
-
-                int page = 1;                int page = 1;
-
-                int perPage = 200; // Zoho default page size                int perPage = 200; // Zoho default page size
-
-                bool hasMore = true;                bool hasMore = true;
-
-
-
-                while (hasMore)                while (hasMore)
-
-                {                {
-
-                    var paginatedQuery = new Dictionary<string, string>(queryParams)                    var paginatedQuery = new Dictionary<string, string>(queryParams)
-
-                    {                    {
-
-                        ["page"] = page.ToString(),                        ["page"] = page.ToString(),
-
-                        ["per_page"] = perPage.ToString()                        ["per_page"] = perPage.ToString()
-
-                    };                    };
-
-
-
-                    using var response = await GetAsync(finalEndpoint, paginatedQuery).ConfigureAwait(false);                    using var response = await GetAsync(finalEndpoint, paginatedQuery).ConfigureAwait(false);
-
-                    if (response?.IsSuccessStatusCode != true)                    if (response?.IsSuccessStatusCode != true)
-
-                    {                    {
-
-                        Logger?.WriteLog($"Failed to fetch {EntityName} from Zoho API");                        Logger?.WriteLog($"Failed to fetch {EntityName} from Zoho API");
-
-                        break;                        break;
-
-                    }                    }
-
-
-
-                    var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);                    var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                    var results = ExtractZohoData(content, endpoint);                    var results = ExtractZohoData(content, endpoint);
-
-                                        
-
-                    if (results?.Any() == true)                    if (results?.Any() == true)
-
-                    {                    {
-
-                        allResults.AddRange(results);                        allResults.AddRange(results);
-
-                        page++;                        page++;
-
-                                                
-
-                        // Check if we got fewer results than requested (indicates last page)                        // Check if we got fewer results than requested (indicates last page)
-
-                        hasMore = results.Count() >= perPage;                        hasMore = results.Count() >= perPage;
-
-                    }                    }
-
-                    else                    else
-
-                    {                    {
-
-                        hasMore = false;                        hasMore = false;
-
-                    }                    }
-
-                }                }
-
-
-
-                return allResults;                return allResults;
-
-            }            }
-
-            catch (Exception ex)            catch (Exception ex)
-
-            {            {
-
-                Logger?.WriteLog($"Error fetching {EntityName}: {ex.Message}");                Logger?.WriteLog($"Error fetching {EntityName}: {ex.Message}");
-
-                if (ErrorObject != null)                if (ErrorObject != null)
-
-                    ErrorObject.Flag = Errors.Failed;                    ErrorObject.Flag = Errors.Failed;
-
-                return new List<object>();                return new List<object>();
-
-            }            }
-
-        }        }
-
-
-
-        // Build query parameters for Zoho CRM API        // Build query parameters for Zoho CRM API
-
-        private Dictionary<string, string> BuildZohoQuery(List<AppFilter> filters)        private Dictionary<string, string> BuildZohoQuery(List<AppFilter> filters)
-
-        {        {
-
-            var queryParams = new Dictionary<string, string>();            var queryParams = new Dictionary<string, string>();
-
-
-
-            if (filters?.Any() != true) return queryParams;            if (filters?.Any() != true) return queryParams;
-
-
-
-            // Build Zoho CRM search criteria            // Build Zoho CRM search criteria
-
-            var criteria = new List<string>();            var criteria = new List<string>();
-
-                        
-
-            foreach (var filter in filters)            foreach (var filter in filters)
-
-            {            {
-
-                if (string.IsNullOrWhiteSpace(filter.FieldName) || filter.FilterValue == null)                if (string.IsNullOrWhiteSpace(filter.FieldName) || filter.FilterValue == null)
-
-                    continue;                    continue;
-
-
-
-                var fieldName = filter.FieldName;                var fieldName = filter.FieldName;
-
-                var value = filter.FilterValue.ToString();                var value = filter.FilterValue.ToString();
-
-
-
-                // Map common filter operations to Zoho format                // Map common filter operations to Zoho format
-
-                switch (filter.Operator?.ToLowerInvariant())                switch (filter.Operator?.ToLowerInvariant())
-
-                {                {
-
-                    case "=":                    case "=":
-
-                    case "eq":                    case "eq":
-
-                        criteria.Add($"({fieldName}:equals:{EscapeZohoValue(value)})");                        criteria.Add($"({fieldName}:equals:{EscapeZohoValue(value)})");
-
-                        break;                        break;
-
-                    case "like":                    case "like":
-
-                    case "contains":                    case "contains":
-
-                        criteria.Add($"({fieldName}:contains:{EscapeZohoValue(value)})");                        criteria.Add($"({fieldName}:contains:{EscapeZohoValue(value)})");
-
-                        break;                        break;
-
-                    case ">":                    case ">":
-
-                    case "gt":                    case "gt":
-
-                        criteria.Add($"({fieldName}:greater_than:{EscapeZohoValue(value)})");                        criteria.Add($"({fieldName}:greater_than:{EscapeZohoValue(value)})");
-
-                        break;                        break;
-
-                    case "<":                    case "<":
-
-                    case "lt":                    case "lt":
-
-                        criteria.Add($"({fieldName}:less_than:{EscapeZohoValue(value)})");                        criteria.Add($"({fieldName}:less_than:{EscapeZohoValue(value)})");
-
-                        break;                        break;
-
-                    case ">=":                    case ">=":
-
-                    case "gte":                    case "gte":
-
-                        criteria.Add($"({fieldName}:greater_equal:{EscapeZohoValue(value)})");                        criteria.Add($"({fieldName}:greater_equal:{EscapeZohoValue(value)})");
-
-                        break;                        break;
-
-                    case "<=":                    case "<=":
-
-                    case "lte":                    case "lte":
-
-                        criteria.Add($"({fieldName}:less_equal:{EscapeZohoValue(value)})");                        criteria.Add($"({fieldName}:less_equal:{EscapeZohoValue(value)})");
-
-                        break;                        break;
-
-                    default:                    default:
-
-                        // Default to equality                        // Default to equality
-
-                        criteria.Add($"({fieldName}:equals:{EscapeZohoValue(value)})");                        criteria.Add($"({fieldName}:equals:{EscapeZohoValue(value)})");
-
-                        break;                        break;
-
-                }                }
-
-            }            }
-
-
-
-            if (criteria.Any())            if (criteria.Any())
-
-            {            {
-
-                queryParams["criteria"] = string.Join("and", criteria);                queryParams["criteria"] = string.Join("and", criteria);
-
-            }            }
-
-
-
-            return queryParams;            return queryParams;
-
-        }        }
-
-
-
-        // Escape special characters in Zoho search values        // Escape special characters in Zoho search values
-
-        private string EscapeZohoValue(string? value)        private string EscapeZohoValue(string value)
-
-        {        {
-
-            if (string.IsNullOrEmpty(value)) return value ?? "";            if (string.IsNullOrEmpty(value)) return value;
-
-                        
-
-            // Escape common special characters for Zoho CRM API            // Escape common special characters for Zoho CRM API
-
-            return value.Replace("'", "\\'").Replace("\"", "\\\"");            return value.Replace("'", "\\'").Replace("\"", "\\\"");
-
-        }        }
-
-
-
-        // Extract data from Zoho JSON response        // Extract data from Zoho JSON response
-
-        private IEnumerable<object> ExtractZohoData(string jsonContent, string endpoint)        private IEnumerable<object> ExtractZohoData(string jsonContent, string endpoint)
-
-        {        {
-
-            try            try
-
-            {            {
-
-                if (string.IsNullOrWhiteSpace(jsonContent))                if (string.IsNullOrWhiteSpace(jsonContent))
-
-                    return Enumerable.Empty<object>();                    return Enumerable.Empty<object>();
-
-
-
-                using var document = JsonDocument.Parse(jsonContent);                using var document = JsonDocument.Parse(jsonContent);
-
-                var root = document.RootElement;                var root = document.RootElement;
-
-
-
-                // Zoho returns different structures:                // Zoho returns different structures:
-
-                // For most entities: { "data": [...] }                // For most entities: { "data": [...] }
-
-                // For users: { "users": [...] }                // For users: { "users": [...] }
-
-                                
-
-                var propertyName = endpoint.Equals("users", StringComparison.OrdinalIgnoreCase) ? "users" : "data";                var propertyName = endpoint.Equals("users", StringComparison.OrdinalIgnoreCase) ? "users" : "data";
-
-                                
-
-                if (root.TryGetProperty(propertyName, out var dataElement) && dataElement.ValueKind == JsonValueKind.Array)                if (root.TryGetProperty(propertyName, out var dataElement) && dataElement.ValueKind == JsonValueKind.Array)
-
-                {                {
-
-                    return ExtractArrayItems(dataElement);                    return ExtractArrayItems(dataElement);
-
-                }                }
-
-
-
-                // If root is an array                // If root is an array
-
-                if (root.ValueKind == JsonValueKind.Array)                if (root.ValueKind == JsonValueKind.Array)
-
-                {                {
-
-                    return ExtractArrayItems(root);                    return ExtractArrayItems(root);
-
-                }                }
-
-
-
-                // If single object, wrap in array                // If single object, wrap in array
-
-                if (root.ValueKind == JsonValueKind.Object)                if (root.ValueKind == JsonValueKind.Object)
-
-                {                {
-
-                    var obj = JsonSerializer.Deserialize<object>(root.GetRawText());                    var obj = JsonSerializer.Deserialize<object>(root.GetRawText());
-
-                    return obj != null ? new[] { obj } : Enumerable.Empty<object>();                    return obj != null ? new[] { obj } : Enumerable.Empty<object>();
-
-                }                }
-
-
-
-                return Enumerable.Empty<object>();                return Enumerable.Empty<object>();
-
-            }            }
-
-            catch (Exception ex)            catch (Exception ex)
-
-            {            {
-
-                Logger?.WriteLog($"Error parsing Zoho response: {ex.Message}");                Logger?.WriteLog($"Error parsing Zoho response: {ex.Message}");
-
-                return Enumerable.Empty<object>();                return Enumerable.Empty<object>();
-
-            }            }
-
-        }        }
-
-
-
-        // Helper method to extract items from JSON array        // Helper method to extract items from JSON array
-
-        private IEnumerable<object> ExtractArrayItems(JsonElement arrayElement)        private IEnumerable<object> ExtractArrayItems(JsonElement arrayElement)
-
-        {        {
-
-            var results = new List<object>();            var results = new List<object>();
-
-                        
-
-            foreach (var item in arrayElement.EnumerateArray())            foreach (var item in arrayElement.EnumerateArray())
-
-            {            {
-
-                try                try
-
-                {                {
-
-                    var obj = JsonSerializer.Deserialize<object>(item.GetRawText());                    var obj = JsonSerializer.Deserialize<object>(item.GetRawText());
-
-                    if (obj != null)                    if (obj != null)
-
-                        results.Add(obj);                        results.Add(obj);
-
-                }                }
-
-                catch (Exception ex)                catch (Exception ex)
-
-                {                {
-
-                    Logger?.WriteLog($"Error deserializing array item: {ex.Message}");                    Logger?.WriteLog($"Error deserializing array item: {ex.Message}");
-
-                }                }
-
-            }            }
-
-
-
-            return results;            return results;
-
-        }        }
-
-    }    }
-
-}}
-        }
-
-        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Http;
+using TheTechIdea.Beep;
+using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.Workflow;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.ConfigUtil;
+
+namespace TheTechIdea.Beep.Connectors.ZohoDataSource
+{
+    /// <summary>
+    /// Zoho CRM Data Source implementation using Zoho CRM REST API
+    /// </summary>
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho)]
+    public class ZohoDataSource : WebAPIDataSource
+    {
+        #region Configuration Classes
+
+        /// <summary>
+        /// Configuration for Zoho connection
+        /// </summary>
+        public class ZohoConfig
         {
-            if (!Map.TryGetValue(EntityName, out var m))
-                throw new InvalidOperationException($"Unknown Zoho entity '{EntityName}'.");
-
-            int page = Math.Max(1, pageNumber);
-            int size = Math.Max(1, Math.Min(pageSize, 200));
-
-            Dictionary<string, string> q;
-            string endpoint;
-
-            if (EntityName.Equals("Users", StringComparison.OrdinalIgnoreCase))
-            {
-                q = FiltersToQuery(filter);
-                endpoint = m.path;
-            }
-            else
-            {
-                var tmp = BuildZohoQuery(filter);
-                q = tmp.query;
-                endpoint = tmp.useSearch ? $"{m.path}/search" : m.path;
-            }
-
-            q["page"] = page.ToString();
-            q["per_page"] = size.ToString();
-
-            var resp = GetAsync(endpoint, q).ConfigureAwait(false).GetAwaiter().GetResult();
-            var items = ExtractArray(resp, m.root);
-            var (countOnPage, more) = ExtractInfo(resp); // count is this page�s count
-
-            int pageCount = (int)(countOnPage ?? items.Count);
-            int totalSoFar = (page - 1) * size + pageCount;
-
-            return new PagedResult
-            {
-                Data = items,
-                PageNumber = page,
-                PageSize = size,
-                TotalRecords = totalSoFar,                        // true grand total not exposed directly
-                TotalPages = more ? page + 1 : page,            // best-effort
-                HasPreviousPage = page > 1,
-                HasNextPage = more
-            };
-        }
-
-        // ---------------------------- helpers ----------------------------
-
-        private static Dictionary<string, string> FiltersToQuery(List<AppFilter> filters)
-        {
-            var q = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            if (filters == null) return q;
-            foreach (var f in filters)
-            {
-                if (f == null || string.IsNullOrWhiteSpace(f.FieldName)) continue;
-                q[f.FieldName.Trim()] = f.FilterValue?.ToString() ?? string.Empty;
-            }
-            return q;
+            public string ClientId { get; set; } = string.Empty;
+            public string ClientSecret { get; set; } = string.Empty;
+            public string RefreshToken { get; set; } = string.Empty;
+            public string AccessToken { get; set; } = string.Empty;
+            public string BaseUrl { get; set; } = "https://www.zohoapis.com/crm/v2";
+            public string Domain { get; set; } = "com"; // com, eu, in, au, jp, cn
         }
 
         /// <summary>
-        /// Builds Zoho query dictionary. If filters exist, uses /search with criteria=...; otherwise plain list endpoint.
+        /// Zoho entity metadata
         /// </summary>
-        private static (Dictionary<string, string> query, bool useSearch) BuildZohoQuery(List<AppFilter> filters)
+        public class ZohoEntity
         {
-            var q = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-            if (filters == null || filters.Count == 0)
-                return (q, false); // no filters -> list
-
-            var crit = BuildCriteria(filters);
-            if (!string.IsNullOrWhiteSpace(crit))
-            {
-                q["criteria"] = crit;
-                return (q, true);
-            }
-            return (q, false);
+            public string EntityName { get; set; } = string.Empty;
+            public string DisplayName { get; set; } = string.Empty;
+            public string ApiEndpoint { get; set; } = string.Empty;
+            public Dictionary<string, string> Fields { get; set; } = new();
         }
 
-        /// <summary>
-        /// Convert AppFilter list into Zoho "criteria" string: (Field op value) and (Field op value) ...
-        /// Supported ops: =, !=, <, <=, >, >=, contains, starts_with, ends_with, in
-        /// </summary>
-        private static string BuildCriteria(List<AppFilter> filters)
+        #endregion
+
+        #region Private Fields
+
+        private readonly ZohoConfig _config;
+        private HttpClient? _httpClient;
+        private ConnectionState _connectionState = ConnectionState.Closed;
+        private string _connectionString = string.Empty;
+        private readonly Dictionary<string, ZohoEntity> _entityCache = new();
+        private DateTime _tokenExpiry = DateTime.MinValue;
+
+        #endregion
+
+        #region Constructor
+
+        public ZohoDataSource(
+            string datasourcename,
+            IDMLogger logger,
+            IDMEEditor editor,
+            DataSourceType type,
+            IErrorsInfo errors)
+            : base(datasourcename, logger, editor, type, errors)
         {
-            var parts = new List<string>();
-            foreach (var f in filters)
+            _config = new ZohoConfig();
+
+            // Initialize connection properties
+            if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
             {
-                if (f == null || string.IsNullOrWhiteSpace(f.FieldName)) continue;
-
-                var field = f.FieldName.Trim();
-                var opRaw = (f.Operator ?? "=").Trim().ToLowerInvariant();
-                var value = f.FilterValue?.ToString();
-
-                string op = opRaw switch
-                {
-                    "!=" or "<>" => "!=",
-                    "<=" => "<=",
-                    ">=" => ">=",
-                    "<" => "<",
-                    ">" => ">",
-                    "contains" => "contains",
-                    "starts_with" => "starts_with",
-                    "ends_with" => "ends_with",
-                    "in" => "in",
-                    _ => "="
-                };
-
-                if (op == "in")
-                {
-                    var list = SplitList(value).Select(EscapeValue).ToArray();
-                    if (list.Length > 0)
-                        parts.Add($"({field}:in:{string.Join(",", list)})");
-                    continue;
-                }
-
-                var lit = EscapeValue(value);
-                parts.Add($"({field}:{op}:{lit})");
+                if (Dataconnection != null)
+                    Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
             }
 
-            return parts.Count == 0 ? null : string.Join(" and ", parts);
+            // Initialize HTTP client
+            var handler = new HttpClientHandler();
+            _httpClient = new HttpClient(handler);
+            _httpClient.DefaultRequestHeaders.Add("User-Agent", "BeepDataConnector/1.0");
         }
 
-        private static string EscapeValue(string s)
+        #endregion
+
+        #region IDataSource Implementation
+
+        public async Task<bool> ConnectAsync()
         {
-            if (s == null) return "\"\"";
-            // try booleans/numbers/dates? Zoho /search expects literals as strings in most cases; quote safely.
-            var esc = s.Replace("\\", "\\\\").Replace("\"", "\\\"");
-            return $"\"{esc}\"";
-        }
-
-        private static string[] SplitList(string s)
-        {
-            if (string.IsNullOrWhiteSpace(s)) return Array.Empty<string>();
-            return s.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(x => x.Trim())
-                    .Where(x => x.Length > 0)
-                    .ToArray();
-        }
-
-        private async Task<HttpResponseMessage> GetAsync(string endpoint, Dictionary<string, string> query, CancellationToken ct = default)
-            => await base.GetAsync(endpoint, query, cancellationToken: ct).ConfigureAwait(false);
-
-        /// <summary>
-        /// Extract array under root (e.g., "data" or "users"); wrap single object if needed.
-        /// </summary>
-        private static List<object> ExtractArray(HttpResponseMessage resp, string root)
-        {
-            var list = new List<object>();
-            if (resp == null) return list;
-
-            var json = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            using var doc = JsonDocument.Parse(json);
-
-            JsonElement node = doc.RootElement;
-            if (!string.IsNullOrWhiteSpace(root))
-            {
-                if (!node.TryGetProperty(root, out node))
-                    return list;
-            }
-
-            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-            if (node.ValueKind == JsonValueKind.Array)
-            {
-                list.Capacity = node.GetArrayLength();
-                foreach (var el in node.EnumerateArray())
-                {
-                    var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(el.GetRawText(), opts);
-                    if (obj != null) list.Add(obj);
-                }
-            }
-            else if (node.ValueKind == JsonValueKind.Object)
-            {
-                var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(node.GetRawText(), opts);
-                if (obj != null) list.Add(obj);
-            }
-            return list;
-        }
-
-        /// <summary>
-        /// Extract paging info: info.count and info.more_records
-        /// </summary>
-        private static (long? count, bool more) ExtractInfo(HttpResponseMessage resp)
-        {
-            if (resp == null) return (null, false);
             try
             {
-                var json = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-                using var doc = JsonDocument.Parse(json);
-                if (doc.RootElement.TryGetProperty("info", out var info) && info.ValueKind == JsonValueKind.Object)
+                Logger.WriteLog($"Connecting to Zoho CRM: {_config.BaseUrl}");
+
+                // Refresh access token if needed
+                if (string.IsNullOrEmpty(_config.AccessToken) || DateTime.Now >= _tokenExpiry)
                 {
-                    long? count = null;
-                    bool more = false;
+                    if (!await RefreshAccessTokenAsync())
+                    {
+                        ErrorObject.Flag = Errors.Failed;
+                        ErrorObject.Message = "Failed to obtain access token";
+                        return false;
+                    }
+                }
 
-                    if (info.TryGetProperty("count", out var c) && c.ValueKind == JsonValueKind.Number && c.TryGetInt64(out var cv))
-                        count = cv;
-                    if (info.TryGetProperty("more_records", out var m) && m.ValueKind == JsonValueKind.True)
-                        more = true;
+                // Set authorization header
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Zoho-oauthtoken", _config.AccessToken);
 
-                    return (count, more);
+                // Test connection by getting users
+                var testResponse = await _httpClient.GetAsync($"{_config.BaseUrl}/users?type=CurrentUser");
+                if (testResponse.IsSuccessStatusCode)
+                {
+                    ConnectionStatus = ConnectionState.Open;
+                    Logger.WriteLog("Successfully connected to Zoho CRM");
+                    return true;
+                }
+
+                var errorContent = await testResponse.Content.ReadAsStringAsync();
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Connection test failed: {testResponse.StatusCode} - {errorContent}";
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Connection failed: {ex.Message}";
+                Logger.WriteLog($"Zoho CRM connection error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public Task<bool> DisconnectAsync()
+        {
+            try
+            {
+                _httpClient?.Dispose();
+                _httpClient = null;
+                ConnectionStatus = ConnectionState.Closed;
+                _entityCache.Clear();
+                _config.AccessToken = string.Empty;
+                Logger.WriteLog("Disconnected from Zoho CRM");
+                return Task.FromResult(true);
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Disconnect failed: {ex.Message}";
+                return Task.FromResult(false);
+            }
+        }
+
+        public async Task<bool> OpenconnectionAsync()
+        {
+            return await ConnectAsync();
+        }
+
+        public async Task<bool> CloseconnectionAsync()
+        {
+            return await DisconnectAsync();
+        }
+
+        public Task<List<string>> GetEntitiesNamesAsync()
+        {
+            try
+            {
+                if (_httpClient == null)
+                    throw new InvalidOperationException("Not connected to Zoho CRM");
+
+                // Get available entities from Zoho CRM
+                var entities = GetZohoEntitiesAsync();
+                EntitiesNames = entities.Select(e => e.EntityName).ToList();
+                return Task.FromResult(EntitiesNames);
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get entities: {ex.Message}";
+                return Task.FromResult(new List<string>());
+            }
+        }
+
+        public Task<List<EntityStructure>> GetEntityStructuresAsync(bool refresh = false)
+        {
+            try
+            {
+                if (_httpClient == null)
+                    throw new InvalidOperationException("Not connected to Zoho CRM");
+
+                if (!refresh && Entities.Any())
+                    return Task.FromResult(Entities);
+
+                var zohoEntities = GetZohoEntitiesAsync();
+                Entities = new List<EntityStructure>();
+
+                foreach (var entity in zohoEntities)
+                {
+                    var structure = new EntityStructure
+                    {
+                        EntityName = entity.EntityName,
+                        Caption = entity.DisplayName,
+                        Fields = new List<EntityField>()
+                    };
+
+                    foreach (var field in entity.Fields)
+                    {
+                        structure.Fields.Add(new EntityField
+                        {
+                            fieldname = field.Key,
+                            fieldtype = field.Value
+                        });
+                    }
+
+                    Entities.Add(structure);
+                }
+
+                return Task.FromResult(Entities);
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get entity structures: {ex.Message}";
+                return Task.FromResult(new List<EntityStructure>());
+            }
+        }
+
+        public new async Task<object?> GetEntityAsync(string entityName, List<AppFilter>? filter = null)
+        {
+            try
+            {
+                if (_httpClient == null)
+                    throw new InvalidOperationException("Not connected to Zoho CRM");
+
+                var queryParams = BuildQueryParameters(filter);
+                var url = $"{_config.BaseUrl}/{entityName}{queryParams}";
+
+                var response = await _httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<JsonElement>(content);
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get {entityName}: {response.StatusCode} - {errorContent}";
+                return null;
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get entity data: {ex.Message}";
+                return null;
+            }
+        }
+
+        public async Task<bool> InsertEntityAsync(string entityName, object entityData)
+        {
+            try
+            {
+                if (_httpClient == null)
+                    throw new InvalidOperationException("Not connected to Zoho CRM");
+
+                var jsonData = JsonSerializer.Serialize(entityData);
+                var content = new StringContent(jsonData, System.Text.Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync($"{_config.BaseUrl}/{entityName}", content);
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to insert {entityName}: {response.StatusCode} - {errorContent}";
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to insert entity: {ex.Message}";
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateEntityAsync(string entityName, object entityData, string entityId)
+        {
+            try
+            {
+                if (_httpClient == null)
+                    throw new InvalidOperationException("Not connected to Zoho CRM");
+
+                var jsonData = JsonSerializer.Serialize(entityData);
+                var content = new StringContent(jsonData, System.Text.Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PutAsync($"{_config.BaseUrl}/{entityName}/{entityId}", content);
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to update {entityName}: {response.StatusCode} - {errorContent}";
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to update entity: {ex.Message}";
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteEntityAsync(string entityName, string entityId)
+        {
+            try
+            {
+                if (_httpClient == null)
+                    throw new InvalidOperationException("Not connected to Zoho CRM");
+
+                var response = await _httpClient.DeleteAsync($"{_config.BaseUrl}/{entityName}/{entityId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to delete {entityName}: {response.StatusCode} - {errorContent}";
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to delete entity: {ex.Message}";
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private async Task<bool> RefreshAccessTokenAsync()
+        {
+            try
+            {
+                using var tokenClient = new HttpClient();
+                var tokenUrl = $"https://accounts.zoho.{_config.Domain}/oauth/v2/token";
+
+                var content = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("refresh_token", _config.RefreshToken),
+                    new KeyValuePair<string, string>("client_id", _config.ClientId),
+                    new KeyValuePair<string, string>("client_secret", _config.ClientSecret),
+                    new KeyValuePair<string, string>("grant_type", "refresh_token")
+                });
+
+                var response = await tokenClient.PostAsync(tokenUrl, content);
+                if (response.IsSuccessStatusCode)
+                {
+                    var tokenResponse = await response.Content.ReadFromJsonAsync<JsonElement>();
+                    _config.AccessToken = tokenResponse.GetProperty("access_token").GetString() ?? string.Empty;
+
+                    // Set token expiry (typically 1 hour)
+                    _tokenExpiry = DateTime.Now.AddHours(1);
+
+                    Logger.WriteLog("Successfully refreshed Zoho CRM access token");
+                    return true;
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Token refresh failed: {response.StatusCode} - {errorContent}";
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Token refresh error: {ex.Message}";
+                return false;
+            }
+        }
+
+        private void ParseConnectionString(string connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString))
+                return;
+
+            var parameters = connectionString.Split(';');
+            foreach (var param in parameters)
+            {
+                if (string.IsNullOrWhiteSpace(param))
+                    continue;
+
+                var keyValue = param.Split('=');
+                if (keyValue.Length == 2)
+                {
+                    var key = keyValue[0].Trim().ToLower();
+                    var value = keyValue[1].Trim();
+
+                    switch (key.ToLower())
+                    {
+                        case "clientid":
+                            _config.ClientId = value;
+                            break;
+                        case "clientsecret":
+                            _config.ClientSecret = value;
+                            break;
+                        case "refreshtoken":
+                            _config.RefreshToken = value;
+                            break;
+                        case "domain":
+                            _config.Domain = value;
+                            break;
+                        case "baseurl":
+                            _config.BaseUrl = value;
+                            break;
+                    }
                 }
             }
-            catch { /* ignore */ }
-            return (null, false);
         }
+
+        private List<ZohoEntity> GetZohoEntitiesAsync()
+        {
+            if (_entityCache.Any())
+                return _entityCache.Values.ToList();
+
+            // Common Zoho CRM entities
+            var entities = new List<ZohoEntity>
+            {
+                new ZohoEntity
+                {
+                    EntityName = "Leads",
+                    DisplayName = "Leads",
+                    ApiEndpoint = "Leads",
+                    Fields = new Dictionary<string, string>
+                    {
+                        ["id"] = "String",
+                        ["First_Name"] = "String",
+                        ["Last_Name"] = "String",
+                        ["Email"] = "String",
+                        ["Phone"] = "String",
+                        ["Company"] = "String",
+                        ["Lead_Source"] = "String",
+                        ["Lead_Status"] = "String",
+                        ["Created_Time"] = "DateTime",
+                        ["Modified_Time"] = "DateTime"
+                    }
+                },
+                new ZohoEntity
+                {
+                    EntityName = "Contacts",
+                    DisplayName = "Contacts",
+                    ApiEndpoint = "Contacts",
+                    Fields = new Dictionary<string, string>
+                    {
+                        ["id"] = "String",
+                        ["First_Name"] = "String",
+                        ["Last_Name"] = "String",
+                        ["Email"] = "String",
+                        ["Phone"] = "String",
+                        ["Mobile"] = "String",
+                        ["Account_Name"] = "String",
+                        ["Created_Time"] = "DateTime",
+                        ["Modified_Time"] = "DateTime"
+                    }
+                },
+                new ZohoEntity
+                {
+                    EntityName = "Accounts",
+                    DisplayName = "Accounts",
+                    ApiEndpoint = "Accounts",
+                    Fields = new Dictionary<string, string>
+                    {
+                        ["id"] = "String",
+                        ["Account_Name"] = "String",
+                        ["Website"] = "String",
+                        ["Phone"] = "String",
+                        ["Billing_Street"] = "String",
+                        ["Billing_City"] = "String",
+                        ["Billing_State"] = "String",
+                        ["Billing_Country"] = "String",
+                        ["Created_Time"] = "DateTime",
+                        ["Modified_Time"] = "DateTime"
+                    }
+                },
+                new ZohoEntity
+                {
+                    EntityName = "Deals",
+                    DisplayName = "Deals",
+                    ApiEndpoint = "Deals",
+                    Fields = new Dictionary<string, string>
+                    {
+                        ["id"] = "String",
+                        ["Deal_Name"] = "String",
+                        ["Stage"] = "String",
+                        ["Amount"] = "Decimal",
+                        ["Closing_Date"] = "DateTime",
+                        ["Account_Name"] = "String",
+                        ["Contact_Name"] = "String",
+                        ["Created_Time"] = "DateTime",
+                        ["Modified_Time"] = "DateTime"
+                    }
+                }
+            };
+
+            foreach (var entity in entities)
+            {
+                _entityCache[entity.EntityName] = entity;
+            }
+
+            return entities;
+        }
+
+        private string BuildQueryParameters(List<AppFilter>? filters)
+        {
+            if (filters == null || !filters.Any())
+                return string.Empty;
+
+            var queryParts = new List<string>();
+
+            foreach (var filter in filters)
+            {
+                if (!string.IsNullOrEmpty(filter.FilterValue))
+                {
+                    queryParts.Add($"{filter.FieldName}={Uri.EscapeDataString(filter.FilterValue)}");
+                }
+            }
+
+            return queryParts.Any() ? $"?{string.Join("&", queryParts)}" : string.Empty;
+        }
+
+        #endregion
+
+        #region Standard Interface Methods
+
+        public bool CreateEntityAsAsync(string entityname, object entitydata)
+        {
+            return Task.Run(() => InsertEntityAsync(entityname, entitydata)).GetAwaiter().GetResult();
+        }
+
+        public bool UpdateEntity(string entityname, object entitydata, string entityid)
+        {
+            return Task.Run(() => UpdateEntityAsync(entityname, entitydata, entityid)).GetAwaiter().GetResult();
+        }
+
+        public bool DeleteEntity(string entityname, string entitydata, string entityid)
+        {
+            return Task.Run(() => DeleteEntityAsync(entityname, entityid)).GetAwaiter().GetResult();
+        }
+
+        public new object? GetEntity(string entityname, List<AppFilter> filter)
+        {
+            return Task.Run(() => GetEntityAsync(entityname, filter)).GetAwaiter().GetResult();
+        }
+
+        public List<EntityStructure> GetEntityStructures(bool refresh = false)
+        {
+            return Task.Run(() => GetEntityStructuresAsync(refresh)).GetAwaiter().GetResult();
+        }
+
+        public new List<string> GetEntitesList()
+        {
+            return Task.Run(() => GetEntitiesNamesAsync()).GetAwaiter().GetResult();
+        }
+
+        public new bool Openconnection()
+        {
+            return Task.Run(() => OpenconnectionAsync()).GetAwaiter().GetResult();
+        }
+
+        public new bool Closeconnection()
+        {
+            return Task.Run(() => CloseconnectionAsync()).GetAwaiter().GetResult();
+        }
+
+        public bool CreateEntityAs(string entityname, object entitydata)
+        {
+            return CreateEntityAsAsync(entityname, entitydata);
+        }
+
+        public new IErrorsInfo RunQuery(string qrystr)
+        {
+            // Zoho CRM doesn't support arbitrary SQL queries
+            // This would need to be implemented using Zoho's filter API
+            ErrorObject.Flag = Errors.Failed;
+            ErrorObject.Message = "RunQuery not supported. Use GetEntity with filters instead.";
+            return ErrorObject;
+        }
+
+        public new IErrorsInfo RunScript(ETLScriptDet dDLScripts)
+        {
+            ErrorObject.Flag = Errors.Failed;
+            ErrorObject.Message = "RunScript not supported for Zoho CRM";
+            return ErrorObject;
+        }
+
+        public new void Dispose()
+        {
+            Task.Run(() => DisconnectAsync()).GetAwaiter().GetResult();
+            _entityCache.Clear();
+        }
+
+        #endregion
     }
 }
+

@@ -85,214 +85,137 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
     /// Reddit data source implementation for Beep framework
     /// Supports Reddit API
     /// </summary>
-    public class RedditDataSource : IDataSource
+    [AddinAttribute(Category = "SocialMedia", Name = "RedditDataSource")]
+    public class RedditDataSource : WebAPIDataSource
     {
-        private readonly RedditConfig _config;
-        private HttpClient _httpClient;
-        private bool _isConnected;
-        private readonly Dictionary<string, EntityMetadata> _entityMetadata;
+    /// <summary>
+    /// Constructor for RedditDataSource
+    /// </summary>
+    public RedditDataSource(string datasourcename, IDMLogger logger, IDMEEditor editor, DataSourceType type, IErrorsInfo errors)
+        : base(datasourcename, logger, editor, type, errors)
+    {
+        InitializeEntities();
+    }
 
-        /// <summary>
-        /// Constructor for RedditDataSource
-        /// </summary>
-        /// <param name="config">Reddit configuration</param>
-        public RedditDataSource(RedditConfig config)
+    /// <summary>
+    /// Initialize entities for Reddit data source
+    /// </summary>
+    private void InitializeEntities()
+    {
+        // Posts/Submissions
+        Entities["posts"] = new EntityStructure
         {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
-            _entityMetadata = InitializeEntityMetadata();
-        }
-
-        /// <summary>
-        /// Constructor for RedditDataSource with connection string
-        /// </summary>
-        /// <param name="connectionString">Connection string in format: ClientId=xxx;ClientSecret=xxx;Username=xxx;Password=xxx;UserAgent=xxx</param>
-        public RedditDataSource(string connectionString)
-        {
-            _config = ParseConnectionString(connectionString);
-            _entityMetadata = InitializeEntityMetadata();
-        }
-
-        /// <summary>
-        /// Parse connection string into RedditConfig
-        /// </summary>
-        private RedditConfig ParseConnectionString(string connectionString)
-        {
-            var config = new RedditConfig();
-            var parts = connectionString.Split(';');
-
-            foreach (var part in parts)
+            EntityName = "posts",
+            ViewID = 1,
+            Fields = new List<EntityField>
             {
-                var keyValue = part.Split('=');
-                if (keyValue.Length == 2)
-                {
-                    var key = keyValue[0].Trim();
-                    var value = keyValue[1].Trim();
-
-                    switch (key.ToLower())
-                    {
-                        case "clientid":
-                            config.ClientId = value;
-                            break;
-                        case "clientsecret":
-                            config.ClientSecret = value;
-                            break;
-                        case "username":
-                            config.Username = value;
-                            break;
-                        case "password":
-                            config.Password = value;
-                            break;
-                        case "accesstoken":
-                            config.AccessToken = value;
-                            break;
-                        case "refreshtoken":
-                            config.RefreshToken = value;
-                            break;
-                        case "useragent":
-                            config.UserAgent = value;
-                            break;
-                        case "apiversion":
-                            config.ApiVersion = value;
-                            break;
-                        case "timeoutseconds":
-                            if (int.TryParse(value, out var timeout))
-                                config.TimeoutSeconds = timeout;
-                            break;
-                        case "maxretries":
-                            if (int.TryParse(value, out var retries))
-                                config.MaxRetries = retries;
-                            break;
-                        case "ratelimitdelayms":
-                            if (int.TryParse(value, out var delay))
-                                config.RateLimitDelayMs = delay;
-                            break;
-                    }
-                }
+                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { fieldname = "title", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "selftext", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "url", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "subreddit", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "author", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "score", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "num_comments", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "created_utc", fieldtype = "datetime", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "upvote_ratio", fieldtype = "decimal", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "is_self", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "over_18", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "stickied", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "locked", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "archived", fieldtype = "boolean", ValueRetrievedFromParent = false }
             }
+        };
 
-            return config;
-        }
-
-        /// <summary>
-        /// Initialize entity metadata for Reddit entities
-        /// </summary>
-        private Dictionary<string, EntityMetadata> InitializeEntityMetadata()
+        // Comments
+        Entities["comments"] = new EntityStructure
         {
-            var metadata = new Dictionary<string, EntityMetadata>();
-
-            // Posts/Submissions
-            metadata["posts"] = new EntityMetadata
+            EntityName = "comments",
+            ViewID = 2,
+            Fields = new List<EntityField>
             {
-                EntityName = "posts",
-                DisplayName = "Posts",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Post ID" },
-                    new EntityField { Name = "title", Type = "string", DisplayName = "Title" },
-                    new EntityField { Name = "selftext", Type = "string", DisplayName = "Self Text" },
-                    new EntityField { Name = "url", Type = "string", DisplayName = "URL" },
-                    new EntityField { Name = "subreddit", Type = "string", DisplayName = "Subreddit" },
-                    new EntityField { Name = "author", Type = "string", DisplayName = "Author" },
-                    new EntityField { Name = "score", Type = "integer", DisplayName = "Score" },
-                    new EntityField { Name = "num_comments", Type = "integer", DisplayName = "Number of Comments" },
-                    new EntityField { Name = "created_utc", Type = "datetime", DisplayName = "Created UTC" },
-                    new EntityField { Name = "upvote_ratio", Type = "decimal", DisplayName = "Upvote Ratio" },
-                    new EntityField { Name = "is_self", Type = "boolean", DisplayName = "Is Self Post" },
-                    new EntityField { Name = "over_18", Type = "boolean", DisplayName = "NSFW" },
-                    new EntityField { Name = "stickied", Type = "boolean", DisplayName = "Stickied" },
-                    new EntityField { Name = "locked", Type = "boolean", DisplayName = "Locked" },
-                    new EntityField { Name = "archived", Type = "boolean", DisplayName = "Archived" }
-                }
-            };
+                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { fieldname = "body", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "author", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "subreddit", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "link_id", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "parent_id", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "score", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "created_utc", fieldtype = "datetime", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "edited", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "is_submitter", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "stickied", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "locked", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "collapsed", fieldtype = "boolean", ValueRetrievedFromParent = false }
+            }
+        };
 
-            // Comments
-            metadata["comments"] = new EntityMetadata
+        // Subreddits
+        Entities["subreddits"] = new EntityStructure
+        {
+            EntityName = "subreddits",
+            ViewID = 3,
+            Fields = new List<EntityField>
             {
-                EntityName = "comments",
-                DisplayName = "Comments",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Comment ID" },
-                    new EntityField { Name = "body", Type = "string", DisplayName = "Body" },
-                    new EntityField { Name = "author", Type = "string", DisplayName = "Author" },
-                    new EntityField { Name = "subreddit", Type = "string", DisplayName = "Subreddit" },
-                    new EntityField { Name = "link_id", Type = "string", DisplayName = "Link ID" },
-                    new EntityField { Name = "parent_id", Type = "string", DisplayName = "Parent ID" },
-                    new EntityField { Name = "score", Type = "integer", DisplayName = "Score" },
-                    new EntityField { Name = "created_utc", Type = "datetime", DisplayName = "Created UTC" },
-                    new EntityField { Name = "edited", Type = "boolean", DisplayName = "Edited" },
-                    new EntityField { Name = "is_submitter", Type = "boolean", DisplayName = "Is Submitter" },
-                    new EntityField { Name = "stickied", Type = "boolean", DisplayName = "Stickied" },
-                    new EntityField { Name = "locked", Type = "boolean", DisplayName = "Locked" },
-                    new EntityField { Name = "collapsed", Type = "boolean", DisplayName = "Collapsed" }
-                }
-            };
+                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { fieldname = "display_name", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "display_name_prefixed", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "subscribers", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "active_user_count", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "description", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "public_description", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "created_utc", fieldtype = "datetime", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "over18", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "subreddit_type", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "lang", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "url", fieldtype = "string", ValueRetrievedFromParent = false }
+            }
+        };
 
-            // Subreddits
-            metadata["subreddits"] = new EntityMetadata
+        // Users
+        Entities["users"] = new EntityStructure
+        {
+            EntityName = "users",
+            ViewID = 4,
+            Fields = new List<EntityField>
             {
-                EntityName = "subreddits",
-                DisplayName = "Subreddits",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Subreddit ID" },
-                    new EntityField { Name = "display_name", Type = "string", DisplayName = "Display Name" },
-                    new EntityField { Name = "display_name_prefixed", Type = "string", DisplayName = "Display Name Prefixed" },
-                    new EntityField { Name = "subscribers", Type = "integer", DisplayName = "Subscribers" },
-                    new EntityField { Name = "active_user_count", Type = "integer", DisplayName = "Active Users" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "public_description", Type = "string", DisplayName = "Public Description" },
-                    new EntityField { Name = "created_utc", Type = "datetime", DisplayName = "Created UTC" },
-                    new EntityField { Name = "over18", Type = "boolean", DisplayName = "NSFW" },
-                    new EntityField { Name = "subreddit_type", Type = "string", DisplayName = "Subreddit Type" },
-                    new EntityField { Name = "lang", Type = "string", DisplayName = "Language" },
-                    new EntityField { Name = "url", Type = "string", DisplayName = "URL" }
-                }
-            };
+                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { fieldname = "name", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "date", fieldtype = "datetime", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "comment_karma", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "link_karma", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "is_gold", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "is_mod", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "is_employee", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "has_verified_email", fieldtype = "boolean", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "created_utc", fieldtype = "datetime", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "snoovatar_img", fieldtype = "string", ValueRetrievedFromParent = false }
+            }
+        };
 
-            // Users
-            metadata["users"] = new EntityMetadata
+        // Search Results
+        Entities["search"] = new EntityStructure
+        {
+            EntityName = "search",
+            ViewID = 5,
+            Fields = new List<EntityField>
             {
-                EntityName = "users",
-                DisplayName = "Users",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "User ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Username" },
-                    new EntityField { Name = "date", Type = "datetime", DisplayName = "Date" },
-                    new EntityField { Name = "comment_karma", Type = "integer", DisplayName = "Comment Karma" },
-                    new EntityField { Name = "link_karma", Type = "integer", DisplayName = "Link Karma" },
-                    new EntityField { Name = "is_gold", Type = "boolean", DisplayName = "Gold Member" },
-                    new EntityField { Name = "is_mod", Type = "boolean", DisplayName = "Moderator" },
-                    new EntityField { Name = "is_employee", Type = "boolean", DisplayName = "Reddit Employee" },
-                    new EntityField { Name = "has_verified_email", Type = "boolean", DisplayName = "Verified Email" },
-                    new EntityField { Name = "created_utc", Type = "datetime", DisplayName = "Created UTC" },
-                    new EntityField { Name = "snoovatar_img", Type = "string", DisplayName = "Avatar Image" }
-                }
-            };
+                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { fieldname = "title", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "selftext", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "url", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "subreddit", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "author", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "score", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "num_comments", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "created_utc", fieldtype = "datetime", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "relevance_score", fieldtype = "decimal", ValueRetrievedFromParent = false }
+            }
+        };
 
-            // Search Results
-            metadata["search"] = new EntityMetadata
-            {
-                EntityName = "search",
-                DisplayName = "Search Results",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Result ID" },
-                    new EntityField { Name = "title", Type = "string", DisplayName = "Title" },
-                    new EntityField { Name = "selftext", Type = "string", DisplayName = "Self Text" },
-                    new EntityField { Name = "url", Type = "string", DisplayName = "URL" },
-                    new EntityField { Name = "subreddit", Type = "string", DisplayName = "Subreddit" },
-                    new EntityField { Name = "author", Type = "string", DisplayName = "Author" },
-                    new EntityField { Name = "score", Type = "integer", DisplayName = "Score" },
-                    new EntityField { Name = "num_comments", Type = "integer", DisplayName = "Number of Comments" },
-                    new EntityField { Name = "created_utc", Type = "datetime", DisplayName = "Created UTC" },
-                    new EntityField { Name = "relevance_score", Type = "decimal", DisplayName = "Relevance Score" }
-                }
-            };
-
-            return metadata;
-        }
+        // Update EntitiesNames collection
+        EntitiesNames.AddRange(Entities.Keys);
+    }
 
         /// <summary>
         /// Authenticate with Reddit API
@@ -338,63 +261,55 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
             }
         }
 
-        /// <summary>
-        /// Connect to Reddit API
-        /// </summary>
-        public async Task<bool> ConnectAsync()
+    /// <summary>
+    /// Connect to Reddit API
+    /// </summary>
+    public override async Task<IErrorsInfo> ConnectAsync(WebAPIConnectionProperties properties)
+    {
+        try
         {
-            try
+            if (string.IsNullOrEmpty(properties.AccessToken))
             {
-                // Authenticate if no access token
-                if (string.IsNullOrEmpty(_config.AccessToken))
-                {
-                    await AuthenticateAsync();
-                }
-
-                // Initialize HTTP client
-                var handler = new HttpClientHandler();
-                _httpClient = new HttpClient(handler)
-                {
-                    Timeout = TimeSpan.FromSeconds(_config.TimeoutSeconds)
-                };
-
-                _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(_config.UserAgent);
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.AccessToken);
-
-                // Test connection by getting user info
-                var testUrl = $"{_config.OAuthUrl}/api/v1/me";
-                var response = await _httpClient.GetAsync(testUrl);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    _isConnected = true;
-                    return true;
-                }
-                else
-                {
-                    // Try to re-authenticate
-                    await AuthenticateAsync();
-                    _httpClient.DefaultRequestHeaders.Authorization =
-                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.AccessToken);
-
-                    response = await _httpClient.GetAsync(testUrl);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        _isConnected = true;
-                        return true;
-                    }
-
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    throw new Exception($"Reddit API connection failed: {response.StatusCode} - {errorContent}");
-                }
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = "Access token is required for Reddit connection";
+                return ErrorObject;
             }
-            catch (Exception ex)
+
+            // Test connection by getting user info
+            var testUrl = $"{properties.BaseUrl}/api/v1/me";
+            var response = await HttpClient.GetAsync(testUrl);
+
+            if (response.IsSuccessStatusCode)
             {
-                _isConnected = false;
-                throw new Exception($"Failed to connect to Reddit API: {ex.Message}", ex);
+                ErrorObject.Flag = Errors.Ok;
+                ErrorObject.Message = "Successfully connected to Reddit API";
+                return ErrorObject;
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Reddit API connection failed: {response.StatusCode} - {errorContent}";
+                return ErrorObject;
             }
         }
+        catch (Exception ex)
+        {
+            ErrorObject.Flag = Errors.Failed;
+            ErrorObject.Message = $"Failed to connect to Reddit API: {ex.Message}";
+            return ErrorObject;
+        }
+    }
+
+    /// <summary>
+    /// Disconnect from Reddit API
+    /// </summary>
+    public override async Task<IErrorsInfo> DisconnectAsync()
+    {
+        ErrorObject.Flag = Errors.Ok;
+        ErrorObject.Message = "Successfully disconnected from Reddit API";
+        return ErrorObject;
+    }
 
         /// <summary>
         /// Disconnect from Reddit API
@@ -410,82 +325,93 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
             return true;
         }
 
-        /// <summary>
-        /// Get data from Reddit API
-        /// </summary>
-        public async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
+    /// <summary>
+    /// Get data from Reddit API
+    /// </summary>
+    public override async Task<IErrorsInfo> GetEntityAsync(string entityName, List<AppFilter> filters = null)
+    {
+        try
         {
-            if (!_isConnected)
+            filters ??= new List<AppFilter>();
+
+            string url;
+
+            switch (entityName.ToLower())
             {
-                await ConnectAsync();
+                case "posts":
+                    var subreddit = filters.FirstOrDefault(f => f.FieldName == "subreddit")?.FieldValue?.ToString() ?? "all";
+                    var sort = filters.FirstOrDefault(f => f.FieldName == "sort")?.FieldValue?.ToString() ?? "hot";
+                    var limit = filters.FirstOrDefault(f => f.FieldName == "limit")?.FieldValue != null ? Convert.ToInt32(filters.FirstOrDefault(f => f.FieldName == "limit").FieldValue) : 25;
+                    url = $"{ConnectionProperties.BaseUrl}/r/{subreddit}/{sort}?limit={limit}";
+                    break;
+
+                case "comments":
+                    var linkId = filters.FirstOrDefault(f => f.FieldName == "link_id")?.FieldValue?.ToString() ?? "";
+                    var commentSort = filters.FirstOrDefault(f => f.FieldName == "sort")?.FieldValue?.ToString() ?? "top";
+                    var commentLimit = filters.FirstOrDefault(f => f.FieldName == "limit")?.FieldValue != null ? Convert.ToInt32(filters.FirstOrDefault(f => f.FieldName == "limit").FieldValue) : 25;
+                    url = $"{ConnectionProperties.BaseUrl}/comments/{linkId}?sort={commentSort}&limit={commentLimit}";
+                    break;
+
+                case "subreddits":
+                    var subredditType = filters.FirstOrDefault(f => f.FieldName == "type")?.FieldValue?.ToString() ?? "popular";
+                    var subredditLimit = filters.FirstOrDefault(f => f.FieldName == "limit")?.FieldValue != null ? Convert.ToInt32(filters.FirstOrDefault(f => f.FieldName == "limit").FieldValue) : 25;
+                    url = $"{ConnectionProperties.BaseUrl}/subreddits/{subredditType}?limit={subredditLimit}";
+                    break;
+
+                case "users":
+                    var username = filters.FirstOrDefault(f => f.FieldName == "username")?.FieldValue?.ToString() ?? "";
+                    url = $"{ConnectionProperties.BaseUrl}/user/{username}/about";
+                    break;
+
+                case "search":
+                    var query = filters.FirstOrDefault(f => f.FieldName == "query")?.FieldValue?.ToString() ?? "";
+                    var searchSubreddit = filters.FirstOrDefault(f => f.FieldName == "subreddit")?.FieldValue?.ToString() ?? "";
+                    var searchLimit = filters.FirstOrDefault(f => f.FieldName == "limit")?.FieldValue != null ? Convert.ToInt32(filters.FirstOrDefault(f => f.FieldName == "limit").FieldValue) : 25;
+                    var subredditParam = string.IsNullOrEmpty(searchSubreddit) ? "" : $"&subreddit={searchSubreddit}";
+                    url = $"{ConnectionProperties.BaseUrl}/search?q={Uri.EscapeDataString(query)}&limit={searchLimit}&sort=relevance&type=link{subredditParam}";
+                    break;
+
+                default:
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = $"Unsupported entity: {entityName}";
+                    return ErrorObject;
             }
 
-            parameters ??= new Dictionary<string, object>();
-
-            try
+            // Rate limiting delay
+            var rateLimitDelay = ConnectionProperties.GetPropertyValue("RateLimitDelayMs");
+            if (rateLimitDelay != null && int.TryParse(rateLimitDelay.ToString(), out var delay) && delay > 0)
             {
-                string url;
-
-                switch (entityName.ToLower())
-                {
-                    case "posts":
-                        var subreddit = parameters.ContainsKey("subreddit") ? parameters["subreddit"].ToString() : "all";
-                        var sort = parameters.ContainsKey("sort") ? parameters["sort"].ToString() : "hot";
-                        var limit = parameters.ContainsKey("limit") ? (int)parameters["limit"] : 25;
-                        url = $"{_config.OAuthUrl}/r/{subreddit}/{sort}?limit={limit}";
-                        break;
-
-                    case "comments":
-                        var linkId = parameters.ContainsKey("link_id") ? parameters["link_id"].ToString() : "";
-                        var commentSort = parameters.ContainsKey("sort") ? parameters["sort"].ToString() : "top";
-                        var commentLimit = parameters.ContainsKey("limit") ? (int)parameters["limit"] : 25;
-                        url = $"{_config.OAuthUrl}/comments/{linkId}?sort={commentSort}&limit={commentLimit}";
-                        break;
-
-                    case "subreddits":
-                        var subredditType = parameters.ContainsKey("type") ? parameters["type"].ToString() : "popular";
-                        var subredditLimit = parameters.ContainsKey("limit") ? (int)parameters["limit"] : 25;
-                        url = $"{_config.OAuthUrl}/subreddits/{subredditType}?limit={subredditLimit}";
-                        break;
-
-                    case "users":
-                        var username = parameters.ContainsKey("username") ? parameters["username"].ToString() : "";
-                        url = $"{_config.OAuthUrl}/user/{username}/about";
-                        break;
-
-                    case "search":
-                        var query = parameters.ContainsKey("query") ? parameters["query"].ToString() : "";
-                        var searchSubreddit = parameters.ContainsKey("subreddit") ? parameters["subreddit"].ToString() : "";
-                        var searchLimit = parameters.ContainsKey("limit") ? (int)parameters["limit"] : 25;
-                        var subredditParam = string.IsNullOrEmpty(searchSubreddit) ? "" : $"&subreddit={searchSubreddit}";
-                        url = $"{_config.OAuthUrl}/search?q={Uri.EscapeDataString(query)}&limit={searchLimit}&sort=relevance&type=link{subredditParam}";
-                        break;
-
-                    default:
-                        throw new ArgumentException($"Unsupported entity: {entityName}");
-                }
-
-                // Rate limiting delay
-                if (_config.RateLimitDelayMs > 0)
-                {
-                    await Task.Delay(_config.RateLimitDelayMs);
-                }
-
-                var response = await _httpClient.GetAsync(url);
-                var jsonContent = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"Reddit API request failed: {response.StatusCode} - {jsonContent}");
-                }
-
-                return ParseJsonToDataTable(jsonContent, entityName);
+                await Task.Delay(delay);
             }
-            catch (Exception ex)
+
+            var response = await HttpClient.GetAsync(url);
+            var jsonContent = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Failed to get {entityName} data: {ex.Message}", ex);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Reddit API request failed: {response.StatusCode} - {jsonContent}";
+                return ErrorObject;
             }
+
+            // Parse and store the data
+            var dataTable = ParseJsonToDataTable(jsonContent, entityName);
+            if (Entities.ContainsKey(entityName))
+            {
+                Entities[entityName].EntityData = dataTable;
+            }
+
+            ErrorObject.Flag = Errors.Ok;
+            ErrorObject.Message = $"Successfully retrieved {entityName} data";
+            return ErrorObject;
         }
+        catch (Exception ex)
+        {
+            ErrorObject.Flag = Errors.Failed;
+            ErrorObject.Message = $"Failed to get {entityName} data: {ex.Message}";
+            return ErrorObject;
+        }
+    }
 
         /// <summary>
         /// Parse JSON response to DataTable
@@ -493,7 +419,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
         private DataTable ParseJsonToDataTable(string jsonContent, string entityName)
         {
             var dataTable = new DataTable(entityName);
-            var metadata = _entityMetadata.ContainsKey(entityName.ToLower()) ? _entityMetadata[entityName.ToLower()] : null;
+            var entityStructure = Entities.ContainsKey(entityName.ToLower()) ? Entities[entityName.ToLower()] : null;
 
             try
             {
@@ -521,11 +447,11 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
                 }
 
                 // Create columns based on metadata or first object
-                if (metadata != null)
+                if (entityStructure != null)
                 {
-                    foreach (var field in metadata.Fields)
+                    foreach (var field in entityStructure.Fields)
                     {
-                        dataTable.Columns.Add(field.Name, GetFieldType(field.Type));
+                        dataTable.Columns.Add(field.fieldname, GetFieldType(field.fieldtype));
                     }
                 }
 
@@ -615,84 +541,19 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
         }
 
         /// <summary>
-        /// Get available entities
+        /// Get value from JSON element
         /// </summary>
-        public List<string> GetEntities()
+        private object GetJsonValue(JsonElement element)
         {
-            return new List<string> { "posts", "comments", "subreddits", "users", "search" };
-        }
-
-        /// <summary>
-        /// Get entity metadata
-        /// </summary>
-        public EntityMetadata GetEntityMetadata(string entityName)
-        {
-            if (_entityMetadata.ContainsKey(entityName.ToLower()))
+            return element.ValueKind switch
             {
-                return _entityMetadata[entityName.ToLower()];
-            }
-            throw new ArgumentException($"Entity '{entityName}' not found");
-        }
-
-        /// <summary>
-        /// Insert data (limited support for Reddit API)
-        /// </summary>
-        public async Task<int> InsertEntityAsync(string entityName, DataTable data)
-        {
-            throw new NotSupportedException("Insert operations are not supported for Reddit API");
-        }
-
-        /// <summary>
-        /// Update data (limited support for Reddit API)
-        /// </summary>
-        public async Task<int> UpdateEntityAsync(string entityName, DataTable data, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Update operations are not supported for Reddit API");
-        }
-
-        /// <summary>
-        /// Delete data (limited support for Reddit API)
-        /// </summary>
-        public async Task<int> DeleteEntityAsync(string entityName, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Delete operations are not supported for Reddit API");
-        }
-
-        /// <summary>
-        /// Execute custom query
-        /// </summary>
-        public async Task<DataTable> ExecuteQueryAsync(string query, Dictionary<string, object> parameters = null)
-        {
-            // For Reddit, we'll treat query as entity name with parameters
-            return await GetEntityAsync(query, parameters);
-        }
-
-        /// <summary>
-        /// Get connection status
-        /// </summary>
-        public bool IsConnected => _isConnected;
-
-        /// <summary>
-        /// Get data source type
-        /// </summary>
-        public string DataSourceType => "Reddit";
-
-        /// <summary>
-        /// Get data source name
-        /// </summary>
-        public string DataSourceName => "Reddit Data Source";
-
-        /// <summary>
-        /// Dispose resources
-        /// </summary>
-        public void Dispose()
-        {
-            if (_httpClient != null)
-            {
-                _httpClient.Dispose();
-                _httpClient = null;
-            }
-            _isConnected = false;
+                JsonValueKind.String => element.GetString(),
+                JsonValueKind.Number => element.TryGetInt32(out var intValue) ? intValue : element.GetDouble(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Null => null,
+                _ => element.GetRawText()
+            };
         }
     }
 }

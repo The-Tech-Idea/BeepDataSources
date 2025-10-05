@@ -19,7 +19,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WooCommerce
     [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce)]
     public class WooCommerceDataSource : WebAPIDataSource
     {
-        
+
 
         // Map entity -> (endpoint template, root array/property, required filter keys)
         // Endpoints are relative to base URL, e.g., https://example.com/wp-json/wc/v3/

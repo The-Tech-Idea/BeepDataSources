@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -14,21 +14,21 @@ using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 
-namespace TheTechIdea.Beep.MilvusDatasource
+namespace TheTechIdea.Beep.ChromaDBDatasource
 {
     /// <summary>
-    /// Milvus vector database data source implementation
-    /// Milvus is an open-source vector database built for scalable similarity search
+    /// ChromaDB vector database data source implementation
+    /// ChromaDB is an open-source embedding database focused on simplicity and developer experience
     /// </summary>
-    //[AddinAttribute(Category = DatasourceCategory.VectorDB, DatasourceType = DataSourceType.Milvus)]
-    public class MilvusDataSource : IDataSource
+    //[AddinAttribute(Category = DatasourceCategory.VectorDB, DatasourceType = DataSourceType.ChromaDB)]
+    public class ChromaDBDataSource : IDataSource
     {
         #region IDataSource Properties
         public string ColumnDelimiter { get; set; } = "\"";
         public string ParameterDelimiter { get; set; } = ":";
         public string GuidID { get; set; } = Guid.NewGuid().ToString();
         public string Id { get; set; }
-        public DataSourceType DatasourceType { get; set; } = DataSourceType.Milvus;
+        public DataSourceType DatasourceType { get; set; } = DataSourceType.ChromaDB;
         public DatasourceCategory Category { get; set; } = DatasourceCategory.VectorDB;
         public IDataConnection Dataconnection { get; set; }
         public string DatasourceName { get; set; }
@@ -46,49 +46,45 @@ namespace TheTechIdea.Beep.MilvusDatasource
         private readonly HttpClient _httpClient;
         private string _baseUrl;
         
-        // Milvus REST API endpoints mapping
+        // ChromaDB REST API endpoints mapping
         private static readonly Dictionary<string, string> EntityEndpoints = new(StringComparer.OrdinalIgnoreCase)
         {
             // Collection management
-            ["collections.list"] = "v1/vector/collections",
-            ["collections.describe"] = "v1/vector/collections/describe",
-            ["collections.create"] = "v1/vector/collections/create",
-            ["collections.drop"] = "v1/vector/collections/drop",
-            ["collections.load"] = "v1/vector/collections/load",
-            ["collections.release"] = "v1/vector/collections/release",
-            ["collections.stats"] = "v1/vector/collections/get_stats",
+            ["collections.list"] = "api/v1/collections",
+            ["collections.create"] = "api/v1/collections",
+            ["collections.get"] = "api/v1/collections/{collection_name}",
+            ["collections.delete"] = "api/v1/collections/{collection_name}",
+            ["collections.update"] = "api/v1/collections/{collection_id}",
+            ["collections.count"] = "api/v1/collections/{collection_id}/count",
             
-            // Vector operations
-            ["vectors.insert"] = "v1/vector/insert",
-            ["vectors.search"] = "v1/vector/search",
-            ["vectors.query"] = "v1/vector/query",
-            ["vectors.delete"] = "v1/vector/delete",
+            // Embeddings operations
+            ["embeddings.add"] = "api/v1/collections/{collection_id}/add",
+            ["embeddings.query"] = "api/v1/collections/{collection_id}/query",
+            ["embeddings.get"] = "api/v1/collections/{collection_id}/get",
+            ["embeddings.update"] = "api/v1/collections/{collection_id}/update",
+            ["embeddings.delete"] = "api/v1/collections/{collection_id}/delete",
             
-            // Index operations
-            ["indexes.create"] = "v1/vector/indexes/create",
-            ["indexes.describe"] = "v1/vector/indexes/describe",
-            ["indexes.drop"] = "v1/vector/indexes/drop"
+            // System operations
+            ["system.heartbeat"] = "api/v1/heartbeat",
+            ["system.version"] = "api/v1/version"
         };
 
         private static readonly Dictionary<string, string[]> RequiredFilters = new(StringComparer.OrdinalIgnoreCase)
         {
-            ["collections.describe"] = new[] { "collection_name" },
-            ["collections.drop"] = new[] { "collection_name" },
-            ["collections.load"] = new[] { "collection_name" },
-            ["collections.release"] = new[] { "collection_name" },
-            ["collections.stats"] = new[] { "collection_name" },
-            ["vectors.insert"] = new[] { "collection_name", "vectors" },
-            ["vectors.search"] = new[] { "collection_name", "vector" },
-            ["vectors.query"] = new[] { "collection_name" },
-            ["vectors.delete"] = new[] { "collection_name" },
-            ["indexes.create"] = new[] { "collection_name", "field_name" },
-            ["indexes.describe"] = new[] { "collection_name" },
-            ["indexes.drop"] = new[] { "collection_name", "field_name" }
+            ["collections.get"] = new[] { "collection_name" },
+            ["collections.delete"] = new[] { "collection_name" },
+            ["collections.update"] = new[] { "collection_id", "new_name" },
+            ["collections.count"] = new[] { "collection_id" },
+            ["embeddings.add"] = new[] { "collection_id", "ids", "embeddings" },
+            ["embeddings.query"] = new[] { "collection_id", "query_embeddings" },
+            ["embeddings.get"] = new[] { "collection_id" },
+            ["embeddings.update"] = new[] { "collection_id", "ids" },
+            ["embeddings.delete"] = new[] { "collection_id", "ids" }
         };
         #endregion
 
         #region Constructor
-        public MilvusDataSource(
+        public ChromaDBDataSource(
             string datasourcename,
             IDMLogger logger,
             IDMEEditor dmeEditor,
@@ -98,7 +94,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
             DatasourceName = datasourcename;
             Logger = logger;
             DMEEditor = dmeEditor;
-            DatasourceType = DataSourceType.Milvus;
+            DatasourceType = DataSourceType.ChromaDB;
             Category = DatasourceCategory.VectorDB;
             ErrorObject = errorObject ?? dmeEditor?.ErrorObject;
             Id = Guid.NewGuid().ToString();
@@ -108,7 +104,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
             
             EntitiesNames = EntityEndpoints.Keys.ToList();
             Entities = EntitiesNames
-                .Select(n => CreateMilvusEntityStructure(n))
+                .Select(n => CreateChromaDBEntityStructure(n))
                 .ToList();
         }
 
@@ -116,13 +112,14 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             if (Dataconnection == null)
             {
-                Dataconnection = new MilvusDataConnection(DMEEditor)
+                Dataconnection = new ChromaDBDataConnection(DMEEditor)
                 {
+                    DMEEditor = DMEEditor,
                     ConnectionProp = new ConnectionProperties
                     {
                         Host = "localhost",
-                        Port = 9091, // Default Milvus port
-                        DatabaseType = DataSourceType.Milvus,
+                        Port = 8000, // Default ChromaDB port
+                        DatabaseType = DataSourceType.ChromaDB,
                         ConnectionName = DatasourceName
                     }
                 };
@@ -155,16 +152,16 @@ namespace TheTechIdea.Beep.MilvusDatasource
         public async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
             if (!EntityEndpoints.TryGetValue(EntityName, out var endpoint))
-                throw new InvalidOperationException($"Unknown Milvus operation '{EntityName}'.");
+                throw new InvalidOperationException($"Unknown ChromaDB operation '{EntityName}'.");
 
-            var queryParams = FiltersToMilvusQuery(Filter);
+            var queryParams = FiltersToChromaDBQuery(Filter);
             RequireFilters(EntityName, queryParams, RequiredFilters.GetValueOrDefault(EntityName, Array.Empty<string>()));
 
             return EntityName.Split('.')[0] switch
             {
                 "collections" => await HandleCollectionOperation(EntityName, endpoint, queryParams),
-                "vectors" => await HandleVectorOperation(EntityName, endpoint, queryParams, Filter),
-                "indexes" => await HandleIndexOperation(EntityName, endpoint, queryParams),
+                "embeddings" => await HandleEmbeddingsOperation(EntityName, endpoint, queryParams, Filter),
+                "system" => await HandleSystemOperation(EntityName, endpoint),
                 _ => Array.Empty<object>()
             };
         }
@@ -186,7 +183,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog($"Executing Milvus query: {qrystr}");
+                Logger?.WriteLog($"Executing ChromaDB query: {qrystr}");
                 return Array.Empty<object>();
             }
             catch (Exception ex)
@@ -200,7 +197,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog("Opening connection to Milvus");
+                Logger?.WriteLog("Opening connection to ChromaDB");
                 UpdateBaseUrl();
                 ConnectionStatus = ConnectionState.Open;
                 return ConnectionStatus;
@@ -217,7 +214,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog("Closing connection to Milvus");
+                Logger?.WriteLog("Closing connection to ChromaDB");
                 ConnectionStatus = ConnectionState.Closed;
                 return ConnectionStatus;
             }
@@ -253,7 +250,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog($"Creating Milvus collection: {entity.EntityName}");
+                Logger?.WriteLog($"Creating ChromaDB collection: {entity.EntityName}");
                 if (!EntitiesNames.Contains(entity.EntityName))
                 {
                     EntitiesNames.Add(entity.EntityName);
@@ -276,7 +273,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog($"Inserting into Milvus entity: {EntityName}");
+                Logger?.WriteLog($"Inserting into ChromaDB entity: {EntityName}");
                 return ErrorObject;
             }
             catch (Exception ex)
@@ -290,7 +287,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog($"Updating Milvus entity: {EntityName}");
+                Logger?.WriteLog($"Updating ChromaDB entity: {EntityName}");
                 return ErrorObject;
             }
             catch (Exception ex)
@@ -304,7 +301,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog($"Bulk updating Milvus entity: {EntityName}");
+                Logger?.WriteLog($"Bulk updating ChromaDB entity: {EntityName}");
                 return ErrorObject;
             }
             catch (Exception ex)
@@ -318,7 +315,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog($"Deleting from Milvus entity: {EntityName}");
+                Logger?.WriteLog($"Deleting from ChromaDB entity: {EntityName}");
                 return ErrorObject;
             }
             catch (Exception ex)
@@ -336,7 +333,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog($"Executing Milvus command: {sql}");
+                Logger?.WriteLog($"Executing ChromaDB command: {sql}");
                 return ErrorObject;
             }
             catch (Exception ex)
@@ -353,7 +350,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
             {
                 scripts.Add(new ETLScriptDet
                 {
-                    ddl = $"-- Create Milvus collection: {entity.EntityName}",
+                    ddl = $"-- Create ChromaDB collection: {entity.EntityName}",
                     scriptType = DDLScriptType.CreateEntity
                 });
             }
@@ -364,7 +361,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog($"Running Milvus script");
+                Logger?.WriteLog($"Running ChromaDB script");
                 return ErrorObject;
             }
             catch (Exception ex)
@@ -409,7 +406,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog("Beginning Milvus transaction");
+                Logger?.WriteLog("Beginning ChromaDB transaction");
                 return ErrorObject;
             }
             catch (Exception ex)
@@ -423,7 +420,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog("Ending Milvus transaction");
+                Logger?.WriteLog("Ending ChromaDB transaction");
                 return ErrorObject;
             }
             catch (Exception ex)
@@ -437,7 +434,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
-                Logger?.WriteLog("Committing Milvus transaction");
+                Logger?.WriteLog("Committing ChromaDB transaction");
                 return ErrorObject;
             }
             catch (Exception ex)
@@ -462,7 +459,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
 
         #endregion
 
-        #region Milvus-specific Operations
+        #region ChromaDB-specific Operations
 
         private async Task<IEnumerable<object>> HandleCollectionOperation(string operation, string endpoint, Dictionary<string, string> queryParams)
         {
@@ -472,8 +469,10 @@ namespace TheTechIdea.Beep.MilvusDatasource
                 {
                     case "collections.list":
                         return await ListCollectionsAsync();
-                    case "collections.describe":
-                        return await DescribeCollectionAsync(queryParams["collection_name"]);
+                    case "collections.get":
+                        return await GetCollectionAsync(queryParams["collection_name"]);
+                    case "collections.count":
+                        return await GetCollectionCountAsync(queryParams["collection_id"]);
                     default:
                         return Array.Empty<object>();
                 }
@@ -485,96 +484,97 @@ namespace TheTechIdea.Beep.MilvusDatasource
             }
         }
 
-        private async Task<IEnumerable<object>> HandleVectorOperation(string operation, string endpoint, Dictionary<string, string> queryParams, List<AppFilter> filters)
+        private async Task<IEnumerable<object>> HandleEmbeddingsOperation(string operation, string endpoint, Dictionary<string, string> queryParams, List<AppFilter> filters)
         {
             try
             {
                 switch (operation)
                 {
-                    case "vectors.search":
-                        return await SearchVectorsAsync(queryParams["collection_name"], filters);
-                    case "vectors.query":
-                        return await QueryVectorsAsync(queryParams["collection_name"], filters);
+                    case "embeddings.query":
+                        return await QueryEmbeddingsAsync(queryParams["collection_id"], filters);
+                    case "embeddings.get":
+                        return await GetEmbeddingsAsync(queryParams["collection_id"], filters);
                     default:
                         return Array.Empty<object>();
                 }
             }
             catch (Exception ex)
             {
-                Logger?.WriteLog($"Error in vector operation {operation}: {ex.Message}");
+                Logger?.WriteLog($"Error in embeddings operation {operation}: {ex.Message}");
                 return Array.Empty<object>();
             }
         }
 
-        private async Task<IEnumerable<object>> HandleIndexOperation(string operation, string endpoint, Dictionary<string, string> queryParams)
+        private async Task<IEnumerable<object>> HandleSystemOperation(string operation, string endpoint)
         {
             try
             {
                 switch (operation)
                 {
-                    case "indexes.describe":
-                        return await DescribeIndexAsync(queryParams["collection_name"]);
+                    case "system.heartbeat":
+                        return await GetHeartbeatAsync();
+                    case "system.version":
+                        return await GetVersionAsync();
                     default:
                         return Array.Empty<object>();
                 }
             }
             catch (Exception ex)
             {
-                Logger?.WriteLog($"Error in index operation {operation}: {ex.Message}");
+                Logger?.WriteLog($"Error in system operation {operation}: {ex.Message}");
                 return Array.Empty<object>();
             }
         }
 
         private async Task<IEnumerable<object>> ListCollectionsAsync()
         {
-            var response = await GetJsonAsync("v1/vector/collections");
-            if (response != null && response.TryGetValue("data", out var data))
+            var response = await GetJsonAsync("api/v1/collections");
+            if (response != null && response is JsonElement element && element.ValueKind == JsonValueKind.Array)
             {
-                if (data is JsonElement element && element.ValueKind == JsonValueKind.Array)
-                {
-                    return element.EnumerateArray()
-                        .Select(c => (object)JsonSerializer.Deserialize<Dictionary<string, object>>(c.GetRawText()))
-                        .ToList();
-                }
+                return element.EnumerateArray()
+                    .Select(c => (object)JsonSerializer.Deserialize<Dictionary<string, object>>(c.GetRawText()))
+                    .ToList();
             }
             return Array.Empty<object>();
         }
 
-        private async Task<IEnumerable<object>> DescribeCollectionAsync(string collectionName)
+        private async Task<IEnumerable<object>> GetCollectionAsync(string collectionName)
         {
-            var request = new { collectionName = collectionName };
-            var response = await PostJsonAsync("v1/vector/collections/describe", request);
+            var response = await GetJsonAsync($"api/v1/collections/{collectionName}");
             return response != null ? new[] { response } : Array.Empty<object>();
         }
 
-        private async Task<IEnumerable<object>> SearchVectorsAsync(string collectionName, List<AppFilter> filters)
+        private async Task<IEnumerable<object>> GetCollectionCountAsync(string collectionId)
         {
-            var vectorFilter = filters?.FirstOrDefault(f => f.FieldName.Equals("vector", StringComparison.OrdinalIgnoreCase));
-            if (vectorFilter?.FilterValue is not string vectorStr || !TryParseFloatArray(vectorStr, out float[] searchVector))
+            var response = await GetJsonAsync($"api/v1/collections/{collectionId}/count");
+            return response != null ? new[] { response } : Array.Empty<object>();
+        }
+
+        private async Task<IEnumerable<object>> QueryEmbeddingsAsync(string collectionId, List<AppFilter> filters)
+        {
+            var embeddingFilter = filters?.FirstOrDefault(f => f.FieldName.Equals("query_embeddings", StringComparison.OrdinalIgnoreCase));
+            if (embeddingFilter?.FilterValue is not string embeddingStr || !TryParseFloatArray(embeddingStr, out float[] queryEmbedding))
             {
-                throw new ArgumentException("Search requires a 'vector' filter with float array value");
+                throw new ArgumentException("Query requires 'query_embeddings' filter with float array value");
             }
 
-            var topKFilter = filters?.FirstOrDefault(f => f.FieldName.Equals("topK", StringComparison.OrdinalIgnoreCase) || 
-                                                           f.FieldName.Equals("limit", StringComparison.OrdinalIgnoreCase));
-            var topK = 10;
-            if (topKFilter != null && int.TryParse(topKFilter.FilterValue?.ToString(), out int k))
+            var nResultsFilter = filters?.FirstOrDefault(f => f.FieldName.Equals("n_results", StringComparison.OrdinalIgnoreCase));
+            var nResults = 10;
+            if (nResultsFilter != null && int.TryParse(nResultsFilter.FilterValue?.ToString(), out int n))
             {
-                topK = k;
+                nResults = n;
             }
 
             var request = new
             {
-                collectionName = collectionName,
-                vector = searchVector,
-                topK = topK,
-                outputFields = new[] { "*" }
+                query_embeddings = new[] { queryEmbedding },
+                n_results = nResults
             };
 
-            var response = await PostJsonAsync("v1/vector/search", request);
-            if (response != null && response.TryGetValue("data", out var data))
+            var response = await PostJsonAsync($"api/v1/collections/{collectionId}/query", request);
+            if (response != null && response.TryGetValue("results", out var results))
             {
-                if (data is JsonElement element && element.ValueKind == JsonValueKind.Array)
+                if (results is JsonElement element && element.ValueKind == JsonValueKind.Array)
                 {
                     return element.EnumerateArray()
                         .Select(item => (object)JsonSerializer.Deserialize<Dictionary<string, object>>(item.GetRawText()))
@@ -584,10 +584,10 @@ namespace TheTechIdea.Beep.MilvusDatasource
             return Array.Empty<object>();
         }
 
-        private async Task<IEnumerable<object>> QueryVectorsAsync(string collectionName, List<AppFilter> filters)
+        private async Task<IEnumerable<object>> GetEmbeddingsAsync(string collectionId, List<AppFilter> filters)
         {
             var limitFilter = filters?.FirstOrDefault(f => f.FieldName.Equals("limit", StringComparison.OrdinalIgnoreCase));
-            var limit = 100;
+            var limit = 10;
             if (limitFilter != null && int.TryParse(limitFilter.FilterValue?.ToString(), out int l))
             {
                 limit = l;
@@ -595,15 +595,13 @@ namespace TheTechIdea.Beep.MilvusDatasource
 
             var request = new
             {
-                collectionName = collectionName,
-                limit = limit,
-                outputFields = new[] { "*" }
+                limit = limit
             };
 
-            var response = await PostJsonAsync("v1/vector/query", request);
-            if (response != null && response.TryGetValue("data", out var data))
+            var response = await PostJsonAsync($"api/v1/collections/{collectionId}/get", request);
+            if (response != null && response.TryGetValue("embeddings", out var embeddings))
             {
-                if (data is JsonElement element && element.ValueKind == JsonValueKind.Array)
+                if (embeddings is JsonElement element && element.ValueKind == JsonValueKind.Array)
                 {
                     return element.EnumerateArray()
                         .Select(item => (object)JsonSerializer.Deserialize<Dictionary<string, object>>(item.GetRawText()))
@@ -613,10 +611,15 @@ namespace TheTechIdea.Beep.MilvusDatasource
             return Array.Empty<object>();
         }
 
-        private async Task<IEnumerable<object>> DescribeIndexAsync(string collectionName)
+        private async Task<IEnumerable<object>> GetHeartbeatAsync()
         {
-            var request = new { collectionName = collectionName };
-            var response = await PostJsonAsync("v1/vector/indexes/describe", request);
+            var response = await GetJsonAsync("api/v1/heartbeat");
+            return response != null ? new[] { response } : Array.Empty<object>();
+        }
+
+        private async Task<IEnumerable<object>> GetVersionAsync()
+        {
+            var response = await GetJsonAsync("api/v1/version");
             return response != null ? new[] { response } : Array.Empty<object>();
         }
 
@@ -624,7 +627,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
 
         #region Helper Methods
 
-        private Dictionary<string, string> FiltersToMilvusQuery(List<AppFilter> filters)
+        private Dictionary<string, string> FiltersToChromaDBQuery(List<AppFilter> filters)
         {
             var queryParams = new Dictionary<string, string>();
             foreach (var filter in filters ?? new List<AppFilter>())
@@ -643,7 +646,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
             {
                 if (!queryParams.ContainsKey(field))
                 {
-                    throw new InvalidOperationException($"Milvus operation '{operation}' requires filter '{field}'");
+                    throw new InvalidOperationException($"ChromaDB operation '{operation}' requires filter '{field}'");
                 }
             }
         }
@@ -669,14 +672,14 @@ namespace TheTechIdea.Beep.MilvusDatasource
             }
         }
 
-        private EntityStructure CreateMilvusEntityStructure(string operationName)
+        private EntityStructure CreateChromaDBEntityStructure(string operationName)
         {
             var entity = new EntityStructure
             {
                 EntityName = operationName,
                 DatasourceEntityName = operationName,
                 DataSourceID = DatasourceName,
-                DatabaseType = DataSourceType.Milvus,
+                DatabaseType = DataSourceType.ChromaDB,
                 Caption = operationName.Replace(".", " ").Replace("_", " "),
                 KeyToken = Guid.NewGuid().ToString(),
                 Fields = new List<EntityField>()
@@ -688,28 +691,27 @@ namespace TheTechIdea.Beep.MilvusDatasource
                 case "collections":
                     entity.Fields.AddRange(new[]
                     {
-                        new EntityField { fieldname = "collection_name", fieldtype = "System.String", IsKey = true },
-                        new EntityField { fieldname = "description", fieldtype = "System.String" },
-                        new EntityField { fieldname = "vector_count", fieldtype = "System.Int64" },
-                        new EntityField { fieldname = "index_count", fieldtype = "System.Int32" }
+                        new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true },
+                        new EntityField { fieldname = "name", fieldtype = "System.String" },
+                        new EntityField { fieldname = "metadata", fieldtype = "System.Object" }
                     });
                     break;
-                case "vectors":
+                case "embeddings":
                     entity.Fields.AddRange(new[]
                     {
                         new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true },
-                        new EntityField { fieldname = "vector", fieldtype = "System.Single[]" },
-                        new EntityField { fieldname = "distance", fieldtype = "System.Single" },
-                        new EntityField { fieldname = "fields", fieldtype = "System.Object" }
+                        new EntityField { fieldname = "embedding", fieldtype = "System.Single[]" },
+                        new EntityField { fieldname = "document", fieldtype = "System.String" },
+                        new EntityField { fieldname = "metadata", fieldtype = "System.Object" },
+                        new EntityField { fieldname = "distance", fieldtype = "System.Single" }
                     });
                     break;
-                case "indexes":
+                case "system":
                     entity.Fields.AddRange(new[]
                     {
-                        new EntityField { fieldname = "index_name", fieldtype = "System.String", IsKey = true },
-                        new EntityField { fieldname = "field_name", fieldtype = "System.String" },
-                        new EntityField { fieldname = "metric_type", fieldtype = "System.String" },
-                        new EntityField { fieldname = "index_type", fieldtype = "System.String" }
+                        new EntityField { fieldname = "status", fieldtype = "System.String" },
+                        new EntityField { fieldname = "version", fieldtype = "System.String" },
+                        new EntityField { fieldname = "time", fieldtype = "System.DateTime" }
                     });
                     break;
             }
@@ -717,7 +719,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
             return entity;
         }
 
-        private async Task<Dictionary<string, object>> GetJsonAsync(string endpoint)
+        private async Task<object> GetJsonAsync(string endpoint)
         {
             try
             {
@@ -727,7 +729,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    return JsonSerializer.Deserialize<Dictionary<string, object>>(content);
+                    return JsonSerializer.Deserialize<object>(content);
                 }
             }
             catch (Exception ex)
@@ -770,7 +772,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
             {
                 Closeconnection();
                 _httpClient?.Dispose();
-                Logger?.WriteLog("Milvus datasource disposed");
+                Logger?.WriteLog("ChromaDB datasource disposed");
             }
             catch (Exception ex)
             {

@@ -19,7 +19,7 @@ using TheTechIdea.Beep.Vis;
 
 namespace TheTechIdea.Beep.ShapVectorDatasource
 {
-    [AddinAttribute(Category = DatasourceCategory.VectorDB, DatasourceType = DataSourceType.ShapVector)]
+    //[AddinAttribute(Category = DatasourceCategory.VectorDB, DatasourceType = DataSourceType.ShapVector)]
     public class SharpVectorDatasource : IDataSource, IInMemoryDB
     {
         private HttpClient _httpClient;
@@ -334,19 +334,19 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
             return ErrorObject;
         }
 
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
             // SharpVector doesn't have traditional parent-child relationships
             return new List<ChildRelation>();
         }
 
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
             // Not applicable for SharpVector
             return new List<ETLScriptDet>();
         }
 
-        public List<string> GetEntitesList()
+        public IEnumerable<string> GetEntitesList()
         {
             try
             {
@@ -365,7 +365,7 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
             }
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter)
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
             try
             {
@@ -376,19 +376,17 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
 
                 // For SharpVector, we'll return information about the index
                 var indexInfo = GetCollectionInfo(EntityName).Result;
-                return indexInfo;
+                return indexInfo != null ? new[] { indexInfo } : Array.Empty<object>();
             }
             catch (Exception ex)
             {
                 DMEEditor.AddLogMessage("Error", $"Error getting index: {ex.Message}", DateTime.Now, -1, "", Errors.Failed);
-                return null;
+                return Array.Empty<object>();
             }
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            // SharpVector doesn't support traditional pagination
-            // Let's implement a basic approach using filters instead
             try
             {
                 if (ConnectionStatus != ConnectionState.Open)
@@ -396,36 +394,31 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
                     Openconnection();
                 }
 
-                // Create a paginated list request
-                var result = new Dictionary<string, object>
+                var allData = GetEntity(EntityName, filter).ToList();
+                var pagedData = allData.Skip(pageNumber * pageSize).Take(pageSize).ToList();
+                
+                return new PagedResult
                 {
-                    ["indexInfo"] = GetCollectionInfo(EntityName).Result,
-                    ["pagination"] = new Dictionary<string, object>
-                    {
-                        ["pageNumber"] = pageNumber,
-                        ["pageSize"] = pageSize,
-                        ["offset"] = (pageNumber - 1) * pageSize,
-                        ["limit"] = pageSize
-                    }
+                    Data = pagedData,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    TotalRecords = allData.Count,
+                    TotalPages = (int)Math.Ceiling((double)allData.Count / pageSize)
                 };
-
-                // Here we would add actual vector data if available
-
-                return result;
             }
             catch (Exception ex)
             {
                 DMEEditor.AddLogMessage("Error", $"Error getting index with pagination: {ex.Message}", DateTime.Now, -1, "", Errors.Failed);
-                return null;
+                return new PagedResult { Data = Array.Empty<object>(), PageNumber = pageNumber, PageSize = pageSize, TotalRecords = 0, TotalPages = 0 };
             }
         }
 
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
             return Task.FromResult(GetEntity(EntityName, Filter));
         }
 
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
             // SharpVector doesn't have traditional foreign keys
             return new List<RelationShipKeys>();
@@ -605,7 +598,7 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
             return ErrorObject;
         }
 
-        public object RunQuery(string qrystr)
+        public IEnumerable<object> RunQuery(string qrystr)
         {
             // Not applicable for traditional SQL queries
             throw new NotImplementedException("SQL queries are not supported by SharpVector");

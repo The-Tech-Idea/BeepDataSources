@@ -70,86 +70,44 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
     /// LinkedIn data source implementation for Beep framework
     /// Supports LinkedIn Marketing API v2
     /// </summary>
-    public class LinkedInDataSource : IDataSource
+    [AddinAttribute(Category = DatasourceCategory.SOCIALMEDIA, DatasourceType = DataSourceType.WebApi)]
+    public class LinkedInDataSource : WebAPIDataSource
     {
         private readonly LinkedInConfig _config;
-        private HttpClient _httpClient;
-        private bool _isConnected;
         private readonly Dictionary<string, EntityMetadata> _entityMetadata;
 
         /// <summary>
         /// Constructor for LinkedInDataSource
         /// </summary>
-        /// <param name="config">LinkedIn configuration</param>
-        public LinkedInDataSource(LinkedInConfig config)
+        public LinkedInDataSource(string datasourcename, IDMLogger logger, IDMEEditor editor, DataSourceType type, IErrorsInfo errors)
+            : base(datasourcename, logger, editor, type, errors)
         {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
+            _config = new LinkedInConfig();
             _entityMetadata = InitializeEntityMetadata();
+            InitializeEntities();
         }
 
         /// <summary>
-        /// Constructor for LinkedInDataSource with connection string
+        /// Initialize entities for LinkedIn data source
         /// </summary>
-        /// <param name="connectionString">Connection string in format: ClientId=xxx;ClientSecret=xxx;AccessToken=xxx;PersonUrn=xxx</param>
-        public LinkedInDataSource(string connectionString)
+        private void InitializeEntities()
         {
-            _config = ParseConnectionString(connectionString);
-            _entityMetadata = InitializeEntityMetadata();
-        }
-
-        /// <summary>
-        /// Parse connection string into LinkedInConfig
-        /// </summary>
-        private LinkedInConfig ParseConnectionString(string connectionString)
-        {
-            var config = new LinkedInConfig();
-            var parts = connectionString.Split(';');
-
-            foreach (var part in parts)
+            foreach (var kvp in _entityMetadata)
             {
-                var keyValue = part.Split('=');
-                if (keyValue.Length == 2)
+                var entityStructure = new EntityStructure
                 {
-                    var key = keyValue[0].Trim();
-                    var value = keyValue[1].Trim();
+                    EntityName = kvp.Value.EntityName,
+                    ViewID = kvp.Value.EntityName,
+                    DataSourceID = DatasourceName,
+                    ViewName = kvp.Value.DisplayName,
+                    Fields = kvp.Value.Fields,
+                    Methods = new List<EntityMethod>(),
+                    Viewtype = ViewType.Table
+                };
 
-                    switch (key.ToLower())
-                    {
-                        case "clientid":
-                            config.ClientId = value;
-                            break;
-                        case "clientsecret":
-                            config.ClientSecret = value;
-                            break;
-                        case "accesstoken":
-                            config.AccessToken = value;
-                            break;
-                        case "personurn":
-                            config.PersonUrn = value;
-                            break;
-                        case "organizationurn":
-                            config.OrganizationUrn = value;
-                            break;
-                        case "apiversion":
-                            config.ApiVersion = value;
-                            break;
-                        case "timeoutseconds":
-                            if (int.TryParse(value, out var timeout))
-                                config.TimeoutSeconds = timeout;
-                            break;
-                        case "maxretries":
-                            if (int.TryParse(value, out var retries))
-                                config.MaxRetries = retries;
-                            break;
-                        case "ratelimitdelayms":
-                            if (int.TryParse(value, out var delay))
-                                config.RateLimitDelayMs = delay;
-                            break;
-                    }
-                }
+                Entities[kvp.Value.EntityName] = entityStructure;
+                EntitiesNames.Add(kvp.Value.EntityName);
             }
-
-            return config;
         }
 
         /// <summary>
@@ -265,72 +223,74 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
         /// <summary>
         /// Connect to LinkedIn API
         /// </summary>
-        public async Task<bool> ConnectAsync()
+        public override async Task<bool> ConnectAsync()
         {
             try
             {
                 if (string.IsNullOrEmpty(_config.AccessToken))
                 {
-                    throw new InvalidOperationException("Access token is required for LinkedIn connection");
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = "Access token is required for LinkedIn connection";
+                    return false;
                 }
 
                 // Initialize HTTP client
                 var handler = new HttpClientHandler();
-                _httpClient = new HttpClient(handler)
+                HttpClient = new HttpClient(handler)
                 {
                     Timeout = TimeSpan.FromSeconds(_config.TimeoutSeconds)
                 };
 
                 // Add authorization header
-                _httpClient.DefaultRequestHeaders.Authorization =
+                HttpClient.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.AccessToken);
 
                 // Test connection by getting user profile
                 var testUrl = $"{_config.BaseUrl}/people/~";
-                var response = await _httpClient.GetAsync(testUrl);
+                var response = await HttpClient.GetAsync(testUrl);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    _isConnected = true;
+                    ErrorObject.Flag = Errors.Ok;
+                    ErrorObject.Message = "Successfully connected to LinkedIn API";
                     return true;
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    throw new Exception($"LinkedIn API connection failed: {response.StatusCode} - {errorContent}");
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = $"LinkedIn API connection failed: {response.StatusCode} - {errorContent}";
+                    return false;
                 }
             }
             catch (Exception ex)
             {
-                _isConnected = false;
-                throw new Exception($"Failed to connect to LinkedIn API: {ex.Message}", ex);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to connect to LinkedIn API: {ex.Message}";
+                return false;
             }
         }
 
         /// <summary>
         /// Disconnect from LinkedIn API
         /// </summary>
-        public async Task<bool> DisconnectAsync()
+        public override async Task<bool> DisconnectAsync()
         {
-            if (_httpClient != null)
+            if (HttpClient != null)
             {
-                _httpClient.Dispose();
-                _httpClient = null;
+                HttpClient.Dispose();
+                HttpClient = null;
             }
-            _isConnected = false;
+            ErrorObject.Flag = Errors.Ok;
+            ErrorObject.Message = "Successfully disconnected from LinkedIn API";
             return true;
         }
 
         /// <summary>
         /// Get data from LinkedIn API
         /// </summary>
-        public async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
+        public override async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
         {
-            if (!_isConnected)
-            {
-                await ConnectAsync();
-            }
-
             parameters ??= new Dictionary<string, object>();
 
             try
@@ -378,7 +338,9 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
                         break;
 
                     default:
-                        throw new ArgumentException($"Unsupported entity: {entityName}");
+                        ErrorObject.Flag = Errors.Failed;
+                        ErrorObject.Message = $"Unsupported entity: {entityName}";
+                        return null;
                 }
 
                 // Rate limiting delay
@@ -387,19 +349,25 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
                     await Task.Delay(_config.RateLimitDelayMs);
                 }
 
-                var response = await _httpClient.GetAsync(url);
+                var response = await HttpClient.GetAsync(url);
                 var jsonContent = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw new Exception($"LinkedIn API request failed: {response.StatusCode} - {jsonContent}");
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = $"LinkedIn API request failed: {response.StatusCode} - {jsonContent}";
+                    return null;
                 }
 
+                ErrorObject.Flag = Errors.Ok;
+                ErrorObject.Message = $"Successfully retrieved {entityName} data";
                 return ParseJsonToDataTable(jsonContent, entityName);
             }
             catch (Exception ex)
             {
-                throw new Exception($"Failed to get {entityName} data: {ex.Message}", ex);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get {entityName} data: {ex.Message}";
+                return null;
             }
         }
 
@@ -523,91 +491,19 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
         }
 
         /// <summary>
-        /// Get available entities
+        /// Get value from JSON element
         /// </summary>
-        public List<string> GetEntities()
+        private object GetJsonValue(JsonElement element)
         {
-            return new List<string> { "profile", "posts", "organizations", "followers", "analytics", "campaigns" };
-        }
-
-        /// <summary>
-        /// Get entity metadata
-        /// </summary>
-        public EntityMetadata GetEntityMetadata(string entityName)
-        {
-            if (_entityMetadata.ContainsKey(entityName.ToLower()))
+            return element.ValueKind switch
             {
-                return _entityMetadata[entityName.ToLower()];
-            }
-            throw new ArgumentException($"Entity '{entityName}' not found");
-        }
-
-        /// <summary>
-        /// Insert data (limited support for LinkedIn API)
-        /// </summary>
-        public async Task<int> InsertEntityAsync(string entityName, DataTable data)
-        {
-            if (entityName.ToLower() != "posts")
-            {
-                throw new NotSupportedException($"Insert operations are not supported for {entityName}");
-            }
-
-            // Implementation for creating posts would go here
-            // This is a placeholder as LinkedIn API has specific requirements for post creation
-            throw new NotImplementedException("Post creation not yet implemented");
-        }
-
-        /// <summary>
-        /// Update data (limited support for LinkedIn API)
-        /// </summary>
-        public async Task<int> UpdateEntityAsync(string entityName, DataTable data, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Update operations are not supported for LinkedIn API");
-        }
-
-        /// <summary>
-        /// Delete data (limited support for LinkedIn API)
-        /// </summary>
-        public async Task<int> DeleteEntityAsync(string entityName, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Delete operations are not supported for LinkedIn API");
-        }
-
-        /// <summary>
-        /// Execute custom query
-        /// </summary>
-        public async Task<DataTable> ExecuteQueryAsync(string query, Dictionary<string, object> parameters = null)
-        {
-            // For LinkedIn, we'll treat query as entity name with parameters
-            return await GetEntityAsync(query, parameters);
-        }
-
-        /// <summary>
-        /// Get connection status
-        /// </summary>
-        public bool IsConnected => _isConnected;
-
-        /// <summary>
-        /// Get data source type
-        /// </summary>
-        public string DataSourceType => "LinkedIn";
-
-        /// <summary>
-        /// Get data source name
-        /// </summary>
-        public string DataSourceName => "LinkedIn Data Source";
-
-        /// <summary>
-        /// Dispose resources
-        /// </summary>
-        public void Dispose()
-        {
-            if (_httpClient != null)
-            {
-                _httpClient.Dispose();
-                _httpClient = null;
-            }
-            _isConnected = false;
+                JsonValueKind.String => element.GetString(),
+                JsonValueKind.Number => element.TryGetInt32(out var intValue) ? intValue : element.GetDouble(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Null => null,
+                _ => element.GetRawText()
+            };
         }
     }
 }

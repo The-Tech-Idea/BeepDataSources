@@ -13,15 +13,17 @@ using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Workflow;
-using TheTechIdea.Logger;
-using TheTechIdea.Util;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.AppManager;
+using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.Connectors.NutshellDataSource
 {
     /// <summary>
     /// Nutshell CRM Data Source implementation using Nutshell REST API
     /// </summary>
-    public class NutshellDataSource : IDataSource
+    public class NutshellDataSource : WebAPIDataSource
     {
         #region Configuration Classes
 
@@ -62,12 +64,6 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
 
         private readonly NutshellConfig _config;
         private HttpClient? _httpClient;
-        private readonly IDMEEditor _dmeEditor;
-        private readonly IErrorsInfo _errorsInfo;
-        private readonly IJsonLoader _jsonLoader;
-        private readonly IDMLogger _logger;
-        private readonly IUtil _util;
-        private ConnectionState _connectionState = ConnectionState.Closed;
         private string _connectionString = string.Empty;
         private readonly Dictionary<string, NutshellEntity> _entityCache = new();
 
@@ -75,54 +71,33 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
 
         #region Constructor
 
-        public NutshellDataSource(string datasourcename, IDMEEditor dmeEditor, IDataConnection cn, IErrorsInfo per)
+        public NutshellDataSource(string datasourcename, IDMLogger logger, IDMEEditor dmeEditor, DataSourceType databasetype, IErrorsInfo errorObject)
+            : base(datasourcename, logger, dmeEditor, databasetype, errorObject)
         {
-            DatasourceName = datasourcename;
-            _dmeEditor = dmeEditor;
-            _errorsInfo = per;
-            _jsonLoader = new JsonLoader();
-            _logger = new DMLogger();
-            _util = new Util();
+            Category = DatasourceCategory.Connector;
             _config = new NutshellConfig();
 
+            // Ensure WebAPI connection props exist
+            if (Dataconnection != null && Dataconnection.ConnectionProp is not WebAPIConnectionProperties)
+                Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+
             // Initialize connection properties
-            Dataconnection = cn;
-            if (cn != null)
+            if (Dataconnection?.ConnectionProp != null)
             {
-                _connectionString = cn.ConnectionString;
+                _connectionString = Dataconnection.ConnectionProp.ConnectionString;
                 ParseConnectionString();
             }
-
-            // Initialize HTTP client
-            var handler = new HttpClientHandler();
-            _httpClient = new HttpClient(handler);
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "BeepDataConnector/1.0");
         }
 
         #endregion
 
-        #region IDataSource Implementation
-
-        public string DatasourceName { get; set; } = string.Empty;
-        public string DatasourceType { get; set; } = "Nutshell";
-        public DatasourceCategory Category { get; set; } = DatasourceCategory.CRM;
-        public IDataConnection? Dataconnection { get; set; }
-        public object? DatasourceConnection { get; set; }
-        public ConnectionState ConnectionStatus => _connectionState;
-        public bool InMemory { get; set; } = false;
-        public List<string> EntitiesNames { get; set; } = new();
-        public List<EntityStructure> Entities { get; set; } = new();
-        public IDMLogger Logger => _logger;
-        public IErrorsInfo ErrorObject => _errorsInfo;
-        public IUtil util => _util;
-        public IJsonLoader jsonLoader => _jsonLoader;
-        public IDMEEditor DMEEditor => _dmeEditor;
+        #region Nutshell-Specific Methods
 
         public async Task<bool> ConnectAsync()
         {
             try
             {
-                _logger.WriteLog($"Connecting to Nutshell: {_config.BaseUrl}");
+                Logger.WriteLog($"Connecting to Nutshell: {_config.BaseUrl}");
 
                 // Test connection by getting user info
                 var testRequest = new
@@ -143,41 +118,42 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
 
                     if (testResponse?.Success == true)
                     {
-                        _connectionState = ConnectionState.Open;
-                        DatasourceConnection = _httpClient;
-                        _logger.WriteLog("Successfully connected to Nutshell");
+                        ConnectionStatus = ConnectionState.Open;
+                        Logger.WriteLog("Successfully connected to Nutshell");
                         return true;
                     }
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _errorsInfo.AddError("Nutshell", $"Connection test failed: {response.StatusCode} - {errorContent}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Connection test failed: {response.StatusCode} - {errorContent}";
                 return false;
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Nutshell", $"Connection failed: {ex.Message}", ex);
-                _logger.WriteLog($"Nutshell connection error: {ex.Message}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Connection failed: {ex.Message}";
+                Logger.WriteLog($"Nutshell connection error: {ex.Message}");
                 return false;
             }
         }
 
-        public async Task<bool> DisconnectAsync()
+        public Task<bool> DisconnectAsync()
         {
             try
             {
                 _httpClient?.Dispose();
                 _httpClient = null;
-                _connectionState = ConnectionState.Closed;
-                DatasourceConnection = null;
+                ConnectionStatus = ConnectionState.Closed;
                 _entityCache.Clear();
-                _logger.WriteLog("Disconnected from Nutshell");
-                return true;
+                Logger.WriteLog("Disconnected from Nutshell");
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Nutshell", $"Disconnect failed: {ex.Message}", ex);
-                return false;
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Disconnect failed: {ex.Message}";
+                return Task.FromResult(false);
             }
         }
 
@@ -191,7 +167,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             return await DisconnectAsync();
         }
 
-        public async Task<List<string>> GetEntitiesNamesAsync()
+        public Task<List<string>> GetEntitiesNamesAsync()
         {
             try
             {
@@ -199,18 +175,19 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                     throw new InvalidOperationException("Not connected to Nutshell");
 
                 // Get available entities from Nutshell
-                var entities = await GetNutshellEntitiesAsync();
+                var entities = GetNutshellEntitiesAsync();
                 EntitiesNames = entities.Select(e => e.EntityName).ToList();
-                return EntitiesNames;
+                return Task.FromResult(EntitiesNames);
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Nutshell", $"Failed to get entities: {ex.Message}", ex);
-                return new List<string>();
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get entities: {ex.Message}";
+                return Task.FromResult(new List<string>());
             }
         }
 
-        public async Task<List<EntityStructure>> GetEntityStructuresAsync(bool refresh = false)
+        public Task<List<EntityStructure>> GetEntityStructuresAsync(bool refresh = false)
         {
             try
             {
@@ -218,9 +195,9 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                     throw new InvalidOperationException("Not connected to Nutshell");
 
                 if (!refresh && Entities.Any())
-                    return Entities;
+                    return Task.FromResult(Entities);
 
-                var nutshellEntities = await GetNutshellEntitiesAsync();
+                var nutshellEntities = GetNutshellEntitiesAsync();
                 Entities = new List<EntityStructure>();
 
                 foreach (var entity in nutshellEntities)
@@ -228,8 +205,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                     var structure = new EntityStructure
                     {
                         EntityName = entity.EntityName,
-                        DisplayName = entity.DisplayName,
-                        SchemaName = "Nutshell",
+                        Caption = entity.DisplayName,
                         Fields = new List<EntityField>()
                     };
 
@@ -238,24 +214,24 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                         structure.Fields.Add(new EntityField
                         {
                             fieldname = field.Key,
-                            fieldtype = field.Value,
-                            FieldDisplayName = field.Key
+                            fieldtype = field.Value
                         });
                     }
 
                     Entities.Add(structure);
                 }
 
-                return Entities;
+                return Task.FromResult(Entities);
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Nutshell", $"Failed to get entity structures: {ex.Message}", ex);
-                return new List<EntityStructure>();
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get entity structures: {ex.Message}";
+                return Task.FromResult(new List<EntityStructure>());
             }
         }
 
-        public async Task<object?> GetEntityAsync(string entityName, List<AppFilter>? filter = null)
+        public new async Task<object?> GetEntityAsync(string entityName, List<AppFilter>? filter = null)
         {
             try
             {
@@ -278,19 +254,21 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                     var responseContent = await response.Content.ReadAsStringAsync();
                     var apiResponse = JsonSerializer.Deserialize<NutshellApiResponse<JsonElement>>(responseContent);
 
-                    if (apiResponse?.Success == true && apiResponse.Result.HasValue)
+                    if (apiResponse?.Success == true)
                     {
-                        return apiResponse.Result.Value;
+                        return apiResponse.Result;
                     }
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _errorsInfo.AddError("Nutshell", $"Failed to get {entityName}: {response.StatusCode} - {errorContent}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get {entityName}: {response.StatusCode} - {errorContent}";
                 return null;
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Nutshell", $"Failed to get entity data: {ex.Message}", ex);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to get entity data: {ex.Message}";
                 return null;
             }
         }
@@ -322,12 +300,14 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _errorsInfo.AddError("Nutshell", $"Failed to insert {entityName}: {response.StatusCode} - {errorContent}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to insert {entityName}: {response.StatusCode} - {errorContent}";
                 return false;
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Nutshell", $"Failed to insert entity: {ex.Message}", ex);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to insert entity: {ex.Message}";
                 return false;
             }
         }
@@ -359,12 +339,14 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _errorsInfo.AddError("Nutshell", $"Failed to update {entityName}: {response.StatusCode} - {errorContent}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to update {entityName}: {response.StatusCode} - {errorContent}";
                 return false;
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Nutshell", $"Failed to update entity: {ex.Message}", ex);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to update entity: {ex.Message}";
                 return false;
             }
         }
@@ -396,12 +378,14 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _errorsInfo.AddError("Nutshell", $"Failed to delete {entityName}: {response.StatusCode} - {errorContent}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to delete {entityName}: {response.StatusCode} - {errorContent}";
                 return false;
             }
             catch (Exception ex)
             {
-                _errorsInfo.AddError("Nutshell", $"Failed to delete entity: {ex.Message}", ex);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to delete entity: {ex.Message}";
                 return false;
             }
         }
@@ -441,7 +425,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             }
         }
 
-        private async Task<List<NutshellEntity>> GetNutshellEntitiesAsync()
+        private List<NutshellEntity> GetNutshellEntitiesAsync()
         {
             if (_entityCache.Any())
                 return _entityCache.Values.ToList();
@@ -570,7 +554,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             return Task.Run(() => DeleteEntityAsync(entityname, entityid)).GetAwaiter().GetResult();
         }
 
-        public object GetEntity(string entityname, List<AppFilter> filter)
+        public new object GetEntity(string entityname, List<AppFilter> filter)
         {
             return Task.Run(() => GetEntityAsync(entityname, filter)).GetAwaiter().GetResult();
         }
@@ -580,17 +564,17 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             return Task.Run(() => GetEntityStructuresAsync(refresh)).GetAwaiter().GetResult();
         }
 
-        public List<string> GetEntitesList()
+        public new List<string> GetEntitesList()
         {
             return Task.Run(() => GetEntitiesNamesAsync()).GetAwaiter().GetResult();
         }
 
-        public bool Openconnection()
+        public new bool Openconnection()
         {
             return Task.Run(() => OpenconnectionAsync()).GetAwaiter().GetResult();
         }
 
-        public bool Closeconnection()
+        public new bool Closeconnection()
         {
             return Task.Run(() => CloseconnectionAsync()).GetAwaiter().GetResult();
         }
@@ -600,21 +584,23 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             return CreateEntityAsAsync(entityname, entitydata);
         }
 
-        public object RunQuery(string qrystr)
+        public new IErrorsInfo RunQuery(string qrystr)
         {
             // Nutshell doesn't support arbitrary SQL queries
             // This would need to be implemented using Nutshell's filter API
-            _errorsInfo.AddError("Nutshell", "RunQuery not supported. Use GetEntity with filters instead.");
-            return null;
+            ErrorObject.Flag = Errors.Warning;
+            ErrorObject.Message = "RunQuery not supported. Use GetEntity with filters instead.";
+            return ErrorObject;
         }
 
-        public object RunScript(ETLScriptDet dDLScripts)
+        public new IErrorsInfo RunScript(ETLScriptDet dDLScripts)
         {
-            _errorsInfo.AddError("Nutshell", "RunScript not supported for Nutshell");
-            return null;
+            ErrorObject.Flag = Errors.Warning;
+            ErrorObject.Message = "RunScript not supported for Nutshell";
+            return ErrorObject;
         }
 
-        public void Dispose()
+        public new void Dispose()
         {
             Task.Run(() => DisconnectAsync()).GetAwaiter().GetResult();
             _entityCache.Clear();

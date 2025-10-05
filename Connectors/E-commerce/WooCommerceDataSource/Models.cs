@@ -37,10 +37,10 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WooCommerce.Models
         public static Type Resolve(string entityName)
             => entityName != null && Types.TryGetValue(entityName, out var t) ? t : null;
     }
-            // =======================================================
-            // Base
-            // =======================================================
-     public abstract class WooEntityBase
+    // =======================================================
+    // Base
+    // =======================================================
+    public abstract class WooEntityBase
     {
         [JsonIgnore] public IDataSource DataSource { get; private set; }
         public T Attach<T>(IDataSource ds) where T : WooEntityBase { DataSource = ds; return (T)this; }

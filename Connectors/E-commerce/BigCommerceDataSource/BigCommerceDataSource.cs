@@ -10,11 +10,17 @@ using TheTechIdea.Beep;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.WebAPI;
 using TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource.Models;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.ConfigUtil;
 
 namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
 {
     public class BigCommerceDataSource : WebAPIDataSource
     {
+        private readonly HttpClient _httpClient;
         // BigCommerce API Map with endpoints, roots, and required filters
         public static readonly Dictionary<string, (string endpoint, string? root, string[] requiredFilters)> Map = new()
         {
@@ -70,6 +76,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             IErrorsInfo errors)
             : base(datasourcename, logger, editor, type, errors)
         {
+            _httpClient = new HttpClient();
             // Ensure we're on WebAPI connection properties
             if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
             {
@@ -97,9 +104,9 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             {
                 foreach (var filter in filters)
                 {
-                    if (filter.FieldName != null && filter.FieldValue != null)
+                    if (filter.FieldName != null && filter.FilterValue != null)
                     {
-                        endpoint = endpoint.Replace($"{{{filter.FieldName}}}", filter.FieldValue.ToString());
+                        endpoint = endpoint.Replace($"{{{filter.FieldName}}}", filter.FilterValue.ToString());
                     }
                 }
             }
@@ -135,13 +142,13 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
 
             foreach (var filter in filters)
             {
-                if (filter.FieldName != null && filter.FieldValue != null)
+                if (filter.FieldName != null && filter.FilterValue != null)
                 {
                     // Skip filters that are used as path parameters
                     if (!Map.ContainsKey(filter.FieldName ?? "") ||
                         !Map[filter.FieldName ?? ""].endpoint.Contains($"{{{filter.FieldName}}}"))
                     {
-                        queryParams.Add($"{filter.FieldName}={Uri.EscapeDataString(filter.FieldValue.ToString() ?? "")}");
+                        queryParams.Add($"{filter.FieldName}={Uri.EscapeDataString(filter.FilterValue.ToString() ?? "")}");
                     }
                 }
             }
@@ -150,7 +157,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
         }
 
         // Override GetEntity to handle BigCommerce API specifics
-        public override async Task<object?> GetEntityAsync(string EntityName, List<AppFilter>? filter)
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter>? filter)
         {
             try
             {
@@ -170,7 +177,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
 
                 request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                var response = await HttpClient.SendAsync(request);
+                var response = await _httpClient.SendAsync(request);
                 response.EnsureSuccessStatusCode();
 
                 var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -182,18 +189,20 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
                     using var doc = JsonDocument.Parse(jsonResponse);
                     if (doc.RootElement.TryGetProperty(Map[EntityName].root!, out var dataElement))
                     {
-                        return JsonSerializer.Deserialize(
+                        var nestedResult = JsonSerializer.Deserialize(
                             dataElement.GetRawText(),
                             GetEntityType(EntityName),
                             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        return nestedResult as IEnumerable<object> ?? Array.Empty<object>();
                     }
                 }
 
                 // Direct response
-                return JsonSerializer.Deserialize(
+                var result = JsonSerializer.Deserialize(
                     jsonResponse,
                     GetEntityType(EntityName),
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                return result as IEnumerable<object> ?? Array.Empty<object>();
             }
             catch (Exception ex)
             {
@@ -202,68 +211,8 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             }
         }
 
-        // Override GetEntitiesAsync for pagination support
-        public override async Task<object?> GetEntitiesAsync(string EntityName, List<AppFilter>? filter)
-        {
-            try
-            {
-                RequireFilters(EntityName, filter);
-                var endpoint = ResolveEndpoint(EntityName, filter);
-                var query = FiltersToQuery(filter);
-
-                // Add pagination parameters if not specified
-                if (!query.Contains("limit="))
-                {
-                    query += string.IsNullOrEmpty(query) ? "?" : "&";
-                    query += "limit=50"; // BigCommerce default page size
-                }
-
-                var fullUrl = $"{BaseURL?.TrimEnd('/')}/{endpoint}{query}";
-
-                using var request = new HttpRequestMessage(HttpMethod.Get, fullUrl);
-
-                // Add BigCommerce specific headers
-                if (!string.IsNullOrEmpty(AccessToken))
-                {
-                    request.Headers.Add("X-Auth-Token", AccessToken);
-                }
-
-                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var response = await HttpClient.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-
-                // Handle BigCommerce response structure
-                if (!string.IsNullOrEmpty(Map[EntityName].root))
-                {
-                    // Parse nested response
-                    using var doc = JsonDocument.Parse(jsonResponse);
-                    if (doc.RootElement.TryGetProperty(Map[EntityName].root!, out var dataElement))
-                    {
-                        return JsonSerializer.Deserialize(
-                            dataElement.GetRawText(),
-                            GetEntityListType(EntityName),
-                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    }
-                }
-
-                // Direct response
-                return JsonSerializer.Deserialize(
-                    jsonResponse,
-                    GetEntityListType(EntityName),
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"Error getting {EntityName} entities: {ex.Message}");
-                throw;
-            }
-        }
-
         // Helper method to get entity type for deserialization
-        private Type GetEntityType(string entityName) => entityName switch
+        public override Type GetEntityType(string entityName) => entityName switch
         {
             "products" => typeof(BigCommerceProduct),
             "categories" => typeof(BigCommerceCategory),

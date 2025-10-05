@@ -75,279 +75,192 @@ namespace BeepDataSources.Connectors.SocialMedia.Pinterest
     /// Pinterest data source implementation for Beep framework
     /// Supports Pinterest API v5
     /// </summary>
-    public class PinterestDataSource : IDataSource
+    [AddinAttribute(Category = "SocialMedia", Name = "PinterestDataSource")]
+    public class PinterestDataSource : WebAPIDataSource
     {
-        private readonly PinterestConfig _config;
-        private HttpClient _httpClient;
-        private bool _isConnected;
-        private readonly Dictionary<string, EntityMetadata> _entityMetadata;
+    /// <summary>
+    /// Constructor for PinterestDataSource
+    /// </summary>
+    public PinterestDataSource(string datasourcename, IDMLogger logger, IDMEEditor editor, DataSourceType type, IErrorsInfo errors)
+        : base(datasourcename, logger, editor, type, errors)
+    {
+        InitializeEntities();
+    }
 
-        /// <summary>
-        /// Constructor for PinterestDataSource
-        /// </summary>
-        /// <param name="config">Pinterest configuration</param>
-        public PinterestDataSource(PinterestConfig config)
+    /// <summary>
+    /// Initialize entities for Pinterest data source
+    /// </summary>
+    private void InitializeEntities()
+    {
+        // User Profile
+        Entities["user"] = new EntityStructure
         {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
-            _entityMetadata = InitializeEntityMetadata();
-        }
-
-        /// <summary>
-        /// Constructor for PinterestDataSource with connection string
-        /// </summary>
-        /// <param name="connectionString">Connection string in format: AppId=xxx;AppSecret=xxx;AccessToken=xxx;UserId=xxx</param>
-        public PinterestDataSource(string connectionString)
-        {
-            _config = ParseConnectionString(connectionString);
-            _entityMetadata = InitializeEntityMetadata();
-        }
-
-        /// <summary>
-        /// Parse connection string into PinterestConfig
-        /// </summary>
-        private PinterestConfig ParseConnectionString(string connectionString)
-        {
-            var config = new PinterestConfig();
-            var parts = connectionString.Split(';');
-
-            foreach (var part in parts)
+            EntityName = "user",
+            ViewID = 1,
+            Fields = new List<EntityField>
             {
-                var keyValue = part.Split('=');
-                if (keyValue.Length == 2)
-                {
-                    var key = keyValue[0].Trim();
-                    var value = keyValue[1].Trim();
+                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { fieldname = "username", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "first_name", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "last_name", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "bio", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "created_at", fieldtype = "datetime", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "counts", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "image", fieldtype = "string", ValueRetrievedFromParent = false }
+            }
+        };
 
-                    switch (key.ToLower())
-                    {
-                        case "appid":
-                            config.AppId = value;
-                            break;
-                        case "appsecret":
-                            config.AppSecret = value;
-                            break;
-                        case "accesstoken":
-                            config.AccessToken = value;
-                            break;
-                        case "userid":
-                            config.UserId = value;
-                            break;
-                        case "username":
-                            config.Username = value;
-                            break;
-                        case "apiversion":
-                            config.ApiVersion = value;
-                            break;
-                        case "timeoutseconds":
-                            if (int.TryParse(value, out var timeout))
-                                config.TimeoutSeconds = timeout;
-                            break;
-                        case "maxretries":
-                            if (int.TryParse(value, out var retries))
-                                config.MaxRetries = retries;
-                            break;
-                        case "ratelimitdelayms":
-                            if (int.TryParse(value, out var delay))
-                                config.RateLimitDelayMs = delay;
-                            break;
-                        case "pagesize":
-                            if (int.TryParse(value, out var pageSize))
-                                config.PageSize = pageSize;
-                            break;
-                    }
-                }
+        // Boards
+        Entities["boards"] = new EntityStructure
+        {
+            EntityName = "boards",
+            ViewID = 2,
+            Fields = new List<EntityField>
+            {
+                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { fieldname = "name", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "description", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "owner", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "privacy", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "created_at", fieldtype = "datetime", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "counts", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "image", fieldtype = "string", ValueRetrievedFromParent = false }
+            }
+        };
+
+        // Pins
+        Entities["pins"] = new EntityStructure
+        {
+            EntityName = "pins",
+            ViewID = 3,
+            Fields = new List<EntityField>
+            {
+                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { fieldname = "title", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "description", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "link", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "url", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "created_at", fieldtype = "datetime", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "board", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "counts", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "images", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "dominant_color", fieldtype = "string", ValueRetrievedFromParent = false }
+            }
+        };
+
+        // Analytics
+        Entities["analytics"] = new EntityStructure
+        {
+            EntityName = "analytics",
+            ViewID = 4,
+            Fields = new List<EntityField>
+            {
+                new EntityField { fieldname = "date", fieldtype = "datetime", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { fieldname = "pin_id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { fieldname = "impressions", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "saves", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "clicks", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "outbound_clicks", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "pin_clicks", fieldtype = "integer", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "closeups", fieldtype = "integer", ValueRetrievedFromParent = false }
+            }
+        };
+
+        // Following
+        Entities["following"] = new EntityStructure
+        {
+            EntityName = "following",
+            ViewID = 5,
+            Fields = new List<EntityField>
+            {
+                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { fieldname = "username", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "first_name", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "last_name", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "followed_at", fieldtype = "datetime", ValueRetrievedFromParent = false }
+            }
+        };
+
+        // Followers
+        Entities["followers"] = new EntityStructure
+        {
+            EntityName = "followers",
+            ViewID = 6,
+            Fields = new List<EntityField>
+            {
+                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { fieldname = "username", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "first_name", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "last_name", fieldtype = "string", ValueRetrievedFromParent = false },
+                new EntityField { fieldname = "followed_at", fieldtype = "datetime", ValueRetrievedFromParent = false }
+            }
+        };
+
+        // Update EntitiesNames collection
+        EntitiesNames.AddRange(Entities.Keys);
+    }
+
+    /// <summary>
+    /// Connect to Pinterest API
+    /// </summary>
+    public override async Task<IErrorsInfo> ConnectAsync(WebAPIConnectionProperties properties)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(properties.AccessToken))
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = "Access token is required for Pinterest connection";
+                return ErrorObject;
             }
 
-            return config;
-        }
+            // Test connection by getting user profile
+            var testUrl = $"{properties.BaseUrl}/user_account";
+            var response = await HttpClient.GetAsync(testUrl);
 
-        /// <summary>
-        /// Initialize entity metadata for Pinterest entities
-        /// </summary>
-        private Dictionary<string, EntityMetadata> InitializeEntityMetadata()
-        {
-            var metadata = new Dictionary<string, EntityMetadata>();
-
-            // User Profile
-            metadata["user"] = new EntityMetadata
+            if (response.IsSuccessStatusCode)
             {
-                EntityName = "user",
-                DisplayName = "User Profile",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "User ID" },
-                    new EntityField { Name = "username", Type = "string", DisplayName = "Username" },
-                    new EntityField { Name = "first_name", Type = "string", DisplayName = "First Name" },
-                    new EntityField { Name = "last_name", Type = "string", DisplayName = "Last Name" },
-                    new EntityField { Name = "bio", Type = "string", DisplayName = "Bio" },
-                    new EntityField { Name = "created_at", Type = "datetime", DisplayName = "Created At" },
-                    new EntityField { Name = "counts", Type = "string", DisplayName = "Counts" },
-                    new EntityField { Name = "image", Type = "string", DisplayName = "Profile Image" }
-                }
-            };
-
-            // Boards
-            metadata["boards"] = new EntityMetadata
-            {
-                EntityName = "boards",
-                DisplayName = "Boards",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Board ID" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Board Name" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "owner", Type = "string", DisplayName = "Owner" },
-                    new EntityField { Name = "privacy", Type = "string", DisplayName = "Privacy" },
-                    new EntityField { Name = "created_at", Type = "datetime", DisplayName = "Created At" },
-                    new EntityField { Name = "counts", Type = "string", DisplayName = "Counts" },
-                    new EntityField { Name = "image", Type = "string", DisplayName = "Board Image" }
-                }
-            };
-
-            // Pins
-            metadata["pins"] = new EntityMetadata
-            {
-                EntityName = "pins",
-                DisplayName = "Pins",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Pin ID" },
-                    new EntityField { Name = "title", Type = "string", DisplayName = "Title" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "link", Type = "string", DisplayName = "Link" },
-                    new EntityField { Name = "url", Type = "string", DisplayName = "URL" },
-                    new EntityField { Name = "created_at", Type = "datetime", DisplayName = "Created At" },
-                    new EntityField { Name = "board", Type = "string", DisplayName = "Board" },
-                    new EntityField { Name = "counts", Type = "string", DisplayName = "Counts" },
-                    new EntityField { Name = "images", Type = "string", DisplayName = "Images" },
-                    new EntityField { Name = "dominant_color", Type = "string", DisplayName = "Dominant Color" }
-                }
-            };
-
-            // Analytics
-            metadata["analytics"] = new EntityMetadata
-            {
-                EntityName = "analytics",
-                DisplayName = "Analytics",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "date", Type = "datetime", IsPrimaryKey = true, DisplayName = "Date" },
-                    new EntityField { Name = "pin_id", Type = "string", IsPrimaryKey = true, DisplayName = "Pin ID" },
-                    new EntityField { Name = "impressions", Type = "integer", DisplayName = "Impressions" },
-                    new EntityField { Name = "saves", Type = "integer", DisplayName = "Saves" },
-                    new EntityField { Name = "clicks", Type = "integer", DisplayName = "Clicks" },
-                    new EntityField { Name = "outbound_clicks", Type = "integer", DisplayName = "Outbound Clicks" },
-                    new EntityField { Name = "pin_clicks", Type = "integer", DisplayName = "Pin Clicks" },
-                    new EntityField { Name = "closeups", Type = "integer", DisplayName = "Closeups" }
-                }
-            };
-
-            // Following
-            metadata["following"] = new EntityMetadata
-            {
-                EntityName = "following",
-                DisplayName = "Following",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "User ID" },
-                    new EntityField { Name = "username", Type = "string", DisplayName = "Username" },
-                    new EntityField { Name = "first_name", Type = "string", DisplayName = "First Name" },
-                    new EntityField { Name = "last_name", Type = "string", DisplayName = "Last Name" },
-                    new EntityField { Name = "followed_at", Type = "datetime", DisplayName = "Followed At" }
-                }
-            };
-
-            // Followers
-            metadata["followers"] = new EntityMetadata
-            {
-                EntityName = "followers",
-                DisplayName = "Followers",
-                Fields = new List<EntityField>
-                {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "User ID" },
-                    new EntityField { Name = "username", Type = "string", DisplayName = "Username" },
-                    new EntityField { Name = "first_name", Type = "string", DisplayName = "First Name" },
-                    new EntityField { Name = "last_name", Type = "string", DisplayName = "Last Name" },
-                    new EntityField { Name = "followed_at", Type = "datetime", DisplayName = "Followed At" }
-                }
-            };
-
-            return metadata;
-        }
-
-        /// <summary>
-        /// Connect to Pinterest API
-        /// </summary>
-        public async Task<bool> ConnectAsync()
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(_config.AccessToken))
-                {
-                    throw new InvalidOperationException("Access token is required for Pinterest connection");
-                }
-
-                // Initialize HTTP client
-                var handler = new HttpClientHandler();
-                _httpClient = new HttpClient(handler)
-                {
-                    Timeout = TimeSpan.FromSeconds(_config.TimeoutSeconds)
-                };
-
-                // Add authorization header
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.AccessToken);
-
-                // Test connection by getting user profile
-                var testUrl = $"{_config.BaseUrl}/user_account";
-                var response = await _httpClient.GetAsync(testUrl);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    _isConnected = true;
-                    return true;
-                }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    throw new Exception($"Pinterest API connection failed: {response.StatusCode} - {errorContent}");
-                }
+                ErrorObject.Flag = Errors.Ok;
+                ErrorObject.Message = "Successfully connected to Pinterest API";
+                return ErrorObject;
             }
-            catch (Exception ex)
+            else
             {
-                _isConnected = false;
-                throw new Exception($"Failed to connect to Pinterest API: {ex.Message}", ex);
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Pinterest API connection failed: {response.StatusCode} - {errorContent}";
+                return ErrorObject;
             }
         }
-
-        /// <summary>
-        /// Disconnect from Pinterest API
-        /// </summary>
-        public async Task<bool> DisconnectAsync()
+        catch (Exception ex)
         {
-            if (_httpClient != null)
-            {
-                _httpClient.Dispose();
-                _httpClient = null;
-            }
-            _isConnected = false;
-            return true;
+            ErrorObject.Flag = Errors.Failed;
+            ErrorObject.Message = $"Failed to connect to Pinterest API: {ex.Message}";
+            return ErrorObject;
         }
+    }
+
+    /// <summary>
+    /// Disconnect from Pinterest API
+    /// </summary>
+    public override async Task<IErrorsInfo> DisconnectAsync()
+    {
+        ErrorObject.Flag = Errors.Ok;
+        ErrorObject.Message = "Successfully disconnected from Pinterest API";
+        return ErrorObject;
+    }
 
         /// <summary>
         /// Get data from Pinterest API
-        /// </summary>
-        public async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
+        public override async Task<(DataTable, ErrorObject)> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
         {
-            if (!_isConnected)
-            {
-                await ConnectAsync();
-            }
-
-            parameters ??= new Dictionary<string, object>();
+            var errorObject = new ErrorObject();
+            DataTable dataTable = null;
 
             try
             {
+                parameters ??= new Dictionary<string, object>();
+
                 string url;
                 var pageSize = parameters.ContainsKey("page_size") ? parameters["page_size"].ToString() : _config.PageSize.ToString();
 
@@ -397,7 +310,9 @@ namespace BeepDataSources.Connectors.SocialMedia.Pinterest
                         break;
 
                     default:
-                        throw new ArgumentException($"Unsupported entity: {entityName}");
+                        errorObject.Flag = Errors.Failed;
+                        errorObject.Message = $"Unsupported entity: {entityName}";
+                        return (null, errorObject);
                 }
 
                 // Rate limiting delay
@@ -406,20 +321,27 @@ namespace BeepDataSources.Connectors.SocialMedia.Pinterest
                     await Task.Delay(_config.RateLimitDelayMs);
                 }
 
-                var response = await _httpClient.GetAsync(url);
+                var response = await HttpClient.GetAsync(url);
                 var jsonContent = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw new Exception($"Pinterest API request failed: {response.StatusCode} - {jsonContent}");
+                    errorObject.Flag = Errors.Failed;
+                    errorObject.Message = $"Pinterest API request failed: {response.StatusCode} - {jsonContent}";
+                    return (null, errorObject);
                 }
 
-                return ParseJsonToDataTable(jsonContent, entityName);
+                dataTable = ParseJsonToDataTable(jsonContent, entityName);
+                errorObject.Flag = Errors.Ok;
+                errorObject.Message = $"Successfully retrieved {entityName} data";
             }
             catch (Exception ex)
             {
-                throw new Exception($"Failed to get {entityName} data: {ex.Message}", ex);
+                errorObject.Flag = Errors.Failed;
+                errorObject.Message = $"Failed to get {entityName} data: {ex.Message}";
             }
+
+            return (dataTable, errorObject);
         }
 
         /// <summary>
@@ -428,7 +350,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Pinterest
         private DataTable ParseJsonToDataTable(string jsonContent, string entityName)
         {
             var dataTable = new DataTable(entityName);
-            var metadata = _entityMetadata.ContainsKey(entityName.ToLower()) ? _entityMetadata[entityName.ToLower()] : null;
+            var entityStructure = Entities.ContainsKey(entityName.ToLower()) ? Entities[entityName.ToLower()] : null;
 
             try
             {
@@ -452,9 +374,9 @@ namespace BeepDataSources.Connectors.SocialMedia.Pinterest
                 }
 
                 // Create columns based on metadata or first object
-                if (metadata != null)
+                if (entityStructure != null)
                 {
-                    foreach (var field in metadata.Fields)
+                    foreach (var field in entityStructure.Fields)
                     {
                         dataTable.Columns.Add(field.Name, GetFieldType(field.Type));
                     }
@@ -545,92 +467,24 @@ namespace BeepDataSources.Connectors.SocialMedia.Pinterest
             };
         }
 
-        /// <summary>
-        /// Get available entities
-        /// </summary>
-        public List<string> GetEntities()
-        {
-            return new List<string> { "user", "boards", "board", "pins", "pin", "userpins", "analytics", "following", "followers" };
-        }
 
-        /// <summary>
-        /// Get entity metadata
-        /// </summary>
-        public EntityMetadata GetEntityMetadata(string entityName)
-        {
-            if (_entityMetadata.ContainsKey(entityName.ToLower()))
-            {
-                return _entityMetadata[entityName.ToLower()];
-            }
-            throw new ArgumentException($"Entity '{entityName}' not found");
-        }
 
-        /// <summary>
-        /// Insert data (limited support for Pinterest API)
-        /// </summary>
-        public async Task<int> InsertEntityAsync(string entityName, DataTable data)
-        {
-            if (entityName.ToLower() != "pins")
-            {
-                throw new NotSupportedException($"Insert operations are not supported for {entityName}");
-            }
 
-            // Implementation for creating pins would go here
-            // This is a placeholder as Pinterest API has specific requirements for pin creation
-            throw new NotImplementedException("Pin creation not yet implemented");
-        }
 
-        /// <summary>
-        /// Update data (limited support for Pinterest API)
-        /// </summary>
-        public async Task<int> UpdateEntityAsync(string entityName, DataTable data, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Update operations are not supported for Pinterest API");
-        }
 
-        /// <summary>
-        /// Delete data (limited support for Pinterest API)
-        /// </summary>
-        public async Task<int> DeleteEntityAsync(string entityName, Dictionary<string, object> filter)
-        {
-            throw new NotSupportedException("Delete operations are not supported for Pinterest API");
-        }
 
-        /// <summary>
-        /// Execute custom query
-        /// </summary>
-        public async Task<DataTable> ExecuteQueryAsync(string query, Dictionary<string, object> parameters = null)
-        {
-            // For Pinterest, we'll treat query as entity name with parameters
-            return await GetEntityAsync(query, parameters);
-        }
 
-        /// <summary>
-        /// Get connection status
-        /// </summary>
-        public bool IsConnected => _isConnected;
 
-        /// <summary>
-        /// Get data source type
-        /// </summary>
-        public string DataSourceType => "Pinterest";
 
-        /// <summary>
-        /// Get data source name
-        /// </summary>
-        public string DataSourceName => "Pinterest Data Source";
 
-        /// <summary>
-        /// Dispose resources
-        /// </summary>
-        public void Dispose()
-        {
-            if (_httpClient != null)
-            {
-                _httpClient.Dispose();
-                _httpClient = null;
-            }
-            _isConnected = false;
-        }
+
+
+
+
+
+
+
+
+
     }
 }

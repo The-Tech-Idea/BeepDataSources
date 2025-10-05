@@ -15,7 +15,7 @@ using TheTechIdea.Beep.WebAPI;
 
 namespace BeepDataSources.iCloud
 {
-  
+
 
     /// <summary>
     /// iCloud data source implementation for Beep framework

@@ -15,7 +15,7 @@ using TheTechIdea.Beep.WebAPI;
 
 namespace BeepDataSources.MediaFire
 {
-  
+
     public class MediaFireDataSource : WebAPIDataSource
     {
         public MediaFireDataSource(string datasourcename, IDMLogger logger, IDMEEditor dmeEditor, DataSourceType databasetype, IErrorsInfo errorObject) : base(datasourcename, logger, dmeEditor, databasetype, errorObject)

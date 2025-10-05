@@ -16,6 +16,7 @@ using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
 
 using Qdrant.Client;
 
@@ -54,7 +55,7 @@ public QdrantDatasourceGeneric(string pdatasourcename, IDMLogger plogger, IDMEEd
         if (pdatasourcename != null)
             {
                 // Initialize data connection with connection properties
-                Dataconnection = new DefaulDataConnection
+                Dataconnection = new WebAPIDataConnection
                 {
                     DMEEditor = DMEEditor,
                     ConnectionProp = DMEEditor.ConfigEditor.DataConnections.FirstOrDefault(
@@ -350,19 +351,19 @@ public QdrantDatasourceGeneric(string pdatasourcename, IDMLogger plogger, IDMEEd
             return ErrorObject;
         }
 
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
             // Qdrant doesn't have traditional parent-child relationships
-            return new List<ChildRelation>();
+            return Array.Empty<ChildRelation>();
         }
 
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
             // Not applicable for Qdrant
-            return new List<ETLScriptDet>();
+            return Array.Empty<ETLScriptDet>();
         }
 
-        public List<string> GetEntitesList()
+        public IEnumerable<string> GetEntitesList()
         {
             try
             {
@@ -377,11 +378,11 @@ public QdrantDatasourceGeneric(string pdatasourcename, IDMLogger plogger, IDMEEd
             catch (Exception ex)
             {
                 DMEEditor.AddLogMessage("Error", $"Error getting collection list: {ex.Message}", DateTime.Now, -1, "", Errors.Failed);
-                return new List<string>();
+                return Array.Empty<string>();
             }
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter)
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
             try
             {
@@ -392,18 +393,17 @@ public QdrantDatasourceGeneric(string pdatasourcename, IDMLogger plogger, IDMEEd
 
                 // For Qdrant, we'll return information about the collection
                 var collectionInfo = GetCollectionInfo(EntityName).Result;
-                return collectionInfo;
+                return collectionInfo != null ? new[] { collectionInfo } : Array.Empty<object>();
             }
             catch (Exception ex)
             {
                 DMEEditor.AddLogMessage("Error", $"Error getting collection: {ex.Message}", DateTime.Now, -1, "", Errors.Failed);
-                return null;
+                return Array.Empty<object>();
             }
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            // Qdrant supports pagination via scroll api, but for this implementation we'll use simplified approach
             try
             {
                 if (ConnectionStatus != ConnectionState.Open)
@@ -411,37 +411,34 @@ public QdrantDatasourceGeneric(string pdatasourcename, IDMLogger plogger, IDMEEd
                     Openconnection();
                 }
 
-                // For search-based retrieval, we'd need a query vector which we don't have here
-                // So return collection info with pagination details
-                var collectionInfo = GetCollectionInfo(EntityName).Result;
-                // Add pagination metadata
-                return new Dictionary<string, object>
+                var allData = GetEntity(EntityName, filter).ToList();
+                var pagedData = allData.Skip(pageNumber * pageSize).Take(pageSize).ToList();
+                
+                return new PagedResult
                 {
-                    ["collectionInfo"] = collectionInfo,
-                    ["pagination"] = new Dictionary<string, object>
-                    {
-                        ["pageNumber"] = pageNumber,
-                        ["pageSize"] = pageSize
-                    }
+                    Data = pagedData,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    TotalRecords = allData.Count,
+                    TotalPages = (int)Math.Ceiling((double)allData.Count / pageSize)
                 };
             }
             catch (Exception ex)
             {
                 DMEEditor.AddLogMessage("Error", $"Error getting collection with pagination: {ex.Message}", DateTime.Now, -1, "", Errors.Failed);
-                return null;
+                return new PagedResult { Data = Array.Empty<object>(), PageNumber = pageNumber, PageSize = pageSize, TotalRecords = 0, TotalPages = 0 };
             }
         }
 
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            // Async version of GetEntity
             return Task.FromResult(GetEntity(EntityName, Filter));
         }
 
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
             // Qdrant doesn't have traditional foreign keys
-            return new List<RelationShipKeys>();
+            return Array.Empty<RelationShipKeys>();
         }
 
         public int GetEntityIdx(string entityName)
@@ -613,7 +610,7 @@ public QdrantDatasourceGeneric(string pdatasourcename, IDMLogger plogger, IDMEEd
             return ErrorObject;
         }
 
-        public object RunQuery(string qrystr)
+        public IEnumerable<object> RunQuery(string qrystr)
         {
             // Not applicable for traditional SQL queries
             throw new NotImplementedException("SQL queries are not supported by Qdrant");
