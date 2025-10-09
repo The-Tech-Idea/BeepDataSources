@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
+
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Report;
@@ -247,6 +250,84 @@ namespace TheTechIdea.Beep.BufferDataSource
             }
 
             return queryParts.Any() ? "?" + string.Join("&", queryParts) : string.Empty;
+        }
+
+        /// <summary>
+        /// Gets all posts/updates
+        /// </summary>
+        [CommandAttribute(ObjectType = "BufferPost", PointType = EnumPointType.Function, Name = "GetPosts", Caption = "Get Buffer Posts", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferPost>")]
+        public async Task<IEnumerable<BufferPost>> GetPosts()
+        {
+            string endpoint = "updates.json";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var responseObj = JsonSerializer.Deserialize<BufferResponse<BufferPost>>(json);
+            return responseObj?.Data ?? new List<BufferPost>();
+        }
+
+        /// <summary>
+        /// Gets pending posts
+        /// </summary>
+        [CommandAttribute(ObjectType = "BufferPost", PointType = EnumPointType.Function, Name = "GetPendingPosts", Caption = "Get Buffer Pending Posts", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferPost>")]
+        public async Task<IEnumerable<BufferPost>> GetPendingPosts()
+        {
+            string endpoint = "updates/pending.json";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var responseObj = JsonSerializer.Deserialize<BufferResponse<BufferPost>>(json);
+            return responseObj?.Data ?? new List<BufferPost>();
+        }
+
+        /// <summary>
+        /// Gets sent posts
+        /// </summary>
+        [CommandAttribute(ObjectType = "BufferPost", PointType = EnumPointType.Function, Name = "GetSentPosts", Caption = "Get Buffer Sent Posts", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferPost>")]
+        public async Task<IEnumerable<BufferPost>> GetSentPosts()
+        {
+            string endpoint = "updates/sent.json";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var responseObj = JsonSerializer.Deserialize<BufferResponse<BufferPost>>(json);
+            return responseObj?.Data ?? new List<BufferPost>();
+        }
+
+        /// <summary>
+        /// Gets all social media profiles
+        /// </summary>
+        [CommandAttribute(ObjectType = "BufferProfile", PointType = EnumPointType.Function, Name = "GetProfiles", Caption = "Get Buffer Profiles", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferProfile>")]
+        public async Task<IEnumerable<BufferProfile>> GetProfiles()
+        {
+            string endpoint = "profiles.json";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var responseObj = JsonSerializer.Deserialize<BufferResponse<BufferProfile>>(json);
+            return responseObj?.Data ?? new List<BufferProfile>();
+        }
+
+        /// <summary>
+        /// Gets analytics for a specific profile
+        /// </summary>
+        [CommandAttribute(ObjectType = "BufferAnalytics", PointType = EnumPointType.Function, Name = "GetAnalytics", Caption = "Get Buffer Analytics", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferAnalytics>")]
+        public async Task<IEnumerable<BufferAnalytics>> GetAnalytics(string profileId)
+        {
+            string endpoint = $"analytics/{profileId}.json";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var analytics = JsonSerializer.Deserialize<BufferAnalytics>(json);
+            return analytics != null ? new List<BufferAnalytics> { analytics } : new List<BufferAnalytics>();
+        }
+
+        /// <summary>
+        /// Gets all campaigns
+        /// </summary>
+        [CommandAttribute(ObjectType = "BufferCampaign", PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Buffer Campaigns", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferCampaign>")]
+        public async Task<IEnumerable<BufferCampaign>> GetCampaigns()
+        {
+            string endpoint = "campaigns.json";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var responseObj = JsonSerializer.Deserialize<BufferResponse<BufferCampaign>>(json);
+            return responseObj?.Data ?? new List<BufferCampaign>();
         }
 
         private void RequireFilters(string entityName, string query, string[] required)

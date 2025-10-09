@@ -1,13 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using TheTechIdea.Beep.DataBase;
 
 namespace TheTechIdea.Beep.FacebookDataSource
 {
     /// <summary>
+    /// Base class for Facebook entities
+    /// </summary>
+    public abstract class FacebookEntityBase
+    {
+        [JsonIgnore] public IDataSource DataSource { get; private set; }
+        public T Attach<T>(IDataSource ds) where T : FacebookEntityBase { DataSource = ds; return (T)this; }
+    }
+
+    /// <summary>
     /// Facebook Post entity
     /// </summary>
-    public class FacebookPost
+    public sealed class FacebookPost : FacebookEntityBase
     {
         [JsonPropertyName("id")]
         public string? Id { get; set; }
@@ -82,7 +92,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
     /// <summary>
     /// Facebook Page entity
     /// </summary>
-    public class FacebookPage
+    public sealed class FacebookPage : FacebookEntityBase
     {
         [JsonPropertyName("id")]
         public string? Id { get; set; }
@@ -151,7 +161,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
     /// <summary>
     /// Facebook Group entity
     /// </summary>
-    public class FacebookGroup
+    public sealed class FacebookGroup : FacebookEntityBase
     {
         [JsonPropertyName("id")]
         public string? Id { get; set; }
@@ -196,7 +206,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
     /// <summary>
     /// Facebook Event entity
     /// </summary>
-    public class FacebookEvent
+    public sealed class FacebookEvent : FacebookEntityBase
     {
         [JsonPropertyName("id")]
         public string? Id { get; set; }
@@ -259,7 +269,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
     /// <summary>
     /// Facebook Ad entity
     /// </summary>
-    public class FacebookAd
+    public sealed class FacebookAd : FacebookEntityBase
     {
         [JsonPropertyName("id")]
         public string? Id { get; set; }
@@ -310,7 +320,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
     /// <summary>
     /// Facebook Insights entity
     /// </summary>
-    public class FacebookInsight
+    public sealed class FacebookInsight : FacebookEntityBase
     {
         [JsonPropertyName("id")]
         public string? Id { get; set; }
@@ -462,7 +472,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
     /// <summary>
     /// Facebook User
     /// </summary>
-    public class FacebookUser
+    public sealed class FacebookUser : FacebookEntityBase
     {
         [JsonPropertyName("id")]
         public string? Id { get; set; }
@@ -652,5 +662,44 @@ namespace TheTechIdea.Beep.FacebookDataSource
 
         [JsonPropertyName("end_time")]
         public DateTime? EndTime { get; set; }
+    }
+
+    /// <summary>
+    /// Facebook API response wrapper
+    /// </summary>
+    public class FacebookResponse<T>
+    {
+        [JsonPropertyName("data")]
+        public List<T>? Data { get; set; }
+
+        [JsonPropertyName("paging")]
+        public FacebookPaging? Paging { get; set; }
+    }
+
+    /// <summary>
+    /// Facebook paging information
+    /// </summary>
+    public class FacebookPaging
+    {
+        [JsonPropertyName("next")]
+        public string? Next { get; set; }
+
+        [JsonPropertyName("previous")]
+        public string? Previous { get; set; }
+
+        [JsonPropertyName("cursors")]
+        public FacebookCursors? Cursors { get; set; }
+    }
+
+    /// <summary>
+    /// Facebook cursors for pagination
+    /// </summary>
+    public class FacebookCursors
+    {
+        [JsonPropertyName("before")]
+        public string? Before { get; set; }
+
+        [JsonPropertyName("after")]
+        public string? After { get; set; }
     }
 }

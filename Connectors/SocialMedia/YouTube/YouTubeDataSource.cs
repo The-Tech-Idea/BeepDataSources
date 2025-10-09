@@ -5,8 +5,16 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using DataManagementEngineStandard;
-using DataManagementModelsStandard;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.YouTube.Models;
 
 namespace BeepDataSources.Connectors.SocialMedia.YouTube
 {
@@ -839,6 +847,86 @@ namespace BeepDataSources.Connectors.SocialMedia.YouTube
                 JsonValueKind.Null => null,
                 _ => element.GetRawText()
             };
+        }
+
+        // ---------------- Specific YouTube Methods ----------------
+
+        /// <summary>
+        /// Gets videos from a channel
+        /// </summary>
+        [CommandAttribute(ObjectType = "YouTubeVideo", PointType = EnumPointType.Function, Name = "GetVideos", Caption = "Get YouTube Videos", ClassName = "YouTubeDataSource", misc = "ReturnType: IEnumerable<YouTubeVideo>")]
+        public async Task<IEnumerable<YouTubeVideo>> GetVideos(string channelId, int maxResults = 25, string order = "date")
+        {
+            string endpoint = $"search?part=snippet&channelId={channelId}&order={order}&type=video&maxResults={maxResults}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var data = JsonSerializer.Deserialize<YouTubeResponse<YouTubeVideo>>(json);
+            return data?.Items ?? new List<YouTubeVideo>();
+        }
+
+        /// <summary>
+        /// Gets channel information
+        /// </summary>
+        [CommandAttribute(ObjectType = "YouTubeChannel", PointType = EnumPointType.Function, Name = "GetChannel", Caption = "Get YouTube Channel", ClassName = "YouTubeDataSource", misc = "ReturnType: IEnumerable<YouTubeChannel>")]
+        public async Task<IEnumerable<YouTubeChannel>> GetChannel(string channelId)
+        {
+            string endpoint = $"channels?part=snippet,statistics,status,brandingSettings,contentDetails&id={channelId}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var data = JsonSerializer.Deserialize<YouTubeResponse<YouTubeChannel>>(json);
+            return data?.Items ?? new List<YouTubeChannel>();
+        }
+
+        /// <summary>
+        /// Gets playlists from a channel
+        /// </summary>
+        [CommandAttribute(ObjectType = "YouTubePlaylist", PointType = EnumPointType.Function, Name = "GetPlaylists", Caption = "Get YouTube Playlists", ClassName = "YouTubeDataSource", misc = "ReturnType: IEnumerable<YouTubePlaylist>")]
+        public async Task<IEnumerable<YouTubePlaylist>> GetPlaylists(string channelId, int maxResults = 25)
+        {
+            string endpoint = $"playlists?part=snippet,status,contentDetails&channelId={channelId}&maxResults={maxResults}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var data = JsonSerializer.Deserialize<YouTubeResponse<YouTubePlaylist>>(json);
+            return data?.Items ?? new List<YouTubePlaylist>();
+        }
+
+        /// <summary>
+        /// Gets comments for a video
+        /// </summary>
+        [CommandAttribute(ObjectType = "YouTubeCommentThread", PointType = EnumPointType.Function, Name = "GetComments", Caption = "Get YouTube Comments", ClassName = "YouTubeDataSource", misc = "ReturnType: IEnumerable<YouTubeCommentThread>")]
+        public async Task<IEnumerable<YouTubeCommentThread>> GetComments(string videoId, int maxResults = 25)
+        {
+            string endpoint = $"commentThreads?part=snippet,replies&videoId={videoId}&maxResults={maxResults}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var data = JsonSerializer.Deserialize<YouTubeResponse<YouTubeCommentThread>>(json);
+            return data?.Items ?? new List<YouTubeCommentThread>();
+        }
+
+        /// <summary>
+        /// Searches for videos
+        /// </summary>
+        [CommandAttribute(ObjectType = "YouTubeSearchResult", PointType = EnumPointType.Function, Name = "SearchVideos", Caption = "Search YouTube Videos", ClassName = "YouTubeDataSource", misc = "ReturnType: IEnumerable<YouTubeSearchResult>")]
+        public async Task<IEnumerable<YouTubeSearchResult>> SearchVideos(string query, int maxResults = 25, string type = "video")
+        {
+            string endpoint = $"search?part=snippet&q={Uri.EscapeDataString(query)}&type={type}&maxResults={maxResults}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var data = JsonSerializer.Deserialize<YouTubeResponse<YouTubeSearchResult>>(json);
+            return data?.Items ?? new List<YouTubeSearchResult>();
+        }
+
+        /// <summary>
+        /// Gets video details
+        /// </summary>
+        [CommandAttribute(ObjectType = "YouTubeVideo", PointType = EnumPointType.Function, Name = "GetVideoDetails", Caption = "Get YouTube Video Details", ClassName = "YouTubeDataSource", misc = "ReturnType: IEnumerable<YouTubeVideo>")]
+        public async Task<IEnumerable<YouTubeVideo>> GetVideoDetails(string videoId)
+        {
+            string endpoint = $"videos?part=snippet,statistics,status,contentDetails&id={videoId}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var data = JsonSerializer.Deserialize<YouTubeResponse<YouTubeVideo>>(json);
+            return data?.Items ?? new List<YouTubeVideo>();
         }
     }
 }

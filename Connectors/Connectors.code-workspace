@@ -1,6 +1,12 @@
 {
 	"folders": [
 		{
+			"path": "../../BeepDM/DataManagementModelsStandard"
+		},
+		{
+			"path": "../../BeepDM/DataManagementEngineStandard"
+		},
+		{
 			"path": "."
 		}
 	],

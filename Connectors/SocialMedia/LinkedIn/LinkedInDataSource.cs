@@ -5,8 +5,16 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using DataManagementEngineStandard;
-using DataManagementModelsStandard;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.LinkedIn.Models;
 
 namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
 {
@@ -504,6 +512,73 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
                 JsonValueKind.Null => null,
                 _ => element.GetRawText()
             };
+        }
+
+        // ---------------- Specific LinkedIn Methods ----------------
+
+        /// <summary>
+        /// Gets posts from LinkedIn
+        /// </summary>
+        [CommandAttribute(ObjectType = "LinkedInPost", PointType = EnumPointType.Function, Name = "GetPosts", Caption = "Get LinkedIn Posts", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInPost>")]
+        public async Task<IEnumerable<LinkedInPost>> GetPosts(string authorUrn, int count = 10)
+        {
+            string endpoint = $"ugcPosts?q=authors&authors=List({authorUrn})&count={count}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var data = JsonSerializer.Deserialize<LinkedInResponse<LinkedInPost>>(json);
+            return data?.Elements ?? new List<LinkedInPost>();
+        }
+
+        /// <summary>
+        /// Gets user profile information
+        /// </summary>
+        [CommandAttribute(ObjectType = "LinkedInPerson", PointType = EnumPointType.Function, Name = "GetProfile", Caption = "Get LinkedIn Profile", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInPerson>")]
+        public async Task<IEnumerable<LinkedInPerson>> GetProfile(string personId)
+        {
+            string endpoint = $"people/{personId}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var profile = JsonSerializer.Deserialize<LinkedInPerson>(json);
+            return profile != null ? new List<LinkedInPerson> { profile } : new List<LinkedInPerson>();
+        }
+
+        /// <summary>
+        /// Gets company information
+        /// </summary>
+        [CommandAttribute(ObjectType = "LinkedInCompany", PointType = EnumPointType.Function, Name = "GetCompany", Caption = "Get LinkedIn Company", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInCompany>")]
+        public async Task<IEnumerable<LinkedInCompany>> GetCompany(string companyId)
+        {
+            string endpoint = $"organizations/{companyId}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var company = JsonSerializer.Deserialize<LinkedInCompany>(json);
+            return company != null ? new List<LinkedInCompany> { company } : new List<LinkedInCompany>();
+        }
+
+        /// <summary>
+        /// Gets company posts
+        /// </summary>
+        [CommandAttribute(ObjectType = "LinkedInPost", PointType = EnumPointType.Function, Name = "GetCompanyPosts", Caption = "Get LinkedIn Company Posts", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInPost>")]
+        public async Task<IEnumerable<LinkedInPost>> GetCompanyPosts(string companyId, int count = 10)
+        {
+            string endpoint = $"ugcPosts?q=authors&authors=List(urn%3Ali%3Aorganization%3A{companyId})&count={count}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var data = JsonSerializer.Deserialize<LinkedInResponse<LinkedInPost>>(json);
+            return data?.Elements ?? new List<LinkedInPost>();
+        }
+
+        /// <summary>
+        /// Gets user connections/following
+        /// </summary>
+        [CommandAttribute(ObjectType = "LinkedInFollowing", PointType = EnumPointType.Function, Name = "GetFollowing", Caption = "Get LinkedIn Following", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInFollowing>")]
+        public async Task<IEnumerable<LinkedInFollowing>> GetFollowing(string personId, int count = 10)
+        {
+            string endpoint = $"people/{personId}/following?count={count}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var data = JsonSerializer.Deserialize<LinkedInResponse<LinkedInFollowing>>(json);
+            return data?.Elements ?? new List<LinkedInFollowing>();
         }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
 
 namespace TheTechIdea.Beep.Connectors.YouTube.Models
 {
@@ -900,5 +901,20 @@ namespace TheTechIdea.Beep.Connectors.YouTube.Models
         [JsonPropertyName("channelId")] public string ChannelId { get; set; }
         [JsonPropertyName("title")] public string Title { get; set; }
         [JsonPropertyName("assignable")] public bool? Assignable { get; set; }
+    }
+
+    // ---------------- Response Wrappers ----------------
+    public sealed class YouTubeResponse<T>
+    {
+        [JsonPropertyName("items")] public List<T> Items { get; set; } = new();
+        [JsonPropertyName("nextPageToken")] public string NextPageToken { get; set; }
+        [JsonPropertyName("prevPageToken")] public string PrevPageToken { get; set; }
+        [JsonPropertyName("pageInfo")] public YouTubePageInfo PageInfo { get; set; }
+    }
+
+    public sealed class YouTubePageInfo
+    {
+        [JsonPropertyName("totalResults")] public int TotalResults { get; set; }
+        [JsonPropertyName("resultsPerPage")] public int ResultsPerPage { get; set; }
     }
 }

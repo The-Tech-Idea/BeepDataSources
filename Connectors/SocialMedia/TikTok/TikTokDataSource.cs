@@ -5,8 +5,13 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using DataManagementEngineStandard;
-using DataManagementModelsStandard;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Vis;
 
 namespace BeepDataSources.Connectors.SocialMedia.TikTok
 {
@@ -421,23 +426,23 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
                     if (dataProp.TryGetProperty("list", out var listProp))
                     {
                         dataElement = listProp;
-                    }
-                    else if (dataProp.TryGetProperty("video_list", out var videoListProp))
-                    {
+                      }
+                      else if (dataProp.TryGetProperty("video_list", out var videoListProp))
+                      {
                         dataElement = videoListProp;
-                    }
-                    else if (dataProp.TryGetProperty("comment_list", out var commentListProp))
-                    {
+                      }
+                      else if (dataProp.TryGetProperty("comment_list", out var commentListProp))
+                      {
                         dataElement = commentListProp;
-                    }
-                    else if (dataProp.TryGetProperty("user_list", out var userListProp))
-                    {
+                      }
+                      else if (dataProp.TryGetProperty("user_list", out var userListProp))
+                      {
                         dataElement = userListProp;
-                    }
-                    else
-                    {
+                      }
+                      else
+                      {
                         dataElement = dataProp;
-                    }
+                      }
                 }
                 else
                 {
@@ -537,6 +542,60 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
                 JsonValueKind.Null => null,
                 _ => element.GetRawText()
             };
+        }
+
+        [CommandAttribute(ObjectType = "TikTokUser", PointType = EnumPointType.Function, Name = "GetUserInfo", Caption = "Get TikTok User Info", ClassName = "TikTokDataSource")]
+        public async Task<TikTokResponse<TikTokUser>> GetUserInfo(string openId)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/user/info/?open_id={openId}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TikTokResponse<TikTokUser>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "TikTokVideo", PointType = EnumPointType.Function, Name = "GetUserVideos", Caption = "Get TikTok User Videos", ClassName = "TikTokDataSource")]
+        public async Task<TikTokResponse<TikTokVideo>> GetUserVideos(string openId, long cursor = 0, int maxCount = 20)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/video/list/?open_id={openId}&cursor={cursor}&max_count={maxCount}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TikTokResponse<TikTokVideo>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "TikTokVideo", PointType = EnumPointType.Function, Name = "GetVideoDetails", Caption = "Get TikTok Video Details", ClassName = "TikTokDataSource")]
+        public async Task<TikTokResponse<TikTokVideo>> GetVideoDetails(string videoId)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/video/query/?video_id={videoId}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TikTokResponse<TikTokVideo>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "TikTokVideo", PointType = EnumPointType.Function, Name = "GetTrendingVideos", Caption = "Get TikTok Trending Videos", ClassName = "TikTokDataSource")]
+        public async Task<TikTokResponse<TikTokVideo>> GetTrendingVideos(long cursor = 0, int maxCount = 20)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/video/trending/?cursor={cursor}&max_count={maxCount}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TikTokResponse<TikTokVideo>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "TikTokMusic", PointType = EnumPointType.Function, Name = "GetMusicInfo", Caption = "Get TikTok Music Info", ClassName = "TikTokDataSource")]
+        public async Task<TikTokResponse<TikTokMusic>> GetMusicInfo(string musicId)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/music/info/?music_id={musicId}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TikTokResponse<TikTokMusic>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "TikTokVideo", PointType = EnumPointType.Function, Name = "GetHashtagVideos", Caption = "Get TikTok Hashtag Videos", ClassName = "TikTokDataSource")]
+        public async Task<TikTokResponse<TikTokVideo>> GetHashtagVideos(string hashtagName, long cursor = 0, int maxCount = 20)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/hashtag/video/list/?hashtag_name={Uri.EscapeDataString(hashtagName)}&cursor={cursor}&max_count={maxCount}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TikTokResponse<TikTokVideo>>(json);
         }
     }
 }

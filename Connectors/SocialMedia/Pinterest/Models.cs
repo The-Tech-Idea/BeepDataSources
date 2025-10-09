@@ -417,4 +417,18 @@ namespace TheTechIdea.Beep.Connectors.Pinterest.Models
         [JsonPropertyName("updated_at")] public DateTime? UpdatedAt { get; set; }
         [JsonPropertyName("summary_status")] public string SummaryStatus { get; set; }
     }
+
+    // ---------------- Response Wrappers ----------------
+    public sealed class PinterestResponse<T>
+    {
+        [JsonPropertyName("data")] public List<T> Data { get; set; } = new();
+        [JsonPropertyName("bookmark")] public string Bookmark { get; set; }
+        [JsonPropertyName("page")] public PinterestPageInfo Page { get; set; }
+    }
+
+    public sealed class PinterestPageInfo
+    {
+        [JsonPropertyName("cursor")] public string Cursor { get; set; }
+        [JsonPropertyName("size")] public int? Size { get; set; }
+    }
 }

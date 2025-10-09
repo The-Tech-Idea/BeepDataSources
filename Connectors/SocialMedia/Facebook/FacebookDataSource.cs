@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
@@ -22,254 +23,138 @@ namespace TheTechIdea.Beep.FacebookDataSource
     [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook)]
     public class FacebookDataSource : WebAPIDataSource
     {
-        private readonly FacebookDataSourceConfig _config;
+        // Fixed, supported entities
+        private static readonly List<string> KnownEntities = new()
+        {
+            "posts",
+            "pages", 
+            "users",
+            "events",
+            "photos"
+        };
 
         /// <summary>
         /// Initializes a new instance of the FacebookDataSource class
         /// </summary>
-        public FacebookDataSource(FacebookDataSourceConfig config)
-            : base(config?.BaseUrl ?? "https://graph.facebook.com/v18.0",
-                   config?.AccessToken ?? throw new ArgumentNullException(nameof(config.AccessToken)),
-                   config?.Logger,
-                   config?.ConfigEditor,
-                   config?.DMLogger,
-                   config?.ErrorObject,
-                   config?.VisManager,
-                   config?.ProgressReport)
+        public FacebookDataSource(
+            string datasourcename,
+            IDMLogger logger,
+            IDMEEditor dmeEditor,
+            DataSourceType databasetype,
+            IErrorsInfo errorObject)
+            : base(datasourcename, logger, dmeEditor, databasetype, errorObject)
         {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
+            // Ensure WebAPI props (Url/Auth) exist (configure outside this class)
+            if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
+                Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
 
-            if (!_config.IsValid())
-            {
-                throw new ArgumentException("Invalid Facebook configuration");
-            }
-
-            // Set up entity mappings
-            EntityMappings = new Dictionary<string, string>
-            {
-                { "posts", "posts" },
-                { "pages", "pages" },
-                { "groups", "groups" },
-                { "events", "events" },
-                { "ads", "ads" },
-                { "insights", "insights" }
-            };
-
-            // Set up default headers
-            DefaultHeaders = new Dictionary<string, string>
-            {
-                { "Authorization", $"Bearer {_config.AccessToken}" },
-                { "Content-Type", "application/json" }
-            };
-        }
-
-        /// <summary>
-        /// Gets the list of available entities
-        /// </summary>
-        public override List<string> GetEntities()
-        {
-            return EntityMappings.Keys.ToList();
-        }
-
-        /// <summary>
-        /// Gets entity metadata
-        /// </summary>
-        public override EntityMetadata GetEntityMetadata(string entityName)
-        {
-            if (!EntityMappings.ContainsKey(entityName))
-            {
-                throw new ArgumentException($"Entity '{entityName}' not found");
-            }
-
-            return new EntityMetadata
-            {
-                EntityName = entityName,
-                Fields = GetEntityFields(entityName)
-            };
+            // Register fixed entities
+            EntitiesNames = KnownEntities.ToList();
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+                .ToList();
         }
 
         /// <summary>
         /// Gets entity data asynchronously
         /// </summary>
-        public override async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            if (!EntityMappings.ContainsKey(entityName))
-            {
-                throw new ArgumentException($"Entity '{entityName}' not found");
-            }
-
-            string endpoint = GetEntityEndpoint(entityName, parameters);
-            string jsonResponse = await GetAsync(endpoint);
-
-            return FacebookHelpers.ParseEntityData(jsonResponse, entityName);
+            // Implementation will go here
+            await Task.CompletedTask;
+            return new List<object>();
         }
 
         /// <summary>
-        /// Creates a new entity record
+        /// Gets posts from a Facebook page
         /// </summary>
-        public override async Task<bool> CreateAsync(string entityName, Dictionary<string, object> data)
+        [CommandAttribute(ObjectType = "FacebookPost", PointType = EnumPointType.Function, Name = "GetPosts", Caption = "Get Facebook Posts", ClassName = "FacebookDataSource", misc = "ReturnType: IEnumerable<FacebookPost>")]
+        public async Task<IEnumerable<FacebookPost>> GetPosts(string pageId, int limit = 10)
         {
-            if (!EntityMappings.ContainsKey(entityName))
-            {
-                throw new ArgumentException($"Entity '{entityName}' not found");
-            }
-
-            string endpoint = GetCreateEndpoint(entityName);
-            string jsonData = JsonSerializer.Serialize(data);
-
-            string response = await PostAsync(endpoint, jsonData);
-            return !string.IsNullOrEmpty(response);
+            string fields = "id,message,story,created_time,updated_time,type,status_type,permalink_url,full_picture,picture,source,name,caption,description,link,likes.summary(true),comments.summary(true),shares.summary(true),reactions.summary(true)";
+            string endpoint = $"{pageId}/posts?limit={limit}&fields={fields}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var apiResponse = JsonSerializer.Deserialize<FacebookResponse<FacebookPost>>(json);
+            return apiResponse?.Data ?? new List<FacebookPost>();
         }
 
         /// <summary>
-        /// Updates an existing entity record
+        /// Gets information about a Facebook page
         /// </summary>
-        public override async Task<bool> UpdateAsync(string entityName, Dictionary<string, object> data, string id)
+        [CommandAttribute(ObjectType = "FacebookPage", PointType = EnumPointType.Function, Name = "GetPageInfo", Caption = "Get Facebook Page Info", ClassName = "FacebookDataSource", misc = "ReturnType: IEnumerable<FacebookPage>")]
+        public async Task<IEnumerable<FacebookPage>> GetPageInfo(string pageId)
         {
-            if (!EntityMappings.ContainsKey(entityName))
-            {
-                throw new ArgumentException($"Entity '{entityName}' not found");
-            }
-
-            string endpoint = $"{GetCreateEndpoint(entityName)}/{id}";
-            string jsonData = JsonSerializer.Serialize(data);
-
-            string response = await PostAsync(endpoint, jsonData);
-            return !string.IsNullOrEmpty(response);
+            string fields = "id,name,category,description,website,phone,emails,location,hours,cover,picture,about,link,followers_count,fan_count";
+            string endpoint = $"{pageId}?fields={fields}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var page = JsonSerializer.Deserialize<FacebookPage>(json);
+            return page != null ? new List<FacebookPage> { page } : new List<FacebookPage>();
         }
 
         /// <summary>
-        /// Deletes an entity record
+        /// Gets posts from a Facebook group
         /// </summary>
-        public override async Task<bool> DeleteAsync(string entityName, string id)
+        [CommandAttribute(ObjectType = "FacebookPost", PointType = EnumPointType.Function, Name = "GetGroupPosts", Caption = "Get Facebook Group Posts", ClassName = "FacebookDataSource", misc = "ReturnType: IEnumerable<FacebookPost>")]
+        public async Task<IEnumerable<FacebookPost>> GetGroupPosts(string groupId, int limit = 10)
         {
-            if (!EntityMappings.ContainsKey(entityName))
-            {
-                throw new ArgumentException($"Entity '{entityName}' not found");
-            }
-
-            string endpoint = $"{GetCreateEndpoint(entityName)}/{id}";
-            string response = await DeleteAsync(endpoint);
-
-            return !string.IsNullOrEmpty(response);
+            string fields = "id,message,story,created_time,updated_time,type,status_type,permalink_url,full_picture,picture,source,name,caption,description,link,likes.summary(true),comments.summary(true),shares.summary(true),reactions.summary(true)";
+            string endpoint = $"{groupId}/feed?limit={limit}&fields={fields}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var apiResponse = JsonSerializer.Deserialize<FacebookResponse<FacebookPost>>(json);
+            return apiResponse?.Data ?? new List<FacebookPost>();
         }
 
         /// <summary>
-        /// Gets the entity endpoint
+        /// Gets user profile information
         /// </summary>
-        private string GetEntityEndpoint(string entityName, Dictionary<string, object> parameters = null)
+        [CommandAttribute(ObjectType = "FacebookUser", PointType = EnumPointType.Function, Name = "GetUserProfile", Caption = "Get Facebook User Profile", ClassName = "FacebookDataSource", misc = "ReturnType: IEnumerable<FacebookUser>")]
+        public async Task<IEnumerable<FacebookUser>> GetUserProfile(string userId)
         {
-            string baseEndpoint = $"{_config.UserId}/{EntityMappings[entityName]}";
-            string fields = GetDefaultFields(entityName);
-
-            string endpoint = $"{baseEndpoint}?fields={fields}";
-
-            if (parameters != null)
-            {
-                foreach (var param in parameters)
-                {
-                    endpoint += $"&{param.Key}={param.Value}";
-                }
-            }
-
-            return endpoint;
+            string fields = "id,name,first_name,last_name,email,birthday,gender,location,hometown,about,website,picture";
+            string endpoint = $"{userId}?fields={fields}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var user = JsonSerializer.Deserialize<FacebookUser>(json);
+            return user != null ? new List<FacebookUser> { user } : new List<FacebookUser>();
         }
 
         /// <summary>
-        /// Gets the create endpoint
+        /// Gets events from a Facebook page
         /// </summary>
-        private string GetCreateEndpoint(string entityName)
+        [CommandAttribute(ObjectType = "FacebookEvent", PointType = EnumPointType.Function, Name = "GetEvents", Caption = "Get Facebook Events", ClassName = "FacebookDataSource", misc = "ReturnType: IEnumerable<FacebookEvent>")]
+        public async Task<IEnumerable<FacebookEvent>> GetEvents(string pageId, int limit = 10)
         {
-            return $"{_config.UserId}/{EntityMappings[entityName]}";
+            string fields = "id,name,description,start_time,end_time,place,attending_count,interested_count,maybe_count,noreply_count,cover,picture,type,category,ticket_uri";
+            string endpoint = $"{pageId}/events?limit={limit}&fields={fields}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var apiResponse = JsonSerializer.Deserialize<FacebookResponse<FacebookEvent>>(json);
+            return apiResponse?.Data ?? new List<FacebookEvent>();
         }
 
         /// <summary>
-        /// Gets default fields for an entity
+        /// Gets photos from a Facebook album or page
         /// </summary>
-        private string GetDefaultFields(string entityName)
+        [CommandAttribute(ObjectType = "FacebookPicture", PointType = EnumPointType.Function, Name = "GetPhotos", Caption = "Get Facebook Photos", ClassName = "FacebookDataSource", misc = "ReturnType: IEnumerable<FacebookPicture>")]
+        public async Task<IEnumerable<FacebookPicture>> GetPhotos(string albumId, int limit = 10)
         {
-            return entityName switch
-            {
-                "posts" => "id,message,created_time,updated_time,likes.summary(true),comments.summary(true)",
-                "pages" => "id,name,category,description,website,phone,emails,location",
-                "groups" => "id,name,description,privacy,updated_time",
-                "events" => "id,name,description,start_time,end_time,place,attending_count,interested_count",
-                "ads" => "id,name,status,created_time,updated_time,insights",
-                "insights" => "id,name,period,values,title,description",
-                _ => "id,name"
-            };
-        }
-
-        /// <summary>
-        /// Gets entity fields
-        /// </summary>
-        private List<EntityField> GetEntityFields(string entityName)
-        {
-            return entityName switch
-            {
-                "posts" => new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "string" },
-                    new EntityField { fieldname = "message", fieldtype = "string" },
-                    new EntityField { fieldname = "created_time", fieldtype = "datetime" },
-                    new EntityField { fieldname = "updated_time", fieldtype = "datetime" },
-                    new EntityField { fieldname = "likes_count", fieldtype = "int" },
-                    new EntityField { fieldname = "comments_count", fieldtype = "int" }
-                },
-                "pages" => new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "category", fieldtype = "string" },
-                    new EntityField { fieldname = "description", fieldtype = "string" },
-                    new EntityField { fieldname = "website", fieldtype = "string" },
-                    new EntityField { fieldname = "phone", fieldtype = "string" }
-                },
-                "groups" => new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "description", fieldtype = "string" },
-                    new EntityField { fieldname = "privacy", fieldtype = "string" },
-                    new EntityField { fieldname = "updated_time", fieldtype = "datetime" }
-                },
-                "events" => new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "description", fieldtype = "string" },
-                    new EntityField { fieldname = "start_time", fieldtype = "datetime" },
-                    new EntityField { fieldname = "end_time", fieldtype = "datetime" },
-                    new EntityField { fieldname = "attending_count", fieldtype = "int" },
-                    new EntityField { fieldname = "interested_count", fieldtype = "int" }
-                },
-                "ads" => new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "status", fieldtype = "string" },
-                    new EntityField { fieldname = "created_time", fieldtype = "datetime" },
-                    new EntityField { fieldname = "updated_time", fieldtype = "datetime" }
-                },
-                "insights" => new List<EntityField>
-                {
-                    new EntityField { fieldname = "id", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "period", fieldtype = "string" },
-                    new EntityField { fieldname = "values", fieldtype = "string" },
-                    new EntityField { fieldname = "title", fieldtype = "string" },
-                    new EntityField { fieldname = "description", fieldtype = "string" }
-                },
-                _ => new List<EntityField>()
-            };
+            string fields = "id,name,source,images,height,width,created_time,updated_time,link,likes.summary(true),comments.summary(true)";
+            string endpoint = $"{albumId}/photos?limit={limit}&fields={fields}";
+            var response = await GetAsync(endpoint);
+            string json = await response.Content.ReadAsStringAsync();
+            var apiResponse = JsonSerializer.Deserialize<FacebookResponse<FacebookPicture>>(json);
+            return apiResponse?.Data ?? new List<FacebookPicture>();
         }
 
         /// <summary>
         /// Dispose resources
         /// </summary>
-        public void Dispose()
+        public new void Dispose()
         {
-            DisconnectAsync().Wait();
+            base.Dispose();
         }
     }
 }

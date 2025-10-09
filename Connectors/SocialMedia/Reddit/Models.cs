@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
 
 namespace TheTechIdea.Beep.Connectors.Reddit.Models
 {
@@ -688,100 +689,38 @@ namespace TheTechIdea.Beep.Connectors.Reddit.Models
     }
 
     // -------------------------------------------------------
-    // Search Results
+    // Response Wrappers
     // -------------------------------------------------------
-    public sealed class RedditSearchResult : RedditEntityBase
+    public sealed class RedditResponse<T>
     {
-        [JsonPropertyName("id")] public string Id { get; set; }
-        [JsonPropertyName("title")] public string Title { get; set; }
-        [JsonPropertyName("selftext")] public string Selftext { get; set; }
-        [JsonPropertyName("url")] public string Url { get; set; }
-        [JsonPropertyName("subreddit")] public string Subreddit { get; set; }
-        [JsonPropertyName("author")] public string Author { get; set; }
-        [JsonPropertyName("score")] public int? Score { get; set; }
-        [JsonPropertyName("num_comments")] public int? NumComments { get; set; }
-        [JsonPropertyName("created_utc")] public double? CreatedUtc { get; set; }
-        [JsonPropertyName("relevance_score")] public double? RelevanceScore { get; set; }
-        [JsonPropertyName("subreddit_id")] public string SubredditId { get; set; }
-        [JsonPropertyName("subreddit_name_prefixed")] public string SubredditNamePrefixed { get; set; }
-        [JsonPropertyName("subreddit_subscribers")] public int? SubredditSubscribers { get; set; }
-        [JsonPropertyName("subreddit_type")] public string SubredditType { get; set; }
-        [JsonPropertyName("is_self")] public bool? IsSelf { get; set; }
-        [JsonPropertyName("over_18")] public bool? Over18 { get; set; }
-        [JsonPropertyName("stickied")] public bool? Stickied { get; set; }
-        [JsonPropertyName("locked")] public bool? Locked { get; set; }
-        [JsonPropertyName("archived")] public bool? Archived { get; set; }
-        [JsonPropertyName("spoiler")] public bool? Spoiler { get; set; }
-        [JsonPropertyName("pinned")] public bool? Pinned { get; set; }
-        [JsonPropertyName("is_video")] public bool? IsVideo { get; set; }
-        [JsonPropertyName("is_original_content")] public bool? IsOriginalContent { get; set; }
-        [JsonPropertyName("link_flair_text")] public string LinkFlairText { get; set; }
-        [JsonPropertyName("link_flair_type")] public string LinkFlairType { get; set; }
-        [JsonPropertyName("thumbnail")] public string Thumbnail { get; set; }
-        [JsonPropertyName("thumbnail_width")] public int? ThumbnailWidth { get; set; }
-        [JsonPropertyName("thumbnail_height")] public int? ThumbnailHeight { get; set; }
-        [JsonPropertyName("preview")] public RedditPreview Preview { get; set; }
-        [JsonPropertyName("media")] public RedditMedia Media { get; set; }
-        [JsonPropertyName("secure_media")] public RedditMedia SecureMedia { get; set; }
-        [JsonPropertyName("media_embed")] public RedditMediaEmbed MediaEmbed { get; set; }
-        [JsonPropertyName("permalink")] public string Permalink { get; set; }
-        [JsonPropertyName("domain")] public string Domain { get; set; }
-        [JsonPropertyName("post_hint")] public string PostHint { get; set; }
-        [JsonPropertyName("edited")] public object Edited { get; set; } // Can be boolean or timestamp
-        [JsonPropertyName("gilded")] public int? Gilded { get; set; }
-        [JsonPropertyName("can_gild")] public bool? CanGild { get; set; }
-        [JsonPropertyName("saved")] public bool? Saved { get; set; }
-        [JsonPropertyName("hidden")] public bool? Hidden { get; set; }
-        [JsonPropertyName("quarantine")] public bool? Quarantine { get; set; }
-        [JsonPropertyName("visited")] public bool? Visited { get; set; }
-        [JsonPropertyName("is_reddit_media_domain")] public bool? IsRedditMediaDomain { get; set; }
-        [JsonPropertyName("is_meta")] public bool? IsMeta { get; set; }
-        [JsonPropertyName("distinguished")] public string Distinguished { get; set; }
-        [JsonPropertyName("removal_reason")] public string RemovalReason { get; set; }
-        [JsonPropertyName("num_reports")] public int? NumReports { get; set; }
-        [JsonPropertyName("report_reasons")] public List<string> ReportReasons { get; set; } = new();
-        [JsonPropertyName("author_patreon_flair")] public bool? AuthorPatreonFlair { get; set; }
-        [JsonPropertyName("author_flair_text")] public string AuthorFlairText { get; set; }
-        [JsonPropertyName("author_flair_type")] public string AuthorFlairType { get; set; }
-        [JsonPropertyName("author_flair_background_color")] public string AuthorFlairBackgroundColor { get; set; }
-        [JsonPropertyName("author_flair_text_color")] public string AuthorFlairTextColor { get; set; }
-        [JsonPropertyName("link_flair_background_color")] public string LinkFlairBackgroundColor { get; set; }
-        [JsonPropertyName("link_flair_text_color")] public string LinkFlairTextColor { get; set; }
-        [JsonPropertyName("all_awardings")] public List<RedditAward> AllAwardings { get; set; } = new();
-        [JsonPropertyName("total_awards_received")] public int? TotalAwardsReceived { get; set; }
-        [JsonPropertyName("treatment_tags")] public List<string> TreatmentTags { get; set; } = new();
-        [JsonPropertyName("top_awarded_type")] public string TopAwardedType { get; set; }
-        [JsonPropertyName("allow_live_comments")] public bool? AllowLiveComments { get; set; }
-        [JsonPropertyName("contest_mode")] public bool? ContestMode { get; set; }
-        [JsonPropertyName("is_crosspostable")] public bool? IsCrosspostable { get; set; }
-        [JsonPropertyName("is_robot_indexable")] public bool? IsRobotIndexable { get; set; }
-        [JsonPropertyName("send_replies")] public bool? SendReplies { get; set; }
-        [JsonPropertyName("whitelist_status")] public string WhitelistStatus { get; set; }
-        [JsonPropertyName("parent_whitelist_status")] public string ParentWhitelistStatus { get; set; }
-        [JsonPropertyName("wls")] public int? Wls { get; set; }
-        [JsonPropertyName("subreddit_name_prefixed")] public string SubredditNamePrefixed { get; set; }
-        [JsonPropertyName("subreddit_subscribers")] public int? SubredditSubscribers { get; set; }
-        [JsonPropertyName("subreddit_type")] public string SubredditType { get; set; }
-        [JsonPropertyName("suggested_sort")] public string SuggestedSort { get; set; }
-        [JsonPropertyName("no_follow")] public bool? NoFollow { get; set; }
-        [JsonPropertyName("num_crossposts")] public int? NumCrossposts { get; set; }
-        [JsonPropertyName("media_only")] public bool? MediaOnly { get; set; }
-        [JsonPropertyName("can_mod_post")] public bool? CanModPost { get; set; }
-        [JsonPropertyName("category")] public string Category { get; set; }
-        [JsonPropertyName("content_categories")] public List<string> ContentCategories { get; set; } = new();
-        [JsonPropertyName("discussion_type")] public string DiscussionType { get; set; }
-        [JsonPropertyName("event_end")] public double? EventEnd { get; set; }
-        [JsonPropertyName("event_is_live")] public bool? EventIsLive { get; set; }
-        [JsonPropertyName("event_start")] public double? EventStart { get; set; }
-        [JsonPropertyName("gallery_data")] public RedditGalleryData GalleryData { get; set; }
-        [JsonPropertyName("is_gallery")] public bool? IsGallery { get; set; }
-        [JsonPropertyName("media_metadata")] public Dictionary<string, RedditMediaMetadata> MediaMetadata { get; set; } = new();
-        [JsonPropertyName("poll_data")] public RedditPollData PollData { get; set; }
-        [JsonPropertyName("rte_mode")] public string RteMode { get; set; }
-        [JsonPropertyName("secure_media_embed")] public RedditMediaEmbed SecureMediaEmbed { get; set; }
-        [JsonPropertyName("selftext_html")] public string SelftextHtml { get; set; }
-        [JsonPropertyName("subreddit_id36")] public string SubredditId36 { get; set; }
-        [JsonPropertyName("third_party_trackers")] public List<string> ThirdPartyTrackers { get; set; } = new();
-        [JsonPropertyName("view_count")] public int? ViewCount { get; set; }
+        [JsonPropertyName("kind")] public string Kind { get; set; }
+        [JsonPropertyName("data")] public RedditResponseData<T> Data { get; set; }
+    }
+
+    public sealed class RedditResponseData<T>
+    {
+        [JsonPropertyName("after")] public string After { get; set; }
+        [JsonPropertyName("before")] public string Before { get; set; }
+        [JsonPropertyName("children")] public List<RedditResponseChild<T>> Children { get; set; } = new();
+        [JsonPropertyName("dist")] public int? Dist { get; set; }
+        [JsonPropertyName("modhash")] public string Modhash { get; set; }
+    }
+
+    public sealed class RedditResponseChild<T>
+    {
+        [JsonPropertyName("kind")] public string Kind { get; set; }
+        [JsonPropertyName("data")] public T Data { get; set; }
+    }
+
+    public sealed class RedditUserResponse
+    {
+        [JsonPropertyName("kind")] public string Kind { get; set; }
+        [JsonPropertyName("data")] public RedditUser Data { get; set; }
+    }
+
+    public sealed class RedditSubredditResponse
+    {
+        [JsonPropertyName("kind")] public string Kind { get; set; }
+        [JsonPropertyName("data")] public RedditSubreddit Data { get; set; }
     }
 }

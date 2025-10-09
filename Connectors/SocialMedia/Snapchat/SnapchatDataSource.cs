@@ -5,8 +5,13 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using DataManagementEngineStandard;
-using DataManagementModelsStandard;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Vis;
 
 namespace BeepDataSources.Connectors.SocialMedia.Snapchat
 {
@@ -535,6 +540,61 @@ namespace BeepDataSources.Connectors.SocialMedia.Snapchat
                 JsonValueKind.Null => null,
                 _ => element.GetRawText()
             };
+        }
+
+        [CommandAttribute(ObjectType = "SnapchatOrganization", PointType = EnumPointType.Function, Name = "GetOrganizations", Caption = "Get Snapchat Organizations", ClassName = "SnapchatDataSource")]
+        public async Task<SnapchatResponse<SnapchatOrganization>> GetOrganizations()
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/organizations";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<SnapchatResponse<SnapchatOrganization>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "SnapchatAdAccount", PointType = EnumPointType.Function, Name = "GetAdAccounts", Caption = "Get Snapchat Ad Accounts", ClassName = "SnapchatDataSource")]
+        public async Task<SnapchatResponse<SnapchatAdAccount>> GetAdAccounts(string organizationId = null)
+        {
+            var orgParam = string.IsNullOrEmpty(organizationId) ? "" : $"?organization_id={organizationId}";
+            var url = $"{ConnectionProperties.BaseUrl}/adaccounts{orgParam}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<SnapchatResponse<SnapchatAdAccount>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "SnapchatCampaign", PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Snapchat Campaigns", ClassName = "SnapchatDataSource")]
+        public async Task<SnapchatResponse<SnapchatCampaign>> GetCampaigns(string adAccountId)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/campaigns?ad_account_id={adAccountId}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<SnapchatResponse<SnapchatCampaign>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "SnapchatAdSquad", PointType = EnumPointType.Function, Name = "GetAdSquads", Caption = "Get Snapchat Ad Squads", ClassName = "SnapchatDataSource")]
+        public async Task<SnapchatResponse<SnapchatAdSquad>> GetAdSquads(string campaignId)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/adsquads?campaign_id={campaignId}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<SnapchatResponse<SnapchatAdSquad>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "SnapchatAd", PointType = EnumPointType.Function, Name = "GetAds", Caption = "Get Snapchat Ads", ClassName = "SnapchatDataSource")]
+        public async Task<SnapchatResponse<SnapchatAd>> GetAds(string adSquadId)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/ads?ad_squad_id={adSquadId}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<SnapchatResponse<SnapchatAd>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "SnapchatCreative", PointType = EnumPointType.Function, Name = "GetCreatives", Caption = "Get Snapchat Creatives", ClassName = "SnapchatDataSource")]
+        public async Task<SnapchatResponse<SnapchatCreative>> GetCreatives(string adAccountId)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/creatives?ad_account_id={adAccountId}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<SnapchatResponse<SnapchatCreative>>(json);
         }
     }
 }

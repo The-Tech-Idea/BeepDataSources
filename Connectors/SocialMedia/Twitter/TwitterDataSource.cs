@@ -13,6 +13,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Twitter.Models;
 
 namespace TheTechIdea.Beep.Connectors.Twitter
 {
@@ -143,6 +144,256 @@ namespace TheTechIdea.Beep.Connectors.Twitter
                 HasPreviousPage = pageNumber > 1,
                 HasNextPage = !string.IsNullOrEmpty(nextTok)
             };
+        }
+
+        // ---------------------------- Twitter-Specific Functions with Command Attributes ----------------------------
+
+        /// <summary>
+        /// Search for recent tweets based on a query
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetTweets",
+            Caption = "Search Tweets",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterTweet",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "twitter.png",
+            misc = "ReturnType: IEnumerable<TwitterTweet>"
+        )]
+        public async Task<IEnumerable<TwitterTweet>> GetTweets(string query, int maxResults = 10, string? nextToken = null)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "query", FilterValue = query, Operator = "=" },
+                new AppFilter { FieldName = "max_results", FilterValue = maxResults.ToString(), Operator = "=" }
+            };
+
+            if (!string.IsNullOrEmpty(nextToken))
+            {
+                filters.Add(new AppFilter { FieldName = "pagination_token", FilterValue = nextToken, Operator = "=" });
+            }
+
+            var result = await GetEntityAsync("tweets.search", filters);
+            return result.Select(item => JsonSerializer.Deserialize<TwitterTweet>(JsonSerializer.Serialize(item))).Where(tweet => tweet != null).Cast<TwitterTweet>();
+        }
+
+        /// <summary>
+        /// Get tweets from a specific user's timeline
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetUserTimeline",
+            Caption = "Get User Timeline",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterTweet",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "timeline.png",
+            misc = "ReturnType: IEnumerable<TwitterTweet>"
+        )]
+        public async Task<IEnumerable<TwitterTweet>> GetUserTimeline(string userId, int maxResults = 10, string? nextToken = null)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "id", FilterValue = userId, Operator = "=" },
+                new AppFilter { FieldName = "max_results", FilterValue = maxResults.ToString(), Operator = "=" }
+            };
+
+            if (!string.IsNullOrEmpty(nextToken))
+            {
+                filters.Add(new AppFilter { FieldName = "pagination_token", FilterValue = nextToken, Operator = "=" });
+            }
+
+            var result = await GetEntityAsync("users.tweets", filters);
+            return result.Select(item => JsonSerializer.Deserialize<TwitterTweet>(JsonSerializer.Serialize(item))).Where(tweet => tweet != null).Cast<TwitterTweet>();
+        }
+
+        /// <summary>
+        /// Get user information by username
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetUserByUsername",
+            Caption = "Get User by Username",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterUser",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "user.png",
+            misc = "ReturnType: IEnumerable<TwitterUser>"
+        )]
+        public async Task<IEnumerable<TwitterUser>> GetUserByUsername(string username)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "usernames", FilterValue = username, Operator = "=" }
+            };
+
+            var result = await GetEntityAsync("users.by_username", filters);
+            return result.Select(item => JsonSerializer.Deserialize<TwitterUser>(JsonSerializer.Serialize(item))).Where(user => user != null).Cast<TwitterUser>();
+        }
+
+        /// <summary>
+        /// Get user information by user ID
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetUserById",
+            Caption = "Get User by ID",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterUser",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "user_id.png",
+            misc = "ReturnType: IEnumerable<TwitterUser>"
+        )]
+        public async Task<IEnumerable<TwitterUser>> GetUserById(string userId)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "ids", FilterValue = userId, Operator = "=" }
+            };
+
+            var result = await GetEntityAsync("users.by_id", filters);
+            return result.Select(item => JsonSerializer.Deserialize<TwitterUser>(JsonSerializer.Serialize(item))).Where(user => user != null).Cast<TwitterUser>();
+        }
+
+        /// <summary>
+        /// Get followers of a specific user
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetFollowers",
+            Caption = "Get Followers",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterUser",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "followers.png",
+            misc = "ReturnType: IEnumerable<TwitterUser>"
+        )]
+        public async Task<IEnumerable<TwitterUser>> GetFollowers(string userId, int maxResults = 10, string? nextToken = null)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "id", FilterValue = userId, Operator = "=" },
+                new AppFilter { FieldName = "max_results", FilterValue = maxResults.ToString(), Operator = "=" }
+            };
+
+            if (!string.IsNullOrEmpty(nextToken))
+            {
+                filters.Add(new AppFilter { FieldName = "pagination_token", FilterValue = nextToken, Operator = "=" });
+            }
+
+            var result = await GetEntityAsync("users.followers", filters);
+            return result.Select(item => JsonSerializer.Deserialize<TwitterUser>(JsonSerializer.Serialize(item))).Where(user => user != null).Cast<TwitterUser>();
+        }
+
+        /// <summary>
+        /// Get users that a specific user is following
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetFollowing",
+            Caption = "Get Following",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterUser",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "following.png",
+            misc = "ReturnType: IEnumerable<TwitterUser>"
+        )]
+        public async Task<IEnumerable<TwitterUser>> GetFollowing(string userId, int maxResults = 10, string? nextToken = null)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "id", FilterValue = userId, Operator = "=" },
+                new AppFilter { FieldName = "max_results", FilterValue = maxResults.ToString(), Operator = "=" }
+            };
+
+            if (!string.IsNullOrEmpty(nextToken))
+            {
+                filters.Add(new AppFilter { FieldName = "pagination_token", FilterValue = nextToken, Operator = "=" });
+            }
+
+            var result = await GetEntityAsync("users.following", filters);
+            return result.Select(item => JsonSerializer.Deserialize<TwitterUser>(JsonSerializer.Serialize(item))).Where(user => user != null).Cast<TwitterUser>();
+        }
+
+        /// <summary>
+        /// Get tweets from a specific list
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetListTweets",
+            Caption = "Get List Tweets",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterTweet",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "list.png",
+            misc = "ReturnType: IEnumerable<TwitterTweet>"
+        )]
+        public async Task<IEnumerable<TwitterTweet>> GetListTweets(string listId, int maxResults = 10, string? nextToken = null)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "id", FilterValue = listId, Operator = "=" },
+                new AppFilter { FieldName = "max_results", FilterValue = maxResults.ToString(), Operator = "=" }
+            };
+
+            if (!string.IsNullOrEmpty(nextToken))
+            {
+                filters.Add(new AppFilter { FieldName = "pagination_token", FilterValue = nextToken, Operator = "=" });
+            }
+
+            var result = await GetEntityAsync("lists.tweets", filters);
+            return result.Select(item => JsonSerializer.Deserialize<TwitterTweet>(JsonSerializer.Serialize(item))).Where(tweet => tweet != null).Cast<TwitterTweet>();
+        }
+
+        /// <summary>
+        /// Search for Twitter Spaces
+        /// </summary>
+        [CommandAttribute(
+            Name = "SearchSpaces",
+            Caption = "Search Spaces",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterSpace",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "spaces.png",
+            misc = "ReturnType: IEnumerable<TwitterSpace>"
+        )]
+        public async Task<IEnumerable<TwitterSpace>> SearchSpaces(string query, string state = "live", int maxResults = 10)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "query", FilterValue = query, Operator = "=" },
+                new AppFilter { FieldName = "state", FilterValue = state, Operator = "=" },
+                new AppFilter { FieldName = "max_results", FilterValue = maxResults.ToString(), Operator = "=" }
+            };
+
+            var result = await GetEntityAsync("spaces.search", filters);
+            return result.Select(item => JsonSerializer.Deserialize<TwitterSpace>(JsonSerializer.Serialize(item))).Where(space => space != null).Cast<TwitterSpace>();
         }
 
         // ---------------------------- helpers ----------------------------

@@ -5,8 +5,13 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using DataManagementEngineStandard;
-using DataManagementModelsStandard;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Vis;
 
 namespace BeepDataSources.Connectors.SocialMedia.Reddit
 {
@@ -540,20 +545,59 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
             };
         }
 
-        /// <summary>
-        /// Get value from JSON element
-        /// </summary>
-        private object GetJsonValue(JsonElement element)
+        [CommandAttribute(ObjectType = "RedditPost", PointType = EnumPointType.Function, Name = "GetPosts", Caption = "Get Reddit Posts", ClassName = "RedditDataSource")]
+        public async Task<RedditResponse<RedditPost>> GetPosts(string subreddit = "all", string sort = "hot", int limit = 25)
         {
-            return element.ValueKind switch
-            {
-                JsonValueKind.String => element.GetString(),
-                JsonValueKind.Number => element.TryGetInt32(out var intValue) ? intValue : element.GetDouble(),
-                JsonValueKind.True => true,
-                JsonValueKind.False => false,
-                JsonValueKind.Null => null,
-                _ => element.GetRawText()
-            };
+            var url = $"{ConnectionProperties.BaseUrl}/r/{subreddit}/{sort}?limit={limit}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<RedditResponse<RedditPost>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "RedditSubreddit", PointType = EnumPointType.Function, Name = "GetSubredditInfo", Caption = "Get Reddit Subreddit Info", ClassName = "RedditDataSource")]
+        public async Task<RedditSubredditResponse> GetSubredditInfo(string subreddit)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/r/{subreddit}/about";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<RedditSubredditResponse>(json);
+        }
+
+        [CommandAttribute(ObjectType = "RedditUser", PointType = EnumPointType.Function, Name = "GetUserInfo", Caption = "Get Reddit User Info", ClassName = "RedditDataSource")]
+        public async Task<RedditUserResponse> GetUserInfo(string username)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/user/{username}/about";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<RedditUserResponse>(json);
+        }
+
+        [CommandAttribute(ObjectType = "RedditComment", PointType = EnumPointType.Function, Name = "GetComments", Caption = "Get Reddit Comments", ClassName = "RedditDataSource")]
+        public async Task<RedditResponse<RedditComment>> GetComments(string postId, string sort = "top", int limit = 25)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/comments/{postId}?sort={sort}&limit={limit}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<RedditResponse<RedditComment>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "RedditSearchResult", PointType = EnumPointType.Function, Name = "GetSearchResults", Caption = "Get Reddit Search Results", ClassName = "RedditDataSource")]
+        public async Task<RedditResponse<RedditSearchResult>> GetSearchResults(string query, string subreddit = null, int limit = 25)
+        {
+            var subredditParam = string.IsNullOrEmpty(subreddit) ? "" : $"&subreddit={subreddit}";
+            var url = $"{ConnectionProperties.BaseUrl}/search?q={Uri.EscapeDataString(query)}&limit={limit}&sort=relevance&type=link{subredditParam}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<RedditResponse<RedditSearchResult>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "RedditPost", PointType = EnumPointType.Function, Name = "GetHotPosts", Caption = "Get Reddit Hot Posts", ClassName = "RedditDataSource")]
+        public async Task<RedditResponse<RedditPost>> GetHotPosts(string subreddit = "all", int limit = 25)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/r/{subreddit}/hot?limit={limit}";
+            var response = await GetAsync(url);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<RedditResponse<RedditPost>>(json);
         }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
 
 namespace TheTechIdea.Beep.Connectors.TikTok.Models
 {
@@ -435,5 +436,43 @@ namespace TheTechIdea.Beep.Connectors.TikTok.Models
         [JsonPropertyName("video_count")] public long? VideoCount { get; set; }
         [JsonPropertyName("url")] public string Url { get; set; }
         [JsonPropertyName("zip_url")] public string ZipUrl { get; set; }
+    }
+
+    // -------------------------------------------------------
+    // Response Wrappers
+    // -------------------------------------------------------
+    public sealed class TikTokResponse<T>
+    {
+        [JsonPropertyName("data")] public TikTokResponseData<T> Data { get; set; }
+        [JsonPropertyName("error")] public TikTokError Error { get; set; }
+        [JsonPropertyName("extra")] public TikTokExtra Extra { get; set; }
+    }
+
+    public sealed class TikTokResponseData<T>
+    {
+        [JsonPropertyName("cursor")] public long? Cursor { get; set; }
+        [JsonPropertyName("has_more")] public bool? HasMore { get; set; }
+        [JsonPropertyName("list")] public List<T> List { get; set; } = new();
+        [JsonPropertyName("user_list")] public List<T> UserList { get; set; } = new();
+        [JsonPropertyName("video_list")] public List<T> VideoList { get; set; } = new();
+        [JsonPropertyName("music_list")] public List<T> MusicList { get; set; } = new();
+        [JsonPropertyName("hashtag_list")] public List<T> HashtagList { get; set; } = new();
+        [JsonPropertyName("effect_list")] public List<T> EffectList { get; set; } = new();
+        [JsonPropertyName("poi_list")] public List<T> PoiList { get; set; } = new();
+    }
+
+    public sealed class TikTokError
+    {
+        [JsonPropertyName("code")] public int? Code { get; set; }
+        [JsonPropertyName("message")] public string Message { get; set; }
+        [JsonPropertyName("log_id")] public string LogId { get; set; }
+    }
+
+    public sealed class TikTokExtra
+    {
+        [JsonPropertyName("now")] public long? Now { get; set; }
+        [JsonPropertyName("logid")] public string Logid { get; set; }
+        [JsonPropertyName("fatal_item_ids")] public List<string> FatalItemIds { get; set; } = new();
+        [JsonPropertyName("description")] public string Description { get; set; }
     }
 }

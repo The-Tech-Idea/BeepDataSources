@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
 
 namespace TheTechIdea.Beep.Connectors.Snapchat.Models
 {
@@ -446,5 +447,31 @@ namespace TheTechIdea.Beep.Connectors.Snapchat.Models
         [JsonPropertyName("updated_at")] public DateTime? UpdatedAt { get; set; }
         [JsonPropertyName("last_fired_time")] public DateTime? LastFiredTime { get; set; }
         [JsonPropertyName("fired_count")] public long? FiredCount { get; set; }
+    }
+
+    // -------------------------------------------------------
+    // Response Wrappers
+    // -------------------------------------------------------
+    public sealed class SnapchatResponse<T>
+    {
+        [JsonPropertyName("request_id")] public string RequestId { get; set; }
+        [JsonPropertyName("request_status")] public string RequestStatus { get; set; }
+        [JsonPropertyName("total_count")] public int? TotalCount { get; set; }
+        [JsonPropertyName("paging")] public SnapchatPaging Paging { get; set; }
+        [JsonPropertyName("organizations")] public List<T> Organizations { get; set; } = new();
+        [JsonPropertyName("adaccounts")] public List<T> AdAccounts { get; set; } = new();
+        [JsonPropertyName("campaigns")] public List<T> Campaigns { get; set; } = new();
+        [JsonPropertyName("adsquads")] public List<T> AdSquads { get; set; } = new();
+        [JsonPropertyName("ads")] public List<T> Ads { get; set; } = new();
+        [JsonPropertyName("creatives")] public List<T> Creatives { get; set; } = new();
+        [JsonPropertyName("media")] public List<T> Media { get; set; } = new();
+        [JsonPropertyName("pixels")] public List<T> Pixels { get; set; } = new();
+        [JsonPropertyName("funding_sources")] public List<T> FundingSources { get; set; } = new();
+    }
+
+    public sealed class SnapchatPaging
+    {
+        [JsonPropertyName("next")] public string Next { get; set; }
+        [JsonPropertyName("previous")] public string Previous { get; set; }
     }
 }

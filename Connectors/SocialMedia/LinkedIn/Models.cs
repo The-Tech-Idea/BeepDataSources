@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
 
 namespace TheTechIdea.Beep.Connectors.LinkedIn.Models
 {
@@ -579,5 +580,26 @@ namespace TheTechIdea.Beep.Connectors.LinkedIn.Models
         [JsonPropertyName("followerCount")] public long? FollowerCount { get; set; }
         [JsonPropertyName("following")] public bool? Following { get; set; }
         [JsonPropertyName("pages")] public List<LinkedInCompany> Pages { get; set; } = new();
+    }
+
+    // ---------------- Response Wrappers ----------------
+    public sealed class LinkedInResponse<T>
+    {
+        [JsonPropertyName("elements")] public List<T> Elements { get; set; } = new();
+        [JsonPropertyName("paging")] public LinkedInPaging Paging { get; set; }
+    }
+
+    public sealed class LinkedInPaging
+    {
+        [JsonPropertyName("count")] public int Count { get; set; }
+        [JsonPropertyName("start")] public int Start { get; set; }
+        [JsonPropertyName("links")] public List<LinkedInLink> Links { get; set; } = new();
+    }
+
+    public sealed class LinkedInLink
+    {
+        [JsonPropertyName("rel")] public string Rel { get; set; }
+        [JsonPropertyName("href")] public string Href { get; set; }
+        [JsonPropertyName("type")] public string Type { get; set; }
     }
 }

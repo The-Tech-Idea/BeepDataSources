@@ -14,6 +14,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Instagram.Models;
 
 namespace TheTechIdea.Beep.Connectors.Instagram
 {
@@ -144,7 +145,7 @@ namespace TheTechIdea.Beep.Connectors.Instagram
             var items = ExtractArray(finalResp, m.root);
             var nextAfter = GetNextAfter(finalResp);
 
-            // We don’t get a grand total; best-effort counters
+            // We donï¿½t get a grand total; best-effort counters
             int pageIdx = Math.Max(1, pageNumber);
             int pageCount = items.Count;
             int totalSoFar = (pageIdx - 1) * limit + pageCount;
@@ -263,6 +264,71 @@ namespace TheTechIdea.Beep.Connectors.Instagram
             }
             catch { /* ignore */ }
             return null;
+        }
+
+        // ---------------- Specific Instagram Methods ----------------
+
+        /// <summary>
+        /// Gets the media for a user
+        /// </summary>
+        [CommandAttribute(ObjectType = "IgMedia", PointType = EnumPointType.Function, Name = "GetUserMedia", Caption = "Get Instagram User Media", ClassName = "InstagramDataSource", misc = "ReturnType: IEnumerable<IgMedia>")]
+        public async Task<IEnumerable<IgMedia>> GetUserMedia(string userId, int limit = 10)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "id", FilterValue = userId },
+                new AppFilter { FieldName = "limit", FilterValue = limit.ToString() },
+                new AppFilter { FieldName = "fields", FilterValue = "id,caption,media_type,media_url,thumbnail_url,permalink,shortcode,timestamp,username" }
+            };
+            var data = await GetEntityAsync("users.media", filters).ConfigureAwait(false);
+            return data?.Select(d => JsonSerializer.Deserialize<IgMedia>(JsonSerializer.Serialize(d))) ?? new List<IgMedia>();
+        }
+
+        /// <summary>
+        /// Gets user profile information
+        /// </summary>
+        [CommandAttribute(ObjectType = "IgUser", PointType = EnumPointType.Function, Name = "GetUserProfile", Caption = "Get Instagram User Profile", ClassName = "InstagramDataSource", misc = "ReturnType: IEnumerable<IgUser>")]
+        public async Task<IEnumerable<IgUser>> GetUserProfile(string userId)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "id", FilterValue = userId },
+                new AppFilter { FieldName = "fields", FilterValue = "id,username,name,profile_picture_url,account_type,media_count" }
+            };
+            var data = await GetEntityAsync("users.by_id", filters).ConfigureAwait(false);
+            return data?.Select(d => JsonSerializer.Deserialize<IgUser>(JsonSerializer.Serialize(d))) ?? new List<IgUser>();
+        }
+
+        /// <summary>
+        /// Gets comments for a media item
+        /// </summary>
+        [CommandAttribute(ObjectType = "IgComment", PointType = EnumPointType.Function, Name = "GetMediaComments", Caption = "Get Instagram Media Comments", ClassName = "InstagramDataSource", misc = "ReturnType: IEnumerable<IgComment>")]
+        public async Task<IEnumerable<IgComment>> GetMediaComments(string mediaId, int limit = 10)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "id", FilterValue = mediaId },
+                new AppFilter { FieldName = "limit", FilterValue = limit.ToString() },
+                new AppFilter { FieldName = "fields", FilterValue = "id,text,username,timestamp,like_count" }
+            };
+            var data = await GetEntityAsync("media.comments", filters).ConfigureAwait(false);
+            return data?.Select(d => JsonSerializer.Deserialize<IgComment>(JsonSerializer.Serialize(d))) ?? new List<IgComment>();
+        }
+
+        /// <summary>
+        /// Gets insights for a media item
+        /// </summary>
+        [CommandAttribute(ObjectType = "IgInsight", PointType = EnumPointType.Function, Name = "GetMediaInsights", Caption = "Get Instagram Media Insights", ClassName = "InstagramDataSource", misc = "ReturnType: IEnumerable<IgInsight>")]
+        public async Task<IEnumerable<IgInsight>> GetMediaInsights(string mediaId, string metric = "engagement,impressions,reach,saved", string period = "lifetime")
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "id", FilterValue = mediaId },
+                new AppFilter { FieldName = "metric", FilterValue = metric },
+                new AppFilter { FieldName = "period", FilterValue = period }
+            };
+            var data = await GetEntityAsync("media.insights", filters).ConfigureAwait(false);
+            return data?.Select(d => JsonSerializer.Deserialize<IgInsight>(JsonSerializer.Serialize(d))) ?? new List<IgInsight>();
         }
     }
 }
