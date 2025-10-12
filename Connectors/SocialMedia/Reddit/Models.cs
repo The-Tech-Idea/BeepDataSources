@@ -19,7 +19,7 @@ namespace TheTechIdea.Beep.Connectors.Reddit.Models
     // -------------------------------------------------------
     // Post/Submission
     // -------------------------------------------------------
-    public sealed class RedditPost : RedditEntityBase
+    public class RedditPost : RedditEntityBase
     {
         [JsonPropertyName("id")] public string Id { get; set; }
         [JsonPropertyName("name")] public string Name { get; set; }
@@ -722,5 +722,24 @@ namespace TheTechIdea.Beep.Connectors.Reddit.Models
     {
         [JsonPropertyName("kind")] public string Kind { get; set; }
         [JsonPropertyName("data")] public RedditSubreddit Data { get; set; }
+    }
+
+    public sealed class RedditSubmitResponse
+    {
+        [JsonPropertyName("success")] public bool Success { get; set; }
+        [JsonPropertyName("data")] public RedditSubmitData Data { get; set; }
+    }
+
+    public sealed class RedditSubmitData
+    {
+        [JsonPropertyName("name")] public string Name { get; set; } // e.g., "t3_xxxxx"
+    }
+
+    // -------------------------------------------------------
+    // Search Result (same as Post for Reddit)
+    // -------------------------------------------------------
+    public sealed class RedditSearchResult : RedditPost
+    {
+        // Inherits all properties from RedditPost
     }
 }

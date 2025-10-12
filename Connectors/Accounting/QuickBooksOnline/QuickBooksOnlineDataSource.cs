@@ -247,5 +247,33 @@ namespace TheTechIdea.Beep.Connectors.QuickBooksOnline
 
             return list;
         }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.QuickBooks, PointType = EnumPointType.Function, ObjectType = "Customers", ClassName = "QuickBooksOnlineDataSource", Showin = ShowinType.Both)]
+        public IEnumerable<Customer> GetCustomers(List<AppFilter> filter) => GetEntity("customers", filter).Cast<Customer>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.QuickBooks, PointType = EnumPointType.Function, ObjectType = "Invoices", ClassName = "QuickBooksOnlineDataSource", Showin = ShowinType.Both)]
+        public IEnumerable<Invoice> GetInvoices(List<AppFilter> filter) => GetEntity("invoices", filter).Cast<Invoice>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.QuickBooks, PointType = EnumPointType.Function, ObjectType = "Bills", ClassName = "QuickBooksOnlineDataSource", Showin = ShowinType.Both)]
+        public IEnumerable<Bill> GetBills(List<AppFilter> filter) => GetEntity("bills", filter).Cast<Bill>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.QuickBooks, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "QuickBooksOnlineDataSource", Showin = ShowinType.Both)]
+        public IEnumerable<Account> GetAccounts(List<AppFilter> filter) => GetEntity("accounts", filter).Cast<Account>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.QuickBooks, PointType = EnumPointType.Function, ObjectType = "Items", ClassName = "QuickBooksOnlineDataSource", Showin = ShowinType.Both)]
+        public IEnumerable<Item> GetItems(List<AppFilter> filter) => GetEntity("items", filter).Cast<Item>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.QuickBooks, PointType = EnumPointType.Function, ObjectType = "Employees", ClassName = "QuickBooksOnlineDataSource", Showin = ShowinType.Both)]
+        public IEnumerable<Employee> GetEmployees(List<AppFilter> filter) => GetEntity("employees", filter).Cast<Employee>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.QuickBooks, PointType = EnumPointType.Function, ObjectType = "Vendors", ClassName = "QuickBooksOnlineDataSource", Showin = ShowinType.Both)]
+        public IEnumerable<Vendor> GetVendors(List<AppFilter> filter) => GetEntity("vendors", filter).Cast<Vendor>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.QuickBooks, PointType = EnumPointType.Function, ObjectType = "CompanyInfo", ClassName = "QuickBooksOnlineDataSource", Showin = ShowinType.Both)]
+        public IEnumerable<CompanyInfo> GetCompanyInfo(List<AppFilter> filter) => GetEntity("companyinfo", filter).Cast<CompanyInfo>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.QuickBooks, PointType = EnumPointType.Function, ObjectType = "TaxCodes", ClassName = "QuickBooksOnlineDataSource", Showin = ShowinType.Both)]
+        public IEnumerable<TaxCode> GetTaxCodes(List<AppFilter> filter) => GetEntity("taxcodes", filter).Cast<TaxCode>();
     }
 }

@@ -17,7 +17,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.EtsyDataSource.Models
         [JsonPropertyName("created_timestamp")] public long? CreatedTimestamp { get; set; }
         [JsonPropertyName("update_timestamp")] public long? UpdateTimestamp { get; set; }
 
-        [JsonIgnore] public IDataSource DataSource { get; private set; }
+        [JsonIgnore] public IDataSource? DataSource { get; private set; }
         public T Attach<T>(IDataSource ds) where T : EtsyEntityBase { DataSource = ds; return (T)this; }
     }
 

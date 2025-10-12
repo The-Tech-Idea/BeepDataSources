@@ -205,5 +205,121 @@ namespace TheTechIdea.Beep.Connectors.Marketing.CampaignMonitor
 
             return list;
         }
+
+        // CommandAttribute methods for framework integration
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorClient), PointType = PointType.Function, Name = "GetClients", Caption = "Get Clients", ClassName = "CampaignMonitorDataSource", misc = "GetClients")]
+        public IEnumerable<CampaignMonitorClient> GetClients()
+        {
+            return GetEntity("clients", null).Cast<CampaignMonitorClient>();
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorList), PointType = PointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "CampaignMonitorDataSource", misc = "GetLists")]
+        public IEnumerable<CampaignMonitorList> GetLists(string clientId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "client_id", FilterValue = clientId } };
+            return GetEntity("lists", filters).Cast<CampaignMonitorList>();
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorSubscriber), PointType = PointType.Function, Name = "GetSubscribers", Caption = "Get Subscribers", ClassName = "CampaignMonitorDataSource", misc = "GetSubscribers")]
+        public IEnumerable<CampaignMonitorSubscriber> GetSubscribers(string listId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "list_id", FilterValue = listId } };
+            return GetEntity("subscribers", filters).Cast<CampaignMonitorSubscriber>();
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorCampaign), PointType = PointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "CampaignMonitorDataSource", misc = "GetCampaigns")]
+        public IEnumerable<CampaignMonitorCampaign> GetCampaigns(string clientId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "client_id", FilterValue = clientId } };
+            return GetEntity("campaigns", filters).Cast<CampaignMonitorCampaign>();
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorTemplate), PointType = PointType.Function, Name = "GetTemplates", Caption = "Get Templates", ClassName = "CampaignMonitorDataSource", misc = "GetTemplates")]
+        public IEnumerable<CampaignMonitorTemplate> GetTemplates(string clientId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "client_id", FilterValue = clientId } };
+            return GetEntity("templates", filters).Cast<CampaignMonitorTemplate>();
+        }
+
+        // POST/PUT methods for creating and updating entities
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorClient), PointType = PointType.Function, Name = "CreateClient", Caption = "Create Client", ClassName = "CampaignMonitorDataSource", misc = "CreateClient")]
+        public async Task<CampaignMonitorClient> CreateClient(CampaignMonitorClient client)
+        {
+            var endpoint = "clients.json";
+            var response = await PostAsync<CampaignMonitorClient>(endpoint, client);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorClient), PointType = PointType.Function, Name = "UpdateClient", Caption = "Update Client", ClassName = "CampaignMonitorDataSource", misc = "UpdateClient")]
+        public async Task<CampaignMonitorClient> UpdateClient(string clientId, CampaignMonitorClient client)
+        {
+            var endpoint = $"clients/{clientId}.json";
+            var response = await PutAsync<CampaignMonitorClient>(endpoint, client);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorList), PointType = PointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "CampaignMonitorDataSource", misc = "CreateList")]
+        public async Task<CampaignMonitorList> CreateList(string clientId, CampaignMonitorList list)
+        {
+            var endpoint = $"clients/{clientId}/lists.json";
+            var response = await PostAsync<CampaignMonitorList>(endpoint, list);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorList), PointType = PointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "CampaignMonitorDataSource", misc = "UpdateList")]
+        public async Task<CampaignMonitorList> UpdateList(string listId, CampaignMonitorList list)
+        {
+            var endpoint = $"lists/{listId}.json";
+            var response = await PutAsync<CampaignMonitorList>(endpoint, list);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorSubscriber), PointType = PointType.Function, Name = "CreateSubscriber", Caption = "Create Subscriber", ClassName = "CampaignMonitorDataSource", misc = "CreateSubscriber")]
+        public async Task<CampaignMonitorSubscriber> CreateSubscriber(string listId, CampaignMonitorSubscriber subscriber)
+        {
+            var endpoint = $"subscribers/{listId}.json";
+            var response = await PostAsync<CampaignMonitorSubscriber>(endpoint, subscriber);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorSubscriber), PointType = PointType.Function, Name = "UpdateSubscriber", Caption = "Update Subscriber", ClassName = "CampaignMonitorDataSource", misc = "UpdateSubscriber")]
+        public async Task<CampaignMonitorSubscriber> UpdateSubscriber(string listId, CampaignMonitorSubscriber subscriber)
+        {
+            var endpoint = $"subscribers/{listId}.json";
+            var response = await PutAsync<CampaignMonitorSubscriber>(endpoint, subscriber);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorCampaign), PointType = PointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "CampaignMonitorDataSource", misc = "CreateCampaign")]
+        public async Task<CampaignMonitorCampaign> CreateCampaign(string clientId, CampaignMonitorCampaign campaign)
+        {
+            var endpoint = $"clients/{clientId}/campaigns.json";
+            var response = await PostAsync<CampaignMonitorCampaign>(endpoint, campaign);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorCampaign), PointType = PointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "CampaignMonitorDataSource", misc = "UpdateCampaign")]
+        public async Task<CampaignMonitorCampaign> UpdateCampaign(string campaignId, CampaignMonitorCampaign campaign)
+        {
+            var endpoint = $"campaigns/{campaignId}.json";
+            var response = await PutAsync<CampaignMonitorCampaign>(endpoint, campaign);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorTemplate), PointType = PointType.Function, Name = "CreateTemplate", Caption = "Create Template", ClassName = "CampaignMonitorDataSource", misc = "CreateTemplate")]
+        public async Task<CampaignMonitorTemplate> CreateTemplate(string clientId, CampaignMonitorTemplate template)
+        {
+            var endpoint = $"clients/{clientId}/templates.json";
+            var response = await PostAsync<CampaignMonitorTemplate>(endpoint, template);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorTemplate), PointType = PointType.Function, Name = "UpdateTemplate", Caption = "Update Template", ClassName = "CampaignMonitorDataSource", misc = "UpdateTemplate")]
+        public async Task<CampaignMonitorTemplate> UpdateTemplate(string templateId, CampaignMonitorTemplate template)
+        {
+            var endpoint = $"templates/{templateId}.json";
+            var response = await PutAsync<CampaignMonitorTemplate>(endpoint, template);
+            return response;
+        }
     }
 }

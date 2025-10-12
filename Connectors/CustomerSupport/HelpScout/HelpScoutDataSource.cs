@@ -11,10 +11,12 @@ using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.DataSources
 {
-    [AddinAttribute(Catagory = "Connector", DatasourceType = DatasourceType.HelpScout)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HelpScout)]
     public class HelpScoutDataSource : WebAPIDataSource
     {
         public HelpScoutDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
@@ -36,69 +38,7 @@ namespace TheTechIdea.Beep.DataSources
             ["reports"] = new("/reports", "_embedded.reports", Array.Empty<string>()),
         };
 
-        public override string GetConnectionString()
-        {
-            return $"HelpScout:{DatasourceName}";
-        }
-
-        public override string ColumnDelimiter { get => ","; set => base.ColumnDelimiter = value; }
-        public override string ParameterDelimiter { get => ":"; set => base.ParameterDelimiter = value; }
-        public override string RowDelimiter { get => "\n"; set => base.RowDelimiter = value; }
-
-        public override List<string> GetEntitiesList()
-        {
-            return Map.Keys.ToList();
-        }
-
-        public override List<EntityStructure> GetEntityStructure(string EntityName, bool refresh)
-        {
-            return GetEntityStructureAsync(EntityName, refresh).GetAwaiter().GetResult();
-        }
-
-        public override async Task<List<EntityStructure>> GetEntityStructureAsync(string EntityName, bool refresh)
-        {
-            if (!Map.TryGetValue(EntityName, out var m))
-                throw new InvalidOperationException($"Unknown HelpScout entity '{EntityName}'.");
-
-            var endpoint = m.endpoint;
-            using var resp = await GetAsync(endpoint).ConfigureAwait(false);
-            if (resp is null || !resp.IsSuccessStatusCode) return new List<EntityStructure>();
-
-            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var doc = JsonDocument.Parse(json);
-            var root = GetJsonProperty(doc.RootElement, m.root.Split('.'));
-
-            if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() == 0)
-                return new List<EntityStructure>();
-
-            var sample = root[0];
-            var structure = new EntityStructure
-            {
-                EntityName = EntityName,
-                ViewID = EntityName,
-                DataSourceID = DatasourceName,
-                Fields = new List<EntityField>()
-            };
-
-            foreach (var prop in sample.EnumerateObject())
-            {
-                structure.Fields.Add(new EntityField
-                {
-                    fieldname = prop.Name,
-                    fieldtype = MapJsonType(prop.Value.ValueKind),
-                    ValueRetrievedFromParent = false,
-                    AllowDBNull = true,
-                    IsAutoIncrement = false,
-                    IsIdentity = false,
-                    IsKey = false,
-                    IsUnique = false
-                });
-            }
-
-            return new List<EntityStructure> { structure };
-        }
-
-        public override object GetEntity(string EntityName, List<AppFilter> Filter)
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> Filter)
         {
             return GetEntityAsync(EntityName, Filter).GetAwaiter().GetResult();
         }
@@ -131,11 +71,10 @@ namespace TheTechIdea.Beep.DataSources
 
             // HelpScout pagination
             q["page"] = Math.Max(1, pageNumber).ToString();
-            q["perPage"] = Math.Max(1, Math.Min(pageSize, 50)).ToString();
 
             var endpoint = ResolveEndpoint(m.endpoint, q);
 
-            using var resp = Get(endpoint, q);
+            using var resp = GetAsync(endpoint, q).ConfigureAwait(false).GetAwaiter().GetResult();
             if (resp is null || !resp.IsSuccessStatusCode) return new PagedResult();
 
             var data = ExtractArray(resp, m.root);
@@ -147,6 +86,20 @@ namespace TheTechIdea.Beep.DataSources
                 TotalPages = 1, // HelpScout doesn't provide total count in response
                 TotalRecords = data.Count()
             };
+        }
+
+        // ---------------------------- helpers ----------------------------
+
+        private static Dictionary<string, string> FiltersToQuery(List<AppFilter> filters)
+        {
+            var q = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (filters == null) return q;
+            foreach (var f in filters)
+            {
+                if (f == null || string.IsNullOrWhiteSpace(f.FieldName)) continue;
+                q[f.FieldName.Trim()] = f.FilterValue?.ToString() ?? string.Empty;
+            }
+            return q;
         }
 
         private void RequireFilters(string entity, Dictionary<string, string> q, string[] required)
@@ -197,5 +150,122 @@ namespace TheTechIdea.Beep.DataSources
             JsonValueKind.Object => "System.Object",
             _ => "System.String"
         };
+
+        [CommandAttribute(
+            Caption = "Get Conversations",
+            Name = "GetConversations",
+            ObjectType = "Conversation",
+            PointType = EnumPointType.Function,
+            ClassName = "HelpScoutDataSource",
+            misc = "ReturnType: IEnumerable<Conversation>"
+        )]
+        public IEnumerable<object> GetConversations()
+        {
+            return GetEntity("conversations", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Customers",
+            Name = "GetCustomers",
+            ObjectType = "Customer",
+            PointType = EnumPointType.Function,
+            ClassName = "HelpScoutDataSource",
+            misc = "ReturnType: IEnumerable<Customer>"
+        )]
+        public IEnumerable<object> GetCustomers()
+        {
+            return GetEntity("customers", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Mailboxes",
+            Name = "GetMailboxes",
+            ObjectType = "Mailbox",
+            PointType = EnumPointType.Function,
+            ClassName = "HelpScoutDataSource",
+            misc = "ReturnType: IEnumerable<Mailbox>"
+        )]
+        public IEnumerable<object> GetMailboxes()
+        {
+            return GetEntity("mailboxes", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Users",
+            Name = "GetUsers",
+            ObjectType = "User",
+            PointType = EnumPointType.Function,
+            ClassName = "HelpScoutDataSource",
+            misc = "ReturnType: IEnumerable<User>"
+        )]
+        public IEnumerable<object> GetUsers()
+        {
+            return GetEntity("users", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Teams",
+            Name = "GetTeams",
+            ObjectType = "Team",
+            PointType = EnumPointType.Function,
+            ClassName = "HelpScoutDataSource",
+            misc = "ReturnType: IEnumerable<Team>"
+        )]
+        public IEnumerable<object> GetTeams()
+        {
+            return GetEntity("teams", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Tags",
+            Name = "GetTags",
+            ObjectType = "Tag",
+            PointType = EnumPointType.Function,
+            ClassName = "HelpScoutDataSource",
+            misc = "ReturnType: IEnumerable<Tag>"
+        )]
+        public IEnumerable<object> GetTags()
+        {
+            return GetEntity("tags", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Folders",
+            Name = "GetFolders",
+            ObjectType = "Folder",
+            PointType = EnumPointType.Function,
+            ClassName = "HelpScoutDataSource",
+            misc = "ReturnType: IEnumerable<Folder>"
+        )]
+        public IEnumerable<object> GetFolders()
+        {
+            return GetEntity("folders", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Workflows",
+            Name = "GetWorkflows",
+            ObjectType = "Workflow",
+            PointType = EnumPointType.Function,
+            ClassName = "HelpScoutDataSource",
+            misc = "ReturnType: IEnumerable<Workflow>"
+        )]
+        public IEnumerable<object> GetWorkflows()
+        {
+            return GetEntity("workflows", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Reports",
+            Name = "GetReports",
+            ObjectType = "Report",
+            PointType = EnumPointType.Function,
+            ClassName = "HelpScoutDataSource",
+            misc = "ReturnType: IEnumerable<Report>"
+        )]
+        public IEnumerable<object> GetReports()
+        {
+            return GetEntity("reports", new List<AppFilter>());
+        }
     }
 }

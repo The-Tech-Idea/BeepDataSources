@@ -19,7 +19,7 @@ namespace TheTechIdea.Beep.Connectors.FreshBooks
     /// <summary>
     /// FreshBooks data source implementation using WebAPIDataSource as base class
     /// </summary>
-    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WebApi)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks)]
     public class FreshBooksDataSource : WebAPIDataSource
     {
         // Entity endpoints mapping for FreshBooks API
@@ -375,6 +375,191 @@ namespace TheTechIdea.Beep.Connectors.FreshBooks
             }
 
             return list;
+        }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Clients", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Client>")]
+        public IEnumerable<Client> GetClients(List<AppFilter> filter) => GetEntity("clients", filter).Cast<Client>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Invoices", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Invoice>")]
+        public IEnumerable<Invoice> GetInvoices(List<AppFilter> filter) => GetEntity("invoices", filter).Cast<Invoice>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Estimates", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Estimate>")]
+        public IEnumerable<Estimate> GetEstimates(List<AppFilter> filter) => GetEntity("estimates", filter).Cast<Estimate>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Expenses", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Expense>")]
+        public IEnumerable<Expense> GetExpenses(List<AppFilter> filter) => GetEntity("expenses", filter).Cast<Expense>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Items", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Item>")]
+        public IEnumerable<Item> GetItems(List<AppFilter> filter) => GetEntity("items", filter).Cast<Item>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Payments", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Payment>")]
+        public IEnumerable<Payment> GetPayments(List<AppFilter> filter) => GetEntity("payments", filter).Cast<Payment>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Projects", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Project>")]
+        public IEnumerable<Project> GetProjects(List<AppFilter> filter) => GetEntity("projects", filter).Cast<Project>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "TimeEntries", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TimeEntry>")]
+        public IEnumerable<TimeEntry> GetTimeEntries(List<AppFilter> filter) => GetEntity("timeentries", filter).Cast<TimeEntry>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Tasks", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Task>")]
+        public IEnumerable<Task> GetTasks(List<AppFilter> filter) => GetEntity("tasks", filter).Cast<Task>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Staff", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Staff>")]
+        public IEnumerable<Staff> GetStaff(List<AppFilter> filter) => GetEntity("staff", filter).Cast<Staff>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Services", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Service>")]
+        public IEnumerable<Service> GetServices(List<AppFilter> filter) => GetEntity("services", filter).Cast<Service>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Taxes", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Tax>")]
+        public IEnumerable<Tax> GetTaxes(List<AppFilter> filter) => GetEntity("taxes", filter).Cast<Tax>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Categories", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Category>")]
+        public IEnumerable<Category> GetCategories(List<AppFilter> filter) => GetEntity("categories", filter).Cast<Category>();
+
+        // POST/PUT methods for creating and updating entities
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Client", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Client")]
+        public async Task<Client> CreateClient(Client client, string accountId)
+        {
+            var endpoint = $"accounting/account/{accountId}/users/clients";
+            var response = await PostAsync<Client>(endpoint, client);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Client", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Client")]
+        public async Task<Client> UpdateClient(string clientId, Client client, string accountId)
+        {
+            var endpoint = $"accounting/account/{accountId}/users/clients/{clientId}";
+            var response = await PutAsync<Client>(endpoint, client);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Invoice", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Invoice")]
+        public async Task<Invoice> CreateInvoice(Invoice invoice, string accountId)
+        {
+            var endpoint = $"accounting/account/{accountId}/invoices/invoices";
+            var response = await PostAsync<Invoice>(endpoint, invoice);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Invoice", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Invoice")]
+        public async Task<Invoice> UpdateInvoice(string invoiceId, Invoice invoice, string accountId)
+        {
+            var endpoint = $"accounting/account/{accountId}/invoices/invoices/{invoiceId}";
+            var response = await PutAsync<Invoice>(endpoint, invoice);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Estimate", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Estimate")]
+        public async Task<Estimate> CreateEstimate(Estimate estimate, string accountId)
+        {
+            var endpoint = $"accounting/account/{accountId}/estimates/estimates";
+            var response = await PostAsync<Estimate>(endpoint, estimate);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Estimate", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Estimate")]
+        public async Task<Estimate> UpdateEstimate(string estimateId, Estimate estimate, string accountId)
+        {
+            var endpoint = $"accounting/account/{accountId}/estimates/estimates/{estimateId}";
+            var response = await PutAsync<Estimate>(endpoint, estimate);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Expense", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Expense")]
+        public async Task<Expense> CreateExpense(Expense expense, string accountId)
+        {
+            var endpoint = $"accounting/account/{accountId}/expenses/expenses";
+            var response = await PostAsync<Expense>(endpoint, expense);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Expense", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Expense")]
+        public async Task<Expense> UpdateExpense(string expenseId, Expense expense, string accountId)
+        {
+            var endpoint = $"accounting/account/{accountId}/expenses/expenses/{expenseId}";
+            var response = await PutAsync<Expense>(endpoint, expense);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Item", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Item")]
+        public async Task<Item> CreateItem(Item item, string accountId)
+        {
+            var endpoint = $"accounting/account/{accountId}/items/items";
+            var response = await PostAsync<Item>(endpoint, item);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Item", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Item")]
+        public async Task<Item> UpdateItem(string itemId, Item item, string accountId)
+        {
+            var endpoint = $"accounting/account/{accountId}/items/items/{itemId}";
+            var response = await PutAsync<Item>(endpoint, item);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Payment", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Payment")]
+        public async Task<Payment> CreatePayment(Payment payment, string accountId)
+        {
+            var endpoint = $"accounting/account/{accountId}/payments/payments";
+            var response = await PostAsync<Payment>(endpoint, payment);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Payment", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Payment")]
+        public async Task<Payment> UpdatePayment(string paymentId, Payment payment, string accountId)
+        {
+            var endpoint = $"accounting/account/{accountId}/payments/payments/{paymentId}";
+            var response = await PutAsync<Payment>(endpoint, payment);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Project", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Project")]
+        public async Task<Project> CreateProject(Project project, string businessId)
+        {
+            var endpoint = $"projects/business/{businessId}/projects";
+            var response = await PostAsync<Project>(endpoint, project);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Project", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Project")]
+        public async Task<Project> UpdateProject(string projectId, Project project, string businessId)
+        {
+            var endpoint = $"projects/business/{businessId}/projects/{projectId}";
+            var response = await PutAsync<Project>(endpoint, project);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "TimeEntry", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: TimeEntry")]
+        public async Task<TimeEntry> CreateTimeEntry(TimeEntry timeEntry, string businessId)
+        {
+            var endpoint = $"projects/business/{businessId}/time_entries";
+            var response = await PostAsync<TimeEntry>(endpoint, timeEntry);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "TimeEntry", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: TimeEntry")]
+        public async Task<TimeEntry> UpdateTimeEntry(string timeEntryId, TimeEntry timeEntry, string businessId)
+        {
+            var endpoint = $"projects/business/{businessId}/time_entries/{timeEntryId}";
+            var response = await PutAsync<TimeEntry>(endpoint, timeEntry);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Task", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Task")]
+        public async Task<Task> CreateTask(Task task, string businessId)
+        {
+            var endpoint = $"projects/business/{businessId}/tasks";
+            var response = await PostAsync<Task>(endpoint, task);
+            return response;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.FreshBooks, PointType = EnumPointType.Function, ObjectType = "Task", ClassName = "FreshBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: Task")]
+        public async Task<Task> UpdateTask(string taskId, Task task, string businessId)
+        {
+            var endpoint = $"projects/business/{businessId}/tasks/{taskId}";
+            var response = await PutAsync<Task>(endpoint, task);
+            return response;
         }
     }
 }

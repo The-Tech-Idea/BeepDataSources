@@ -228,5 +228,121 @@ namespace TheTechIdea.Beep.FreshdeskDataSource
 
             return list;
         }
+
+        // -------------------- CommandAttribute Methods --------------------
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskTicket", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskTicket>")]
+        public List<FreshdeskTicket> GetTickets()
+        {
+            return GetEntity("tickets", new List<AppFilter>()).Cast<FreshdeskTicket>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskTicket", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "FreshdeskTicket")]
+        public FreshdeskTicket GetTicket(long id)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
+            return GetEntity("tickets", filters).Cast<FreshdeskTicket>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskTicket", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskTicket>")]
+        public List<FreshdeskTicket> SearchTickets(string query)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "query", FilterValue = query, Operator = "=" } };
+            return GetEntity("tickets.search", filters).Cast<FreshdeskTicket>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskContact", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskContact>")]
+        public List<FreshdeskContact> GetContacts()
+        {
+            return GetEntity("contacts", new List<AppFilter>()).Cast<FreshdeskContact>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskContact", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "FreshdeskContact")]
+        public FreshdeskContact GetContact(long id)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
+            return GetEntity("contacts", filters).Cast<FreshdeskContact>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskContact", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskContact>")]
+        public List<FreshdeskContact> SearchContacts(string term)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "term", FilterValue = term, Operator = "=" } };
+            return GetEntity("contacts.search", filters).Cast<FreshdeskContact>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskCompany", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskCompany>")]
+        public List<FreshdeskCompany> GetCompanies()
+        {
+            return GetEntity("companies", new List<AppFilter>()).Cast<FreshdeskCompany>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskCompany", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "FreshdeskCompany")]
+        public FreshdeskCompany GetCompany(long id)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
+            return GetEntity("companies", filters).Cast<FreshdeskCompany>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskAgent", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskAgent>")]
+        public List<FreshdeskAgent> GetAgents()
+        {
+            return GetEntity("agents", new List<AppFilter>()).Cast<FreshdeskAgent>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskGroup", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskGroup>")]
+        public List<FreshdeskGroup> GetGroups()
+        {
+            return GetEntity("groups", new List<AppFilter>()).Cast<FreshdeskGroup>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskProduct", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskProduct>")]
+        public List<FreshdeskProduct> GetProducts()
+        {
+            return GetEntity("products", new List<AppFilter>()).Cast<FreshdeskProduct>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskConversation", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskConversation>")]
+        public List<FreshdeskConversation> GetTicketConversations(long ticketId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = ticketId.ToString(), Operator = "=" } };
+            return GetEntity("conversations", filters).Cast<FreshdeskConversation>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskTimeEntry", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskTimeEntry>")]
+        public List<FreshdeskTimeEntry> GetTimeEntries()
+        {
+            return GetEntity("time_entries", new List<AppFilter>()).Cast<FreshdeskTimeEntry>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskSatisfactionRating", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskSatisfactionRating>")]
+        public List<FreshdeskSatisfactionRating> GetSatisfactionRatings()
+        {
+            return GetEntity("satisfaction_ratings", new List<AppFilter>()).Cast<FreshdeskSatisfactionRating>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskCannedResponse", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskCannedResponse>")]
+        public List<FreshdeskCannedResponse> GetCannedResponses()
+        {
+            return GetEntity("canned_responses", new List<AppFilter>()).Cast<FreshdeskCannedResponse>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskTicketField", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskTicketField>")]
+        public List<FreshdeskTicketField> GetTicketFields()
+        {
+            return GetEntity("ticket_fields", new List<AppFilter>()).Cast<FreshdeskTicketField>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskContactField", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskContactField>")]
+        public List<FreshdeskContactField> GetContactFields()
+        {
+            return GetEntity("contact_fields", new List<AppFilter>()).Cast<FreshdeskContactField>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskCompanyField", ClassName = "FreshdeskDataSource", Showin = ShowinType.Both, misc = "List<FreshdeskCompanyField>")]
+        public List<FreshdeskCompanyField> GetCompanyFields()
+        {
+            return GetEntity("company_fields", new List<AppFilter>()).Cast<FreshdeskCompanyField>().ToList();
+        }
     }
 }

@@ -18,7 +18,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
     // -------------------------------------------------------
     // File/Folder Metadata
     // -------------------------------------------------------
-    public class DropboxMetadata : DropboxEntityBase
+    public sealed class DropboxMetadata : DropboxEntityBase
     {
         [JsonPropertyName(".tag")] public string? Tag { get; set; } // "file" or "folder"
         [JsonPropertyName("name")] public string? Name { get; set; }
@@ -33,10 +33,20 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
     }
 
     // -------------------------------------------------------
-    // File Metadata (extends Metadata)
+    // File Metadata
     // -------------------------------------------------------
-    public class DropboxFileMetadata : DropboxMetadata
+    public sealed class DropboxFileMetadata : DropboxEntityBase
     {
+        [JsonPropertyName(".tag")] public string? Tag { get; set; } // "file"
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("path_lower")] public string? PathLower { get; set; }
+        [JsonPropertyName("path_display")] public string? PathDisplay { get; set; }
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("client_modified")] public DateTimeOffset? ClientModified { get; set; }
+        [JsonPropertyName("server_modified")] public DateTimeOffset? ServerModified { get; set; }
+        [JsonPropertyName("rev")] public string? Rev { get; set; }
+        [JsonPropertyName("size")] public long? Size { get; set; }
+        [JsonPropertyName("content_hash")] public string? ContentHash { get; set; }
         [JsonPropertyName("is_downloadable")] public bool? IsDownloadable { get; set; }
         [JsonPropertyName("has_explicit_shared_members")] public bool? HasExplicitSharedMembers { get; set; }
         [JsonPropertyName("sharing_info")] public DropboxSharingInfo? SharingInfo { get; set; }
@@ -46,10 +56,20 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
     }
 
     // -------------------------------------------------------
-    // Folder Metadata (extends Metadata)
+    // Folder Metadata
     // -------------------------------------------------------
-    public class DropboxFolderMetadata : DropboxMetadata
+    public sealed class DropboxFolderMetadata : DropboxEntityBase
     {
+        [JsonPropertyName(".tag")] public string? Tag { get; set; } // "folder"
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("path_lower")] public string? PathLower { get; set; }
+        [JsonPropertyName("path_display")] public string? PathDisplay { get; set; }
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("client_modified")] public DateTimeOffset? ClientModified { get; set; }
+        [JsonPropertyName("server_modified")] public DateTimeOffset? ServerModified { get; set; }
+        [JsonPropertyName("rev")] public string? Rev { get; set; }
+        [JsonPropertyName("size")] public long? Size { get; set; }
+        [JsonPropertyName("content_hash")] public string? ContentHash { get; set; }
         [JsonPropertyName("shared_folder_id")] public string? SharedFolderId { get; set; }
         [JsonPropertyName("sharing_info")] public DropboxSharingInfo? SharingInfo { get; set; }
         [JsonPropertyName("property_groups")] public List<DropboxPropertyGroup>? PropertyGroups { get; set; } = new();
@@ -58,7 +78,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
     // -------------------------------------------------------
     // Sharing Info
     // -------------------------------------------------------
-    public class DropboxSharingInfo : DropboxEntityBase
+    public sealed class DropboxSharingInfo : DropboxEntityBase
     {
         [JsonPropertyName("read_only")] public bool? ReadOnly { get; set; }
         [JsonPropertyName("parent_shared_folder_id")] public string? ParentSharedFolderId { get; set; }
@@ -71,13 +91,13 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
     // -------------------------------------------------------
     // Property Group
     // -------------------------------------------------------
-    public class DropboxPropertyGroup : DropboxEntityBase
+    public sealed class DropboxPropertyGroup : DropboxEntityBase
     {
         [JsonPropertyName("template_id")] public string? TemplateId { get; set; }
         [JsonPropertyName("fields")] public List<DropboxPropertyField>? Fields { get; set; } = new();
     }
 
-    public class DropboxPropertyField : DropboxEntityBase
+    public sealed class DropboxPropertyField : DropboxEntityBase
     {
         [JsonPropertyName("name")] public string? Name { get; set; }
         [JsonPropertyName("value")] public string? Value { get; set; }
@@ -86,7 +106,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
     // -------------------------------------------------------
     // Shared Link
     // -------------------------------------------------------
-    public class DropboxSharedLink : DropboxEntityBase
+    public sealed class DropboxSharedLink : DropboxEntityBase
     {
         [JsonPropertyName(".tag")] public string? Tag { get; set; }
         [JsonPropertyName("url")] public string? Url { get; set; }
@@ -103,7 +123,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
         [JsonPropertyName("content_owner_team_info")] public DropboxTeamInfo? ContentOwnerTeamInfo { get; set; }
     }
 
-    public class DropboxLinkPermissions : DropboxEntityBase
+    public sealed class DropboxLinkPermissions : DropboxEntityBase
     {
         [JsonPropertyName("can_revoke")] public bool? CanRevoke { get; set; }
         [JsonPropertyName("revoke_failure_reason")] public DropboxRevokeFailureReason? RevokeFailureReason { get; set; }
@@ -120,7 +140,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
     // -------------------------------------------------------
     // Account Info
     // -------------------------------------------------------
-    public class DropboxAccountInfo : DropboxEntityBase
+    public sealed class DropboxAccountInfo : DropboxEntityBase
     {
         [JsonPropertyName("account_id")] public string? AccountId { get; set; }
         [JsonPropertyName("name")] public DropboxName? Name { get; set; }
@@ -136,7 +156,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
         [JsonPropertyName("root_info")] public DropboxRootInfo? RootInfo { get; set; }
     }
 
-    public class DropboxName : DropboxEntityBase
+    public sealed class DropboxName : DropboxEntityBase
     {
         [JsonPropertyName("given_name")] public string? GivenName { get; set; }
         [JsonPropertyName("surname")] public string? Surname { get; set; }
@@ -148,13 +168,13 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
     // -------------------------------------------------------
     // Space Usage
     // -------------------------------------------------------
-    public class DropboxSpaceUsage : DropboxEntityBase
+    public sealed class DropboxSpaceUsage : DropboxEntityBase
     {
         [JsonPropertyName("used")] public long? Used { get; set; }
         [JsonPropertyName("allocation")] public DropboxSpaceAllocation? Allocation { get; set; }
     }
 
-    public class DropboxSpaceAllocation : DropboxEntityBase
+    public sealed class DropboxSpaceAllocation : DropboxEntityBase
     {
         [JsonPropertyName(".tag")] public string? Tag { get; set; }
         [JsonPropertyName("allocated")] public long? Allocated { get; set; }
@@ -163,13 +183,13 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
     // -------------------------------------------------------
     // Team Info
     // -------------------------------------------------------
-    public class DropboxTeamInfo : DropboxEntityBase
+    public sealed class DropboxTeamInfo : DropboxEntityBase
     {
         [JsonPropertyName("name")] public string? Name { get; set; }
         [JsonPropertyName("team_id")] public string? TeamId { get; set; }
     }
 
-    public class DropboxTeamMemberInfo : DropboxEntityBase
+    public sealed class DropboxTeamMemberInfo : DropboxEntityBase
     {
         [JsonPropertyName("team_info")] public DropboxTeamInfo? TeamInfo { get; set; }
         [JsonPropertyName("display_name")] public string? DisplayName { get; set; }
@@ -210,14 +230,14 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
         Business
     }
 
-    public class DropboxRootInfo : DropboxEntityBase
+    public sealed class DropboxRootInfo : DropboxEntityBase
     {
         [JsonPropertyName(".tag")] public string? Tag { get; set; }
         [JsonPropertyName("root_namespace_id")] public string? RootNamespaceId { get; set; }
         [JsonPropertyName("home_namespace_id")] public string? HomeNamespaceId { get; set; }
     }
 
-    public class DropboxRevokeFailureReason : DropboxEntityBase
+    public sealed class DropboxRevokeFailureReason : DropboxEntityBase
     {
         [JsonPropertyName(".tag")] public string? Tag { get; set; }
     }
@@ -225,7 +245,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
     // -------------------------------------------------------
     // List Folder Response
     // -------------------------------------------------------
-    public class DropboxListFolderResponse : DropboxEntityBase
+    public sealed class DropboxListFolderResponse : DropboxEntityBase
     {
         [JsonPropertyName("entries")] public List<DropboxMetadata>? Entries { get; set; } = new();
         [JsonPropertyName("cursor")] public string? Cursor { get; set; }
@@ -235,13 +255,13 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
     // -------------------------------------------------------
     // Team Member
     // -------------------------------------------------------
-    public class DropboxTeamMember : DropboxEntityBase
+    public sealed class DropboxTeamMember : DropboxEntityBase
     {
         [JsonPropertyName("profile")] public DropboxAccountInfo? Profile { get; set; }
         [JsonPropertyName("role")] public DropboxTeamMemberRole? Role { get; set; }
     }
 
-    public class DropboxTeamMemberRole : DropboxEntityBase
+    public sealed class DropboxTeamMemberRole : DropboxEntityBase
     {
         [JsonPropertyName(".tag")] public string? Tag { get; set; }
     }

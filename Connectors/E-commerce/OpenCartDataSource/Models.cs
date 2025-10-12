@@ -16,7 +16,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCartDataSource.Models
         [JsonPropertyName("date_added")] public DateTime? DateAdded { get; set; }
         [JsonPropertyName("date_modified")] public DateTime? DateModified { get; set; }
 
-        [JsonIgnore] public IDataSource DataSource { get; private set; }
+        [JsonIgnore] public IDataSource? DataSource { get; private set; }
         public T Attach<T>(IDataSource ds) where T : OpenCartEntityBase { DataSource = ds; return (T)this; }
     }
 

@@ -1,37 +1,66 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using TheTechIdea.Beep.DataBase;
 
 namespace TheTechIdea.Beep.TikTokAdsDataSource
 {
     /// <summary>
-    /// Base class for all TikTok Ads entities
+    /// Base class for TikTok Ads entities
     /// </summary>
-    public abstract class TikTokAdsEntity
+    public abstract class TikTokAdsEntityBase
     {
-        /// <summary>
-        /// Unique identifier for the entity
-        /// </summary>
-        [JsonPropertyName("id")]
-        public string? Id { get; set; }
-
-        /// <summary>
-        /// Creation timestamp
-        /// </summary>
-        [JsonPropertyName("create_time")]
-        public DateTime? CreateTime { get; set; }
-
-        /// <summary>
-        /// Last update timestamp
-        /// </summary>
-        [JsonPropertyName("modify_time")]
-        public DateTime? ModifyTime { get; set; }
+        [JsonIgnore] public IDataSource DataSource { get; private set; }
+        public T Attach<T>(IDataSource ds) where T : TikTokAdsEntityBase { DataSource = ds; return (T)this; }
     }
 
     /// <summary>
     /// Represents an advertiser in TikTok Ads
     /// </summary>
-    public class TikTokAdvertiser : TikTokAdsEntity
+    public sealed class TikTokAdvertiser : TikTokAdsEntityBase
+    {
+        /// <summary>
+        /// Advertiser ID
+        /// </summary>
+        [JsonPropertyName("advertiser_id")]
+        public string? AdvertiserId { get; set; }
+
+        /// <summary>
+        /// Advertiser na        /// <summary>
+        /// Attribution window
+        /// </summary>
+        [JsonPropertyName("attribution_window")]
+        public decimal? AttributionWindow { get; set; }
+    }
+
+    /// <summary>
+    /// Response wrapper for TikTok Ads API
+    /// </summary>
+    public class TikTokAdsResponse<T>
+    {
+        [JsonPropertyName("data")]
+        public TikTokAdsResponseData<T>? Data { get; set; }
+
+        [JsonPropertyName("code")]
+        public int Code { get; set; }
+
+        [JsonPropertyName("message")]
+        public string? Message { get; set; }
+    }
+
+    /// <summary>
+    /// Data container for TikTok Ads response
+    /// </summary>
+    public class TikTokAdsResponseData<T>
+    {
+        [JsonPropertyName("list")]
+        public List<T>? List { get; set; }
+    } /// </summary>
+
+    /// <summary>
+    /// Represents an advertiser in TikTok Ads
+    /// </summary>
+    public sealed class TikTokAdvertiser : TikTokAdsEntityBase
     {
         /// <summary>
         /// Advertiser ID
@@ -115,7 +144,7 @@ namespace TheTechIdea.Beep.TikTokAdsDataSource
     /// <summary>
     /// Represents a campaign in TikTok Ads
     /// </summary>
-    public class TikTokCampaign : TikTokAdsEntity
+    public sealed class TikTokCampaign : TikTokAdsEntityBase
     {
         /// <summary>
         /// Campaign ID
@@ -241,7 +270,7 @@ namespace TheTechIdea.Beep.TikTokAdsDataSource
     /// <summary>
     /// Represents an ad group in TikTok Ads
     /// </summary>
-    public class TikTokAdGroup : TikTokAdsEntity
+    public sealed class TikTokAdGroup : TikTokAdsEntityBase
     {
         /// <summary>
         /// Ad group ID
@@ -457,7 +486,7 @@ namespace TheTechIdea.Beep.TikTokAdsDataSource
     /// <summary>
     /// Represents an ad in TikTok Ads
     /// </summary>
-    public class TikTokAd : TikTokAdsEntity
+    public sealed class TikTokAd : TikTokAdsEntityBase
     {
         /// <summary>
         /// Ad ID
@@ -757,7 +786,7 @@ namespace TheTechIdea.Beep.TikTokAdsDataSource
     /// <summary>
     /// Analytics data for TikTok Ads
     /// </summary>
-    public class TikTokAnalytics : TikTokAdsEntity
+    public sealed class TikTokAnalytics : TikTokAdsEntityBase
     {
         /// <summary>
         /// Ad ID

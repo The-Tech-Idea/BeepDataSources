@@ -17,6 +17,7 @@ using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Workflow;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Connectors.InsightlyDataSource.Models;
 
 namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
 {
@@ -36,17 +37,6 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             public string BaseUrl { get; set; } = "https://api.insightly.com/v3.1";
         }
 
-        /// <summary>
-        /// Insightly entity metadata
-        /// </summary>
-        public class InsightlyEntity
-        {
-            public string EntityName { get; set; } = string.Empty;
-            public string DisplayName { get; set; } = string.Empty;
-            public string ApiEndpoint { get; set; } = string.Empty;
-            public Dictionary<string, string> Fields { get; set; } = new();
-        }
-
         #endregion
 
         #region Private Fields
@@ -55,7 +45,6 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
         private HttpClient? _httpClient;
         private ConnectionState _connectionState = ConnectionState.Closed;
         private string _connectionString = string.Empty;
-        private readonly Dictionary<string, InsightlyEntity> _entityCache = new();
 
         #endregion
 
@@ -82,6 +71,101 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             var handler = new HttpClientHandler();
             _httpClient = new HttpClient(handler);
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "BeepDataConnector/1.0");
+
+            // Register entities
+            RegisterEntities();
+        }
+
+        #endregion
+
+        #region Entity Registration
+
+        private void RegisterEntities()
+        {
+            EntitiesNames = new List<string>
+            {
+                "Contacts",
+                "Organisations",
+                "Opportunities",
+                "Leads"
+            };
+
+            Entities = new List<EntityStructure>
+            {
+                new EntityStructure
+                {
+                    EntityName = "Contacts",
+                    Caption = "Contacts",
+                    Fields = new List<EntityField>
+                    {
+                        new EntityField { fieldname = "CONTACT_ID", fieldtype = "Int32" },
+                        new EntityField { fieldname = "FIRST_NAME", fieldtype = "String" },
+                        new EntityField { fieldname = "LAST_NAME", fieldtype = "String" },
+                        new EntityField { fieldname = "SALUTATION", fieldtype = "String" },
+                        new EntityField { fieldname = "DATE_CREATED_UTC", fieldtype = "DateTime" },
+                        new EntityField { fieldname = "DATE_UPDATED_UTC", fieldtype = "DateTime" },
+                        new EntityField { fieldname = "EMAIL_ADDRESS", fieldtype = "String" },
+                        new EntityField { fieldname = "PHONE", fieldtype = "String" },
+                        new EntityField { fieldname = "MOBILE", fieldtype = "String" },
+                        new EntityField { fieldname = "ORGANISATION_ID", fieldtype = "Int32" }
+                    }
+                },
+                new EntityStructure
+                {
+                    EntityName = "Organisations",
+                    Caption = "Organisations",
+                    Fields = new List<EntityField>
+                    {
+                        new EntityField { fieldname = "ORGANISATION_ID", fieldtype = "Int32" },
+                        new EntityField { fieldname = "ORGANISATION_NAME", fieldtype = "String" },
+                        new EntityField { fieldname = "DATE_CREATED_UTC", fieldtype = "DateTime" },
+                        new EntityField { fieldname = "DATE_UPDATED_UTC", fieldtype = "DateTime" },
+                        new EntityField { fieldname = "PHONE", fieldtype = "String" },
+                        new EntityField { fieldname = "FAX", fieldtype = "String" },
+                        new EntityField { fieldname = "WEBSITE", fieldtype = "String" },
+                        new EntityField { fieldname = "ADDRESS_BILLING_STREET", fieldtype = "String" },
+                        new EntityField { fieldname = "ADDRESS_BILLING_CITY", fieldtype = "String" },
+                        new EntityField { fieldname = "ADDRESS_BILLING_STATE", fieldtype = "String" },
+                        new EntityField { fieldname = "ADDRESS_BILLING_COUNTRY", fieldtype = "String" }
+                    }
+                },
+                new EntityStructure
+                {
+                    EntityName = "Opportunities",
+                    Caption = "Opportunities",
+                    Fields = new List<EntityField>
+                    {
+                        new EntityField { fieldname = "OPPORTUNITY_ID", fieldtype = "Int32" },
+                        new EntityField { fieldname = "OPPORTUNITY_NAME", fieldtype = "String" },
+                        new EntityField { fieldname = "OPPORTUNITY_DETAILS", fieldtype = "String" },
+                        new EntityField { fieldname = "PROBABILITY", fieldtype = "Decimal" },
+                        new EntityField { fieldname = "BID_AMOUNT", fieldtype = "Decimal" },
+                        new EntityField { fieldname = "BID_CURRENCY", fieldtype = "String" },
+                        new EntityField { fieldname = "DATE_CREATED_UTC", fieldtype = "DateTime" },
+                        new EntityField { fieldname = "DATE_UPDATED_UTC", fieldtype = "DateTime" },
+                        new EntityField { fieldname = "ORGANISATION_ID", fieldtype = "Int32" },
+                        new EntityField { fieldname = "CONTACT_ID", fieldtype = "Int32" }
+                    }
+                },
+                new EntityStructure
+                {
+                    EntityName = "Leads",
+                    Caption = "Leads",
+                    Fields = new List<EntityField>
+                    {
+                        new EntityField { fieldname = "LEAD_ID", fieldtype = "Int32" },
+                        new EntityField { fieldname = "FIRST_NAME", fieldtype = "String" },
+                        new EntityField { fieldname = "LAST_NAME", fieldtype = "String" },
+                        new EntityField { fieldname = "ORGANISATION_NAME", fieldtype = "String" },
+                        new EntityField { fieldname = "PHONE_NUMBER", fieldtype = "String" },
+                        new EntityField { fieldname = "EMAIL_ADDRESS", fieldtype = "String" },
+                        new EntityField { fieldname = "DATE_CREATED_UTC", fieldtype = "DateTime" },
+                        new EntityField { fieldname = "DATE_UPDATED_UTC", fieldtype = "DateTime" },
+                        new EntityField { fieldname = "LEAD_STATUS_ID", fieldtype = "Int32" },
+                        new EntityField { fieldname = "LEAD_SOURCE_ID", fieldtype = "Int32" }
+                    }
+                }
+            };
         }
 
         #endregion
@@ -129,7 +213,6 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                 _httpClient?.Dispose();
                 _httpClient = null;
                 ConnectionStatus = ConnectionState.Closed;
-                _entityCache.Clear();
                 Logger.WriteLog("Disconnected from Insightly");
                 return Task.FromResult(true);
             }
@@ -153,66 +236,12 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
 
         public Task<List<string>> GetEntitiesNamesAsync()
         {
-            try
-            {
-                if (_httpClient == null)
-                    throw new InvalidOperationException("Not connected to Insightly");
-
-                // Get available entities from Insightly
-                var entities = GetInsightlyEntitiesAsync();
-                EntitiesNames = entities.Select(e => e.EntityName).ToList();
-                return Task.FromResult(EntitiesNames);
-            }
-            catch (Exception ex)
-            {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Failed to get entities: {ex.Message}";
-                return Task.FromResult(new List<string>());
-            }
+            return Task.FromResult(EntitiesNames);
         }
 
         public Task<List<EntityStructure>> GetEntityStructuresAsync(bool refresh = false)
         {
-            try
-            {
-                if (_httpClient == null)
-                    throw new InvalidOperationException("Not connected to Insightly");
-
-                if (!refresh && Entities.Any())
-                    return Task.FromResult(Entities);
-
-                var insightlyEntities = GetInsightlyEntitiesAsync();
-                Entities = new List<EntityStructure>();
-
-                foreach (var entity in insightlyEntities)
-                {
-                    var structure = new EntityStructure
-                    {
-                        EntityName = entity.EntityName,
-                        Caption = entity.DisplayName,
-                        Fields = new List<EntityField>()
-                    };
-
-                    foreach (var field in entity.Fields)
-                    {
-                        structure.Fields.Add(new EntityField
-                        {
-                            fieldname = field.Key,
-                            fieldtype = field.Value
-                        });
-                    }
-
-                    Entities.Add(structure);
-                }
-
-                return Task.FromResult(Entities);
-            }
-            catch (Exception ex)
-            {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Failed to get entity structures: {ex.Message}";
-                return Task.FromResult(new List<EntityStructure>());
-            }
+            return Task.FromResult(Entities);
         }
 
         public new async Task<object?> GetEntityAsync(string entityName, List<AppFilter>? filter = null)
@@ -229,7 +258,7 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    return JsonSerializer.Deserialize<JsonElement>(content);
+                    return ParseResponse(content, entityName);
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
@@ -245,88 +274,86 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             }
         }
 
-        public async Task<bool> InsertEntityAsync(string entityName, object entityData)
+        #endregion
+
+        #region Response Parsing
+
+        private object? ParseResponse(string jsonContent, string entityName)
         {
             try
             {
-                if (_httpClient == null)
-                    throw new InvalidOperationException("Not connected to Insightly");
-
-                var jsonData = JsonSerializer.Serialize(entityData);
-                var content = new StringContent(jsonData, System.Text.Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PostAsync($"{_config.BaseUrl}/{entityName}", content);
-                if (response.IsSuccessStatusCode)
+                return entityName switch
                 {
-                    return true;
-                }
-
-                var errorContent = await response.Content.ReadAsStringAsync();
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Failed to insert {entityName}: {response.StatusCode} - {errorContent}";
-                return false;
+                    "Contacts" => ExtractArray<Contact>(jsonContent),
+                    "Organisations" => ExtractArray<Organisation>(jsonContent),
+                    "Opportunities" => ExtractArray<Opportunity>(jsonContent),
+                    "Leads" => ExtractArray<Lead>(jsonContent),
+                    _ => JsonSerializer.Deserialize<JsonElement>(jsonContent)
+                };
             }
             catch (Exception ex)
             {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Failed to insert entity: {ex.Message}";
-                return false;
+                Logger.WriteLog($"Error parsing response for {entityName}: {ex.Message}");
+                return JsonSerializer.Deserialize<JsonElement>(jsonContent);
             }
         }
 
-        public async Task<bool> UpdateEntityAsync(string entityName, object entityData, string entityId)
+        private List<T> ExtractArray<T>(string jsonContent) where T : InsightlyEntityBase
         {
             try
             {
-                if (_httpClient == null)
-                    throw new InvalidOperationException("Not connected to Insightly");
-
-                var jsonData = JsonSerializer.Serialize(entityData);
-                var content = new StringContent(jsonData, System.Text.Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PutAsync($"{_config.BaseUrl}/{entityName}/{entityId}", content);
-                if (response.IsSuccessStatusCode)
+                var options = new JsonSerializerOptions
                 {
-                    return true;
-                }
+                    PropertyNameCaseInsensitive = true
+                };
 
-                var errorContent = await response.Content.ReadAsStringAsync();
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Failed to update {entityName}: {response.StatusCode} - {errorContent}";
-                return false;
+                var result = JsonSerializer.Deserialize<List<T>>(jsonContent, options);
+                if (result != null)
+                {
+                    foreach (var item in result)
+                    {
+                        item.Attach(this);
+                    }
+                }
+                return result ?? new List<T>();
             }
             catch (Exception ex)
             {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Failed to update entity: {ex.Message}";
-                return false;
+                Logger.WriteLog($"Error extracting array of {typeof(T).Name}: {ex.Message}");
+                return new List<T>();
             }
         }
 
-        public async Task<bool> DeleteEntityAsync(string entityName, string entityId)
+        #endregion
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "List<Contact>")]
+        public async Task<List<Contact>> GetContactsAsync(List<AppFilter>? filter = null)
         {
-            try
-            {
-                if (_httpClient == null)
-                    throw new InvalidOperationException("Not connected to Insightly");
+            var result = await GetEntityAsync("Contacts", filter);
+            return result as List<Contact> ?? new List<Contact>();
+        }
 
-                var response = await _httpClient.DeleteAsync($"{_config.BaseUrl}/{entityName}/{entityId}");
-                if (response.IsSuccessStatusCode)
-                {
-                    return true;
-                }
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Organisation", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "List<Organisation>")]
+        public async Task<List<Organisation>> GetOrganisationsAsync(List<AppFilter>? filter = null)
+        {
+            var result = await GetEntityAsync("Organisations", filter);
+            return result as List<Organisation> ?? new List<Organisation>();
+        }
 
-                var errorContent = await response.Content.ReadAsStringAsync();
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Failed to delete {entityName}: {response.StatusCode} - {errorContent}";
-                return false;
-            }
-            catch (Exception ex)
-            {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Failed to delete entity: {ex.Message}";
-                return false;
-            }
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "List<Opportunity>")]
+        public async Task<List<Opportunity>> GetOpportunitiesAsync(List<AppFilter>? filter = null)
+        {
+            var result = await GetEntityAsync("Opportunities", filter);
+            return result as List<Opportunity> ?? new List<Opportunity>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "List<Lead>")]
+        public async Task<List<Lead>> GetLeadsAsync(List<AppFilter>? filter = null)
+        {
+            var result = await GetEntityAsync("Leads", filter);
+            return result as List<Lead> ?? new List<Lead>();
         }
 
         #endregion
@@ -339,10 +366,10 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                 return;
 
             // Parse connection string format: ApiKey=xxx;BaseUrl=xxx
-            var parts = _connectionString.Split(';');
+            var parts = _connectionString.Split(";");
             foreach (var part in parts)
             {
-                var keyValue = part.Split('=');
+                var keyValue = part.Split("=");
                 if (keyValue.Length == 2)
                 {
                     var key = keyValue[0].Trim();
@@ -361,188 +388,21 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             }
         }
 
-        private List<InsightlyEntity> GetInsightlyEntitiesAsync()
-        {
-            if (_entityCache.Any())
-                return _entityCache.Values.ToList();
-
-            // Common Insightly entities
-            var entities = new List<InsightlyEntity>
-            {
-                new InsightlyEntity
-                {
-                    EntityName = "Contacts",
-                    DisplayName = "Contacts",
-                    ApiEndpoint = "Contacts",
-                    Fields = new Dictionary<string, string>
-                    {
-                        ["CONTACT_ID"] = "Int32",
-                        ["FIRST_NAME"] = "String",
-                        ["LAST_NAME"] = "String",
-                        ["SALUTATION"] = "String",
-                        ["DATE_CREATED_UTC"] = "DateTime",
-                        ["DATE_UPDATED_UTC"] = "DateTime",
-                        ["EMAIL_ADDRESS"] = "String",
-                        ["PHONE"] = "String",
-                        ["MOBILE"] = "String",
-                        ["ORGANISATION_ID"] = "Int32"
-                    }
-                },
-                new InsightlyEntity
-                {
-                    EntityName = "Organisations",
-                    DisplayName = "Organisations",
-                    ApiEndpoint = "Organisations",
-                    Fields = new Dictionary<string, string>
-                    {
-                        ["ORGANISATION_ID"] = "Int32",
-                        ["ORGANISATION_NAME"] = "String",
-                        ["DATE_CREATED_UTC"] = "DateTime",
-                        ["DATE_UPDATED_UTC"] = "DateTime",
-                        ["PHONE"] = "String",
-                        ["FAX"] = "String",
-                        ["WEBSITE"] = "String",
-                        ["ADDRESS_BILLING_STREET"] = "String",
-                        ["ADDRESS_BILLING_CITY"] = "String",
-                        ["ADDRESS_BILLING_STATE"] = "String",
-                        ["ADDRESS_BILLING_COUNTRY"] = "String"
-                    }
-                },
-                new InsightlyEntity
-                {
-                    EntityName = "Opportunities",
-                    DisplayName = "Opportunities",
-                    ApiEndpoint = "Opportunities",
-                    Fields = new Dictionary<string, string>
-                    {
-                        ["OPPORTUNITY_ID"] = "Int32",
-                        ["OPPORTUNITY_NAME"] = "String",
-                        ["OPPORTUNITY_DETAILS"] = "String",
-                        ["PROBABILITY"] = "Decimal",
-                        ["BID_AMOUNT"] = "Decimal",
-                        ["BID_CURRENCY"] = "String",
-                        ["DATE_CREATED_UTC"] = "DateTime",
-                        ["DATE_UPDATED_UTC"] = "DateTime",
-                        ["ORGANISATION_ID"] = "Int32",
-                        ["CONTACT_ID"] = "Int32"
-                    }
-                },
-                new InsightlyEntity
-                {
-                    EntityName = "Leads",
-                    DisplayName = "Leads",
-                    ApiEndpoint = "Leads",
-                    Fields = new Dictionary<string, string>
-                    {
-                        ["LEAD_ID"] = "Int32",
-                        ["FIRST_NAME"] = "String",
-                        ["LAST_NAME"] = "String",
-                        ["ORGANISATION_NAME"] = "String",
-                        ["PHONE_NUMBER"] = "String",
-                        ["EMAIL_ADDRESS"] = "String",
-                        ["DATE_CREATED_UTC"] = "DateTime",
-                        ["DATE_UPDATED_UTC"] = "DateTime",
-                        ["LEAD_STATUS_ID"] = "Int32",
-                        ["LEAD_SOURCE_ID"] = "Int32"
-                    }
-                }
-            };
-
-            foreach (var entity in entities)
-            {
-                _entityCache[entity.EntityName] = entity;
-            }
-
-            return entities;
-        }
-
         private string BuildQueryParameters(List<AppFilter>? filters)
         {
             if (filters == null || !filters.Any())
                 return string.Empty;
 
-            var queryParts = new List<string>();
-
+            var queryParams = new List<string>();
             foreach (var filter in filters)
             {
-                if (!string.IsNullOrEmpty(filter.FilterValue))
+                if (!string.IsNullOrEmpty(filter.FieldName) && !string.IsNullOrEmpty(filter.FilterValue))
                 {
-                    queryParts.Add($"{filter.FieldName}={Uri.EscapeDataString(filter.FilterValue)}");
+                    queryParams.Add($"{filter.FieldName}={Uri.EscapeDataString(filter.FilterValue)}");
                 }
             }
 
-            return queryParts.Any() ? $"?{string.Join("&", queryParts)}" : string.Empty;
-        }
-
-        #endregion
-
-        #region Standard Interface Methods
-
-        public bool CreateEntityAsAsync(string entityname, object entitydata)
-        {
-            return Task.Run(() => InsertEntityAsync(entityname, entitydata)).GetAwaiter().GetResult();
-        }
-
-        public bool UpdateEntity(string entityname, object entitydata, string entityid)
-        {
-            return Task.Run(() => UpdateEntityAsync(entityname, entitydata, entityid)).GetAwaiter().GetResult();
-        }
-
-        public bool DeleteEntity(string entityname, string entityid)
-        {
-            return Task.Run(() => DeleteEntityAsync(entityname, entityid)).GetAwaiter().GetResult();
-        }
-
-        public new object GetEntity(string entityname, List<AppFilter> filter)
-        {
-            return Task.Run(() => GetEntityAsync(entityname, filter)).GetAwaiter().GetResult();
-        }
-
-        public List<EntityStructure> GetEntityStructures(bool refresh = false)
-        {
-            return Task.Run(() => GetEntityStructuresAsync(refresh)).GetAwaiter().GetResult();
-        }
-
-        public new List<string> GetEntitesList()
-        {
-            return Task.Run(() => GetEntitiesNamesAsync()).GetAwaiter().GetResult();
-        }
-
-        public new bool Openconnection()
-        {
-            return Task.Run(() => OpenconnectionAsync()).GetAwaiter().GetResult();
-        }
-
-        public new bool Closeconnection()
-        {
-            return Task.Run(() => CloseconnectionAsync()).GetAwaiter().GetResult();
-        }
-
-        public bool CreateEntityAs(string entityname, object entitydata)
-        {
-            return CreateEntityAsAsync(entityname, entitydata);
-        }
-
-        public new IErrorsInfo RunQuery(string qrystr)
-        {
-            // Insightly doesn't support arbitrary SQL queries
-            // This would need to be implemented using Insightly's filter API
-            ErrorObject.Flag = Errors.Failed;
-            ErrorObject.Message = "RunQuery not supported. Use GetEntity with filters instead.";
-            return ErrorObject;
-        }
-
-        public new IErrorsInfo RunScript(ETLScriptDet dDLScripts)
-        {
-            ErrorObject.Flag = Errors.Failed;
-            ErrorObject.Message = "RunScript not supported for Insightly";
-            return ErrorObject;
-        }
-
-        public new void Dispose()
-        {
-            Task.Run(() => DisconnectAsync()).GetAwaiter().GetResult();
-            _entityCache.Clear();
+            return queryParams.Any() ? "?" + string.Join("&", queryParams) : string.Empty;
         }
 
         #endregion

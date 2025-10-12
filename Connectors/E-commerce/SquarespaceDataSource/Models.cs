@@ -16,7 +16,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.SquarespaceDataSource.Models
         [JsonPropertyName("createdOn")] public DateTimeOffset? CreatedOn { get; set; }
         [JsonPropertyName("modifiedOn")] public DateTimeOffset? ModifiedOn { get; set; }
 
-        [JsonIgnore] public IDataSource DataSource { get; private set; }
+        [JsonIgnore] public IDataSource? DataSource { get; private set; }
         public T Attach<T>(IDataSource ds) where T : SquarespaceEntityBase { DataSource = ds; return (T)this; }
     }
 

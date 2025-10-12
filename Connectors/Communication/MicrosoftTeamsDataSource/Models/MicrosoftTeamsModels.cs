@@ -3,7 +3,19 @@ using System.Collections.Generic;
 
 namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
 {
-    public class TeamsChannel
+    // =======================================================
+    // Base
+    // =======================================================
+    public abstract class MicrosoftTeamsEntityBase
+    {
+        [System.Text.Json.Serialization.JsonIgnore] public IDataSource DataSource { get; private set; }
+        public T Attach<T>(IDataSource ds) where T : MicrosoftTeamsEntityBase { DataSource = ds; return (T)this; }
+    }
+
+    // =======================================================
+    // Existing Models
+    // =======================================================
+    public sealed class TeamsChannel : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public string? DisplayName { get; set; }
@@ -14,7 +26,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
         public TeamsChannelMembershipType MembershipType { get; set; }
     }
 
-    public class TeamsMessage
+    public sealed class TeamsMessage : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public string? ReplyToId { get; set; }
@@ -40,7 +52,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
         public List<TeamsReaction>? Reactions { get; set; }
     }
 
-    public class TeamsUser
+    public sealed class TeamsUser : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public string? DisplayName { get; set; }
@@ -60,7 +72,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
     public class TeamsReaction { public string? ReactionType { get; set; } public DateTime CreatedDateTime { get; set; } public TeamsUser? User { get; set; } }
 
     // Missing model classes for Microsoft Teams Map entities
-    public class TeamsTeam
+    public sealed class TeamsTeam : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public string? DisplayName { get; set; }
@@ -72,7 +84,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
         public TeamsUser? CreatedBy { get; set; }
     }
 
-    public class TeamsChannelTab
+    public sealed class TeamsChannelTab : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public string? DisplayName { get; set; }
@@ -83,7 +95,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
         public string? MessageId { get; set; }
     }
 
-    public class TeamsTeamMember
+    public sealed class TeamsTeamMember : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public string? DisplayName { get; set; }
@@ -94,14 +106,14 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
         public DateTime JoinedDateTime { get; set; }
     }
 
-    public class TeamsTeamApp
+    public sealed class TeamsTeamApp : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public TeamsApp? TeamsApp { get; set; }
         public TeamsAppDefinition? TeamsAppDefinition { get; set; }
     }
 
-    public class TeamsChat
+    public sealed class TeamsChat : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public string? Topic { get; set; }
@@ -112,7 +124,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
         public TeamsUser? CreatedBy { get; set; }
     }
 
-    public class TeamsChatMember
+    public sealed class TeamsChatMember : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public string? DisplayName { get; set; }
@@ -123,7 +135,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
         public TeamsChatMemberRole Roles { get; set; }
     }
 
-    public class TeamsMe
+    public sealed class TeamsMe : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public string? DisplayName { get; set; }
@@ -134,7 +146,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
         public string? PreferredLanguage { get; set; }
     }
 
-    public class TeamsJoinedTeam
+    public sealed class TeamsJoinedTeam : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public string? DisplayName { get; set; }
@@ -144,7 +156,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
         public TeamsTeamVisibility Visibility { get; set; }
     }
 
-    public class TeamsMeChat
+    public sealed class TeamsMeChat : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public string? Topic { get; set; }
@@ -154,7 +166,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
         public string? WebUrl { get; set; }
     }
 
-    public class TeamsApp
+    public sealed class TeamsApp : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
         public string? DisplayName { get; set; }

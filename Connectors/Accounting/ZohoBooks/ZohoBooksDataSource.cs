@@ -19,7 +19,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoBooks
     /// <summary>
     /// ZohoBooks data source implementation using WebAPIDataSource as base class
     /// </summary>
-    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoBooks)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho)]
     public class ZohoBooksDataSource : WebAPIDataSource
     {
         // Entity endpoints mapping for ZohoBooks API
@@ -318,5 +318,60 @@ namespace TheTechIdea.Beep.Connectors.ZohoBooks
                 _ => entityName
             };
         }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Organizations", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Organization>")]
+        public IEnumerable<Organization> GetOrganizations(List<AppFilter> filter) => GetEntity("organizations", filter).Cast<Organization>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Contact>")]
+        public IEnumerable<Contact> GetContacts(List<AppFilter> filter) => GetEntity("contacts", filter).Cast<Contact>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Customers", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Customer>")]
+        public IEnumerable<Customer> GetCustomers(List<AppFilter> filter) => GetEntity("customers", filter).Cast<Customer>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Vendors", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Vendor>")]
+        public IEnumerable<Vendor> GetVendors(List<AppFilter> filter) => GetEntity("vendors", filter).Cast<Vendor>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Items", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Item>")]
+        public IEnumerable<Item> GetItems(List<AppFilter> filter) => GetEntity("items", filter).Cast<Item>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Invoices", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Invoice>")]
+        public IEnumerable<Invoice> GetInvoices(List<AppFilter> filter) => GetEntity("invoices", filter).Cast<Invoice>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Bills", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Bill>")]
+        public IEnumerable<Bill> GetBills(List<AppFilter> filter) => GetEntity("bills", filter).Cast<Bill>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Payments", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Payment>")]
+        public IEnumerable<Payment> GetPayments(List<AppFilter> filter) => GetEntity("payments", filter).Cast<Payment>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "CreditNotes", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<CreditNote>")]
+        public IEnumerable<CreditNote> GetCreditNotes(List<AppFilter> filter) => GetEntity("creditnotes", filter).Cast<CreditNote>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Estimates", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Estimate>")]
+        public IEnumerable<Estimate> GetEstimates(List<AppFilter> filter) => GetEntity("estimates", filter).Cast<Estimate>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "PurchaseOrders", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<PurchaseOrder>")]
+        public IEnumerable<PurchaseOrder> GetPurchaseOrders(List<AppFilter> filter) => GetEntity("purchaseorders", filter).Cast<PurchaseOrder>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Journals", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Journal>")]
+        public IEnumerable<Journal> GetJournals(List<AppFilter> filter) => GetEntity("journals", filter).Cast<Journal>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "ChartOfAccounts", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<ChartOfAccount>")]
+        public IEnumerable<ChartOfAccount> GetChartOfAccounts(List<AppFilter> filter) => GetEntity("chartofaccounts", filter).Cast<ChartOfAccount>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "BankAccounts", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<BankAccount>")]
+        public IEnumerable<BankAccount> GetBankAccounts(List<AppFilter> filter) => GetEntity("bankaccounts", filter).Cast<BankAccount>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "BankTransactions", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<BankTransaction>")]
+        public IEnumerable<BankTransaction> GetBankTransactions(List<AppFilter> filter) => GetEntity("banktransactions", filter).Cast<BankTransaction>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Expenses", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Expense>")]
+        public IEnumerable<Expense> GetExpenses(List<AppFilter> filter) => GetEntity("expenses", filter).Cast<Expense>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Projects", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Project>")]
+        public IEnumerable<Project> GetProjects(List<AppFilter> filter) => GetEntity("projects", filter).Cast<Project>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Timesheets", ClassName = "ZohoBooksDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Timesheet>")]
+        public IEnumerable<Timesheet> GetTimesheets(List<AppFilter> filter) => GetEntity("timesheets", filter).Cast<Timesheet>();
     }
 }

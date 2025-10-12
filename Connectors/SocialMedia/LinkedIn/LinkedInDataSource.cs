@@ -580,5 +580,27 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
             var data = JsonSerializer.Deserialize<LinkedInResponse<LinkedInFollowing>>(json);
             return data?.Elements ?? new List<LinkedInFollowing>();
         }
+
+        // POST methods for creating entities
+        [CommandAttribute(ObjectType = "LinkedInPost", PointType = EnumPointType.Function, Name = "CreatePost", Caption = "Create LinkedIn Post", ClassName = "LinkedInDataSource", misc = "ReturnType: LinkedInPost")]
+        public async Task<LinkedInPost> CreatePostAsync(LinkedInPost post)
+        {
+            string endpoint = "posts";
+            var response = await PostAsync(endpoint, post);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<LinkedInPost>(json);
+        }
+
+        // PUT methods for updating entities
+        [CommandAttribute(ObjectType = "LinkedInPost", PointType = EnumPointType.Function, Name = "UpdatePost", Caption = "Update LinkedIn Post", ClassName = "LinkedInDataSource", misc = "ReturnType: LinkedInPost")]
+        public async Task<LinkedInPost> UpdatePostAsync(string postId, LinkedInPost post)
+        {
+            string endpoint = $"posts/{postId}";
+            var response = await PutAsync(endpoint, post);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<LinkedInPost>(json);
+        }
     }
 }

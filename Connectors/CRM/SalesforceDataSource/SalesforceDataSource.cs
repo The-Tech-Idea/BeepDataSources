@@ -15,6 +15,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Salesforce.Models;
 
 namespace TheTechIdea.Beep.Connectors.Salesforce
 {
@@ -59,7 +60,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
         {
             EnsureKnown(EntityName);
             var soql = BuildSoql(EntityName, filter, limit: null, offset: null, orderBy: null);
-            return QueryRecords(soql);
+            return QueryRecords(soql, EntityName);
         }
 
         public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
@@ -69,7 +70,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
             var limit = Math.Max(1, pageSize);
             var offset = Math.Max(0, (Math.Max(1, pageNumber) - 1) * limit);
             var soql = BuildSoql(EntityName, filter, limit, offset, orderBy: null);
-            var data = QueryRecords(soql).ToList();
+            var data = QueryRecords(soql, EntityName).ToList();
 
             return new PagedResult
             {
@@ -84,10 +85,61 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
         {
             EnsureKnown(EntityName);
             var soql = BuildSoql(EntityName, Filter, limit: null, offset: null, orderBy: null);
-            return await QueryRecordsAsync(soql).ConfigureAwait(false);
+            return await QueryRecordsAsync(soql, EntityName).ConfigureAwait(false);
         }
 
-        // --------------------- helpers (private) ---------------------
+        #region Response Parsing
+
+        private IEnumerable<object>? ParseResponse(string jsonContent, string entityName)
+        {
+            try
+            {
+                return entityName switch
+                {
+                    "Account" => ExtractArray<Account>(jsonContent),
+                    "Contact" => ExtractArray<Contact>(jsonContent),
+                    "Lead" => ExtractArray<Lead>(jsonContent),
+                    "Opportunity" => ExtractArray<Opportunity>(jsonContent),
+                    "User" => ExtractArray<User>(jsonContent),
+                    _ => ExtractRecords(jsonContent)
+                };
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog($"Error parsing response for {entityName}: {ex.Message}");
+                return ExtractRecords(jsonContent);
+            }
+        }
+
+        private List<T> ExtractArray<T>(string jsonContent) where T : SalesforceEntityBase
+        {
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var queryResult = JsonSerializer.Deserialize<QueryResult<T>>(jsonContent, options);
+                if (queryResult?.Records != null)
+                {
+                    foreach (var item in queryResult.Records)
+                    {
+                        item.Attach<T>((IDataSource)this);
+                    }
+                }
+                return queryResult?.Records ?? new List<T>();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog($"Error extracting array of {typeof(T).Name}: {ex.Message}");
+                return new List<T>();
+            }
+        }
+
+        #endregion
+
+        #region Command Methods
 
         private static void EnsureKnown(string entity)
         {
@@ -199,10 +251,10 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
         }
 
         // Execute GET /query?q=... using the base HTTP helper (which injects auth/headers)
-        private IEnumerable<object> QueryRecords(string soql)
-            => QueryRecordsAsync(soql).ConfigureAwait(false).GetAwaiter().GetResult();
+        private IEnumerable<object> QueryRecords(string soql, string entityName)
+            => QueryRecordsAsync(soql, entityName).ConfigureAwait(false).GetAwaiter().GetResult();
 
-        private async Task<IEnumerable<object>> QueryRecordsAsync(string soql, CancellationToken ct = default)
+        private async Task<IEnumerable<object>> QueryRecordsAsync(string soql, string entityName, CancellationToken ct = default)
         {
             var qp = new Dictionary<string, string> { ["q"] = soql };
 
@@ -211,7 +263,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
             if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
 
             var json = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            return ExtractRecords(json);
+            return ParseResponse(json, entityName) ?? Array.Empty<object>();
         }
 
         // Unwraps { totalSize, done, records: [ {...}, ... ] } -> IEnumerable<object> (Dictionary<string,object>)
@@ -233,5 +285,43 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
             }
             return Array.Empty<object>();
         }
+
+        // CommandAttribute methods for Salesforce API
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Account>")]
+        public async Task<IEnumerable<Account>> GetAccounts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Account", new List<AppFilter> { filter });
+            return result.Cast<Account>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Contact>")]
+        public async Task<IEnumerable<Contact>> GetContacts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Contact", new List<AppFilter> { filter });
+            return result.Cast<Contact>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Leads", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Lead>")]
+        public async Task<IEnumerable<Lead>> GetLeads(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Lead", new List<AppFilter> { filter });
+            return result.Cast<Lead>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Opportunities", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Opportunity>")]
+        public async Task<IEnumerable<Opportunity>> GetOpportunities(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Opportunity", new List<AppFilter> { filter });
+            return result.Cast<Opportunity>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Users", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<User>")]
+        public async Task<IEnumerable<User>> GetUsers(AppFilter filter)
+        {
+            var result = await GetEntityAsync("User", new List<AppFilter> { filter });
+            return result.Cast<User>();
+        }
+
+        #endregion
     }
 }

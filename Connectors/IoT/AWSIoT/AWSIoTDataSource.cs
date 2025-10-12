@@ -13,6 +13,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.AWSIoT;
 
 namespace TheTechIdea.Beep.Connectors.AWSIoT
 {
@@ -218,6 +219,58 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
             }
 
             return list;
+        }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "GetThings", Caption = "Get Things", ClassName = "AWSIoTDataSource", misc = "GetThings")]
+        public IEnumerable<Device> GetThings()
+        {
+            return GetEntity("things", null).Cast<Device>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "GetThing", Caption = "Get Thing", ClassName = "AWSIoTDataSource", misc = "GetThing")]
+        public Device GetThing(string thingName)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "thing_name", FilterValue = thingName } };
+            return GetEntity("things", filters).Cast<Device>().FirstOrDefault();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Shadow), PointType = PointType.Function, Name = "GetThingShadows", Caption = "Get Thing Shadows", ClassName = "AWSIoTDataSource", misc = "GetThingShadows")]
+        public IEnumerable<Shadow> GetThingShadows(string thingName)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "thing_name", FilterValue = thingName } };
+            return GetEntity("shadows", filters).Cast<Shadow>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Job), PointType = PointType.Function, Name = "GetJobs", Caption = "Get Jobs", ClassName = "AWSIoTDataSource", misc = "GetJobs")]
+        public IEnumerable<Job> GetJobs()
+        {
+            return GetEntity("jobs", null).Cast<Job>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Rule), PointType = PointType.Function, Name = "GetRules", Caption = "Get Rules", ClassName = "AWSIoTDataSource", misc = "GetRules")]
+        public IEnumerable<Rule> GetRules()
+        {
+            return GetEntity("rules", null).Cast<Rule>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Certificate), PointType = PointType.Function, Name = "GetCertificates", Caption = "Get Certificates", ClassName = "AWSIoTDataSource", misc = "GetCertificates")]
+        public IEnumerable<Certificate> GetCertificates()
+        {
+            return GetEntity("certificates", null).Cast<Certificate>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Policy), PointType = PointType.Function, Name = "GetPolicies", Caption = "Get Policies", ClassName = "AWSIoTDataSource", misc = "GetPolicies")]
+        public IEnumerable<Policy> GetPolicies()
+        {
+            return GetEntity("policies", null).Cast<Policy>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Telemetry), PointType = PointType.Function, Name = "GetTelemetry", Caption = "Get Telemetry", ClassName = "AWSIoTDataSource", misc = "GetTelemetry")]
+        public IEnumerable<Telemetry> GetTelemetry(string topic)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "topic", FilterValue = topic } };
+            return GetEntity("telemetry", filters).Cast<Telemetry>();
         }
     }
 }

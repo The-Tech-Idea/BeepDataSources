@@ -17,6 +17,7 @@ using TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource.Models;
 
 namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
 {
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix)]
     public class WixDataSource : WebAPIDataSource
     {
         // Wix API Map with endpoints, roots, and required filters
@@ -248,5 +249,51 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
 
             return list;
         }
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixProduct>")]
+        public async Task<IEnumerable<WixProduct>> GetProducts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("products", new List<AppFilter> { filter });
+            return result.Cast<WixProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Orders", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixOrder>")]
+        public async Task<IEnumerable<WixOrder>> GetOrders(AppFilter filter)
+        {
+            var result = await GetEntityAsync("orders", new List<AppFilter> { filter });
+            return result.Cast<WixOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Collections", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixCollection>")]
+        public async Task<IEnumerable<WixCollection>> GetCollections(AppFilter filter)
+        {
+            var result = await GetEntityAsync("collections", new List<AppFilter> { filter });
+            return result.Cast<WixCollection>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixContact>")]
+        public async Task<IEnumerable<WixContact>> GetContacts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("contacts", new List<AppFilter> { filter });
+            return result.Cast<WixContact>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Inventory", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixInventoryItem>")]
+        public async Task<IEnumerable<WixInventoryItem>> GetInventory(AppFilter filter)
+        {
+            var result = await GetEntityAsync("inventory", new List<AppFilter> { filter });
+            return result.Cast<WixInventoryItem>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Coupons", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixCoupon>")]
+        public async Task<IEnumerable<WixCoupon>> GetCoupons(AppFilter filter)
+        {
+            var result = await GetEntityAsync("coupons", new List<AppFilter> { filter });
+            return result.Cast<WixCoupon>();
+        }
+
+        #endregion
     }
 }

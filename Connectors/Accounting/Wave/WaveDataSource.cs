@@ -19,7 +19,7 @@ namespace TheTechIdea.Beep.Connectors.Wave
     /// <summary>
     /// Wave data source implementation using WebAPIDataSource as base class
     /// </summary>
-    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WebApi)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WaveApps)]
     public class WaveDataSource : WebAPIDataSource
     {
         // Entity endpoints mapping for Wave API
@@ -258,5 +258,33 @@ namespace TheTechIdea.Beep.Connectors.Wave
 
             return list;
         }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WaveApps, PointType = EnumPointType.Function, ObjectType = "Businesses", ClassName = "WaveDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Business>")]
+        public IEnumerable<Business> GetBusinesses(List<AppFilter> filter) => GetEntity("businesses", filter).Cast<Business>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WaveApps, PointType = EnumPointType.Function, ObjectType = "Customers", ClassName = "WaveDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Customer>")]
+        public IEnumerable<Customer> GetCustomers(List<AppFilter> filter) => GetEntity("customers", filter).Cast<Customer>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WaveApps, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "WaveDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Product>")]
+        public IEnumerable<Product> GetProducts(List<AppFilter> filter) => GetEntity("products", filter).Cast<Product>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WaveApps, PointType = EnumPointType.Function, ObjectType = "Invoices", ClassName = "WaveDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Invoice>")]
+        public IEnumerable<Invoice> GetInvoices(List<AppFilter> filter) => GetEntity("invoices", filter).Cast<Invoice>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WaveApps, PointType = EnumPointType.Function, ObjectType = "Payments", ClassName = "WaveDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Payment>")]
+        public IEnumerable<Payment> GetPayments(List<AppFilter> filter) => GetEntity("payments", filter).Cast<Payment>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WaveApps, PointType = EnumPointType.Function, ObjectType = "Bills", ClassName = "WaveDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Bill>")]
+        public IEnumerable<Bill> GetBills(List<AppFilter> filter) => GetEntity("bills", filter).Cast<Bill>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WaveApps, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "WaveDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Account>")]
+        public IEnumerable<Account> GetAccounts(List<AppFilter> filter) => GetEntity("accounts", filter).Cast<Account>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WaveApps, PointType = EnumPointType.Function, ObjectType = "Transactions", ClassName = "WaveDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Transaction>")]
+        public IEnumerable<Transaction> GetTransactions(List<AppFilter> filter) => GetEntity("transactions", filter).Cast<Transaction>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WaveApps, PointType = EnumPointType.Function, ObjectType = "Taxes", ClassName = "WaveDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Tax>")]
+        public IEnumerable<Tax> GetTaxes(List<AppFilter> filter) => GetEntity("taxes", filter).Cast<Tax>();
     }
 }

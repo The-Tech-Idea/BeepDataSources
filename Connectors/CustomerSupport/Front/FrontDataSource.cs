@@ -11,10 +11,12 @@ using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.DataSources
 {
-    [AddinAttribute(Catagory = "Connector", DatasourceType = DatasourceType.Front)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Front)]
     public class FrontDataSource : WebAPIDataSource
     {
         public FrontDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
@@ -35,69 +37,7 @@ namespace TheTechIdea.Beep.DataSources
             ["teams"] = new("/teams", "_results", Array.Empty<string>()),
         };
 
-        public override string GetConnectionString()
-        {
-            return $"Front:{DatasourceName}";
-        }
-
-        public override string ColumnDelimiter { get => ","; set => base.ColumnDelimiter = value; }
-        public override string ParameterDelimiter { get => ":"; set => base.ParameterDelimiter = value; }
-        public override string RowDelimiter { get => "\n"; set => base.RowDelimiter = value; }
-
-        public override List<string> GetEntitiesList()
-        {
-            return Map.Keys.ToList();
-        }
-
-        public override List<EntityStructure> GetEntityStructure(string EntityName, bool refresh)
-        {
-            return GetEntityStructureAsync(EntityName, refresh).GetAwaiter().GetResult();
-        }
-
-        public override async Task<List<EntityStructure>> GetEntityStructureAsync(string EntityName, bool refresh)
-        {
-            if (!Map.TryGetValue(EntityName, out var m))
-                throw new InvalidOperationException($"Unknown Front entity '{EntityName}'.");
-
-            var endpoint = m.endpoint;
-            using var resp = await GetAsync(endpoint).ConfigureAwait(false);
-            if (resp is null || !resp.IsSuccessStatusCode) return new List<EntityStructure>();
-
-            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var doc = JsonDocument.Parse(json);
-            var root = GetJsonProperty(doc.RootElement, m.root.Split('.'));
-
-            if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() == 0)
-                return new List<EntityStructure>();
-
-            var sample = root[0];
-            var structure = new EntityStructure
-            {
-                EntityName = EntityName,
-                ViewID = EntityName,
-                DataSourceID = DatasourceName,
-                Fields = new List<EntityField>()
-            };
-
-            foreach (var prop in sample.EnumerateObject())
-            {
-                structure.Fields.Add(new EntityField
-                {
-                    fieldname = prop.Name,
-                    fieldtype = MapJsonType(prop.Value.ValueKind),
-                    ValueRetrievedFromParent = false,
-                    AllowDBNull = true,
-                    IsAutoIncrement = false,
-                    IsIdentity = false,
-                    IsKey = false,
-                    IsUnique = false
-                });
-            }
-
-            return new List<EntityStructure> { structure };
-        }
-
-        public override object GetEntity(string EntityName, List<AppFilter> Filter)
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> Filter)
         {
             return GetEntityAsync(EntityName, Filter).GetAwaiter().GetResult();
         }
@@ -133,7 +73,7 @@ namespace TheTechIdea.Beep.DataSources
 
             var endpoint = ResolveEndpoint(m.endpoint, q);
 
-            using var resp = Get(endpoint, q);
+            using var resp = GetAsync(endpoint, q).ConfigureAwait(false).GetAwaiter().GetResult();
             if (resp is null || !resp.IsSuccessStatusCode) return new PagedResult();
 
             var data = ExtractArray(resp, m.root);
@@ -145,6 +85,20 @@ namespace TheTechIdea.Beep.DataSources
                 TotalPages = 1, // Front doesn't provide total count in response
                 TotalRecords = data.Count()
             };
+        }
+
+        // ---------------------------- helpers ----------------------------
+
+        private static Dictionary<string, string> FiltersToQuery(List<AppFilter> filters)
+        {
+            var q = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (filters == null) return q;
+            foreach (var f in filters)
+            {
+                if (f == null || string.IsNullOrWhiteSpace(f.FieldName)) continue;
+                q[f.FieldName.Trim()] = f.FilterValue?.ToString() ?? string.Empty;
+            }
+            return q;
         }
 
         private void RequireFilters(string entity, Dictionary<string, string> q, string[] required)
@@ -195,5 +149,113 @@ namespace TheTechIdea.Beep.DataSources
             JsonValueKind.Object => "System.Object",
             _ => "System.String"
         };
+
+        [CommandAttribute(
+            Caption = "Get Conversations",
+            Name = "GetConversations",
+            ObjectType = "Conversation",
+            PointType = EnumPointType.Function,
+            ClassName = "FrontDataSource",
+            misc = "ReturnType: IEnumerable<Conversation>"
+        )]
+        public IEnumerable<object> GetConversations()
+        {
+            return GetEntity("conversations", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Messages",
+            Name = "GetMessages",
+            ObjectType = "Message",
+            PointType = EnumPointType.Function,
+            ClassName = "FrontDataSource",
+            misc = "ReturnType: IEnumerable<Message>"
+        )]
+        public IEnumerable<object> GetMessages(string conversationId)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "conversationId", FilterValue = conversationId, Operator = "=" }
+            };
+            return GetEntity("messages", filters);
+        }
+
+        [CommandAttribute(
+            Caption = "Get Contacts",
+            Name = "GetContacts",
+            ObjectType = "Contact",
+            PointType = EnumPointType.Function,
+            ClassName = "FrontDataSource",
+            misc = "ReturnType: IEnumerable<Contact>"
+        )]
+        public IEnumerable<object> GetContacts()
+        {
+            return GetEntity("contacts", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Inboxes",
+            Name = "GetInboxes",
+            ObjectType = "Inbox",
+            PointType = EnumPointType.Function,
+            ClassName = "FrontDataSource",
+            misc = "ReturnType: IEnumerable<Inbox>"
+        )]
+        public IEnumerable<object> GetInboxes()
+        {
+            return GetEntity("inboxes", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Tags",
+            Name = "GetTags",
+            ObjectType = "Tag",
+            PointType = EnumPointType.Function,
+            ClassName = "FrontDataSource",
+            misc = "ReturnType: IEnumerable<Tag>"
+        )]
+        public IEnumerable<object> GetTags()
+        {
+            return GetEntity("tags", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Rules",
+            Name = "GetRules",
+            ObjectType = "Rule",
+            PointType = EnumPointType.Function,
+            ClassName = "FrontDataSource",
+            misc = "ReturnType: IEnumerable<Rule>"
+        )]
+        public IEnumerable<object> GetRules()
+        {
+            return GetEntity("rules", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Analytics",
+            Name = "GetAnalytics",
+            ObjectType = "Analytics",
+            PointType = EnumPointType.Function,
+            ClassName = "FrontDataSource",
+            misc = "ReturnType: IEnumerable<Analytics>"
+        )]
+        public IEnumerable<object> GetAnalytics()
+        {
+            return GetEntity("analytics", new List<AppFilter>());
+        }
+
+        [CommandAttribute(
+            Caption = "Get Teams",
+            Name = "GetTeams",
+            ObjectType = "Team",
+            PointType = EnumPointType.Function,
+            ClassName = "FrontDataSource",
+            misc = "ReturnType: IEnumerable<Team>"
+        )]
+        public IEnumerable<object> GetTeams()
+        {
+            return GetEntity("teams", new List<AppFilter>());
+        }
     }
 }

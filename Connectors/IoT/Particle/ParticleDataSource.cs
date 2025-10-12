@@ -3,8 +3,15 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.Connectors.Particle;
 
 namespace TheTechIdea.Beep.Connectors.Particle
 {
@@ -12,69 +19,62 @@ namespace TheTechIdea.Beep.Connectors.Particle
     {
         private const string BaseUrl = "https://api.particle.io/v1";
 
-        public ParticleDataSource(string datasourcename, IConfigEditor configEditor) : base(datasourcename, configEditor)
+        // Entity endpoints mapping for Particle API
+        private static readonly Dictionary<string, string> EntityEndpoints = new(StringComparer.OrdinalIgnoreCase)
         {
-            InitializeEntityEndpoints();
-            InitializeRequiredFilters();
-        }
+            ["devices"] = "devices",
+            ["device_details"] = "devices/{device_id}",
+            ["device_events"] = "devices/{device_id}/events",
+            ["products"] = "products",
+            ["product_details"] = "products/{product_id}",
+            ["customers"] = "products/{product_id}/customers",
+            ["customer_details"] = "products/{product_id}/customers/{customer_id}",
+            ["sims"] = "sims",
+            ["sim_details"] = "sims/{sim_id}",
+            ["billing"] = "billing",
+            ["diagnostics"] = "diagnostics",
+            ["tokens"] = "access_tokens",
+            ["token_details"] = "access_tokens/{token_id}"
+        };
 
-        private void InitializeEntityEndpoints()
+        // Required filters for each entity
+        private static readonly Dictionary<string, List<string>> RequiredFilters = new(StringComparer.OrdinalIgnoreCase)
         {
-            EntityEndpoints = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            ["devices"] = new List<string> { "access_token" },
+            ["device_details"] = new List<string> { "access_token", "device_id" },
+            ["device_events"] = new List<string> { "access_token", "device_id" },
+            ["products"] = new List<string> { "access_token" },
+            ["product_details"] = new List<string> { "access_token", "product_id" },
+            ["customers"] = new List<string> { "access_token", "product_id" },
+            ["customer_details"] = new List<string> { "access_token", "product_id", "customer_id" },
+            ["sims"] = new List<string> { "access_token" },
+            ["sim_details"] = new List<string> { "access_token", "sim_id" },
+            ["billing"] = new List<string> { "access_token" },
+            ["diagnostics"] = new List<string> { "access_token" },
+            ["tokens"] = new List<string> { "access_token" },
+            ["token_details"] = new List<string> { "access_token", "token_id" }
+        };
+
+        public ParticleDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
+            : base(datasourcename, logger, pDMEEditor, databasetype, per)
+        {
+            if (Dataconnection is not WebAPIDataConnection)
             {
-                ["devices"] = $"{BaseUrl}/devices",
-                ["device_details"] = $"{BaseUrl}/devices/{{device_id}}",
-                ["device_events"] = $"{BaseUrl}/devices/{{device_id}}/events",
-                ["device_variables"] = $"{BaseUrl}/devices/{{device_id}}/{{variable_name}}",
-                ["device_functions"] = $"{BaseUrl}/devices/{{device_id}}/{{function_name}}",
-                ["products"] = $"{BaseUrl}/products",
-                ["product_details"] = $"{BaseUrl}/products/{{product_id}}",
-                ["product_devices"] = $"{BaseUrl}/products/{{product_id}}/devices",
-                ["product_firmware"] = $"{BaseUrl}/products/{{product_id}}/firmware",
-                ["integrations"] = $"{BaseUrl}/integrations",
-                ["integration_details"] = $"{BaseUrl}/integrations/{{integration_id}}",
-                ["webhooks"] = $"{BaseUrl}/webhooks",
-                ["webhook_details"] = $"{BaseUrl}/webhooks/{{webhook_id}}",
-                ["events"] = $"{BaseUrl}/events",
-                ["event_details"] = $"{BaseUrl}/events/{{event_name}}",
-                ["tokens"] = $"{BaseUrl}/access_tokens",
-                ["token_details"] = $"{BaseUrl}/access_tokens/{{token_id}}",
-                ["sims"] = $"{BaseUrl}/sims",
-                ["sim_details"] = $"{BaseUrl}/sims/{{sim_id}}",
-                ["billing"] = $"{BaseUrl}/billing",
-                ["diagnostics"] = $"{BaseUrl}/diagnostics"
-            };
-        }
+                Dataconnection = new WebAPIDataConnection
+                {
+                    Logger = Logger,
+                    ErrorObject = ErrorObject,
+                    DMEEditor = DMEEditor
+                };
+            }
 
-        private void InitializeRequiredFilters()
-        {
-            RequiredFilters = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+            if (Dataconnection.ConnectionProp is not WebAPIConnectionProperties)
             {
-                ["devices"] = new List<string> { "access_token" },
-                ["device_details"] = new List<string> { "access_token", "device_id" },
-                ["device_events"] = new List<string> { "access_token", "device_id" },
-                ["device_variables"] = new List<string> { "access_token", "device_id", "variable_name" },
-                ["device_functions"] = new List<string> { "access_token", "device_id", "function_name" },
-                ["products"] = new List<string> { "access_token" },
-                ["product_details"] = new List<string> { "access_token", "product_id" },
-                ["product_devices"] = new List<string> { "access_token", "product_id" },
-                ["product_firmware"] = new List<string> { "access_token", "product_id" },
-                ["integrations"] = new List<string> { "access_token" },
-                ["integration_details"] = new List<string> { "access_token", "integration_id" },
-                ["webhooks"] = new List<string> { "access_token" },
-                ["webhook_details"] = new List<string> { "access_token", "webhook_id" },
-                ["events"] = new List<string> { "access_token" },
-                ["event_details"] = new List<string> { "access_token", "event_name" },
-                ["tokens"] = new List<string> { "access_token" },
-                ["token_details"] = new List<string> { "access_token", "token_id" },
-                ["sims"] = new List<string> { "access_token" },
-                ["sim_details"] = new List<string> { "access_token", "sim_id" },
-                ["billing"] = new List<string> { "access_token" },
-                ["diagnostics"] = new List<string> { "access_token" }
-            };
+                Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+            }
         }
 
-        public override async Task<object> GetEntity(string EntityName, List<ChildRelation> Parententity, List<string> ParentIds, string filter, int pageNumber = 1, int pageSize = 100)
+        public async Task<object> GetEntity(string EntityName, List<ChildRelation> Parententity, List<string> ParentIds, string filter, int pageNumber = 1, int pageSize = 100)
         {
             try
             {
@@ -182,7 +182,9 @@ namespace TheTechIdea.Beep.Connectors.Particle
                 }
 
                 // Use base class HTTP functionality
-                return await base.GetDataAsync(url);
+                using var response = await base.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync();
             }
             catch (Exception ex)
             {
@@ -258,35 +260,18 @@ namespace TheTechIdea.Beep.Connectors.Particle
             }
         }
 
-        public override async Task<object> GetEntityAsync(string EntityName, List<ChildRelation> Parententity, List<string> ParentIds, string filter, int pageNumber = 1, int pageSize = 100)
-        {
-            return await GetEntity(EntityName, Parententity, ParentIds, filter, pageNumber, pageSize);
-        }
-
-        public override async Task<List<object>> GetEntitiesAsync(string EntityName, List<ChildRelation> Parententity, List<string> ParentIds, string filter, int pageNumber = 1, int pageSize = 100)
-        {
-            var result = await GetEntity(EntityName, Parententity, ParentIds, filter, pageNumber, pageSize);
-            return result as List<object> ?? new List<object>();
-        }
-
-        public override async Task<List<object>> GetEntities(string EntityName, List<ChildRelation> Parententity, List<string> ParentIds, string filter, int pageNumber = 1, int pageSize = 100)
-        {
-            var result = await GetEntity(EntityName, Parententity, ParentIds, filter, pageNumber, pageSize);
-            return result as List<object> ?? new List<object>();
-        }
-
         // Additional Particle-specific methods can be added here
         public async Task<List<Device>> GetDevicesAsync(string accessToken)
         {
             var filter = $"access_token={accessToken}";
-            var result = await GetEntity("devices", null, null, filter);
+            var result = await GetEntity("devices", new List<ChildRelation>(), new List<string>(), filter);
             return result as List<Device> ?? new List<Device>();
         }
 
         public async Task<Device> GetDeviceDetailsAsync(string deviceId, string accessToken)
         {
             var filter = $"access_token={accessToken}&device_id={deviceId}";
-            var result = await GetEntity("device_details", null, null, filter);
+            var result = await GetEntity("device_details", new List<ChildRelation>(), new List<string>(), filter);
             var devices = result as List<Device> ?? new List<Device>();
             return devices.FirstOrDefault() ?? new Device();
         }
@@ -294,8 +279,57 @@ namespace TheTechIdea.Beep.Connectors.Particle
         public async Task<List<Event>> GetDeviceEventsAsync(string deviceId, string accessToken)
         {
             var filter = $"access_token={accessToken}&device_id={deviceId}";
-            var result = await GetEntity("device_events", null, null, filter);
+            var result = await GetEntity("device_events", new List<ChildRelation>(), new List<string>(), filter);
             return result as List<Event> ?? new List<Event>();
+        }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "GetDevices", Caption = "Get Devices", ClassName = "ParticleDataSource", misc = "GetDevices")]
+        public IEnumerable<Device> GetDevices(string accessToken)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "access_token", FilterValue = accessToken } };
+            return GetEntity("devices", filters).Cast<Device>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "GetDevice", Caption = "Get Device", ClassName = "ParticleDataSource", misc = "GetDevice")]
+        public Device GetDevice(string deviceId, string accessToken)
+        {
+            var filters = new List<AppFilter> {
+                new AppFilter { FieldName = "access_token", FilterValue = accessToken },
+                new AppFilter { FieldName = "device_id", FilterValue = deviceId }
+            };
+            return GetEntity("device_details", filters).Cast<Device>().FirstOrDefault();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Event), PointType = PointType.Function, Name = "GetDeviceEvents", Caption = "Get Device Events", ClassName = "ParticleDataSource", misc = "GetDeviceEvents")]
+        public IEnumerable<Event> GetDeviceEvents(string deviceId, string accessToken)
+        {
+            var filters = new List<AppFilter> {
+                new AppFilter { FieldName = "access_token", FilterValue = accessToken },
+                new AppFilter { FieldName = "device_id", FilterValue = deviceId }
+            };
+            return GetEntity("device_events", filters).Cast<Event>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Product), PointType = PointType.Function, Name = "GetProducts", Caption = "Get Products", ClassName = "ParticleDataSource", misc = "GetProducts")]
+        public IEnumerable<Product> GetProducts(string accessToken)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "access_token", FilterValue = accessToken } };
+            return GetEntity("products", filters).Cast<Product>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Sim), PointType = PointType.Function, Name = "GetSims", Caption = "Get SIMs", ClassName = "ParticleDataSource", misc = "GetSims")]
+        public IEnumerable<Sim> GetSims(string accessToken)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "access_token", FilterValue = accessToken } };
+            return GetEntity("sims", filters).Cast<Sim>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(AccessToken), PointType = PointType.Function, Name = "GetAccessTokens", Caption = "Get Access Tokens", ClassName = "ParticleDataSource", misc = "GetAccessTokens")]
+        public IEnumerable<AccessToken> GetAccessTokens(string accessToken)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "access_token", FilterValue = accessToken } };
+            return GetEntity("tokens", filters).Cast<AccessToken>();
         }
     }
 }

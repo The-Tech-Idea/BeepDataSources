@@ -15,16 +15,15 @@ This document tracks the migration of CRM connectors to the shared WebAPIDataSou
 | HubSpot | ✅ Completed | Refactored to WebAPIDataSource map pattern with typed models. | 2025-10-03 |
 | Copper | ✅ Completed | Entity mapping + pagination implemented using shared helpers. | 2025-10-03 |
 | Freshsales | ✅ Completed | Twitter-pattern refactor with typed models/helpers and pagination. | 2025-10-04 |
-| Insightly | ⏳ Pending | Uses legacy IDataSource implementation. | 2025-10-03 |
-| Dynamics365 | ⏳ Pending | Legacy Graph-based IDataSource implementation. | 2025-10-03 |
-| Pipedrive | ⏳ Pending | Legacy connector awaiting migration. | 2025-10-03 |
-| Nutshell | ⏳ Pending | Legacy connector awaiting migration. | 2025-10-03 |
-| SugarCRM | ⏳ Pending | Legacy connector awaiting migration. | 2025-10-03 |
-| Salesforce | ⏳ Pending | Needs review for alignment with shared pattern. | 2025-10-03 |
-| Zoho | ⏳ Pending | Newer implementation but still requires consolidation. | 2025-10-03 |
+| Insightly | ✅ Completed | Refactored to WebAPIDataSource pattern with strongly-typed POCO models and CommandAttribute methods. | 2025-10-11 |
+| Dynamics365 | ✅ Completed | Refactored to WebAPIDataSource pattern with strongly-typed POCO models and CommandAttribute methods. | 2025-10-11 |
+| Pipedrive | ✅ Completed | Refactored to WebAPIDataSource pattern with strongly-typed POCO models and CommandAttribute methods. | 2025-10-11 |
+| Nutshell | ✅ Completed | Refactored to WebAPIDataSource pattern with strongly-typed POCO models and CommandAttribute methods. | 2025-10-11 |
+| SugarCRM | ✅ Completed | Refactored to WebAPIDataSource pattern with strongly-typed POCO models and CommandAttribute methods. | 2025-10-11 |
+| Salesforce | ✅ Completed | Refactored to WebAPIDataSource pattern with strongly-typed POCO models and CommandAttribute methods. | 2025-10-11 |
+| Zoho | ✅ Completed | Refactored to WebAPIDataSource pattern with strongly-typed POCO models and CommandAttribute methods. | 2025-01-13 |
 
 ## Next Actions
 
-1. Kick off Insightly refactor, mirroring the Freshsales pattern (entity map + typed models).
-2. Continue down the priority list (Insightly → Dynamics365 → Pipedrive/Nutshell → others).
-3. Update this tracker after each connector reaches the ✅ state.
+1. All CRM connectors have been successfully refactored to the WebAPIDataSource pattern with strongly-typed POCO models and CommandAttribute methods.
+2. All connectors compile successfully and follow the established framework patterns.

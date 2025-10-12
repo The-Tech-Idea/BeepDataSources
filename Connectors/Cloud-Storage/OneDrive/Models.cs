@@ -1,25 +1,32 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using TheTechIdea.Beep.DataBase;
 
-namespace TheTechIdea.Beep.Connectors.OneDrive
+namespace TheTechIdea.Beep.Connectors.OneDrive.Models
 {
     /// <summary>
     /// Base class for all OneDrive models
     /// </summary>
-    public abstract class OneDriveModel
+    public abstract class OneDriveEntityBase
     {
         /// <summary>
         /// Reference to the data source
         /// </summary>
         [JsonIgnore]
-        public OneDriveDataSource? DataSource { get; set; }
+        public IDataSource? DataSource { get; private set; }
+
+        public T Attach<T>(IDataSource ds) where T : OneDriveEntityBase 
+        { 
+            DataSource = ds; 
+            return (T)this; 
+        }
     }
 
     /// <summary>
     /// Represents a OneDrive drive
     /// </summary>
-    public class Drive : OneDriveModel
+    public sealed class Drive : OneDriveEntityBase
     {
         /// <summary>
         /// The unique identifier of the drive
@@ -103,7 +110,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents a drive item (file or folder)
     /// </summary>
-    public class DriveItem : OneDriveModel
+    public sealed class DriveItem : OneDriveEntityBase
     {
         /// <summary>
         /// The unique identifier of the item
@@ -301,7 +308,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents a user identity
     /// </summary>
-    public class User : OneDriveModel
+    public sealed class User : OneDriveEntityBase
     {
         /// <summary>
         /// The unique identifier of the user
@@ -331,7 +338,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents an identity set
     /// </summary>
-    public class IdentitySet : OneDriveModel
+    public sealed class IdentitySet : OneDriveEntityBase
     {
         /// <summary>
         /// User identity
@@ -355,7 +362,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents a generic identity
     /// </summary>
-    public class Identity : OneDriveModel
+    public sealed class Identity : OneDriveEntityBase
     {
         /// <summary>
         /// The unique identifier
@@ -373,7 +380,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents drive quota information
     /// </summary>
-    public class Quota : OneDriveModel
+    public sealed class Quota : OneDriveEntityBase
     {
         /// <summary>
         /// Total storage space
@@ -409,7 +416,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents SharePoint IDs
     /// </summary>
-    public class SharePointIds : OneDriveModel
+    public sealed class SharePointIds : OneDriveEntityBase
     {
         /// <summary>
         /// List ID
@@ -457,7 +464,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents system facet
     /// </summary>
-    public class SystemFacet : OneDriveModel
+    public sealed class SystemFacet : OneDriveEntityBase
     {
         /// <summary>
         /// System facet type
@@ -469,7 +476,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents audio metadata
     /// </summary>
-    public class Audio : OneDriveModel
+    public sealed class Audio : OneDriveEntityBase
     {
         /// <summary>
         /// Album name
@@ -571,7 +578,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents camera metadata
     /// </summary>
-    public class Camera : OneDriveModel
+    public sealed class Camera : OneDriveEntityBase
     {
         /// <summary>
         /// Camera manufacturer
@@ -607,7 +614,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents file facet
     /// </summary>
-    public class FileFacet : OneDriveModel
+    public sealed class FileFacet : OneDriveEntityBase
     {
         /// <summary>
         /// MIME type
@@ -625,7 +632,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents file system info
     /// </summary>
-    public class FileSystemInfo : OneDriveModel
+    public sealed class FileSystemInfo : OneDriveEntityBase
     {
         /// <summary>
         /// Created date time
@@ -643,7 +650,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents folder facet
     /// </summary>
-    public class FolderFacet : OneDriveModel
+    public sealed class FolderFacet : OneDriveEntityBase
     {
         /// <summary>
         /// Child count
@@ -661,7 +668,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents folder view
     /// </summary>
-    public class FolderView : OneDriveModel
+    public sealed class FolderView : OneDriveEntityBase
     {
         /// <summary>
         /// Sort by
@@ -685,7 +692,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents image metadata
     /// </summary>
-    public class Image : OneDriveModel
+    public sealed class Image : OneDriveEntityBase
     {
         /// <summary>
         /// Height
@@ -703,7 +710,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents geo coordinates
     /// </summary>
-    public class GeoCoordinates : OneDriveModel
+    public sealed class GeoCoordinates : OneDriveEntityBase
     {
         /// <summary>
         /// Altitude
@@ -727,7 +734,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents package metadata
     /// </summary>
-    public class Package : OneDriveModel
+    public sealed class Package : OneDriveEntityBase
     {
         /// <summary>
         /// Package type
@@ -739,7 +746,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents item reference
     /// </summary>
-    public class ItemReference : OneDriveModel
+    public sealed class ItemReference : OneDriveEntityBase
     {
         /// <summary>
         /// Drive ID
@@ -793,7 +800,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents photo metadata
     /// </summary>
-    public class Photo : OneDriveModel
+    public sealed class Photo : OneDriveEntityBase
     {
         /// <summary>
         /// Camera make
@@ -853,7 +860,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents remote item
     /// </summary>
-    public class RemoteItem : OneDriveModel
+    public sealed class RemoteItem : OneDriveEntityBase
     {
         /// <summary>
         /// Created by
@@ -961,7 +968,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents root item
     /// </summary>
-    public class Root : OneDriveModel
+    public sealed class Root : OneDriveEntityBase
     {
         /// <summary>
         /// Root type
@@ -973,7 +980,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents search result
     /// </summary>
-    public class SearchResult : OneDriveModel
+    public sealed class SearchResult : OneDriveEntityBase
     {
         /// <summary>
         /// On click telemetry URL
@@ -985,7 +992,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents shared metadata
     /// </summary>
-    public class Shared : OneDriveModel
+    public sealed class Shared : OneDriveEntityBase
     {
         /// <summary>
         /// Owner
@@ -1015,7 +1022,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents special folder
     /// </summary>
-    public class SpecialFolder : OneDriveModel
+    public sealed class SpecialFolder : OneDriveEntityBase
     {
         /// <summary>
         /// Special folder name
@@ -1027,7 +1034,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents video metadata
     /// </summary>
-    public class Video : OneDriveModel
+    public sealed class Video : OneDriveEntityBase
     {
         /// <summary>
         /// Audio bits per sample
@@ -1093,7 +1100,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents permission
     /// </summary>
-    public class Permission : OneDriveModel
+    public sealed class Permission : OneDriveEntityBase
     {
         /// <summary>
         /// Granted to
@@ -1153,7 +1160,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents sharing invitation
     /// </summary>
-    public class SharingInvitation : OneDriveModel
+    public sealed class SharingInvitation : OneDriveEntityBase
     {
         /// <summary>
         /// Email
@@ -1177,7 +1184,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents sharing link
     /// </summary>
-    public class SharingLink : OneDriveModel
+    public sealed class SharingLink : OneDriveEntityBase
     {
         /// <summary>
         /// Application
@@ -1219,7 +1226,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents thumbnail set
     /// </summary>
-    public class ThumbnailSet : OneDriveModel
+    public sealed class ThumbnailSet : OneDriveEntityBase
     {
         /// <summary>
         /// ID
@@ -1255,7 +1262,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents thumbnail
     /// </summary>
-    public class Thumbnail : OneDriveModel
+    public sealed class Thumbnail : OneDriveEntityBase
     {
         /// <summary>
         /// Content stream
@@ -1291,7 +1298,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents drive item version
     /// </summary>
-    public class DriveItemVersion : OneDriveModel
+    public sealed class DriveItemVersion : OneDriveEntityBase
     {
         /// <summary>
         /// ID
@@ -1327,7 +1334,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents publication facet
     /// </summary>
-    public class PublicationFacet : OneDriveModel
+    public sealed class PublicationFacet : OneDriveEntityBase
     {
         /// <summary>
         /// Level
@@ -1345,7 +1352,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents hashes
     /// </summary>
-    public class Hashes : OneDriveModel
+    public sealed class Hashes : OneDriveEntityBase
     {
         /// <summary>
         /// CRC32 hash
@@ -1375,7 +1382,7 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
     /// <summary>
     /// Represents a stream (placeholder for content streams)
     /// </summary>
-    public class Stream : OneDriveModel
+    public sealed class Stream : OneDriveEntityBase
     {
         // Placeholder for stream content - would be implemented based on actual usage
     }

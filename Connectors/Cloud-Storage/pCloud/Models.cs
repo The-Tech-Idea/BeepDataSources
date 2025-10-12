@@ -9,16 +9,16 @@ namespace TheTechIdea.Beep.Connectors.pCloud.Models
     // -------------------------------------------------------
     // Base
     // -------------------------------------------------------
-    public abstract class pCloudModel
+    public abstract class pCloudEntityBase
     {
         [JsonIgnore] public IDataSource? DataSource { get; set; }
-        public T Attach<T>(IDataSource ds) where T : pCloudModel { DataSource = ds; return (T)this; }
+        public T Attach<T>(IDataSource ds) where T : pCloudEntityBase { DataSource = ds; return (T)this; }
     }
 
     // -------------------------------------------------------
     // File/Folder Item
     // -------------------------------------------------------
-    public class pCloudItem : pCloudModel
+    public sealed class pCloudItem : pCloudEntityBase
     {
         [JsonPropertyName("id")] public string? Id { get; set; }
         [JsonPropertyName("name")] public string? Name { get; set; }
@@ -49,7 +49,7 @@ namespace TheTechIdea.Beep.Connectors.pCloud.Models
     // -------------------------------------------------------
     // User Information
     // -------------------------------------------------------
-    public class pCloudUser : pCloudModel
+    public sealed class pCloudUser : pCloudEntityBase
     {
         [JsonPropertyName("userid")] public long? UserId { get; set; }
         [JsonPropertyName("email")] public string? Email { get; set; }
@@ -71,7 +71,7 @@ namespace TheTechIdea.Beep.Connectors.pCloud.Models
     // -------------------------------------------------------
     // Share Link
     // -------------------------------------------------------
-    public class pCloudShare : pCloudModel
+    public sealed class pCloudShare : pCloudEntityBase
     {
         [JsonPropertyName("link")] public string? Link { get; set; }
         [JsonPropertyName("linkid")] public long? LinkId { get; set; }
@@ -91,7 +91,7 @@ namespace TheTechIdea.Beep.Connectors.pCloud.Models
     // -------------------------------------------------------
     // Upload Result
     // -------------------------------------------------------
-    public class pCloudUploadResult : pCloudModel
+    public sealed class pCloudUploadResult : pCloudEntityBase
     {
         [JsonPropertyName("result")] public int? Result { get; set; }
         [JsonPropertyName("metadata")] public List<pCloudItem>? Metadata { get; set; }
@@ -101,7 +101,7 @@ namespace TheTechIdea.Beep.Connectors.pCloud.Models
     // -------------------------------------------------------
     // Folder Metadata
     // -------------------------------------------------------
-    public class pCloudFolderMetadata : pCloudModel
+    public sealed class pCloudFolderMetadata : pCloudEntityBase
     {
         [JsonPropertyName("name")] public string? Name { get; set; }
         [JsonPropertyName("folderid")] public long? FolderId { get; set; }
@@ -121,7 +121,7 @@ namespace TheTechIdea.Beep.Connectors.pCloud.Models
     // -------------------------------------------------------
     // API Response Base
     // -------------------------------------------------------
-    public class pCloudApiResponse : pCloudModel
+    public class pCloudApiResponse : pCloudEntityBase
     {
         [JsonPropertyName("result")] public int? Result { get; set; }
         [JsonPropertyName("error")] public string? Error { get; set; }
@@ -130,7 +130,7 @@ namespace TheTechIdea.Beep.Connectors.pCloud.Models
     // -------------------------------------------------------
     // List Folder Response
     // -------------------------------------------------------
-    public class pCloudListFolderResponse : pCloudApiResponse
+    public sealed class pCloudListFolderResponse : pCloudApiResponse
     {
         [JsonPropertyName("metadata")] public pCloudFolderMetadata? Metadata { get; set; }
     }
@@ -138,7 +138,7 @@ namespace TheTechIdea.Beep.Connectors.pCloud.Models
     // -------------------------------------------------------
     // User Info Response
     // -------------------------------------------------------
-    public class pCloudUserInfoResponse : pCloudApiResponse
+    public sealed class pCloudUserInfoResponse : pCloudApiResponse
     {
         [JsonPropertyName("userid")] public long? UserId { get; set; }
         [JsonPropertyName("email")] public string? Email { get; set; }
@@ -160,7 +160,7 @@ namespace TheTechIdea.Beep.Connectors.pCloud.Models
     // -------------------------------------------------------
     // Share Link Response
     // -------------------------------------------------------
-    public class pCloudShareResponse : pCloudApiResponse
+    public sealed class pCloudShareResponse : pCloudApiResponse
     {
         [JsonPropertyName("link")] public string? Link { get; set; }
         [JsonPropertyName("linkid")] public long? LinkId { get; set; }

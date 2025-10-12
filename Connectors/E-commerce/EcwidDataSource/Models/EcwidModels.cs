@@ -16,7 +16,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.EcwidDataSource.Models
         [JsonPropertyName("created")] public DateTime? Created { get; set; }
         [JsonPropertyName("updated")] public DateTime? Updated { get; set; }
 
-        [JsonIgnore] public IDataSource DataSource { get; private set; }
+        [JsonIgnore] public IDataSource? DataSource { get; private set; }
         public T Attach<T>(IDataSource ds) where T : EcwidEntityBase { DataSource = ds; return (T)this; }
     }
 

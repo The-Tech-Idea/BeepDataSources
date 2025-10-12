@@ -162,5 +162,21 @@ namespace TheTechIdea.Beep.Connectors.Freshsales
         {
             return await GetAsync(endpoint, query, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Leads", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesLead>")]
+        public IEnumerable<FreshsalesLead> GetLeads(List<AppFilter> filter) => GetEntity("leads", filter).Cast<FreshsalesLead>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesContact>")]
+        public IEnumerable<FreshsalesContact> GetContacts(List<AppFilter> filter) => GetEntity("contacts", filter).Cast<FreshsalesContact>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesAccount>")]
+        public IEnumerable<FreshsalesAccount> GetAccounts(List<AppFilter> filter) => GetEntity("accounts", filter).Cast<FreshsalesAccount>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Deals", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesDeal>")]
+        public IEnumerable<FreshsalesDeal> GetDeals(List<AppFilter> filter) => GetEntity("deals", filter).Cast<FreshsalesDeal>();
+
+        #endregion
     }
 }

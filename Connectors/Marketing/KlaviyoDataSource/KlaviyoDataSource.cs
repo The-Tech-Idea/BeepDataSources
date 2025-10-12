@@ -212,5 +212,95 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Klaviyo
 
             return list;
         }
+
+        // CommandAttribute methods for framework integration
+    [CommandAttribute(ObjectType = nameof(KlaviyoProfile), PointType = PointType.Function, Name = "GetProfiles", Caption = "Get Profiles", ClassName = "KlaviyoDataSource", misc = "GetProfiles")]
+        public IEnumerable<KlaviyoProfile> GetProfiles()
+        {
+            return GetEntity("profiles", null).Cast<KlaviyoProfile>();
+        }
+
+    [CommandAttribute(ObjectType = nameof(KlaviyoList), PointType = PointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "KlaviyoDataSource", misc = "GetLists")]
+        public IEnumerable<KlaviyoList> GetLists()
+        {
+            return GetEntity("lists", null).Cast<KlaviyoList>();
+        }
+
+    [CommandAttribute(ObjectType = nameof(KlaviyoSegment), PointType = PointType.Function, Name = "GetSegments", Caption = "Get Segments", ClassName = "KlaviyoDataSource", misc = "GetSegments")]
+        public IEnumerable<KlaviyoSegment> GetSegments()
+        {
+            return GetEntity("segments", null).Cast<KlaviyoSegment>();
+        }
+
+    [CommandAttribute(ObjectType = nameof(KlaviyoCampaign), PointType = PointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "KlaviyoDataSource", misc = "GetCampaigns")]
+        public IEnumerable<KlaviyoCampaign> GetCampaigns()
+        {
+            return GetEntity("campaigns", null).Cast<KlaviyoCampaign>();
+        }
+
+        // POST/PUT methods for creating and updating entities
+    [CommandAttribute(ObjectType = nameof(KlaviyoProfile), PointType = PointType.Function, Name = "CreateProfile", Caption = "Create Profile", ClassName = "KlaviyoDataSource", misc = "CreateProfile")]
+        public async Task<KlaviyoProfile> CreateProfile(KlaviyoProfile profile)
+        {
+            var endpoint = "profiles";
+            var response = await PostAsync<KlaviyoProfile>(endpoint, profile);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(KlaviyoProfile), PointType = PointType.Function, Name = "UpdateProfile", Caption = "Update Profile", ClassName = "KlaviyoDataSource", misc = "UpdateProfile")]
+        public async Task<KlaviyoProfile> UpdateProfile(string profileId, KlaviyoProfile profile)
+        {
+            var endpoint = $"profiles/{profileId}";
+            var response = await PutAsync<KlaviyoProfile>(endpoint, profile);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(KlaviyoList), PointType = PointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "KlaviyoDataSource", misc = "CreateList")]
+        public async Task<KlaviyoList> CreateList(KlaviyoList list)
+        {
+            var endpoint = "lists";
+            var response = await PostAsync<KlaviyoList>(endpoint, list);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(KlaviyoList), PointType = PointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "KlaviyoDataSource", misc = "UpdateList")]
+        public async Task<KlaviyoList> UpdateList(string listId, KlaviyoList list)
+        {
+            var endpoint = $"lists/{listId}";
+            var response = await PutAsync<KlaviyoList>(endpoint, list);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(KlaviyoCampaign), PointType = PointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "KlaviyoDataSource", misc = "CreateCampaign")]
+        public async Task<KlaviyoCampaign> CreateCampaign(KlaviyoCampaign campaign)
+        {
+            var endpoint = "campaigns";
+            var response = await PostAsync<KlaviyoCampaign>(endpoint, campaign);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(KlaviyoCampaign), PointType = PointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "KlaviyoDataSource", misc = "UpdateCampaign")]
+        public async Task<KlaviyoCampaign> UpdateCampaign(string campaignId, KlaviyoCampaign campaign)
+        {
+            var endpoint = $"campaigns/{campaignId}";
+            var response = await PutAsync<KlaviyoCampaign>(endpoint, campaign);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(KlaviyoSegment), PointType = PointType.Function, Name = "CreateSegment", Caption = "Create Segment", ClassName = "KlaviyoDataSource", misc = "CreateSegment")]
+        public async Task<KlaviyoSegment> CreateSegment(KlaviyoSegment segment)
+        {
+            var endpoint = "segments";
+            var response = await PostAsync<KlaviyoSegment>(endpoint, segment);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(KlaviyoSegment), PointType = PointType.Function, Name = "UpdateSegment", Caption = "Update Segment", ClassName = "KlaviyoDataSource", misc = "UpdateSegment")]
+        public async Task<KlaviyoSegment> UpdateSegment(string segmentId, KlaviyoSegment segment)
+        {
+            var endpoint = $"segments/{segmentId}";
+            var response = await PutAsync<KlaviyoSegment>(endpoint, segment);
+            return response;
+        }
     }
 }

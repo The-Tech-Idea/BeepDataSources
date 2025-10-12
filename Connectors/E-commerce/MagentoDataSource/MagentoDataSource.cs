@@ -14,6 +14,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Ecommerce.Magento.Models;
 
 namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
 {
@@ -102,22 +103,200 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
         // Async
         public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            if (!Map.TryGetValue(EntityName, out var mapping))
-                throw new InvalidOperationException($"Unknown Magento entity '{EntityName}'.");
+            try
+            {
+                if (!Map.TryGetValue(EntityName, out var mapping))
+                {
+                    Logger.WriteLog($"Unknown Magento entity: {EntityName}");
+                    return new List<object>();
+                }
 
-            var (endpoint, root, requiredFilters) = mapping;
-            var q = FiltersToQuery(Filter);
-            RequireFilters(EntityName, q, requiredFilters);
+                var (endpoint, root, requiredFilters) = mapping;
+                var q = FiltersToQuery(Filter);
+                RequireFilters(EntityName, q, requiredFilters);
 
-            var resolvedEndpoint = ResolveEndpoint(endpoint, q);
+                var resolvedEndpoint = ResolveEndpoint(endpoint, q);
 
-            using var resp = await GetAsync(resolvedEndpoint, q).ConfigureAwait(false);
-            if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
+                using var resp = await GetAsync(resolvedEndpoint, q).ConfigureAwait(false);
+                if (resp is null || !resp.IsSuccessStatusCode)
+                {
+                    Logger.WriteLog($"API request failed for {EntityName}: {resp?.StatusCode}");
+                    return new List<object>();
+                }
 
-            return ExtractArray(resp, root);
+                var jsonContent = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                return ParseResponse(jsonContent, EntityName);
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog($"Error in GetEntityAsync for {EntityName}: {ex.Message}");
+                return new List<object>();
+            }
         }
 
-        // Paged
+        #region Response Parsing
+
+        private IEnumerable<object> ParseResponse(string jsonContent, string entityName)
+        {
+            try
+            {
+                return entityName.ToLower() switch
+                {
+                    "products" => ExtractArray<Product>(jsonContent),
+                    "product" => new List<object> { ExtractSingle<Product>(jsonContent) },
+                    "categories" => ExtractArray<Category>(jsonContent),
+                    "category" => new List<object> { ExtractSingle<Category>(jsonContent) },
+                    "orders" => ExtractArray<Order>(jsonContent),
+                    "order" => new List<object> { ExtractSingle<Order>(jsonContent) },
+                    "customers" => ExtractArray<Customer>(jsonContent),
+                    "customer" => new List<object> { ExtractSingle<Customer>(jsonContent) },
+                    "inventory" => ExtractArray<InventoryItem>(jsonContent),
+                    "inventory_item" => new List<object> { ExtractSingle<InventoryItem>(jsonContent) },
+                    "carts" => ExtractArray<Cart>(jsonContent),
+                    "cart" => new List<object> { ExtractSingle<Cart>(jsonContent) },
+                    "reviews" => ExtractArray<Review>(jsonContent),
+                    "review" => new List<object> { ExtractSingle<Review>(jsonContent) },
+                    "store_configs" => ExtractArray<StoreConfig>(jsonContent),
+                    "store_config" => new List<object> { ExtractSingle<StoreConfig>(jsonContent) },
+                    "attributes" => ExtractArray<Models.Attribute>(jsonContent),
+                    "attribute" => new List<object> { ExtractSingle<Models.Attribute>(jsonContent) },
+                    "tax_rules" => ExtractArray<TaxRule>(jsonContent),
+                    "tax_rule" => new List<object> { ExtractSingle<TaxRule>(jsonContent) },
+                    _ => JsonSerializer.Deserialize<MagentoApiResponse<JsonElement>>(jsonContent)?.Items.EnumerateArray().Select(x => (object)x).ToList() ?? new List<object>()
+                };
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog($"Error parsing response for {entityName}: {ex.Message}");
+                return new List<object>();
+            }
+        }
+
+        private List<T> ExtractArray<T>(string jsonContent) where T : MagentoEntityBase
+        {
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var apiResponse = JsonSerializer.Deserialize<MagentoApiResponse<List<T>>>(jsonContent, options);
+                if (apiResponse?.Items != null)
+                {
+                    foreach (var item in apiResponse.Items)
+                    {
+                        item.Attach<T>((IDataSource)this);
+                    }
+                }
+                return apiResponse?.Items ?? new List<T>();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog($"Error extracting array of {typeof(T).Name}: {ex.Message}");
+                return new List<T>();
+            }
+        }
+
+        private T ExtractSingle<T>(string jsonContent) where T : MagentoEntityBase
+        {
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var item = JsonSerializer.Deserialize<T>(jsonContent, options);
+                if (item != null)
+                {
+                    item.Attach<T>((IDataSource)this);
+                }
+                return item;
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog($"Error extracting single {typeof(T).Name}: {ex.Message}");
+                return default(T);
+            }
+        }
+
+        #endregion
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Product", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Product>")]
+        public async Task<IEnumerable<Product>> GetProducts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("products", new List<AppFilter> { filter });
+            return result.Cast<Product>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Category", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Category>")]
+        public async Task<IEnumerable<Category>> GetCategories(AppFilter filter)
+        {
+            var result = await GetEntityAsync("categories", new List<AppFilter> { filter });
+            return result.Cast<Category>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Order", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Order>")]
+        public async Task<IEnumerable<Order>> GetOrders(AppFilter filter)
+        {
+            var result = await GetEntityAsync("orders", new List<AppFilter> { filter });
+            return result.Cast<Order>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Customer", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Customer>")]
+        public async Task<IEnumerable<Customer>> GetCustomers(AppFilter filter)
+        {
+            var result = await GetEntityAsync("customers", new List<AppFilter> { filter });
+            return result.Cast<Customer>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "InventoryItem", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<InventoryItem>")]
+        public async Task<IEnumerable<InventoryItem>> GetInventory(AppFilter filter)
+        {
+            var result = await GetEntityAsync("inventory", new List<AppFilter> { filter });
+            return result.Cast<InventoryItem>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Cart", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Cart>")]
+        public async Task<IEnumerable<Cart>> GetCarts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("carts", new List<AppFilter> { filter });
+            return result.Cast<Cart>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Review", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Review>")]
+        public async Task<IEnumerable<Review>> GetReviews(AppFilter filter)
+        {
+            var result = await GetEntityAsync("reviews", new List<AppFilter> { filter });
+            return result.Cast<Review>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "StoreConfig", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<StoreConfig>")]
+        public async Task<IEnumerable<StoreConfig>> GetStoreConfigs(AppFilter filter)
+        {
+            var result = await GetEntityAsync("store_configs", new List<AppFilter> { filter });
+            return result.Cast<StoreConfig>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Attribute", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Models.Attribute>")]
+        public async Task<IEnumerable<Models.Attribute>> GetAttributes(AppFilter filter)
+        {
+            var result = await GetEntityAsync("attributes", new List<AppFilter> { filter });
+            return result.Cast<Models.Attribute>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "TaxRule", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<TaxRule>")]
+        public async Task<IEnumerable<TaxRule>> GetTaxRules(AppFilter filter)
+        {
+            var result = await GetEntityAsync("tax_rules", new List<AppFilter> { filter });
+            return result.Cast<TaxRule>();
+        }
+
+        #endregion
+
         public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
             if (!Map.TryGetValue(EntityName, out var mapping))
@@ -137,17 +316,18 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             if (resp is null || !resp.IsSuccessStatusCode)
                 return new PagedResult { Data = Array.Empty<object>() };
 
-            var items = ExtractArray(resp, root);
+            var jsonContent = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            var items = ParseResponse(jsonContent, EntityName);
 
             return new PagedResult
             {
                 Data = items,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                TotalRecords = items.Count, // Magento may provide total count in response
+                TotalRecords = items.Count(), // Magento may provide total count in response
                 TotalPages = 1,
                 HasPreviousPage = pageNumber > 1,
-                HasNextPage = items.Count >= pageSize
+                HasNextPage = items.Count() >= pageSize
             };
         }
 
@@ -189,41 +369,20 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return result;
         }
 
-        // Extracts array from response
-        private static List<object> ExtractArray(HttpResponseMessage resp, string? root)
+        #region Configuration Classes
+
+        private class MagentoApiResponse<T>
         {
-            var list = new List<object>();
-            if (resp == null) return list;
+            [System.Text.Json.Serialization.JsonPropertyName("items")]
+            public T? Items { get; set; }
 
-            var json = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            using var doc = JsonDocument.Parse(json);
+            [System.Text.Json.Serialization.JsonPropertyName("search_criteria")]
+            public object? SearchCriteria { get; set; }
 
-            JsonElement node = doc.RootElement;
-
-            if (!string.IsNullOrWhiteSpace(root))
-            {
-                if (!node.TryGetProperty(root, out node))
-                    return list;
-            }
-
-            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-            if (node.ValueKind == JsonValueKind.Array)
-            {
-                list.Capacity = node.GetArrayLength();
-                foreach (var el in node.EnumerateArray())
-                {
-                    var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(el.GetRawText(), opts);
-                    if (obj != null) list.Add(obj);
-                }
-            }
-            else if (node.ValueKind == JsonValueKind.Object)
-            {
-                var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(node.GetRawText(), opts);
-                if (obj != null) list.Add(obj);
-            }
-
-            return list;
+            [System.Text.Json.Serialization.JsonPropertyName("total_count")]
+            public int? TotalCount { get; set; }
         }
+
+        #endregion
     }
 }

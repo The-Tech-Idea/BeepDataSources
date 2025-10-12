@@ -14,6 +14,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Communication.GoogleChat.Models;
 
 namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
 {
@@ -81,7 +82,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
             using var resp = await GetAsync(endpoint, q).ConfigureAwait(false);
             if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
 
-            return ExtractArray(resp, m.root);
+            return ExtractArray(resp, m.root, EntityName);
         }
 
         // paged
@@ -104,7 +105,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
             var endpoint = ReplacePathParameters(m.endpoint, q);
 
             var resp = GetAsync(endpoint, q).ConfigureAwait(false).GetAwaiter().GetResult();
-            var items = ExtractArray(resp, m.root);
+            var items = ExtractArray(resp, m.root, EntityName);
 
             // Basic pagination estimate
             int totalRecordsSoFar = (pageNumber - 1) * Math.Max(1, pageSize) + items.Count;
@@ -154,7 +155,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
             return result;
         }
 
-        private static List<object> ExtractArray(HttpResponseMessage resp, string? rootPath)
+        private static List<object> ExtractArray(HttpResponseMessage resp, string? rootPath, string entityName)
         {
             var list = new List<object>();
             if (resp == null) return list;
@@ -180,18 +181,229 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
                 list.Capacity = node.GetArrayLength();
                 foreach (var el in node.EnumerateArray())
                 {
-                    var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(el.GetRawText(), opts);
+                    var obj = DeserializeEntity(el.GetRawText(), entityName, opts);
                     if (obj != null) list.Add(obj);
                 }
             }
             else if (node.ValueKind == JsonValueKind.Object)
             {
                 // wrap single object
-                var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(node.GetRawText(), opts);
+                var obj = DeserializeEntity(node.GetRawText(), entityName, opts);
                 if (obj != null) list.Add(obj);
             }
 
             return list;
         }
+
+        private static object? DeserializeEntity(string json, string entityName, JsonSerializerOptions opts)
+        {
+            return entityName.ToLowerInvariant() switch
+            {
+                "spaces" or "space" => JsonSerializer.Deserialize<GoogleChatSpace>(json, opts),
+                "space_members" => JsonSerializer.Deserialize<GoogleChatMember>(json, opts),
+                "space_messages" or "message" => JsonSerializer.Deserialize<GoogleChatMessage>(json, opts),
+                "message_reactions" => JsonSerializer.Deserialize<GoogleChatReaction>(json, opts),
+                "message_attachments" => JsonSerializer.Deserialize<GoogleChatMessageAttachment>(json, opts),
+                "message_threads" => JsonSerializer.Deserialize<GoogleChatMessageThread>(json, opts),
+                "user_spaces" => JsonSerializer.Deserialize<GoogleChatUserSpace>(json, opts),
+                "user_memberships" => JsonSerializer.Deserialize<GoogleChatUserMembership>(json, opts),
+                "media_links" => JsonSerializer.Deserialize<GoogleChatMediaLink>(json, opts),
+                _ => JsonSerializer.Deserialize<Dictionary<string, object>>(json, opts)
+            };
+        }
+
+        #region CommandAttribute Methods
+
+        /// <summary>
+        /// Gets all spaces from Google Chat
+        /// </summary>
+        /// <returns>Enumerable of GoogleChatSpace objects</returns>
+        [CommandAttribute(
+            ObjectType = "GoogleChatSpace",
+            PointType = EnumPointType.Function,
+            Name = "GetSpaces",
+            Caption = "Get Spaces",
+            ClassName = "GoogleChatDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleChat,
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "googlechat.png",
+            misc = "ReturnType: IEnumerable<GoogleChatSpace>"
+        )]
+        public IEnumerable<GoogleChatSpace> GetSpaces()
+        {
+            return GetEntityAsync("spaces", new List<AppFilter>())
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<GoogleChatSpace>()
+                .Select(x => x.Attach<GoogleChatSpace>(this));
+        }
+
+        /// <summary>
+        /// Gets a specific space by name
+        /// </summary>
+        /// <param name="spaceName">The space name</param>
+        /// <returns>GoogleChatSpace object</returns>
+        [CommandAttribute(
+            ObjectType = "GoogleChatSpace",
+            PointType = EnumPointType.Function,
+            Name = "GetSpace",
+            Caption = "Get Space",
+            ClassName = "GoogleChatDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleChat,
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "googlechat.png",
+            misc = "ReturnType: IEnumerable<GoogleChatSpace>, Filter: space_name"
+        )]
+        public IEnumerable<GoogleChatSpace> GetSpace(string spaceName)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "space_name", FilterValue = spaceName } };
+            return GetEntityAsync("space", filters)
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<GoogleChatSpace>()
+                .Select(x => x.Attach<GoogleChatSpace>(this));
+        }
+
+        /// <summary>
+        /// Gets all messages for a space
+        /// </summary>
+        /// <param name="spaceName">The space name</param>
+        /// <returns>Enumerable of GoogleChatMessage objects</returns>
+        [CommandAttribute(
+            ObjectType = "GoogleChatMessage",
+            PointType = EnumPointType.Function,
+            Name = "GetSpaceMessages",
+            Caption = "Get Space Messages",
+            ClassName = "GoogleChatDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleChat,
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "googlechat.png",
+            misc = "ReturnType: IEnumerable<GoogleChatMessage>, Filter: space_name"
+        )]
+        public IEnumerable<GoogleChatMessage> GetSpaceMessages(string spaceName)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "space_name", FilterValue = spaceName } };
+            return GetEntityAsync("space_messages", filters)
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<GoogleChatMessage>()
+                .Select(x => x.Attach<GoogleChatMessage>(this));
+        }
+
+        /// <summary>
+        /// Gets a specific message by space and message name
+        /// </summary>
+        /// <param name="spaceName">The space name</param>
+        /// <param name="messageName">The message name</param>
+        /// <returns>GoogleChatMessage object</returns>
+        [CommandAttribute(
+            ObjectType = "GoogleChatMessage",
+            PointType = EnumPointType.Function,
+            Name = "GetMessage",
+            Caption = "Get Message",
+            ClassName = "GoogleChatDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleChat,
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "googlechat.png",
+            misc = "ReturnType: IEnumerable<GoogleChatMessage>, Filter: space_name,message_name"
+        )]
+        public IEnumerable<GoogleChatMessage> GetMessage(string spaceName, string messageName)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "space_name", FilterValue = spaceName },
+                new AppFilter { FieldName = "message_name", FilterValue = messageName }
+            };
+            return GetEntityAsync("message", filters)
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<GoogleChatMessage>()
+                .Select(x => x.Attach<GoogleChatMessage>(this));
+        }
+
+        /// <summary>
+        /// Gets all members of a space
+        /// </summary>
+        /// <param name="spaceName">The space name</param>
+        /// <returns>Enumerable of GoogleChatMember objects</returns>
+        [CommandAttribute(
+            ObjectType = "GoogleChatMember",
+            PointType = EnumPointType.Function,
+            Name = "GetSpaceMembers",
+            Caption = "Get Space Members",
+            ClassName = "GoogleChatDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleChat,
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "googlechat.png",
+            misc = "ReturnType: IEnumerable<GoogleChatMember>, Filter: space_name"
+        )]
+        public IEnumerable<GoogleChatMember> GetSpaceMembers(string spaceName)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "space_name", FilterValue = spaceName } };
+            return GetEntityAsync("space_members", filters)
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<GoogleChatMember>()
+                .Select(x => x.Attach<GoogleChatMember>(this));
+        }
+
+        /// <summary>
+        /// Gets user spaces
+        /// </summary>
+        /// <returns>Enumerable of GoogleChatUserSpace objects</returns>
+        [CommandAttribute(
+            ObjectType = "GoogleChatUserSpace",
+            PointType = EnumPointType.Function,
+            Name = "GetUserSpaces",
+            Caption = "Get User Spaces",
+            ClassName = "GoogleChatDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleChat,
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "googlechat.png",
+            misc = "ReturnType: IEnumerable<GoogleChatUserSpace>"
+        )]
+        public IEnumerable<GoogleChatUserSpace> GetUserSpaces()
+        {
+            return GetEntityAsync("user_spaces", new List<AppFilter>())
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<GoogleChatUserSpace>()
+                .Select(x => x.Attach<GoogleChatUserSpace>(this));
+        }
+
+        /// <summary>
+        /// Gets user memberships
+        /// </summary>
+        /// <param name="userName">The user name</param>
+        /// <returns>Enumerable of GoogleChatUserMembership objects</returns>
+        [CommandAttribute(
+            ObjectType = "GoogleChatUserMembership",
+            PointType = EnumPointType.Function,
+            Name = "GetUserMemberships",
+            Caption = "Get User Memberships",
+            ClassName = "GoogleChatDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleChat,
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "googlechat.png",
+            misc = "ReturnType: IEnumerable<GoogleChatUserMembership>, Filter: user_name"
+        )]
+        public IEnumerable<GoogleChatUserMembership> GetUserMemberships(string userName)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "user_name", FilterValue = userName } };
+            return GetEntityAsync("user_memberships", filters)
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<GoogleChatUserMembership>()
+                .Select(x => x.Attach<GoogleChatUserMembership>(this));
+        }
+
+        #endregion
     }
 }

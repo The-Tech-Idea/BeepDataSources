@@ -38,6 +38,12 @@ namespace TheTechIdea.Beep.Connectors.Tableau
                 if (Dataconnection != null)
                     Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
             }
+
+            // Register entities
+            EntitiesNames = new List<string> { "sites", "users", "groups", "projects", "workbooks", "views", "datasources" };
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+                .ToList();
         }
 
         /// <summary>
@@ -94,7 +100,6 @@ namespace TheTechIdea.Beep.Connectors.Tableau
                 "workbooks" => "/workbooks",
                 "views" => "/views",
                 "datasources" => "/datasources",
-                "flows" => "/flows",
                 _ => null
             };
         }
@@ -106,16 +111,17 @@ namespace TheTechIdea.Beep.Connectors.Tableau
 
             try
             {
-                // For now, return empty lists - detailed API parsing can be implemented later
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
                 return entityName.ToLower() switch
                 {
-                    "sites" => new List<TableauSite>(),
-                    "users" => new List<TableauUser>(),
-                    "groups" => new List<TableauGroup>(),
-                    "projects" => new List<TableauProject>(),
-                    "workbooks" => new List<TableauWorkbook>(),
-                    "views" => new List<TableauView>(),
-                    "datasources" => new List<TableauDataSource>(),
+                    "sites" => new List<TableauSite> { JsonSerializer.Deserialize<TableauSite>(jsonResponse, options) ?? new TableauSite() },
+                    "users" => JsonSerializer.Deserialize<TableauUsers>(jsonResponse, options)?.User ?? new List<TableauUser>(),
+                    "groups" => JsonSerializer.Deserialize<TableauGroups>(jsonResponse, options)?.Group ?? new List<TableauGroup>(),
+                    "projects" => JsonSerializer.Deserialize<TableauProjects>(jsonResponse, options)?.Project ?? new List<TableauProject>(),
+                    "workbooks" => JsonSerializer.Deserialize<TableauWorkbooks>(jsonResponse, options)?.Workbook ?? new List<TableauWorkbook>(),
+                    "views" => JsonSerializer.Deserialize<TableauViews>(jsonResponse, options)?.View ?? new List<TableauView>(),
+                    "datasources" => JsonSerializer.Deserialize<TableauDatasources>(jsonResponse, options)?.Datasource != null ? JsonSerializer.Deserialize<TableauDatasources>(jsonResponse, options).Datasource : new List<Models.TableauDataSource>(),
                     _ => Array.Empty<object>()
                 };
             }
@@ -125,5 +131,27 @@ namespace TheTechIdea.Beep.Connectors.Tableau
                 return Array.Empty<object>();
             }
         }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "Sites", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauSite>")]
+        public IEnumerable<TableauSite> GetSites(List<AppFilter> filter) => GetEntity("sites", filter).Cast<TableauSite>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "Users", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauUser>")]
+        public IEnumerable<TableauUser> GetUsers(List<AppFilter> filter) => GetEntity("users", filter).Cast<TableauUser>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "Groups", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauGroup>")]
+        public IEnumerable<TableauGroup> GetGroups(List<AppFilter> filter) => GetEntity("groups", filter).Cast<TableauGroup>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "Projects", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauProject>")]
+        public IEnumerable<TableauProject> GetProjects(List<AppFilter> filter) => GetEntity("projects", filter).Cast<TableauProject>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "Workbooks", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauWorkbook>")]
+        public IEnumerable<TableauWorkbook> GetWorkbooks(List<AppFilter> filter) => GetEntity("workbooks", filter).Cast<TableauWorkbook>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "Views", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauView>")]
+        public IEnumerable<TableauView> GetViews(List<AppFilter> filter) => GetEntity("views", filter).Cast<TableauView>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "DataSources", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauDataSource>")]
+        public IEnumerable<TableauDataSource> GetDataSources(List<AppFilter> filter) => GetEntity("datasources", filter).Cast<TableauDataSource>();
     }
 }

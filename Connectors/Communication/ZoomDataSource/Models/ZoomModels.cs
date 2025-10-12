@@ -1,10 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using TheTechIdea.Beep.DataBase;
 
 namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
 {
+    public abstract class ZoomEntityBase
+    {
+        [JsonIgnore] public IDataSource? DataSource { get; private set; }
+        public T Attach<T>(IDataSource ds) where T : ZoomEntityBase { DataSource = ds; return (T)this; }
+    }
+
     // Zoom Models
-    public class ZoomUser
+    public sealed class ZoomUser : ZoomEntityBase
     {
         public string? Id { get; set; }
         public string? FirstName { get; set; }
@@ -21,7 +29,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public string? RoleId { get; set; }
     }
 
-    public class ZoomMeeting
+    public sealed class ZoomMeeting : ZoomEntityBase
     {
         public string? Uuid { get; set; }
         public long Id { get; set; }
@@ -40,7 +48,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public ZoomSettings? Settings { get; set; }
     }
 
-    public class ZoomWebinar
+    public sealed class ZoomWebinar : ZoomEntityBase
     {
         public string? Uuid { get; set; }
         public long Id { get; set; }
@@ -57,14 +65,14 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public ZoomSettings? Settings { get; set; }
     }
 
-    public class ZoomChannel
+    public sealed class ZoomChannel : ZoomEntityBase
     {
         public string? Id { get; set; }
         public string? Name { get; set; }
         public string? Type { get; set; }
     }
 
-    public class ZoomChannelMessage
+    public sealed class ZoomChannelMessage : ZoomEntityBase
     {
         public string? MessageId { get; set; }
         public string? Sender { get; set; }
@@ -73,7 +81,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
     }
 
     // Missing model classes for Zoom Map entities
-    public class ZoomMeetingParticipant
+    public sealed class ZoomMeetingParticipant : ZoomEntityBase
     {
         public string? Id { get; set; }
         public string? Name { get; set; }
@@ -85,7 +93,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public string? AttentivenessScore { get; set; }
     }
 
-    public class ZoomMeetingRecording
+    public sealed class ZoomMeetingRecording : ZoomEntityBase
     {
         public string? Id { get; set; }
         public string? MeetingId { get; set; }
@@ -96,7 +104,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public string? TotalSize { get; set; }
     }
 
-    public class ZoomWebinarParticipant
+    public sealed class ZoomWebinarParticipant : ZoomEntityBase
     {
         public string? Id { get; set; }
         public string? Name { get; set; }
@@ -108,7 +116,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public string? AttentivenessScore { get; set; }
     }
 
-    public class ZoomWebinarRecording
+    public sealed class ZoomWebinarRecording : ZoomEntityBase
     {
         public string? Id { get; set; }
         public string? WebinarId { get; set; }
@@ -119,14 +127,14 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public string? TotalSize { get; set; }
     }
 
-    public class ZoomGroup
+    public sealed class ZoomGroup : ZoomEntityBase
     {
         public string? Id { get; set; }
         public string? Name { get; set; }
         public int TotalMembers { get; set; }
     }
 
-    public class ZoomGroupMember
+    public sealed class ZoomGroupMember : ZoomEntityBase
     {
         public string? Id { get; set; }
         public string? Email { get; set; }
@@ -148,7 +156,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public string? SamlIdentity { get; set; }
     }
 
-    public class ZoomAccountSettings
+    public sealed class ZoomAccountSettings : ZoomEntityBase
     {
         public ZoomFeatureSettings? Feature { get; set; }
         public ZoomInMeetingSettings? InMeeting { get; set; }
@@ -159,7 +167,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public ZoomSecuritySettings? Security { get; set; }
     }
 
-    public class ZoomUserSettings
+    public sealed class ZoomUserSettings : ZoomEntityBase
     {
         public ZoomFeatureSettings? Feature { get; set; }
         public ZoomInMeetingSettings? InMeeting { get; set; }
@@ -172,11 +180,11 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
     }
 
     // Supporting classes for Zoom
-    public class ZoomTrackingField { public string? Field { get; set; } public string? Value { get; set; } }
-    public class ZoomRecurrence { public int Type { get; set; } public int RepeatInterval { get; set; } public string? WeeklyDays { get; set; } public int MonthlyDay { get; set; } public int MonthlyWeek { get; set; } public int MonthlyWeekDay { get; set; } public int EndTimes { get; set; } public DateTime EndDateTime { get; set; } }
-    public class ZoomSettings { public bool HostVideo { get; set; } public bool ParticipantVideo { get; set; } public bool CnMeeting { get; set; } public bool InMeeting { get; set; } public bool JoinBeforeHost { get; set; } public bool MuteUponEntry { get; set; } public bool Watermark { get; set; } public bool UsePmi { get; set; } public int ApprovalType { get; set; } public string? Audio { get; set; } public string? AutoRecording { get; set; } public bool EnforceLogin { get; set; } public string? EnforceLoginDomains { get; set; } public List<string>? AlternativeHosts { get; set; } public bool CloseRegistration { get; set; } public bool ShowShareButton { get; set; } public bool AllowMultipleDevices { get; set; } public bool RegistrantsConfirmationEmail { get; set; } public bool WaitingRoom { get; set; } public bool RequestPermissionToUnmute { get; set; } public bool RegistrantsEmailNotification { get; set; } public bool MeetingAuthentication { get; set; } public string? EncryptionType { get; set; } public bool ApprovedOrDeniedCountriesOrRegions { get; set; } public ZoomBreakoutRoom? BreakoutRoom { get; set; } }
-    public class ZoomBreakoutRoom { public bool Enable { get; set; } public List<ZoomBreakoutRoomRoom>? Rooms { get; set; } }
-    public class ZoomBreakoutRoomRoom { public string? Name { get; set; } public List<string>? Participants { get; set; } }
+    public sealed class ZoomTrackingField : ZoomEntityBase { public string? Field { get; set; } public string? Value { get; set; } }
+    public sealed class ZoomRecurrence : ZoomEntityBase { public int Type { get; set; } public int RepeatInterval { get; set; } public string? WeeklyDays { get; set; } public int MonthlyDay { get; set; } public int MonthlyWeek { get; set; } public int MonthlyWeekDay { get; set; } public int EndTimes { get; set; } public DateTime EndDateTime { get; set; } }
+    public sealed class ZoomSettings : ZoomEntityBase { public bool HostVideo { get; set; } public bool ParticipantVideo { get; set; } public bool CnMeeting { get; set; } public bool InMeeting { get; set; } public bool JoinBeforeHost { get; set; } public bool MuteUponEntry { get; set; } public bool Watermark { get; set; } public bool UsePmi { get; set; } public int ApprovalType { get; set; } public string? Audio { get; set; } public string? AutoRecording { get; set; } public bool EnforceLogin { get; set; } public string? EnforceLoginDomains { get; set; } public List<string>? AlternativeHosts { get; set; } public bool CloseRegistration { get; set; } public bool ShowShareButton { get; set; } public bool AllowMultipleDevices { get; set; } public bool RegistrantsConfirmationEmail { get; set; } public bool WaitingRoom { get; set; } public bool RequestPermissionToUnmute { get; set; } public bool RegistrantsEmailNotification { get; set; } public bool MeetingAuthentication { get; set; } public string? EncryptionType { get; set; } public bool ApprovedOrDeniedCountriesOrRegions { get; set; } public ZoomBreakoutRoom? BreakoutRoom { get; set; } }
+    public sealed class ZoomBreakoutRoom : ZoomEntityBase { public bool Enable { get; set; } public List<ZoomBreakoutRoomRoom>? Rooms { get; set; } }
+    public sealed class ZoomBreakoutRoomRoom : ZoomEntityBase { public string? Name { get; set; } public List<string>? Participants { get; set; } }
     public class ZoomRecordingFile
     {
         public string? Id { get; set; }
@@ -191,7 +199,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public string? RecordingType { get; set; }
     }
 
-    public class ZoomFeatureSettings
+    public sealed class ZoomFeatureSettings : ZoomEntityBase
     {
         public bool ZoomRooms { get; set; }
         public bool ZoomWhiteboard { get; set; }
@@ -199,7 +207,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public bool ZoomApps { get; set; }
     }
 
-    public class ZoomInMeetingSettings
+    public sealed class ZoomInMeetingSettings : ZoomEntityBase
     {
         public bool E2eEncryption { get; set; }
         public bool Chat { get; set; }
@@ -231,7 +239,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public bool WebinarSurvey { get; set; }
     }
 
-    public class ZoomEmailNotificationSettings
+    public sealed class ZoomEmailNotificationSettings : ZoomEntityBase
     {
         public bool CloudRecordingAvailableReminder { get; set; }
         public bool JbhReminder { get; set; }
@@ -240,7 +248,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public bool ScheduleForReminder { get; set; }
     }
 
-    public class ZoomRecordingSettings
+    public sealed class ZoomRecordingSettings : ZoomEntityBase
     {
         public bool LocalRecording { get; set; }
         public bool CloudRecording { get; set; }
@@ -256,7 +264,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public int AutoDeleteCmrDays { get; set; }
     }
 
-    public class ZoomTelephonySettings
+    public sealed class ZoomTelephonySettings : ZoomEntityBase
     {
         public bool ThirdPartyAudio { get; set; }
         public bool AudioConferenceInfo { get; set; }
@@ -264,14 +272,14 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public bool TelephonyRegions { get; set; }
     }
 
-    public class ZoomTspSettings
+    public sealed class ZoomTspSettings : ZoomEntityBase
     {
         public bool CallOut { get; set; }
         public bool CallOutCountries { get; set; }
         public bool ShowInternationalNumbersLink { get; set; }
     }
 
-    public class ZoomSecuritySettings
+    public sealed class ZoomSecuritySettings : ZoomEntityBase
     {
         public bool AdminChangeNamePic { get; set; }
         public bool SigninWithApple { get; set; }
@@ -285,7 +293,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom.Models
         public bool PmiPassword { get; set; }
     }
 
-    public class ZoomScheduleMeetingSettings
+    public sealed class ZoomScheduleMeetingSettings : ZoomEntityBase
     {
         public bool HostVideo { get; set; }
         public bool ParticipantsVideo { get; set; }

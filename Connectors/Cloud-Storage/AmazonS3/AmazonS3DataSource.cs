@@ -16,6 +16,7 @@ using TheTechIdea.Beep.WebAPI;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
+using TheTechIdea.Beep.Connectors.AmazonS3.Models;
 
 namespace TheTechIdea.Beep.Connectors.AmazonS3
 {
@@ -228,13 +229,13 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
             {
                 // Parse S3 ListBuckets response
                 var doc = JsonDocument.Parse(content);
-                var buckets = new List<S3Bucket>();
+                var buckets = new List<AmazonS3Bucket>();
 
                 if (doc.RootElement.TryGetProperty("Buckets", out var bucketsArray))
                 {
                     foreach (var bucket in bucketsArray.EnumerateArray())
                     {
-                        var s3Bucket = new S3Bucket
+                        var s3Bucket = new AmazonS3Bucket
                         {
                             BucketName = bucket.GetProperty("Name").GetString(),
                             CreationDate = bucket.GetProperty("CreationDate").GetDateTime()
@@ -257,13 +258,13 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
             {
                 // Parse S3 ListObjects response
                 var doc = JsonDocument.Parse(content);
-                var objects = new List<S3Object>();
+                var objects = new List<AmazonS3Object>();
 
                 if (doc.RootElement.TryGetProperty("Contents", out var contentsArray))
                 {
                     foreach (var obj in contentsArray.EnumerateArray())
                     {
-                        var s3Object = new S3Object
+                        var s3Object = new AmazonS3Object
                         {
                             Key = obj.GetProperty("Key").GetString(),
                             LastModified = obj.GetProperty("LastModified").GetDateTime(),
@@ -289,13 +290,13 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
             {
                 // Parse S3 ListObjectVersions response
                 var doc = JsonDocument.Parse(content);
-                var versions = new List<S3ObjectVersion>();
+                var versions = new List<AmazonS3ObjectVersion>();
 
                 if (doc.RootElement.TryGetProperty("Versions", out var versionsArray))
                 {
                     foreach (var version in versionsArray.EnumerateArray())
                     {
-                        var s3Version = new S3ObjectVersion
+                        var s3Version = new AmazonS3ObjectVersion
                         {
                             Key = version.GetProperty("Key").GetString(),
                             VersionId = version.GetProperty("VersionId").GetString(),
@@ -328,6 +329,228 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
             {
                 return Array.Empty<object>();
             }
+        }
+
+        // -------------------- CommandAttribute Methods --------------------
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3Bucket",
+            PointType = EnumPointType.Function,
+            Name = "GetBuckets",
+            Caption = "Get All Buckets",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3Bucket>"
+        )]
+        public IEnumerable<AmazonS3Bucket> GetBuckets()
+        {
+            return GetEntity("buckets", new List<AppFilter>()).Cast<AmazonS3Bucket>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3Bucket",
+            PointType = EnumPointType.Function,
+            Name = "GetBucket",
+            Caption = "Get Bucket Details",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3Bucket>"
+        )]
+        public IEnumerable<AmazonS3Bucket> GetBucket(AppFilter bucketNameFilter)
+        {
+            return GetEntity("bucket", new List<AppFilter> { bucketNameFilter }).Cast<AmazonS3Bucket>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3Object",
+            PointType = EnumPointType.Function,
+            Name = "GetObjects",
+            Caption = "Get Objects in Bucket",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3Object>"
+        )]
+        public IEnumerable<AmazonS3Object> GetObjects(AppFilter bucketNameFilter)
+        {
+            return GetEntity("objects", new List<AppFilter> { bucketNameFilter }).Cast<AmazonS3Object>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3Object",
+            PointType = EnumPointType.Function,
+            Name = "GetObject",
+            Caption = "Get Object Details",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3Object>"
+        )]
+        public IEnumerable<AmazonS3Object> GetObject(AppFilter bucketNameFilter, AppFilter objectKeyFilter)
+        {
+            return GetEntity("object", new List<AppFilter> { bucketNameFilter, objectKeyFilter }).Cast<AmazonS3Object>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3ObjectVersion",
+            PointType = EnumPointType.Function,
+            Name = "GetObjectVersions",
+            Caption = "Get Object Versions",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3ObjectVersion>"
+        )]
+        public IEnumerable<AmazonS3ObjectVersion> GetObjectVersions(AppFilter bucketNameFilter, AppFilter objectKeyFilter)
+        {
+            return GetEntity("object_versions", new List<AppFilter> { bucketNameFilter, objectKeyFilter }).Cast<AmazonS3ObjectVersion>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3MultipartUpload",
+            PointType = EnumPointType.Function,
+            Name = "GetMultipartUploads",
+            Caption = "Get Multipart Uploads",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3MultipartUpload>"
+        )]
+        public IEnumerable<AmazonS3MultipartUpload> GetMultipartUploads(AppFilter bucketNameFilter)
+        {
+            return GetEntity("multipart_uploads", new List<AppFilter> { bucketNameFilter }).Cast<AmazonS3MultipartUpload>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3BucketPolicy",
+            PointType = EnumPointType.Function,
+            Name = "GetBucketPolicy",
+            Caption = "Get Bucket Policy",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3BucketPolicy>"
+        )]
+        public IEnumerable<AmazonS3BucketPolicy> GetBucketPolicy(AppFilter bucketNameFilter)
+        {
+            return GetEntity("bucket_policy", new List<AppFilter> { bucketNameFilter }).Cast<AmazonS3BucketPolicy>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3BucketEncryption",
+            PointType = EnumPointType.Function,
+            Name = "GetBucketEncryption",
+            Caption = "Get Bucket Encryption",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3BucketEncryption>"
+        )]
+        public IEnumerable<AmazonS3BucketEncryption> GetBucketEncryption(AppFilter bucketNameFilter)
+        {
+            return GetEntity("bucket_encryption", new List<AppFilter> { bucketNameFilter }).Cast<AmazonS3BucketEncryption>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3CorsConfiguration",
+            PointType = EnumPointType.Function,
+            Name = "GetBucketCors",
+            Caption = "Get Bucket CORS Configuration",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3CorsConfiguration>"
+        )]
+        public IEnumerable<AmazonS3CorsConfiguration> GetBucketCors(AppFilter bucketNameFilter)
+        {
+            return GetEntity("bucket_cors", new List<AppFilter> { bucketNameFilter }).Cast<AmazonS3CorsConfiguration>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3LifecycleConfiguration",
+            PointType = EnumPointType.Function,
+            Name = "GetBucketLifecycle",
+            Caption = "Get Bucket Lifecycle Configuration",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3LifecycleConfiguration>"
+        )]
+        public IEnumerable<AmazonS3LifecycleConfiguration> GetBucketLifecycle(AppFilter bucketNameFilter)
+        {
+            return GetEntity("bucket_lifecycle", new List<AppFilter> { bucketNameFilter }).Cast<AmazonS3LifecycleConfiguration>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3Tagging",
+            PointType = EnumPointType.Function,
+            Name = "GetBucketTags",
+            Caption = "Get Bucket Tags",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3Tagging>"
+        )]
+        public IEnumerable<AmazonS3Tagging> GetBucketTags(AppFilter bucketNameFilter)
+        {
+            return GetEntity("bucket_tags", new List<AppFilter> { bucketNameFilter }).Cast<AmazonS3Tagging>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3AccessControlList",
+            PointType = EnumPointType.Function,
+            Name = "GetObjectAcl",
+            Caption = "Get Object ACL",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3AccessControlList>"
+        )]
+        public IEnumerable<AmazonS3AccessControlList> GetObjectAcl(AppFilter bucketNameFilter, AppFilter objectKeyFilter)
+        {
+            return GetEntity("object_acl", new List<AppFilter> { bucketNameFilter, objectKeyFilter }).Cast<AmazonS3AccessControlList>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3Tagging",
+            PointType = EnumPointType.Function,
+            Name = "GetObjectTags",
+            Caption = "Get Object Tags",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3Tagging>"
+        )]
+        public IEnumerable<AmazonS3Tagging> GetObjectTags(AppFilter bucketNameFilter, AppFilter objectKeyFilter)
+        {
+            return GetEntity("object_tags", new List<AppFilter> { bucketNameFilter, objectKeyFilter }).Cast<AmazonS3Tagging>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3ObjectMetadata",
+            PointType = EnumPointType.Function,
+            Name = "GetObjectMetadata",
+            Caption = "Get Object Metadata",
+            ClassName = "AmazonS3DataSource",
+            misc = "ReturnType: IEnumerable<AmazonS3ObjectMetadata>"
+        )]
+        public IEnumerable<AmazonS3ObjectMetadata> GetObjectMetadata(AppFilter bucketNameFilter, AppFilter objectKeyFilter)
+        {
+            return GetEntity("object_metadata", new List<AppFilter> { bucketNameFilter, objectKeyFilter }).Cast<AmazonS3ObjectMetadata>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3Bucket",
+            PointType = EnumPointType.Function,
+            Name = "CreateBucketAsync",
+            Caption = "Create Amazon S3 Bucket",
+            ClassName = "AmazonS3DataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AmazonS3,
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "s3.png",
+            misc = "ReturnType: IEnumerable<AmazonS3Bucket>"
+        )]
+        public async Task<IEnumerable<AmazonS3Bucket>> CreateBucketAsync(AmazonS3Bucket bucket, List<AppFilter> filters = null)
+        {
+            var result = await PutAsync("bucket", bucket, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<AmazonS3Bucket>>(result);
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3Object",
+            PointType = EnumPointType.Function,
+            Name = "UploadObjectAsync",
+            Caption = "Upload Amazon S3 Object",
+            ClassName = "AmazonS3DataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AmazonS3,
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "s3.png",
+            misc = "ReturnType: IEnumerable<AmazonS3Object>"
+        )]
+        public async Task<IEnumerable<AmazonS3Object>> UploadObjectAsync(AmazonS3Object obj, List<AppFilter> filters = null)
+        {
+            var result = await PutAsync("object", obj, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<AmazonS3Object>>(result);
         }
     }
 }

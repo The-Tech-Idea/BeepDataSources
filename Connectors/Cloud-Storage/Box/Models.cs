@@ -1,25 +1,32 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using TheTechIdea.Beep.DataBase;
 
-namespace TheTechIdea.Beep.Connectors.Box
+namespace TheTechIdea.Beep.Connectors.Box.Models
 {
     /// <summary>
     /// Base class for all Box models
     /// </summary>
-    public abstract class BoxModel
+    public abstract class BoxEntityBase
     {
         /// <summary>
         /// Reference to the data source
         /// </summary>
         [JsonIgnore]
-        public BoxDataSource? DataSource { get; set; }
+        public IDataSource? DataSource { get; private set; }
+
+        public T Attach<T>(IDataSource ds) where T : BoxEntityBase 
+        { 
+            DataSource = ds; 
+            return (T)this; 
+        }
     }
 
     /// <summary>
     /// Represents a Box item (file or folder)
     /// </summary>
-    public class BoxItem : BoxModel
+    public sealed class BoxItem : BoxEntityBase
     {
         /// <summary>
         /// The unique identifier for this item
@@ -235,7 +242,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box user
     /// </summary>
-    public class BoxUser : BoxModel
+    public sealed class BoxUser : BoxEntityBase
     {
         /// <summary>
         /// The unique identifier for this user
@@ -415,7 +422,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box group
     /// </summary>
-    public class BoxGroup : BoxModel
+    public sealed class BoxGroup : BoxEntityBase
     {
         /// <summary>
         /// The unique identifier for this group
@@ -481,7 +488,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box shared link
     /// </summary>
-    public class BoxSharedLink : BoxModel
+    public sealed class BoxSharedLink : BoxEntityBase
     {
         /// <summary>
         /// The URL of the shared link
@@ -571,7 +578,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents Box shared link permissions
     /// </summary>
-    public class BoxSharedLinkPermissions : BoxModel
+    public sealed class BoxSharedLinkPermissions : BoxEntityBase
     {
         /// <summary>
         /// Whether download is allowed
@@ -595,7 +602,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box file version
     /// </summary>
-    public class BoxFileVersion : BoxModel
+    public sealed class BoxFileVersion : BoxEntityBase
     {
         /// <summary>
         /// The unique identifier for this file version
@@ -673,7 +680,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box item collection
     /// </summary>
-    public class BoxItemCollection : BoxModel
+    public sealed class BoxItemCollection : BoxEntityBase
     {
         /// <summary>
         /// The total count of items
@@ -709,7 +716,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box path collection
     /// </summary>
-    public class BoxPathCollection : BoxModel
+    public sealed class BoxPathCollection : BoxEntityBase
     {
         /// <summary>
         /// The total count of path items
@@ -727,7 +734,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents Box permissions
     /// </summary>
-    public class BoxPermissions : BoxModel
+    public sealed class BoxPermissions : BoxEntityBase
     {
         /// <summary>
         /// Whether the user can delete this item
@@ -793,7 +800,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box lock
     /// </summary>
-    public class BoxLock : BoxModel
+    public sealed class BoxLock : BoxEntityBase
     {
         /// <summary>
         /// The unique identifier for this lock
@@ -847,7 +854,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents Box watermark info
     /// </summary>
-    public class BoxWatermarkInfo : BoxModel
+    public sealed class BoxWatermarkInfo : BoxEntityBase
     {
         /// <summary>
         /// Whether watermarking is enabled
@@ -859,7 +866,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents Box representation collection
     /// </summary>
-    public class BoxRepresentationCollection : BoxModel
+    public sealed class BoxRepresentationCollection : BoxEntityBase
     {
         /// <summary>
         /// The entries in this representation collection
@@ -871,7 +878,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box representation
     /// </summary>
-    public class BoxRepresentation : BoxModel
+    public sealed class BoxRepresentation : BoxEntityBase
     {
         /// <summary>
         /// The content of this representation
@@ -907,7 +914,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents Box representation content
     /// </summary>
-    public class BoxRepresentationContent : BoxModel
+    public sealed class BoxRepresentationContent : BoxEntityBase
     {
         /// <summary>
         /// The URL of this representation content
@@ -919,7 +926,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents Box representation info
     /// </summary>
-    public class BoxRepresentationInfo : BoxModel
+    public sealed class BoxRepresentationInfo : BoxEntityBase
     {
         /// <summary>
         /// The URL of this representation info
@@ -931,7 +938,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents Box representation status
     /// </summary>
-    public class BoxRepresentationStatus : BoxModel
+    public sealed class BoxRepresentationStatus : BoxEntityBase
     {
         /// <summary>
         /// The state of this representation
@@ -943,7 +950,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents Box classification
     /// </summary>
-    public class BoxClassification : BoxModel
+    public sealed class BoxClassification : BoxEntityBase
     {
         /// <summary>
         /// The color of this classification
@@ -967,7 +974,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box tracking code
     /// </summary>
-    public class BoxTrackingCode : BoxModel
+    public sealed class BoxTrackingCode : BoxEntityBase
     {
         /// <summary>
         /// The type of this tracking code
@@ -991,7 +998,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box email alias
     /// </summary>
-    public class BoxEmailAlias : BoxModel
+    public sealed class BoxEmailAlias : BoxEntityBase
     {
         /// <summary>
         /// The email address
@@ -1009,7 +1016,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box enterprise
     /// </summary>
-    public class BoxEnterprise : BoxModel
+    public sealed class BoxEnterprise : BoxEntityBase
     {
         /// <summary>
         /// The unique identifier for this enterprise
@@ -1033,7 +1040,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box order
     /// </summary>
-    public class BoxOrder : BoxModel
+    public sealed class BoxOrder : BoxEntityBase
     {
         /// <summary>
         /// The by field for this order
@@ -1051,7 +1058,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box webhook
     /// </summary>
-    public class BoxWebhook : BoxModel
+    public sealed class BoxWebhook : BoxEntityBase
     {
         /// <summary>
         /// The unique identifier for this webhook
@@ -1105,7 +1112,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents a Box webhook target
     /// </summary>
-    public class BoxWebhookTarget : BoxModel
+    public sealed class BoxWebhookTarget : BoxEntityBase
     {
         /// <summary>
         /// The unique identifier for this target
@@ -1123,7 +1130,7 @@ namespace TheTechIdea.Beep.Connectors.Box
     /// <summary>
     /// Represents Box search results
     /// </summary>
-    public class BoxSearchResult : BoxModel
+    public sealed class BoxSearchResult : BoxEntityBase
     {
         /// <summary>
         /// The total count of search results

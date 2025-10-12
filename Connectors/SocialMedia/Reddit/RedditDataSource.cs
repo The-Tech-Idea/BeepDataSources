@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -11,9 +12,12 @@ using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Reddit.Models;
 
-namespace BeepDataSources.Connectors.SocialMedia.Reddit
+namespace TheTechIdea.Beep.Connectors.Reddit
 {
     /// <summary>
     /// Configuration class for Reddit data source
@@ -90,17 +94,32 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
     /// Reddit data source implementation for Beep framework
     /// Supports Reddit API
     /// </summary>
-    [AddinAttribute(Category = "SocialMedia", Name = "RedditDataSource")]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Reddit)]
     public class RedditDataSource : WebAPIDataSource
     {
-    /// <summary>
-    /// Constructor for RedditDataSource
-    /// </summary>
-    public RedditDataSource(string datasourcename, IDMLogger logger, IDMEEditor editor, DataSourceType type, IErrorsInfo errors)
-        : base(datasourcename, logger, editor, type, errors)
-    {
-        InitializeEntities();
-    }
+        /// <summary>
+        /// Gets the WebAPI connection properties
+        /// </summary>
+        protected WebAPIConnectionProperties ConnectionProperties => Dataconnection?.ConnectionProp as WebAPIConnectionProperties;
+
+        /// <summary>
+        /// Reddit configuration
+        /// </summary>
+        private RedditConfig _config = new();
+
+        /// <summary>
+        /// Entity structures dictionary
+        /// </summary>
+        private Dictionary<string, EntityStructure> _entities = new();
+
+        /// <summary>
+        /// Constructor for RedditDataSource
+        /// </summary>
+        public RedditDataSource(string datasourcename, IDMLogger logger, IDMEEditor editor, DataSourceType type, IErrorsInfo errors)
+            : base(datasourcename, logger, editor, type, errors)
+        {
+            InitializeEntities();
+        }
 
     /// <summary>
     /// Initialize entities for Reddit data source
@@ -108,7 +127,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
     private void InitializeEntities()
     {
         // Posts/Submissions
-        Entities["posts"] = new EntityStructure
+        _entities["posts"] = new EntityStructure
         {
             EntityName = "posts",
             ViewID = 1,
@@ -133,7 +152,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
         };
 
         // Comments
-        Entities["comments"] = new EntityStructure
+        _entities["comments"] = new EntityStructure
         {
             EntityName = "comments",
             ViewID = 2,
@@ -156,7 +175,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
         };
 
         // Subreddits
-        Entities["subreddits"] = new EntityStructure
+        _entities["subreddits"] = new EntityStructure
         {
             EntityName = "subreddits",
             ViewID = 3,
@@ -178,7 +197,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
         };
 
         // Users
-        Entities["users"] = new EntityStructure
+        _entities["users"] = new EntityStructure
         {
             EntityName = "users",
             ViewID = 4,
@@ -199,7 +218,8 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
         };
 
         // Search Results
-        Entities["search"] = new EntityStructure
+        // Search
+        _entities["search"] = new EntityStructure
         {
             EntityName = "search",
             ViewID = 5,
@@ -269,7 +289,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
     /// <summary>
     /// Connect to Reddit API
     /// </summary>
-    public override async Task<IErrorsInfo> ConnectAsync(WebAPIConnectionProperties properties)
+    public async Task<IErrorsInfo> ConnectAsync(WebAPIConnectionProperties properties)
     {
         try
         {
@@ -282,7 +302,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
 
             // Test connection by getting user info
             var testUrl = $"{properties.BaseUrl}/api/v1/me";
-            var response = await HttpClient.GetAsync(testUrl);
+            var response = await GetAsync(testUrl);
 
             if (response.IsSuccessStatusCode)
             {
@@ -309,31 +329,17 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
     /// <summary>
     /// Disconnect from Reddit API
     /// </summary>
-    public override async Task<IErrorsInfo> DisconnectAsync()
+    public async Task<IErrorsInfo> DisconnectAsync()
     {
         ErrorObject.Flag = Errors.Ok;
         ErrorObject.Message = "Successfully disconnected from Reddit API";
         return ErrorObject;
     }
 
-        /// <summary>
-        /// Disconnect from Reddit API
-        /// </summary>
-        public async Task<bool> DisconnectAsync()
-        {
-            if (_httpClient != null)
-            {
-                _httpClient.Dispose();
-                _httpClient = null;
-            }
-            _isConnected = false;
-            return true;
-        }
-
     /// <summary>
     /// Get data from Reddit API
     /// </summary>
-    public override async Task<IErrorsInfo> GetEntityAsync(string entityName, List<AppFilter> filters = null)
+    public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter> filters = null)
     {
         try
         {
@@ -344,34 +350,34 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
             switch (entityName.ToLower())
             {
                 case "posts":
-                    var subreddit = filters.FirstOrDefault(f => f.FieldName == "subreddit")?.FieldValue?.ToString() ?? "all";
-                    var sort = filters.FirstOrDefault(f => f.FieldName == "sort")?.FieldValue?.ToString() ?? "hot";
-                    var limit = filters.FirstOrDefault(f => f.FieldName == "limit")?.FieldValue != null ? Convert.ToInt32(filters.FirstOrDefault(f => f.FieldName == "limit").FieldValue) : 25;
+                    var subreddit = filters.FirstOrDefault(f => f.FieldName == "subreddit")?.FilterValue?.ToString() ?? "all";
+                    var sort = filters.FirstOrDefault(f => f.FieldName == "sort")?.FilterValue?.ToString() ?? "hot";
+                    var limit = filters.FirstOrDefault(f => f.FieldName == "limit")?.FilterValue != null ? Convert.ToInt32(filters.FirstOrDefault(f => f.FieldName == "limit").FilterValue) : 25;
                     url = $"{ConnectionProperties.BaseUrl}/r/{subreddit}/{sort}?limit={limit}";
                     break;
 
                 case "comments":
-                    var linkId = filters.FirstOrDefault(f => f.FieldName == "link_id")?.FieldValue?.ToString() ?? "";
-                    var commentSort = filters.FirstOrDefault(f => f.FieldName == "sort")?.FieldValue?.ToString() ?? "top";
-                    var commentLimit = filters.FirstOrDefault(f => f.FieldName == "limit")?.FieldValue != null ? Convert.ToInt32(filters.FirstOrDefault(f => f.FieldName == "limit").FieldValue) : 25;
+                    var linkId = filters.FirstOrDefault(f => f.FieldName == "link_id")?.FilterValue?.ToString() ?? "";
+                    var commentSort = filters.FirstOrDefault(f => f.FieldName == "sort")?.FilterValue?.ToString() ?? "top";
+                    var commentLimit = filters.FirstOrDefault(f => f.FieldName == "limit")?.FilterValue != null ? Convert.ToInt32(filters.FirstOrDefault(f => f.FieldName == "limit").FilterValue) : 25;
                     url = $"{ConnectionProperties.BaseUrl}/comments/{linkId}?sort={commentSort}&limit={commentLimit}";
                     break;
 
                 case "subreddits":
-                    var subredditType = filters.FirstOrDefault(f => f.FieldName == "type")?.FieldValue?.ToString() ?? "popular";
-                    var subredditLimit = filters.FirstOrDefault(f => f.FieldName == "limit")?.FieldValue != null ? Convert.ToInt32(filters.FirstOrDefault(f => f.FieldName == "limit").FieldValue) : 25;
+                    var subredditType = filters.FirstOrDefault(f => f.FieldName == "type")?.FilterValue?.ToString() ?? "popular";
+                    var subredditLimit = filters.FirstOrDefault(f => f.FieldName == "limit")?.FilterValue != null ? Convert.ToInt32(filters.FirstOrDefault(f => f.FieldName == "limit").FilterValue) : 25;
                     url = $"{ConnectionProperties.BaseUrl}/subreddits/{subredditType}?limit={subredditLimit}";
                     break;
 
                 case "users":
-                    var username = filters.FirstOrDefault(f => f.FieldName == "username")?.FieldValue?.ToString() ?? "";
+                    var username = filters.FirstOrDefault(f => f.FieldName == "username")?.FilterValue?.ToString() ?? "";
                     url = $"{ConnectionProperties.BaseUrl}/user/{username}/about";
                     break;
 
                 case "search":
-                    var query = filters.FirstOrDefault(f => f.FieldName == "query")?.FieldValue?.ToString() ?? "";
-                    var searchSubreddit = filters.FirstOrDefault(f => f.FieldName == "subreddit")?.FieldValue?.ToString() ?? "";
-                    var searchLimit = filters.FirstOrDefault(f => f.FieldName == "limit")?.FieldValue != null ? Convert.ToInt32(filters.FirstOrDefault(f => f.FieldName == "limit").FieldValue) : 25;
+                    var query = filters.FirstOrDefault(f => f.FieldName == "query")?.FilterValue?.ToString() ?? "";
+                    var searchSubreddit = filters.FirstOrDefault(f => f.FieldName == "subreddit")?.FilterValue?.ToString() ?? "";
+                    var searchLimit = filters.FirstOrDefault(f => f.FieldName == "limit")?.FilterValue != null ? Convert.ToInt32(filters.FirstOrDefault(f => f.FieldName == "limit").FilterValue) : 25;
                     var subredditParam = string.IsNullOrEmpty(searchSubreddit) ? "" : $"&subreddit={searchSubreddit}";
                     url = $"{ConnectionProperties.BaseUrl}/search?q={Uri.EscapeDataString(query)}&limit={searchLimit}&sort=relevance&type=link{subredditParam}";
                     break;
@@ -379,7 +385,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
                 default:
                     ErrorObject.Flag = Errors.Failed;
                     ErrorObject.Message = $"Unsupported entity: {entityName}";
-                    return ErrorObject;
+                    return new List<object>();
             }
 
             // Rate limiting delay
@@ -389,32 +395,37 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
                 await Task.Delay(delay);
             }
 
-            var response = await HttpClient.GetAsync(url);
+            var response = await GetAsync(url);
             var jsonContent = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
             {
                 ErrorObject.Flag = Errors.Failed;
                 ErrorObject.Message = $"Reddit API request failed: {response.StatusCode} - {jsonContent}";
-                return ErrorObject;
+                return new List<object>();
             }
 
             // Parse and store the data
             var dataTable = ParseJsonToDataTable(jsonContent, entityName);
-            if (Entities.ContainsKey(entityName))
+            if (_entities.ContainsKey(entityName))
             {
-                Entities[entityName].EntityData = dataTable;
+                _entities[entityName].EntityData = dataTable;
             }
 
-            ErrorObject.Flag = Errors.Ok;
-            ErrorObject.Message = $"Successfully retrieved {entityName} data";
-            return ErrorObject;
+            // Convert DataTable to list of objects
+            var result = new List<object>();
+            foreach (DataRow row in dataTable.Rows)
+            {
+                result.Add(row);
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
             ErrorObject.Flag = Errors.Failed;
             ErrorObject.Message = $"Failed to get {entityName} data: {ex.Message}";
-            return ErrorObject;
+            return new List<object>();
         }
     }
 
@@ -424,7 +435,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
         private DataTable ParseJsonToDataTable(string jsonContent, string entityName)
         {
             var dataTable = new DataTable(entityName);
-            var entityStructure = Entities.ContainsKey(entityName.ToLower()) ? Entities[entityName.ToLower()] : null;
+            var entityStructure = _entities.ContainsKey(entityName.ToLower()) ? _entities[entityName.ToLower()] : null;
 
             try
             {
@@ -598,6 +609,60 @@ namespace BeepDataSources.Connectors.SocialMedia.Reddit
             var response = await GetAsync(url);
             string json = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<RedditResponse<RedditPost>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "RedditPost", PointType = EnumPointType.Function, Name = "CreatePost", Caption = "Create Reddit Post", ClassName = "RedditDataSource", misc = "ReturnType: RedditPost")]
+        public async Task<RedditPost> CreatePostAsync(RedditPost post)
+        {
+            string endpoint = $"{ConnectionProperties.BaseUrl}/api/submit";
+            var query = new Dictionary<string, string>
+            {
+                ["title"] = post.Title,
+                ["text"] = post.SelfText ?? "",
+                ["sr"] = post.Subreddit,
+                ["kind"] = "self" // for text posts
+            };
+            var response = await PostAsync(endpoint, null, query);
+            if (response == null || !response.IsSuccessStatusCode)
+                return null;
+            string json = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<RedditSubmitResponse>(json);
+            if (result?.Success == true && result?.Data?.Name != null)
+            {
+                // Fetch the created post
+                string postId = result.Data.Name.Split('_')[1]; // t3_xxxx
+                return await GetPostAsync(postId);
+            }
+            return null;
+        }
+
+        [CommandAttribute(ObjectType = "RedditPost", PointType = EnumPointType.Function, Name = "UpdatePost", Caption = "Update Reddit Post", ClassName = "RedditDataSource", misc = "ReturnType: RedditPost")]
+        public async Task<RedditPost> UpdatePostAsync(string postId, RedditPost post)
+        {
+            string endpoint = $"{ConnectionProperties.BaseUrl}/api/editusertext";
+            var query = new Dictionary<string, string>
+            {
+                ["thing_id"] = $"t3_{postId}",
+                ["text"] = post.SelfText ?? ""
+            };
+            var response = await PostAsync(endpoint, null, query);
+            if (response == null || !response.IsSuccessStatusCode)
+                return null;
+            // Fetch updated post
+            return await GetPostAsync(postId);
+        }
+
+        private async Task<RedditPost> GetPostAsync(string postId)
+        {
+            var url = $"{ConnectionProperties.BaseUrl}/by_id/t3_{postId}";
+            var response = await GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                string json = await response.Content.ReadAsStringAsync();
+                var redditResponse = JsonSerializer.Deserialize<RedditResponse<RedditPost>>(json);
+                return redditResponse?.Data?.Children?.FirstOrDefault()?.Data;
+            }
+            return null;
         }
     }
 }

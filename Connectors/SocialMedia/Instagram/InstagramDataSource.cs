@@ -330,5 +330,25 @@ namespace TheTechIdea.Beep.Connectors.Instagram
             var data = await GetEntityAsync("media.insights", filters).ConfigureAwait(false);
             return data?.Select(d => JsonSerializer.Deserialize<IgInsight>(JsonSerializer.Serialize(d))) ?? new List<IgInsight>();
         }
+
+        // POST methods for creating entities
+        [CommandAttribute(ObjectType = "IgMedia", PointType = EnumPointType.Function, Name = "CreateMedia", Caption = "Create Instagram Media", ClassName = "InstagramDataSource", misc = "ReturnType: IgMedia")]
+        public async Task<IgMedia> CreateMediaAsync(IgMedia media)
+        {
+            var response = await PostAsync("media", media);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<IgMedia>(json);
+        }
+
+        // PUT methods for updating entities
+        [CommandAttribute(ObjectType = "IgMedia", PointType = EnumPointType.Function, Name = "UpdateMedia", Caption = "Update Instagram Media", ClassName = "InstagramDataSource", misc = "ReturnType: IgMedia")]
+        public async Task<IgMedia> UpdateMediaAsync(string mediaId, IgMedia media)
+        {
+            var response = await PutAsync($"media/{mediaId}", media);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<IgMedia>(json);
+        }
     }
 }

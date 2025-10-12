@@ -167,5 +167,117 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Drip
 
             return list;
         }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(ObjectType = nameof(DripSubscriber), PointType = PointType.Function, Name = "GetSubscribers", Caption = "Get Subscribers", ClassName = "DripDataSource", misc = "GetSubscribers")]
+        public IEnumerable<DripSubscriber> GetSubscribers()
+        {
+            return GetEntity("subscribers", null).Cast<DripSubscriber>();
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripCampaign), PointType = PointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "DripDataSource", misc = "GetCampaigns")]
+        public IEnumerable<DripCampaign> GetCampaigns()
+        {
+            return GetEntity("campaigns", null).Cast<DripCampaign>();
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripTag), PointType = PointType.Function, Name = "GetTags", Caption = "Get Tags", ClassName = "DripDataSource", misc = "GetTags")]
+        public IEnumerable<DripTag> GetTags()
+        {
+            return GetEntity("tags", null).Cast<DripTag>();
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripWorkflow), PointType = PointType.Function, Name = "GetWorkflows", Caption = "Get Workflows", ClassName = "DripDataSource", misc = "GetWorkflows")]
+        public IEnumerable<DripWorkflow> GetWorkflows()
+        {
+            return GetEntity("workflows", null).Cast<DripWorkflow>();
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripForm), PointType = PointType.Function, Name = "GetForms", Caption = "Get Forms", ClassName = "DripDataSource", misc = "GetForms")]
+        public IEnumerable<DripForm> GetForms()
+        {
+            return GetEntity("forms", null).Cast<DripForm>();
+        }
+
+        // POST/PUT methods for creating and updating entities
+        [CommandAttribute(ObjectType = nameof(DripSubscriber), PointType = PointType.Function, Name = "CreateSubscriber", Caption = "Create Subscriber", ClassName = "DripDataSource", misc = "CreateSubscriber")]
+        public async Task<DripSubscriber> CreateSubscriber(DripSubscriber subscriber)
+        {
+            var endpoint = "v2/subscribers";
+            var response = await PostAsync<DripSubscriber>(endpoint, subscriber);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripSubscriber), PointType = PointType.Function, Name = "UpdateSubscriber", Caption = "Update Subscriber", ClassName = "DripDataSource", misc = "UpdateSubscriber")]
+        public async Task<DripSubscriber> UpdateSubscriber(string subscriberId, DripSubscriber subscriber)
+        {
+            var endpoint = $"v2/subscribers/{subscriberId}";
+            var response = await PutAsync<DripSubscriber>(endpoint, subscriber);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripCampaign), PointType = PointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "DripDataSource", misc = "CreateCampaign")]
+        public async Task<DripCampaign> CreateCampaign(DripCampaign campaign)
+        {
+            var endpoint = "v2/campaigns";
+            var response = await PostAsync<DripCampaign>(endpoint, campaign);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripCampaign), PointType = PointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "DripDataSource", misc = "UpdateCampaign")]
+        public async Task<DripCampaign> UpdateCampaign(string campaignId, DripCampaign campaign)
+        {
+            var endpoint = $"v2/campaigns/{campaignId}";
+            var response = await PutAsync<DripCampaign>(endpoint, campaign);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripTag), PointType = PointType.Function, Name = "CreateTag", Caption = "Create Tag", ClassName = "DripDataSource", misc = "CreateTag")]
+        public async Task<DripTag> CreateTag(DripTag tag)
+        {
+            var endpoint = "v2/tags";
+            var response = await PostAsync<DripTag>(endpoint, tag);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripTag), PointType = PointType.Function, Name = "UpdateTag", Caption = "Update Tag", ClassName = "DripDataSource", misc = "UpdateTag")]
+        public async Task<DripTag> UpdateTag(string tagId, DripTag tag)
+        {
+            var endpoint = $"v2/tags/{tagId}";
+            var response = await PutAsync<DripTag>(endpoint, tag);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripWorkflow), PointType = PointType.Function, Name = "CreateWorkflow", Caption = "Create Workflow", ClassName = "DripDataSource", misc = "CreateWorkflow")]
+        public async Task<DripWorkflow> CreateWorkflow(DripWorkflow workflow)
+        {
+            var endpoint = "v2/workflows";
+            var response = await PostAsync<DripWorkflow>(endpoint, workflow);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripWorkflow), PointType = PointType.Function, Name = "UpdateWorkflow", Caption = "Update Workflow", ClassName = "DripDataSource", misc = "UpdateWorkflow")]
+        public async Task<DripWorkflow> UpdateWorkflow(string workflowId, DripWorkflow workflow)
+        {
+            var endpoint = $"v2/workflows/{workflowId}";
+            var response = await PutAsync<DripWorkflow>(endpoint, workflow);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripForm), PointType = PointType.Function, Name = "CreateForm", Caption = "Create Form", ClassName = "DripDataSource", misc = "CreateForm")]
+        public async Task<DripForm> CreateForm(DripForm form)
+        {
+            var endpoint = "v2/forms";
+            var response = await PostAsync<DripForm>(endpoint, form);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(DripForm), PointType = PointType.Function, Name = "UpdateForm", Caption = "Update Form", ClassName = "DripDataSource", misc = "UpdateForm")]
+        public async Task<DripForm> UpdateForm(string formId, DripForm form)
+        {
+            var endpoint = $"v2/forms/{formId}";
+            var response = await PutAsync<DripForm>(endpoint, form);
+            return response;
+        }
     }
 }

@@ -149,6 +149,48 @@ namespace TheTechIdea.Beep.FacebookDataSource
             return apiResponse?.Data ?? new List<FacebookPicture>();
         }
 
+        // POST methods for creating entities
+        [CommandAttribute(ObjectType = "FacebookPost", PointType = EnumPointType.Function, Name = "CreatePost", Caption = "Create Facebook Post", ClassName = "FacebookDataSource", misc = "ReturnType: FacebookPost")]
+        public async Task<FacebookPost> CreatePostAsync(string pageId, FacebookPost post)
+        {
+            string endpoint = $"{pageId}/feed";
+            var response = await PostAsync(endpoint, post);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<FacebookPost>(json);
+        }
+
+        [CommandAttribute(ObjectType = "FacebookEvent", PointType = EnumPointType.Function, Name = "CreateEvent", Caption = "Create Facebook Event", ClassName = "FacebookDataSource", misc = "ReturnType: FacebookEvent")]
+        public async Task<FacebookEvent> CreateEventAsync(string pageId, FacebookEvent fbEvent)
+        {
+            string endpoint = $"{pageId}/events";
+            var response = await PostAsync(endpoint, fbEvent);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<FacebookEvent>(json);
+        }
+
+        // PUT methods for updating entities
+        [CommandAttribute(ObjectType = "FacebookPost", PointType = EnumPointType.Function, Name = "UpdatePost", Caption = "Update Facebook Post", ClassName = "FacebookDataSource", misc = "ReturnType: FacebookPost")]
+        public async Task<FacebookPost> UpdatePostAsync(string postId, FacebookPost post)
+        {
+            string endpoint = $"{postId}";
+            var response = await PutAsync(endpoint, post);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<FacebookPost>(json);
+        }
+
+        [CommandAttribute(ObjectType = "FacebookEvent", PointType = EnumPointType.Function, Name = "UpdateEvent", Caption = "Update Facebook Event", ClassName = "FacebookDataSource", misc = "ReturnType: FacebookEvent")]
+        public async Task<FacebookEvent> UpdateEventAsync(string eventId, FacebookEvent fbEvent)
+        {
+            string endpoint = $"{eventId}";
+            var response = await PutAsync(endpoint, fbEvent);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<FacebookEvent>(json);
+        }
+
         /// <summary>
         /// Dispose resources
         /// </summary>

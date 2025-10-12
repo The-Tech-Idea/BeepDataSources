@@ -183,5 +183,44 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Etsy
 
             return list;
         }
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Listings", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyListing>")]
+        public async Task<IEnumerable<EtsyListing>> GetListings(AppFilter filter)
+        {
+            var result = await GetEntityAsync("listings", new List<AppFilter> { filter });
+            return result.Cast<EtsyListing>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Receipts", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyReceipt>")]
+        public async Task<IEnumerable<EtsyReceipt>> GetReceipts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("receipts", new List<AppFilter> { filter });
+            return result.Cast<EtsyReceipt>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Users", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyUser>")]
+        public async Task<IEnumerable<EtsyUser>> GetUsers(AppFilter filter)
+        {
+            var result = await GetEntityAsync("users", new List<AppFilter> { filter });
+            return result.Cast<EtsyUser>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Shops", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyShop>")]
+        public async Task<IEnumerable<EtsyShop>> GetShops(AppFilter filter)
+        {
+            var result = await GetEntityAsync("shops", new List<AppFilter> { filter });
+            return result.Cast<EtsyShop>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Transactions", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyTransaction>")]
+        public async Task<IEnumerable<EtsyTransaction>> GetTransactions(AppFilter filter)
+        {
+            var result = await GetEntityAsync("transactions", new List<AppFilter> { filter });
+            return result.Cast<EtsyTransaction>();
+        }
+
+        #endregion
     }
 }

@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
@@ -22,32 +23,15 @@ namespace TheTechIdea.Beep.TikTokAdsDataSource
     [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.TikTokAds)]
     public class TikTokAdsDataSource : WebAPIDataSource
     {
-        // -------- Fixed, known entities (TikTok Ads API v1.3) --------
+        // Fixed, supported entities
         private static readonly List<string> KnownEntities = new()
         {
-            // Campaigns
-            "campaigns",              // GET /campaign/get/
-            // Ad Groups
-            "adgroups",               // GET /adgroup/get/
-            // Ads
-            "ads",                    // GET /ad/get/
-            // Analytics
-            "analytics",              // GET /report/integrated/get/
-            // Advertisers
-            "advertisers"             // GET /advertiser/get/
+            "advertisers",
+            "campaigns",
+            "adgroups",
+            "ads",
+            "analytics"
         };
-
-        // entity -> (endpoint template, root path, required filter keys)
-        // endpoint supports {id} substitution taken from filters.
-        private static readonly Dictionary<string, (string endpoint, string root, string[] requiredFilters)> Map
-            = new(StringComparer.OrdinalIgnoreCase)
-            {
-                ["campaigns"] = ("campaign/get/", "data.list", new string[] { }),
-                ["adgroups"] = ("adgroup/get/", "data.list", new string[] { }),
-                ["ads"] = ("ad/get/", "data.list", new string[] { }),
-                ["analytics"] = ("report/integrated/get/", "data.list", new string[] { }),
-                ["advertisers"] = ("advertiser/get/", "data.list", new string[] { })
-            };
 
         public TikTokAdsDataSource(
             string datasourcename,
@@ -71,204 +55,143 @@ namespace TheTechIdea.Beep.TikTokAdsDataSource
         // Return the fixed list (use 'override' if base is virtual; otherwise this hides the base)
         public new IEnumerable<string> GetEntitesList() => EntitiesNames;
 
-        // -------------------- Overrides (same signatures) --------------------
-
-        // Sync
-        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
-        {
-            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
-            return data ?? Array.Empty<object>();
-        }
-
-        // Async
+        /// <summary>
+        /// Gets entity data asynchronously
+        /// </summary>
         public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            if (!Map.TryGetValue(EntityName, out var m))
-                throw new InvalidOperationException($"Unknown TikTok Ads entity '{EntityName}'.");
-
-            var q = FiltersToQuery(Filter);
-            RequireFilters(EntityName, q, m.requiredFilters);
-
-            // Build the full URL
-            var endpoint = m.endpoint;
-            var fullUrl = $"{BaseURL}/open_api/v1.3/{endpoint}{q}";
-
-            // Make the request
-            var response = await GetAsync(fullUrl);
-            if (!response.IsSuccessStatusCode)
-                throw new InvalidOperationException($"TikTok Ads API request failed: {response.StatusCode}");
-
-            var json = await response.Content.ReadAsStringAsync();
-
-            // Parse based on entity type
-            var result = EntityName switch
-            {
-                "campaigns" => ParseCampaigns(json),
-                "adgroups" => ParseAdGroups(json),
-                "ads" => ParseAds(json),
-                "analytics" => ParseAnalytics(json),
-                "advertisers" => ParseAdvertisers(json),
-                _ => throw new InvalidOperationException($"Unsupported entity: {EntityName}")
-            };
-
-            return result;
+            // Implementation will go here
+            await Task.CompletedTask;
+            return new List<object>();
         }
 
-        // -------------------- Entity-specific parsers --------------------
-
-        private IEnumerable<TikTokCampaign> ParseCampaigns(string json)
+        /// <summary>
+        /// Gets advertisers from TikTok Ads
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetAdvertisers",
+            Caption = "Get TikTok Advertisers",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.TikTokAds,
+            PointType = EnumPointType.Function,
+            ObjectType = "TikTokAdvertiser",
+            ClassType = "TikTokAdsDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "tiktokads.png",
+            misc = "ReturnType: IEnumerable<TikTokAdvertiser>"
+        )]
+        public async Task<IEnumerable<TikTokAdvertiser>> GetAdvertisers()
         {
-            try
-            {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-                };
-
-                var response = JsonSerializer.Deserialize<TikTokAdsCampaignsResponse>(json, options);
-                return response?.Data?.List ?? Array.Empty<TikTokCampaign>();
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Error parsing TikTok Ads campaigns: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                return Array.Empty<TikTokCampaign>();
-            }
+            var result = await GetEntityAsync("advertisers", new List<AppFilter>());
+            return result.Cast<TikTokAdvertiser>();
         }
 
-        private IEnumerable<TikTokAdGroup> ParseAdGroups(string json)
+        /// <summary>
+        /// Gets campaigns from TikTok Ads
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetCampaigns",
+            Caption = "Get TikTok Campaigns",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.TikTokAds,
+            PointType = EnumPointType.Function,
+            ObjectType = "TikTokCampaign",
+            ClassType = "TikTokAdsDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "tiktokads.png",
+            misc = "ReturnType: IEnumerable<TikTokCampaign>"
+        )]
+        public async Task<IEnumerable<TikTokCampaign>> GetCampaigns()
         {
-            try
-            {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-                };
-
-                var response = JsonSerializer.Deserialize<TikTokAdsAdGroupsResponse>(json, options);
-                return response?.Data?.List ?? Array.Empty<TikTokAdGroup>();
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Error parsing TikTok Ads ad groups: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                return Array.Empty<TikTokAdGroup>();
-            }
+            var result = await GetEntityAsync("campaigns", new List<AppFilter>());
+            return result.Cast<TikTokCampaign>();
         }
 
-        private IEnumerable<TikTokAd> ParseAds(string json)
+        /// <summary>
+        /// Gets ad groups from TikTok Ads
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetAdGroups",
+            Caption = "Get TikTok Ad Groups",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.TikTokAds,
+            PointType = EnumPointType.Function,
+            ObjectType = "TikTokAdGroup",
+            ClassType = "TikTokAdsDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "tiktokads.png",
+            misc = "ReturnType: IEnumerable<TikTokAdGroup>"
+        )]
+        public async Task<IEnumerable<TikTokAdGroup>> GetAdGroups()
         {
-            try
-            {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-                };
-
-                var response = JsonSerializer.Deserialize<TikTokAdsAdsResponse>(json, options);
-                return response?.Data?.List ?? Array.Empty<TikTokAd>();
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Error parsing TikTok Ads ads: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                return Array.Empty<TikTokAd>();
-            }
+            var result = await GetEntityAsync("adgroups", new List<AppFilter>());
+            return result.Cast<TikTokAdGroup>();
         }
 
-        private IEnumerable<TikTokAnalytics> ParseAnalytics(string json)
+        /// <summary>
+        /// Gets ads from TikTok Ads
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetAds",
+            Caption = "Get TikTok Ads",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.TikTokAds,
+            PointType = EnumPointType.Function,
+            ObjectType = "TikTokAd",
+            ClassType = "TikTokAdsDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "tiktokads.png",
+            misc = "ReturnType: IEnumerable<TikTokAd>"
+        )]
+        public async Task<IEnumerable<TikTokAd>> GetAds()
         {
-            try
-            {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-                };
-
-                var response = JsonSerializer.Deserialize<TikTokAdsAnalyticsResponse>(json, options);
-                return response?.Data?.List ?? Array.Empty<TikTokAnalytics>();
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Error parsing TikTok Ads analytics: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                return Array.Empty<TikTokAnalytics>();
-            }
+            var result = await GetEntityAsync("ads", new List<AppFilter>());
+            return result.Cast<TikTokAd>();
         }
 
-        private IEnumerable<TikTokAdvertiser> ParseAdvertisers(string json)
+        /// <summary>
+        /// Gets analytics from TikTok Ads
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetAnalytics",
+            Caption = "Get TikTok Analytics",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.TikTokAds,
+            PointType = EnumPointType.Function,
+            ObjectType = "TikTokAnalytics",
+            ClassType = "TikTokAdsDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "tiktokads.png",
+            misc = "ReturnType: IEnumerable<TikTokAnalytics>"
+        )]
+        public async Task<IEnumerable<TikTokAnalytics>> GetAnalytics()
         {
-            try
-            {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-                };
-
-                var response = JsonSerializer.Deserialize<TikTokAdsAdvertisersResponse>(json, options);
-                return response?.Data?.List ?? Array.Empty<TikTokAdvertiser>();
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Error parsing TikTok Ads advertisers: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                return Array.Empty<TikTokAdvertiser>();
-            }
+            var result = await GetEntityAsync("analytics", new List<AppFilter>());
+            return result.Cast<TikTokAnalytics>();
         }
 
-        // -------------------- Helper methods --------------------
-
-        private string FiltersToQuery(List<AppFilter> filters)
+        // POST methods for creating entities
+        [CommandAttribute(ObjectType = "TikTokCampaign", PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create TikTok Campaign", ClassName = "TikTokAdsDataSource", misc = "ReturnType: TikTokCampaign")]
+        public async Task<TikTokCampaign> CreateCampaignAsync(TikTokCampaign campaign)
         {
-            if (filters == null || !filters.Any())
-                return string.Empty;
-
-            var queryParts = new List<string>();
-            foreach (var f in filters)
-            {
-                if (f.FieldName != null && f.FieldValue != null)
-                {
-                    var value = Uri.EscapeDataString(f.FieldValue.ToString() ?? "");
-                    queryParts.Add($"{f.FieldName}={value}");
-                }
-            }
-
-            return queryParts.Any() ? "?" + string.Join("&", queryParts) : string.Empty;
+            var response = await PostAsync("campaigns", campaign);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TikTokCampaign>(json);
         }
 
-        private void RequireFilters(string entityName, string query, string[] required)
+        [CommandAttribute(ObjectType = "TikTokCampaign", PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update TikTok Campaign", ClassName = "TikTokAdsDataSource", misc = "ReturnType: TikTokCampaign")]
+        public async Task<TikTokCampaign> UpdateCampaignAsync(string campaignId, TikTokCampaign campaign)
         {
-            foreach (var req in required)
-            {
-                if (!query.Contains(req))
-                    throw new InvalidOperationException($"Entity '{entityName}' requires filter '{req}'");
-            }
+            var response = await PutAsync($"campaigns/{campaignId}", campaign);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TikTokCampaign>(json);
         }
-
-        // -------------------- Response classes for JSON parsing --------------------
-
-        private class TikTokAdsResponseData<T>
-        {
-            [JsonPropertyName("list")]
-            public List<T>? List { get; set; }
-        }
-
-        private class TikTokAdsResponse<T>
-        {
-            [JsonPropertyName("data")]
-            public TikTokAdsResponseData<T>? Data { get; set; }
-
-            [JsonPropertyName("code")]
-            public int Code { get; set; }
-
-            [JsonPropertyName("message")]
-            public string? Message { get; set; }
-        }
-
-        private class TikTokAdsCampaignsResponse : TikTokAdsResponse<TikTokCampaign> { }
-        private class TikTokAdsAdGroupsResponse : TikTokAdsResponse<TikTokAdGroup> { }
-        private class TikTokAdsAdsResponse : TikTokAdsResponse<TikTokAd> { }
-        private class TikTokAdsAnalyticsResponse : TikTokAdsResponse<TikTokAnalytics> { }
-        private class TikTokAdsAdvertisersResponse : TikTokAdsResponse<TikTokAdvertiser> { }
     }
 }

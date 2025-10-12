@@ -135,8 +135,8 @@ Cloud-Storage/
 - **Authentication**: OAuth 2.0 / Service Account
 - **Entities**: Files, Folders, Shared Drives, Permissions, Revisions, Comments
 - **Complexity**: Medium-High (extensive file operations)
-- **Status**: ✅ Completed (August 27, 2025)
-- **Features**: Full CRUD operations, entity discovery, metadata support, OAuth 2.0/Service Account authentication, comprehensive file/folder management, sharing and permissions, revision control, change tracking
+- **Status**: ✅ Completed (October 10, 2025)
+- **Features**: Full CRUD operations, entity discovery, metadata support, OAuth 2.0/Service Account authentication, comprehensive file/folder management, sharing and permissions, revision control, change tracking, 12 CommandAttribute methods
 
 ### Dropbox
 - **API Version**: Dropbox API v2

@@ -15,9 +15,11 @@ using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Vis;
 
 namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
 {
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce)]
     public class BigCommerceDataSource : WebAPIDataSource
     {
         private readonly HttpClient _httpClient;
@@ -269,5 +271,65 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
         // Properties for BigCommerce authentication
         private string? AccessToken => (Dataconnection?.ConnectionProp as WebAPIConnectionProperties)?.ApiKey;
         private string? BaseURL => (Dataconnection?.ConnectionProp as WebAPIConnectionProperties)?.Url;
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceProduct>")]
+        public async Task<IEnumerable<BigCommerceProduct>> GetProducts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("products", new List<AppFilter> { filter });
+            return result.Cast<BigCommerceProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Categories", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceCategory>")]
+        public async Task<IEnumerable<BigCommerceCategory>> GetCategories(AppFilter filter)
+        {
+            var result = await GetEntityAsync("categories", new List<AppFilter> { filter });
+            return result.Cast<BigCommerceCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Brands", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceBrand>")]
+        public async Task<IEnumerable<BigCommerceBrand>> GetBrands(AppFilter filter)
+        {
+            var result = await GetEntityAsync("brands", new List<AppFilter> { filter });
+            return result.Cast<BigCommerceBrand>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Customers", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceCustomer>")]
+        public async Task<IEnumerable<BigCommerceCustomer>> GetCustomers(AppFilter filter)
+        {
+            var result = await GetEntityAsync("customers", new List<AppFilter> { filter });
+            return result.Cast<BigCommerceCustomer>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Orders", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceOrder>")]
+        public async Task<IEnumerable<BigCommerceOrder>> GetOrders(AppFilter filter)
+        {
+            var result = await GetEntityAsync("orders", new List<AppFilter> { filter });
+            return result.Cast<BigCommerceOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Carts", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceCart>")]
+        public async Task<IEnumerable<BigCommerceCart>> GetCarts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("carts", new List<AppFilter> { filter });
+            return result.Cast<BigCommerceCart>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Coupons", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceCoupon>")]
+        public async Task<IEnumerable<BigCommerceCoupon>> GetCoupons(AppFilter filter)
+        {
+            var result = await GetEntityAsync("coupons", new List<AppFilter> { filter });
+            return result.Cast<BigCommerceCoupon>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Inventory", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceInventoryItem>")]
+        public async Task<IEnumerable<BigCommerceInventoryItem>> GetInventory(AppFilter filter)
+        {
+            var result = await GetEntityAsync("inventory", new List<AppFilter> { filter });
+            return result.Cast<BigCommerceInventoryItem>();
+        }
+
+        #endregion
     }
 }

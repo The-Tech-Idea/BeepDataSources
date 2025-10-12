@@ -162,7 +162,7 @@ namespace TheTechIdea.Beep.Connectors.Tableau.Models
     public class TableauTags
     {
         [JsonPropertyName("tag")]
-        public List<TableauTag> Tag { get; set; }
+        public List<TableauTag>? Tag { get; set; }
     }
 
     public class TableauTag
@@ -174,7 +174,7 @@ namespace TheTechIdea.Beep.Connectors.Tableau.Models
     public class TableauViews
     {
         [JsonPropertyName("view")]
-        public List<TableauView> View { get; set; }
+        public List<TableauView>? View { get; set; }
     }
 
     public class TableauView
@@ -498,49 +498,49 @@ namespace TheTechIdea.Beep.Connectors.Tableau.Models
     public class TableauWorkbooks
     {
         [JsonPropertyName("workbook")]
-        public List<TableauWorkbook> Workbook { get; set; }
+        public List<TableauWorkbook>? Workbook { get; set; }
     }
 
     public class TableauDatasources
     {
         [JsonPropertyName("datasource")]
-        public List<TableauDataSource> Datasource { get; set; }
+        public List<TableauDataSource>? Datasource { get; set; }
     }
 
     public class TableauUsers
     {
         [JsonPropertyName("user")]
-        public List<TableauUser> User { get; set; }
+        public List<TableauUser>? User { get; set; }
     }
 
     public class TableauGroups
     {
         [JsonPropertyName("group")]
-        public List<TableauGroup> Group { get; set; }
+        public List<TableauGroup>? Group { get; set; }
     }
 
     public class TableauProjects
     {
         [JsonPropertyName("project")]
-        public List<TableauProject> Project { get; set; }
+        public List<TableauProject>? Project { get; set; }
     }
 
     public class TableauJobs
     {
         [JsonPropertyName("job")]
-        public List<TableauJob> Job { get; set; }
+        public List<TableauJob>? Job { get; set; }
     }
 
     public class TableauSubscriptions
     {
         [JsonPropertyName("subscription")]
-        public List<TableauSubscription> Subscription { get; set; }
+        public List<TableauSubscription>? Subscription { get; set; }
     }
 
     public class TableauSchedules
     {
         [JsonPropertyName("schedule")]
-        public List<TableauSchedule> Schedule { get; set; }
+        public List<TableauSchedule>? Schedule { get; set; }
     }
 
     public class TableauError

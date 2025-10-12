@@ -14,6 +14,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Communication.Flock.Models;
 
 namespace TheTechIdea.Beep.Connectors.Communication.Flock
 {
@@ -90,7 +91,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Flock
             using var resp = await GetAsync(m.endpoint, q).ConfigureAwait(false);
             if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
 
-            return ExtractArray(resp, m.root);
+            return ExtractArray(resp, m.root, EntityName);
         }
 
         // paged
@@ -107,7 +108,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Flock
             q["offset"] = ((pageNumber - 1) * pageSize).ToString();
 
             var resp = GetAsync(m.endpoint, q).ConfigureAwait(false).GetAwaiter().GetResult();
-            var items = ExtractArray(resp, m.root);
+            var items = ExtractArray(resp, m.root, EntityName);
 
             // Basic pagination estimate
             int totalRecordsSoFar = (pageNumber - 1) * Math.Max(1, pageSize) + items.Count;
@@ -147,7 +148,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Flock
             }
         }
 
-        private static List<object> ExtractArray(HttpResponseMessage resp, string? rootPath)
+        private static List<object> ExtractArray(HttpResponseMessage resp, string? rootPath, string entityName)
         {
             var list = new List<object>();
             if (resp == null) return list;
@@ -173,18 +174,240 @@ namespace TheTechIdea.Beep.Connectors.Communication.Flock
                 list.Capacity = node.GetArrayLength();
                 foreach (var el in node.EnumerateArray())
                 {
-                    var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(el.GetRawText(), opts);
-                    if (obj != null) list.Add(obj);
+                    var entity = DeserializeEntity(el.GetRawText(), entityName, opts);
+                    if (entity != null) list.Add(entity);
                 }
             }
             else if (node.ValueKind == JsonValueKind.Object)
             {
                 // wrap single object
-                var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(node.GetRawText(), opts);
-                if (obj != null) list.Add(obj);
+                var entity = DeserializeEntity(node.GetRawText(), entityName, opts);
+                if (entity != null) list.Add(entity);
             }
 
             return list;
         }
+
+        private static object? DeserializeEntity(string json, string entityName, JsonSerializerOptions opts)
+        {
+            return entityName.ToLowerInvariant() switch
+            {
+                "users" => JsonSerializer.Deserialize<FlockUser>(json, opts),
+                "user" => JsonSerializer.Deserialize<FlockUser>(json, opts),
+                "user_presence" => JsonSerializer.Deserialize<FlockUserPresence>(json, opts),
+                "groups" => JsonSerializer.Deserialize<FlockGroup>(json, opts),
+                "group" => JsonSerializer.Deserialize<FlockGroup>(json, opts),
+                "group_members" => JsonSerializer.Deserialize<FlockGroupMember>(json, opts),
+                "channels" => JsonSerializer.Deserialize<FlockChannel>(json, opts),
+                "channel" => JsonSerializer.Deserialize<FlockChannel>(json, opts),
+                "channel_members" => JsonSerializer.Deserialize<FlockChannelMember>(json, opts),
+                "messages" => JsonSerializer.Deserialize<FlockMessage>(json, opts),
+                "message" => JsonSerializer.Deserialize<FlockMessage>(json, opts),
+                "message_reactions" => JsonSerializer.Deserialize<FlockMessageReaction>(json, opts),
+                "message_replies" => JsonSerializer.Deserialize<FlockMessageReply>(json, opts),
+                "files" => JsonSerializer.Deserialize<FlockFile>(json, opts),
+                "file" => JsonSerializer.Deserialize<FlockFile>(json, opts),
+                "contacts" => JsonSerializer.Deserialize<FlockContact>(json, opts),
+                "contact" => JsonSerializer.Deserialize<FlockContact>(json, opts),
+                "apps" => JsonSerializer.Deserialize<FlockApp>(json, opts),
+                "app" => JsonSerializer.Deserialize<FlockApp>(json, opts),
+                "webhooks" => JsonSerializer.Deserialize<FlockWebhook>(json, opts),
+                "webhook" => JsonSerializer.Deserialize<FlockWebhook>(json, opts),
+                "tokens" => JsonSerializer.Deserialize<FlockToken>(json, opts),
+                "token" => JsonSerializer.Deserialize<FlockToken>(json, opts),
+                _ => JsonSerializer.Deserialize<Dictionary<string, object>>(json, opts)
+            };
+        }
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockUser", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockUser>")]
+        public List<FlockUser> GetUsers()
+        {
+            return GetEntity("users", new List<AppFilter>()).Cast<FlockUser>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockUser", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "FlockUser")]
+        public FlockUser? GetUser(string userId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "userId", FilterValue = userId } };
+            return GetEntity("user", filters).Cast<FlockUser>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockUserPresence", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "FlockUserPresence")]
+        public FlockUserPresence? GetUserPresence(string userId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "userId", FilterValue = userId } };
+            return GetEntity("user_presence", filters).Cast<FlockUserPresence>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockGroup", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockGroup>")]
+        public List<FlockGroup> GetGroups()
+        {
+            return GetEntity("groups", new List<AppFilter>()).Cast<FlockGroup>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockGroup", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "FlockGroup")]
+        public FlockGroup? GetGroup(string groupId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "groupId", FilterValue = groupId } };
+            return GetEntity("group", filters).Cast<FlockGroup>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockGroupMember", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockGroupMember>")]
+        public List<FlockGroupMember> GetGroupMembers(string groupId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "groupId", FilterValue = groupId } };
+            return GetEntity("group_members", filters).Cast<FlockGroupMember>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockChannel", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockChannel>")]
+        public List<FlockChannel> GetChannels()
+        {
+            return GetEntity("channels", new List<AppFilter>()).Cast<FlockChannel>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockChannel", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "FlockChannel")]
+        public FlockChannel? GetChannel(string channelId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "channelId", FilterValue = channelId } };
+            return GetEntity("channel", filters).Cast<FlockChannel>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockChannelMember", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockChannelMember>")]
+        public List<FlockChannelMember> GetChannelMembers(string channelId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "channelId", FilterValue = channelId } };
+            return GetEntity("channel_members", filters).Cast<FlockChannelMember>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockMessage", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockMessage>")]
+        public List<FlockMessage> GetMessages(string channelId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "channelId", FilterValue = channelId } };
+            return GetEntity("messages", filters).Cast<FlockMessage>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockMessage", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "FlockMessage")]
+        public FlockMessage? GetMessage(string messageId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "messageId", FilterValue = messageId } };
+            return GetEntity("message", filters).Cast<FlockMessage>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockMessageReaction", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockMessageReaction>")]
+        public List<FlockMessageReaction> GetMessageReactions(string messageId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "messageId", FilterValue = messageId } };
+            return GetEntity("message_reactions", filters).Cast<FlockMessageReaction>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockMessageReply", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockMessageReply>")]
+        public List<FlockMessageReply> GetMessageReplies(string messageId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "messageId", FilterValue = messageId } };
+            return GetEntity("message_replies", filters).Cast<FlockMessageReply>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockFile", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockFile>")]
+        public List<FlockFile> GetFiles(string channelId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "channelId", FilterValue = channelId } };
+            return GetEntity("files", filters).Cast<FlockFile>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockFile", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "FlockFile")]
+        public FlockFile? GetFile(string fileId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "fileId", FilterValue = fileId } };
+            return GetEntity("file", filters).Cast<FlockFile>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockContact", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockContact>")]
+        public List<FlockContact> GetContacts()
+        {
+            return GetEntity("contacts", new List<AppFilter>()).Cast<FlockContact>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockContact", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "FlockContact")]
+        public FlockContact? GetContact(string contactId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "contactId", FilterValue = contactId } };
+            return GetEntity("contact", filters).Cast<FlockContact>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockApp", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockApp>")]
+        public List<FlockApp> GetApps()
+        {
+            return GetEntity("apps", new List<AppFilter>()).Cast<FlockApp>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockApp", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "FlockApp")]
+        public FlockApp? GetApp(string appId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "appId", FilterValue = appId } };
+            return GetEntity("app", filters).Cast<FlockApp>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockWebhook", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockWebhook>")]
+        public List<FlockWebhook> GetWebhooks()
+        {
+            return GetEntity("webhooks", new List<AppFilter>()).Cast<FlockWebhook>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockWebhook", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "FlockWebhook")]
+        public FlockWebhook? GetWebhook(string webhookId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "webhookId", FilterValue = webhookId } };
+            return GetEntity("webhook", filters).Cast<FlockWebhook>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockToken", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "List<FlockToken>")]
+        public List<FlockToken> GetTokens()
+        {
+            return GetEntity("tokens", new List<AppFilter>()).Cast<FlockToken>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock, PointType = EnumPointType.Function, ObjectType = "FlockToken", ClassName = "FlockDataSource", Showin = ShowinType.Both, misc = "FlockToken")]
+        public FlockToken? GetToken(string tokenId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "tokenId", FilterValue = tokenId } };
+            return GetEntity("token", filters).Cast<FlockToken>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Name = "SendMessageAsync", Caption = "Send Flock Message",
+            ObjectType = "FlockMessage", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock,
+            ClassType = "FlockDataSource", Showin = ShowinType.Both, Order = 1,
+            iconimage = "flock.png", misc = "Send a message")]
+        public async Task<IEnumerable<FlockMessage>> SendMessageAsync(FlockMessage message, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("chat.sendMessage", message, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<FlockMessage>>(result);
+        }
+
+        [CommandAttribute(Name = "CreateGroupAsync", Caption = "Create Flock Group",
+            ObjectType = "FlockGroup", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock,
+            ClassType = "FlockDataSource", Showin = ShowinType.Both, Order = 2,
+            iconimage = "flock.png", misc = "Create a group")]
+        public async Task<IEnumerable<FlockGroup>> CreateGroupAsync(FlockGroup group, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("groups.create", group, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<FlockGroup>>(result);
+        }
+
+        [CommandAttribute(Name = "CreateChannelAsync", Caption = "Create Flock Channel",
+            ObjectType = "FlockChannel", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock,
+            ClassType = "FlockDataSource", Showin = ShowinType.Both, Order = 3,
+            iconimage = "flock.png", misc = "Create a channel")]
+        public async Task<IEnumerable<FlockChannel>> CreateChannelAsync(FlockChannel channel, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("channels.create", channel, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<FlockChannel>>(result);
+        }
+
+        #endregion
     }
 }

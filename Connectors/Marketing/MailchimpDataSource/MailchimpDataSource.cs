@@ -529,5 +529,108 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Mailchimp
 
             return list;
         }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(ObjectType = typeof(MailchimpList), PointType = PointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "MailchimpDataSource", misc = "GetLists")]
+        public IEnumerable<MailchimpList> GetLists()
+        {
+            return GetEntity("lists", null).Cast<MailchimpList>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(MailchimpCampaign), PointType = PointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "MailchimpDataSource", misc = "GetCampaigns")]
+        public IEnumerable<MailchimpCampaign> GetCampaigns()
+        {
+            return GetEntity("campaigns", null).Cast<MailchimpCampaign>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(MailchimpMember), PointType = PointType.Function, Name = "GetMembers", Caption = "Get Members", ClassName = "MailchimpDataSource", misc = "GetMembers")]
+        public IEnumerable<MailchimpMember> GetMembers(string listId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "list_id", FilterValue = listId } };
+            return GetEntity("list_members", filters).Cast<MailchimpMember>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(MailchimpTemplate), PointType = PointType.Function, Name = "GetTemplates", Caption = "Get Templates", ClassName = "MailchimpDataSource", misc = "GetTemplates")]
+        public IEnumerable<MailchimpTemplate> GetTemplates()
+        {
+            return GetEntity("templates", null).Cast<MailchimpTemplate>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(MailchimpAutomation), PointType = PointType.Function, Name = "GetAutomations", Caption = "Get Automations", ClassName = "MailchimpDataSource", misc = "GetAutomations")]
+        public IEnumerable<MailchimpAutomation> GetAutomations()
+        {
+            return GetEntity("automations", null).Cast<MailchimpAutomation>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(MailchimpReport), PointType = PointType.Function, Name = "GetReports", Caption = "Get Reports", ClassName = "MailchimpDataSource", misc = "GetReports")]
+        public IEnumerable<MailchimpReport> GetReports()
+        {
+            return GetEntity("reports", null).Cast<MailchimpReport>();
+        }
+
+        // POST/PUT methods for creating and updating entities
+        [CommandAttribute(ObjectType = typeof(MailchimpMember), PointType = PointType.Function, Name = "CreateListMember", Caption = "Create List Member", ClassName = "MailchimpDataSource", misc = "CreateListMember")]
+        public async Task<MailchimpMember> CreateListMember(string listId, MailchimpMember member)
+        {
+            var endpoint = $"lists/{listId}/members";
+            var response = await PostAsync<MailchimpMember>(endpoint, member);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = typeof(MailchimpMember), PointType = PointType.Function, Name = "UpdateListMember", Caption = "Update List Member", ClassName = "MailchimpDataSource", misc = "UpdateListMember")]
+        public async Task<MailchimpMember> UpdateListMember(string listId, string subscriberHash, MailchimpMember member)
+        {
+            var endpoint = $"lists/{listId}/members/{subscriberHash}";
+            var response = await PutAsync<MailchimpMember>(endpoint, member);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = typeof(MailchimpCampaign), PointType = PointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "MailchimpDataSource", misc = "CreateCampaign")]
+        public async Task<MailchimpCampaign> CreateCampaign(MailchimpCampaign campaign)
+        {
+            var endpoint = "campaigns";
+            var response = await PostAsync<MailchimpCampaign>(endpoint, campaign);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = typeof(MailchimpCampaign), PointType = PointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "MailchimpDataSource", misc = "UpdateCampaign")]
+        public async Task<MailchimpCampaign> UpdateCampaign(string campaignId, MailchimpCampaign campaign)
+        {
+            var endpoint = $"campaigns/{campaignId}";
+            var response = await PutAsync<MailchimpCampaign>(endpoint, campaign);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = typeof(MailchimpTemplate), PointType = PointType.Function, Name = "CreateTemplate", Caption = "Create Template", ClassName = "MailchimpDataSource", misc = "CreateTemplate")]
+        public async Task<MailchimpTemplate> CreateTemplate(MailchimpTemplate template)
+        {
+            var endpoint = "templates";
+            var response = await PostAsync<MailchimpTemplate>(endpoint, template);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = typeof(MailchimpTemplate), PointType = PointType.Function, Name = "UpdateTemplate", Caption = "Update Template", ClassName = "MailchimpDataSource", misc = "UpdateTemplate")]
+        public async Task<MailchimpTemplate> UpdateTemplate(string templateId, MailchimpTemplate template)
+        {
+            var endpoint = $"templates/{templateId}";
+            var response = await PutAsync<MailchimpTemplate>(endpoint, template);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = typeof(MailchimpList), PointType = PointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "MailchimpDataSource", misc = "CreateList")]
+        public async Task<MailchimpList> CreateList(MailchimpList list)
+        {
+            var endpoint = "lists";
+            var response = await PostAsync<MailchimpList>(endpoint, list);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = typeof(MailchimpList), PointType = PointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "MailchimpDataSource", misc = "UpdateList")]
+        public async Task<MailchimpList> UpdateList(string listId, MailchimpList list)
+        {
+            var endpoint = $"lists/{listId}";
+            var response = await PutAsync<MailchimpList>(endpoint, list);
+            return response;
+        }
     }
 }

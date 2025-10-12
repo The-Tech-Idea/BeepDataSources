@@ -16,7 +16,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource.Models
         [JsonPropertyName("date_created")] public DateTimeOffset? DateCreated { get; set; }
         [JsonPropertyName("date_modified")] public DateTimeOffset? DateModified { get; set; }
 
-        [JsonIgnore] public IDataSource DataSource { get; private set; }
+        [JsonIgnore] public IDataSource? DataSource { get; private set; }
         public T Attach<T>(IDataSource ds) where T : BigCommerceEntityBase { DataSource = ds; return (T)this; }
     }
 

@@ -16,6 +16,7 @@ using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
 {
+    using TheTechIdea.Beep.Connectors.Ecommerce.Shopify.Models;
     [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify)]
     public class ShopifyDataSource : WebAPIDataSource
     {
@@ -166,6 +167,56 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
                 }
             }
             return result;
+        }
+
+        // COMMAND ATTRIBUTE METHODS - Strongly typed Shopify operations
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Product", Name = "GetProducts", Caption = "Get Shopify Products", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 1, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Product>")]
+        public async Task<IEnumerable<Product>> GetProducts(List<AppFilter>? filters = null)
+        {
+            var result = await GetEntityAsync("products", filters ?? new List<AppFilter>());
+            return result.Cast<Product>().Select(p => p.Attach<Product>(this));
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Order", Name = "GetOrders", Caption = "Get Shopify Orders", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 2, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Order>")]
+        public async Task<IEnumerable<Order>> GetOrders(List<AppFilter>? filters = null)
+        {
+            var result = await GetEntityAsync("orders", filters ?? new List<AppFilter>());
+            return result.Cast<Order>().Select(o => o.Attach<Order>(this));
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Customer", Name = "GetCustomers", Caption = "Get Shopify Customers", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 3, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Customer>")]
+        public async Task<IEnumerable<Customer>> GetCustomers(List<AppFilter>? filters = null)
+        {
+            var result = await GetEntityAsync("customers", filters ?? new List<AppFilter>());
+            return result.Cast<Customer>().Select(c => c.Attach<Customer>(this));
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "InventoryItem", Name = "GetInventoryItems", Caption = "Get Shopify Inventory Items", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 4, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
+        public async Task<IEnumerable<InventoryItem>> GetInventoryItems(List<AppFilter>? filters = null)
+        {
+            var result = await GetEntityAsync("inventory_items", filters ?? new List<AppFilter>());
+            return result.Cast<InventoryItem>().Select(i => i.Attach(this));
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Location", Name = "GetLocations", Caption = "Get Shopify Locations", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 5, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Location>")]
+        public async Task<IEnumerable<Location>> GetLocations(List<AppFilter>? filters = null)
+        {
+            var result = await GetEntityAsync("locations", filters ?? new List<AppFilter>());
+            return result.Cast<Location>().Select(l => l.Attach(this));
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "CustomCollection", Name = "GetCustomCollections", Caption = "Get Shopify Custom Collections", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 6, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<CustomCollection>")]
+        public async Task<IEnumerable<CustomCollection>> GetCustomCollections(List<AppFilter>? filters = null)
+        {
+            var result = await GetEntityAsync("custom_collections", filters ?? new List<AppFilter>());
+            return result.Cast<CustomCollection>().Select(c => c.Attach<CustomCollection>(this));
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "SmartCollection", Name = "GetSmartCollections", Caption = "Get Shopify Smart Collections", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 7, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<SmartCollection>")]
+        public async Task<IEnumerable<SmartCollection>> GetSmartCollections(List<AppFilter>? filters = null)
+        {
+            var result = await GetEntityAsync("smart_collections", filters ?? new List<AppFilter>());
+            return result.Cast<SmartCollection>().Select(s => s.Attach<SmartCollection>(this));
         }
 
         // Extracts array from response

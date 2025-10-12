@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using TheTechIdea.Beep.DataBase;
 
 namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness.Models
 {
+    // Legacy models (keeping for compatibility if needed)
     public class WhatsAppMessage
     {
         public string Id { get; set; }

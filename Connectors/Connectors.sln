@@ -2,10 +2,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataManagementModelsStandard", "..\..\BeepDM\DataManagementModelsStandard\DataManagementModels.csproj", "{D1E2F3A4-B5C6-7D8E-9F0A-1B2C3D4E5F6A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataManagementEngineStandard", "..\..\BeepDM\DataManagementEngineStandard\DataManagementEngine.csproj", "{E2F3A4B5-C6D7-8E9F-0A1B-2C3D4E5F6A7B}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SalesforceDataSource", "CRM\SalesforceDataSource\SalesforceDataSource.csproj", "{2E07A71E-068F-7FDD-292A-3B015C1E2F38}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HubSpotDataSource", "CRM\HubSpotDataSource\HubSpotDataSource.csproj", "{3F08B72F-078F-8EDD-393B-4C025D2E3F49}"
@@ -109,6 +105,66 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Buffer", "SocialMedia\Buffer\Buffer.csproj", "{AF70F5AC-80A3-1234-BDEF-DF9BFBF0C023}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hootsuite", "SocialMedia\Hootsuite\Hootsuite.csproj", "{B08106BD-91B4-2345-CDEF-E0AC0C1D1345}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreshBooks", "Accounting\FreshBooks\FreshBooks.csproj", "{C0000001-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MYOB", "Accounting\MYOB\MYOB.csproj", "{C0000002-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickBooksOnline", "Accounting\QuickBooksOnline\QuickBooksOnline.csproj", "{C0000003-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SageIntacct", "Accounting\SageIntacct\SageIntacct.csproj", "{C0000004-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xero", "Accounting\Xero\Xero.csproj", "{C0000005-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TableauDataSource", "BusinessIntelligence\TableauDataSource\TableauDataSource.csproj", "{C0000006-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WordPressDataSource", "ContentManagement\WordPressDataSource\WordPressDataSource.csproj", "{C0000007-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zendesk", "CustomerSupport\Zendesk\Zendesk.csproj", "{C0000008-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JotformDataSource", "Forms\JotformDataSource\JotformDataSource.csproj", "{C0000009-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TypeformDataSource", "Forms\TypeformDataSource\TypeformDataSource.csproj", "{C000000A-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GmailDataSource", "MailServices\Gmail\GmailDataSource.csproj", "{C000000B-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OutlookDataSource", "MailServices\Outlook\OutlookDataSource.csproj", "{C000000C-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YahooDataSource", "MailServices\Yahoo\YahooDataSource.csproj", "{C000000D-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveCampaignDataSource", "Marketing\ActiveCampaignDataSource\ActiveCampaignDataSource.csproj", "{C000000E-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CampaignMonitorDataSource", "Marketing\CampaignMonitorDataSource\CampaignMonitorDataSource.csproj", "{C000000F-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConstantContactDataSource", "Marketing\ConstantContactDataSource\ConstantContactDataSource.csproj", "{C0000010-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConvertKitDataSource", "Marketing\ConvertKitDataSource\ConvertKitDataSource.csproj", "{C0000011-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DripDataSource", "Marketing\DripDataSource\DripDataSource.csproj", "{C0000012-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoogleAdsDataSource", "Marketing\GoogleAdsDataSource\GoogleAdsDataSource.csproj", "{C0000013-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KlaviyoDataSource", "Marketing\KlaviyoDataSource\KlaviyoDataSource.csproj", "{C0000014-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailchimpDataSource", "Marketing\MailchimpDataSource\MailchimpDataSource.csproj", "{C0000015-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailerLiteDataSource", "Marketing\MailerLiteDataSource\MailerLiteDataSource.csproj", "{C0000016-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarketoDataSource", "Marketing\MarketoDataSource\MarketoDataSource.csproj", "{C0000017-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SendinblueDataSource", "Marketing\SendinblueDataSource\SendinblueDataSource.csproj", "{C0000018-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FathomDataSource", "MeetingTools\FathomDataSource\FathomDataSource.csproj", "{C0000019-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TLDVDataSource", "MeetingTools\TLDVDataSource\TLDVDataSource.csproj", "{C000001A-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClickSendDataSource", "SMS\ClickSendDataSource\ClickSendDataSource.csproj", "{C000001B-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KudosityDataSource", "SMS\KudosityDataSource\KudosityDataSource.csproj", "{C000001C-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoomlyDataSource", "SocialMedia\LoomlyDataSource\LoomlyDataSource.csproj", "{C000001D-0000-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnyDoDataSource", "TaskManagement\AnyDoDataSource\AnyDoDataSource.csproj", "{C000001E-0000-0000-0000-000000000000}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -324,14 +380,122 @@ Global
 		{B08106BD-91B4-2345-CDEF-E0AC0C1D1345}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B08106BD-91B4-2345-CDEF-E0AC0C1D1345}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B08106BD-91B4-2345-CDEF-E0AC0C1D1345}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D1E2F3A4-B5C6-7D8E-9F0A-1B2C3D4E5F6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D1E2F3A4-B5C6-7D8E-9F0A-1B2C3D4E5F6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D1E2F3A4-B5C6-7D8E-9F0A-1B2C3D4E5F6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D1E2F3A4-B5C6-7D8E-9F0A-1B2C3D4E5F6A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E2F3A4B5-C6D7-8E9F-0A1B-2C3D4E5F6A7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E2F3A4B5-C6D7-8E9F-0A1B-2C3D4E5F6A7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E2F3A4B5-C6D7-8E9F-0A1B-2C3D4E5F6A7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E2F3A4B5-C6D7-8E9F-0A1B-2C3D4E5F6A7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000001-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000001-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000001-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000001-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000003-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000003-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000003-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000003-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000004-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000004-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000004-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000004-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000005-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000005-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000005-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000005-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000006-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000006-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000006-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000006-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000007-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000007-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000007-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000007-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000008-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000008-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000008-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000008-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000009-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000009-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000009-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000009-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C000000A-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C000000A-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C000000A-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C000000A-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C000000B-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C000000B-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C000000B-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C000000B-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C000000C-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C000000C-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C000000C-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C000000C-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C000000D-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C000000D-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C000000D-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C000000D-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C000000E-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C000000E-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C000000E-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C000000E-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C000000F-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C000000F-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C000000F-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C000000F-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000010-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000010-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000010-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000010-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000011-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000011-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000011-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000011-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000012-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000012-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000012-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000012-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000013-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000013-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000013-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000013-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000014-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000014-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000014-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000014-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000015-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000015-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000015-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000015-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000016-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000016-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000016-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000016-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000017-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000017-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000017-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000017-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000018-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000018-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000018-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000018-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000019-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000019-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000019-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000019-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C000001A-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C000001A-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C000001A-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C000001A-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C000001B-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C000001B-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C000001B-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C000001B-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C000001C-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C000001C-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C000001C-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C000001C-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C000001D-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C000001D-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C000001D-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C000001D-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C000001E-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C000001E-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C000001E-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C000001E-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

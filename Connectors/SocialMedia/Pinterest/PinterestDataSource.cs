@@ -373,5 +373,27 @@ namespace BeepDataSources.Connectors.SocialMedia.Pinterest
             var analytics = JsonSerializer.Deserialize<PinterestAnalytics>(json);
             return analytics != null ? new List<PinterestAnalytics> { analytics } : new List<PinterestAnalytics>();
         }
+
+        // POST methods for creating entities
+        [CommandAttribute(ObjectType = "PinterestPin", PointType = EnumPointType.Function, Name = "CreatePin", Caption = "Create Pinterest Pin", ClassName = "PinterestDataSource", misc = "ReturnType: PinterestPin")]
+        public async Task<PinterestPin> CreatePinAsync(PinterestPin pin)
+        {
+            string endpoint = "pins";
+            var response = await PostAsync(endpoint, pin);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<PinterestPin>(json);
+        }
+
+        // PUT methods for updating entities
+        [CommandAttribute(ObjectType = "PinterestPin", PointType = EnumPointType.Function, Name = "UpdatePin", Caption = "Update Pinterest Pin", ClassName = "PinterestDataSource", misc = "ReturnType: PinterestPin")]
+        public async Task<PinterestPin> UpdatePinAsync(string pinId, PinterestPin pin)
+        {
+            string endpoint = $"pins/{pinId}";
+            var response = await PutAsync(endpoint, pin);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<PinterestPin>(json);
+        }
     }
 }

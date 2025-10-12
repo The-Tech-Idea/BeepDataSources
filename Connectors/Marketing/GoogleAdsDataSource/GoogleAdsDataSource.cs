@@ -193,5 +193,96 @@ namespace TheTechIdea.Beep.Connectors.Marketing.GoogleAds
 
             return list;
         }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(ObjectType = typeof(GoogleAdsCustomer), PointType = PointType.Function, Name = "GetCustomers", Caption = "Get Customers", ClassName = "GoogleAdsDataSource", misc = "GetCustomers")]
+        public IEnumerable<GoogleAdsCustomer> GetCustomers()
+        {
+            return GetEntity("customers", null).Cast<GoogleAdsCustomer>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(GoogleAdsCampaign), PointType = PointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "GoogleAdsDataSource", misc = "GetCampaigns")]
+        public IEnumerable<GoogleAdsCampaign> GetCampaigns(string customerId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "customer_id", FilterValue = customerId } };
+            return GetEntity("campaigns", filters).Cast<GoogleAdsCampaign>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(GoogleAdsAdGroup), PointType = PointType.Function, Name = "GetAdGroups", Caption = "Get Ad Groups", ClassName = "GoogleAdsDataSource", misc = "GetAdGroups")]
+        public IEnumerable<GoogleAdsAdGroup> GetAdGroups(string customerId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "customer_id", FilterValue = customerId } };
+            return GetEntity("ad_groups", filters).Cast<GoogleAdsAdGroup>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(GoogleAdsAd), PointType = PointType.Function, Name = "GetAds", Caption = "Get Ads", ClassName = "GoogleAdsDataSource", misc = "GetAds")]
+        public IEnumerable<GoogleAdsAd> GetAds(string customerId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "customer_id", FilterValue = customerId } };
+            return GetEntity("ads", filters).Cast<GoogleAdsAd>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(GoogleAdsKeyword), PointType = PointType.Function, Name = "GetKeywords", Caption = "Get Keywords", ClassName = "GoogleAdsDataSource", misc = "GetKeywords")]
+        public IEnumerable<GoogleAdsKeyword> GetKeywords(string customerId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "customer_id", FilterValue = customerId } };
+            return GetEntity("keywords", filters).Cast<GoogleAdsKeyword>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(GoogleAdsCampaignBudget), PointType = PointType.Function, Name = "GetCampaignBudgets", Caption = "Get Campaign Budgets", ClassName = "GoogleAdsDataSource", misc = "GetCampaignBudgets")]
+        public IEnumerable<GoogleAdsCampaignBudget> GetCampaignBudgets(string customerId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "customer_id", FilterValue = customerId } };
+            return GetEntity("campaign_budgets", filters).Cast<GoogleAdsCampaignBudget>();
+        }
+
+        // POST/PUT methods for creating and updating entities
+        [CommandAttribute(ObjectType = typeof(GoogleAdsCampaign), PointType = PointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "GoogleAdsDataSource", misc = "CreateCampaign")]
+        public async Task<GoogleAdsCampaign> CreateCampaign(string customerId, GoogleAdsCampaign campaign)
+        {
+            var endpoint = $"v14/customers/{customerId}/campaigns";
+            var response = await PostAsync<GoogleAdsCampaign>(endpoint, campaign);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = typeof(GoogleAdsCampaign), PointType = PointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "GoogleAdsDataSource", misc = "UpdateCampaign")]
+        public async Task<GoogleAdsCampaign> UpdateCampaign(string customerId, string campaignId, GoogleAdsCampaign campaign)
+        {
+            var endpoint = $"v14/customers/{customerId}/campaigns/{campaignId}";
+            var response = await PutAsync<GoogleAdsCampaign>(endpoint, campaign);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = typeof(GoogleAdsAdGroup), PointType = PointType.Function, Name = "CreateAdGroup", Caption = "Create Ad Group", ClassName = "GoogleAdsDataSource", misc = "CreateAdGroup")]
+        public async Task<GoogleAdsAdGroup> CreateAdGroup(string customerId, GoogleAdsAdGroup adGroup)
+        {
+            var endpoint = $"v14/customers/{customerId}/adGroups";
+            var response = await PostAsync<GoogleAdsAdGroup>(endpoint, adGroup);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = typeof(GoogleAdsAdGroup), PointType = PointType.Function, Name = "UpdateAdGroup", Caption = "Update Ad Group", ClassName = "GoogleAdsDataSource", misc = "UpdateAdGroup")]
+        public async Task<GoogleAdsAdGroup> UpdateAdGroup(string customerId, string adGroupId, GoogleAdsAdGroup adGroup)
+        {
+            var endpoint = $"v14/customers/{customerId}/adGroups/{adGroupId}";
+            var response = await PutAsync<GoogleAdsAdGroup>(endpoint, adGroup);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = typeof(GoogleAdsAd), PointType = PointType.Function, Name = "CreateAd", Caption = "Create Ad", ClassName = "GoogleAdsDataSource", misc = "CreateAd")]
+        public async Task<GoogleAdsAd> CreateAd(string customerId, GoogleAdsAd ad)
+        {
+            var endpoint = $"v14/customers/{customerId}/ads";
+            var response = await PostAsync<GoogleAdsAd>(endpoint, ad);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = typeof(GoogleAdsAd), PointType = PointType.Function, Name = "UpdateAd", Caption = "Update Ad", ClassName = "GoogleAdsDataSource", misc = "UpdateAd")]
+        public async Task<GoogleAdsAd> UpdateAd(string customerId, string adId, GoogleAdsAd ad)
+        {
+            var endpoint = $"v14/customers/{customerId}/ads/{adId}";
+            var response = await PutAsync<GoogleAdsAd>(endpoint, ad);
+            return response;
+        }
     }
 }

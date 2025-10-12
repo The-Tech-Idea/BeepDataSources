@@ -13,6 +13,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.HubSpot.Models;
 
 namespace TheTechIdea.Beep.Connectors.HubSpot
 {
@@ -209,6 +210,67 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
             }
 
             return list;
+        }
+
+
+        // ------------------------------------------------------------------
+        // COMMAND ATTRIBUTE METHODS - Strongly typed HubSpot CRM operations
+        // ------------------------------------------------------------------
+
+        [CommandAttribute(Name = "GetContacts", Caption = "Get HubSpot Contacts", ObjectType = "Contact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Contact", Showin = ShowinType.Both, Order = 1, iconimage = "contact.png")]
+        public async Task<IEnumerable<Contact>> GetContacts(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("contacts", filters ?? new List<AppFilter>());
+            return result.Cast<Contact>().Select(c => c.Attach<Contact>(this));
+        }
+
+        [CommandAttribute(Name = "GetCompanies", Caption = "Get HubSpot Companies", ObjectType = "Company", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Company", Showin = ShowinType.Both, Order = 2, iconimage = "company.png")]
+        public async Task<IEnumerable<Company>> GetCompanies(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("companies", filters ?? new List<AppFilter>());
+            return result.Cast<Company>().Select(c => c.Attach<Company>(this));
+        }
+
+        [CommandAttribute(Name = "GetDeals", Caption = "Get HubSpot Deals", ObjectType = "Deal", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Deal", Showin = ShowinType.Both, Order = 3, iconimage = "deal.png")]
+        public async Task<IEnumerable<Deal>> GetDeals(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("deals", filters ?? new List<AppFilter>());
+            return result.Cast<Deal>().Select(d => d.Attach<Deal>(this));
+        }
+
+        [CommandAttribute(Name = "GetTickets", Caption = "Get HubSpot Tickets", ObjectType = "Ticket", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Ticket", Showin = ShowinType.Both, Order = 4, iconimage = "ticket.png")]
+        public async Task<IEnumerable<Ticket>> GetTickets(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("tickets", filters ?? new List<AppFilter>());
+            return result.Cast<Ticket>().Select(t => t.Attach<Ticket>(this));
+        }
+
+        [CommandAttribute(Name = "GetProducts", Caption = "Get HubSpot Products", ObjectType = "Product", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Product", Showin = ShowinType.Both, Order = 5, iconimage = "product.png")]
+        public async Task<IEnumerable<Product>> GetProducts(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("products", filters ?? new List<AppFilter>());
+            return result.Cast<Product>().Select(p => p.Attach<Product>(this));
+        }
+
+        [CommandAttribute(Name = "GetLineItems", Caption = "Get HubSpot Line Items", ObjectType = "LineItem", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "LineItem", Showin = ShowinType.Both, Order = 6, iconimage = "lineitem.png")]
+        public async Task<IEnumerable<LineItem>> GetLineItems(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("line_items", filters ?? new List<AppFilter>());
+            return result.Cast<LineItem>().Select(l => l.Attach<LineItem>(this));
+        }
+
+        [CommandAttribute(Name = "GetQuotes", Caption = "Get HubSpot Quotes", ObjectType = "Quote", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Quote", Showin = ShowinType.Both, Order = 7, iconimage = "quote.png")]
+        public async Task<IEnumerable<Quote>> GetQuotes(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("quotes", filters ?? new List<AppFilter>());
+            return result.Cast<Quote>().Select(q => q.Attach<Quote>(this));
+        }
+
+        [CommandAttribute(Name = "GetOwners", Caption = "Get HubSpot Owners", ObjectType = "Owner", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Owner", Showin = ShowinType.Both, Order = 8, iconimage = "owner.png")]
+        public async Task<IEnumerable<Owner>> GetOwners(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("owners", filters ?? new List<AppFilter>());
+            return result.Cast<Owner>().Select(o => o.Attach(this));
         }
     }
 }

@@ -405,5 +405,22 @@ namespace TheTechIdea.Beep.HootsuiteDataSource
 
             return JsonSerializer.Deserialize<HootsuiteResponse<HootsuiteAnalytics>>(json, options);
         }
+
+        [CommandAttribute(Name = "CreatePost", Caption = "Create Hootsuite Post", ClassName = "HootsuiteDataSource", ObjectType = "HootsuitePost", PointType = EnumPointType.Function, misc = "ReturnType: HootsuitePost")]
+        public async Task<HootsuitePost> CreatePostAsync(HootsuitePost post)
+        {
+            var response = await PostAsync("v1/messages", post);
+            if (!response.IsSuccessStatusCode)
+                throw new InvalidOperationException($"Hootsuite API request failed: {response.StatusCode}");
+
+            var json = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            };
+
+            return JsonSerializer.Deserialize<HootsuitePost>(json, options);
+        }
     }
 }

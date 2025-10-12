@@ -1,25 +1,35 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using TheTechIdea.Beep.DataBase;
 
-namespace TheTechIdea.Beep.Connectors.Egnyte
+namespace TheTechIdea.Beep.Connectors.Egnyte.Models
 {
     /// <summary>
-    /// Base class for all Egnyte models
+    /// Base class for all Egnyte entities
     /// </summary>
-    public abstract class EgnyteModel
+    public abstract class EgnyteEntityBase
     {
         /// <summary>
         /// Reference to the data source
         /// </summary>
         [JsonIgnore]
-        public EgnyteDataSource? DataSource { get; set; }
+        public IDataSource? DataSource { get; set; }
+
+        /// <summary>
+        /// Attach the entity to a data source
+        /// </summary>
+        public T Attach<T>(IDataSource dataSource) where T : EgnyteEntityBase
+        {
+            DataSource = dataSource;
+            return (T)this;
+        }
     }
 
     /// <summary>
-    /// Represents an Egnyte item (file or folder)
+    /// Represents an Egnyte file or folder item
     /// </summary>
-    public class EgnyteItem : EgnyteModel
+    public sealed class EgnyteItem : EgnyteEntityBase
     {
         /// <summary>
         /// The checksum of the item
@@ -151,7 +161,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
     /// <summary>
     /// Represents an Egnyte user
     /// </summary>
-    public class EgnyteUser : EgnyteModel
+    public sealed class EgnyteUser : EgnyteEntityBase
     {
         /// <summary>
         /// The username
@@ -325,7 +335,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
     /// <summary>
     /// Represents an Egnyte group
     /// </summary>
-    public class EgnyteGroup : EgnyteModel
+    public sealed class EgnyteGroup : EgnyteEntityBase
     {
         /// <summary>
         /// The group ID
@@ -385,7 +395,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
     /// <summary>
     /// Represents an Egnyte link
     /// </summary>
-    public class EgnyteLink : EgnyteModel
+    public sealed class EgnyteLink : EgnyteEntityBase
     {
         /// <summary>
         /// The link ID
@@ -487,7 +497,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
     /// <summary>
     /// Represents an Egnyte link recipient
     /// </summary>
-    public class EgnyteLinkRecipient : EgnyteModel
+    public sealed class EgnyteLinkRecipient : EgnyteEntityBase
     {
         /// <summary>
         /// The recipient email
@@ -511,7 +521,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
     /// <summary>
     /// Represents Egnyte permissions
     /// </summary>
-    public class EgnytePermissions : EgnyteModel
+    public sealed class EgnytePermissions : EgnyteEntityBase
     {
         /// <summary>
         /// The user permissions
@@ -541,7 +551,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
     /// <summary>
     /// Represents an Egnyte permission
     /// </summary>
-    public class EgnytePermission : EgnyteModel
+    public sealed class EgnytePermission : EgnyteEntityBase
     {
         /// <summary>
         /// The permission level
@@ -559,7 +569,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
     /// <summary>
     /// Represents Egnyte search results
     /// </summary>
-    public class EgnyteSearchResult : EgnyteModel
+    public sealed class EgnyteSearchResult : EgnyteEntityBase
     {
         /// <summary>
         /// The total count of search results
@@ -595,7 +605,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
     /// <summary>
     /// Represents an Egnyte facet
     /// </summary>
-    public class EgnyteFacet : EgnyteModel
+    public sealed class EgnyteFacet : EgnyteEntityBase
     {
         /// <summary>
         /// The facet key
@@ -619,7 +629,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
     /// <summary>
     /// Represents Egnyte audit events
     /// </summary>
-    public class EgnyteAuditEvent : EgnyteModel
+    public sealed class EgnyteAuditEvent : EgnyteEntityBase
     {
         /// <summary>
         /// The event ID
@@ -679,7 +689,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
     /// <summary>
     /// Represents Egnyte file versions
     /// </summary>
-    public class EgnyteFileVersion : EgnyteModel
+    public sealed class EgnyteFileVersion : EgnyteEntityBase
     {
         /// <summary>
         /// The version ID
@@ -733,7 +743,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
     /// <summary>
     /// Represents Egnyte user info
     /// </summary>
-    public class EgnyteUserInfo : EgnyteModel
+    public sealed class EgnyteUserInfo : EgnyteEntityBase
     {
         /// <summary>
         /// The username

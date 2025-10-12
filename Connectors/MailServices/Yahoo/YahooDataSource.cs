@@ -216,5 +216,160 @@ namespace TheTechIdea.Beep.Connectors.Yahoo
         {
             [JsonPropertyName("folders")] public List<YahooFolder> Folders { get; set; }
         }
+
+        // CommandAttribute methods for Yahoo API
+        [CommandAttribute(Name = "GetMessages", Caption = "Get Yahoo Messages", ObjectType = "YahooMessage", PointType = EnumPointType.Function, Category = "Yahoo", DatasourceType = DataSourceType.Yahoo, ClassType = "YahooMessage", Showin = ShowinType.Grid, Order = 1, iconimage = "mail.png")]
+        public async Task<IEnumerable<YahooMessage>> GetMessages(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("messages", filters);
+            return result.Cast<YahooMessage>();
+        }
+
+        [CommandAttribute(Name = "GetMessage", Caption = "Get Yahoo Message", ObjectType = "YahooMessage", PointType = EnumPointType.Function, Category = "Yahoo", DatasourceType = DataSourceType.Yahoo, ClassType = "YahooMessage", Showin = ShowinType.Grid, Order = 2, iconimage = "mail.png")]
+        public async Task<IEnumerable<YahooMessage>> GetMessage(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("messages.get", filters);
+            return result.Cast<YahooMessage>();
+        }
+
+        [CommandAttribute(Name = "GetContacts", Caption = "Get Yahoo Contacts", ObjectType = "YahooContact", PointType = EnumPointType.Function, Category = "Yahoo", DatasourceType = DataSourceType.Yahoo, ClassType = "YahooContact", Showin = ShowinType.Grid, Order = 3, iconimage = "contact.png")]
+        public async Task<IEnumerable<YahooContact>> GetContacts(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("contacts", filters);
+            return result.Cast<YahooContact>();
+        }
+
+        [CommandAttribute(Name = "GetFolders", Caption = "Get Yahoo Folders", ObjectType = "YahooFolder", PointType = EnumPointType.Function, Category = "Yahoo", DatasourceType = DataSourceType.Yahoo, ClassType = "YahooFolder", Showin = ShowinType.Grid, Order = 4, iconimage = "folder.png")]
+        public async Task<IEnumerable<YahooFolder>> GetFolders(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("folders", filters);
+            return result.Cast<YahooFolder>();
+        }
+
+        /// <summary>
+        /// Sends a Yahoo message
+        /// </summary>
+        [CommandAttribute(
+            Name = "SendMessage",
+            Caption = "Send Yahoo Message",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Yahoo,
+            PointType = EnumPointType.Function,
+            ObjectType = "YahooMessage",
+            ClassType = "YahooDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "mail.png",
+            misc = "ReturnType: IEnumerable<YahooMessage>"
+        )]
+        public async Task<IEnumerable<YahooMessage>> SendMessageAsync(YahooMessage message)
+        {
+            var url = "https://mail.yahooapis.com/ws/mail/v1.1/messages/send";
+            var response = await PostAsync(url, message);
+            // Send returns the sent message or empty
+            var json = await response.Content.ReadAsStringAsync();
+            var sentMessage = JsonSerializer.Deserialize<YahooMessage>(json);
+            return sentMessage != null ? new[] { sentMessage } : Array.Empty<YahooMessage>();
+        }
+
+        /// <summary>
+        /// Creates a Yahoo contact
+        /// </summary>
+        [CommandAttribute(
+            Name = "CreateContact",
+            Caption = "Create Yahoo Contact",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Yahoo,
+            PointType = EnumPointType.Function,
+            ObjectType = "YahooContact",
+            ClassType = "YahooDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "contact.png",
+            misc = "ReturnType: IEnumerable<YahooContact>"
+        )]
+        public async Task<IEnumerable<YahooContact>> CreateContactAsync(YahooContact contact)
+        {
+            var url = "https://mail.yahooapis.com/ws/mail/v1.1/contacts";
+            var response = await PostAsync(url, contact);
+            var json = await response.Content.ReadAsStringAsync();
+            var createdContact = JsonSerializer.Deserialize<YahooContact>(json);
+            return createdContact != null ? new[] { createdContact } : Array.Empty<YahooContact>();
+        }
+
+        /// <summary>
+        /// Updates a Yahoo contact
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateContact",
+            Caption = "Update Yahoo Contact",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Yahoo,
+            PointType = EnumPointType.Function,
+            ObjectType = "YahooContact",
+            ClassType = "YahooDataSource",
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "contact.png",
+            misc = "ReturnType: IEnumerable<YahooContact>"
+        )]
+        public async Task<IEnumerable<YahooContact>> UpdateContactAsync(string id, YahooContact contact)
+        {
+            var url = $"https://mail.yahooapis.com/ws/mail/v1.1/contacts/{id}";
+            var response = await PutAsync(url, contact);
+            var json = await response.Content.ReadAsStringAsync();
+            var updatedContact = JsonSerializer.Deserialize<YahooContact>(json);
+            return updatedContact != null ? new[] { updatedContact } : Array.Empty<YahooContact>();
+        }
+
+        /// <summary>
+        /// Creates a Yahoo folder
+        /// </summary>
+        [CommandAttribute(
+            Name = "CreateFolder",
+            Caption = "Create Yahoo Folder",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Yahoo,
+            PointType = EnumPointType.Function,
+            ObjectType = "YahooFolder",
+            ClassType = "YahooDataSource",
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "folder.png",
+            misc = "ReturnType: IEnumerable<YahooFolder>"
+        )]
+        public async Task<IEnumerable<YahooFolder>> CreateFolderAsync(YahooFolder folder)
+        {
+            var url = "https://mail.yahooapis.com/ws/mail/v1.1/folders";
+            var response = await PostAsync(url, folder);
+            var json = await response.Content.ReadAsStringAsync();
+            var createdFolder = JsonSerializer.Deserialize<YahooFolder>(json);
+            return createdFolder != null ? new[] { createdFolder } : Array.Empty<YahooFolder>();
+        }
+
+        /// <summary>
+        /// Updates a Yahoo folder
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateFolder",
+            Caption = "Update Yahoo Folder",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Yahoo,
+            PointType = EnumPointType.Function,
+            ObjectType = "YahooFolder",
+            ClassType = "YahooDataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "folder.png",
+            misc = "ReturnType: IEnumerable<YahooFolder>"
+        )]
+        public async Task<IEnumerable<YahooFolder>> UpdateFolderAsync(string id, YahooFolder folder)
+        {
+            var url = $"https://mail.yahooapis.com/ws/mail/v1.1/folders/{id}";
+            var response = await PutAsync(url, folder);
+            var json = await response.Content.ReadAsStringAsync();
+            var updatedFolder = JsonSerializer.Deserialize<YahooFolder>(json);
+            return updatedFolder != null ? new[] { updatedFolder } : Array.Empty<YahooFolder>();
+        }
     }
 }

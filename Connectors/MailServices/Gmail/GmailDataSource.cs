@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
@@ -161,6 +163,262 @@ namespace TheTechIdea.Beep.Connectors.Gmail
             };
         }
 
+        /// <summary>
+        /// Gets Gmail messages
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetMessages",
+            Caption = "Get Gmail Messages",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Gmail,
+            PointType = EnumPointType.Function,
+            ObjectType = "GmailMessage",
+            ClassType = "GmailDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "gmail.png",
+            misc = "ReturnType: IEnumerable<GmailMessage>"
+        )]
+        public async Task<IEnumerable<GmailMessage>> GetMessages(int maxResults = 10, string? q = null, string? labelIds = null)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "maxResults", FilterValue = maxResults.ToString(), Operator = "=" }
+            };
+            if (!string.IsNullOrEmpty(q))
+                filters.Add(new AppFilter { FieldName = "q", FilterValue = q, Operator = "=" });
+            if (!string.IsNullOrEmpty(labelIds))
+                filters.Add(new AppFilter { FieldName = "labelIds", FilterValue = labelIds, Operator = "=" });
+
+            var result = await GetEntityAsync("messages.list", filters);
+            return result.Cast<GmailMessage>();
+        }
+
+        /// <summary>
+        /// Gets a specific Gmail message
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetMessage",
+            Caption = "Get Gmail Message",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Gmail,
+            PointType = EnumPointType.Function,
+            ObjectType = "GmailMessage",
+            ClassType = "GmailDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "gmail.png",
+            misc = "ReturnType: IEnumerable<GmailMessage>"
+        )]
+        public async Task<IEnumerable<GmailMessage>> GetMessage(string id)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "id", FilterValue = id, Operator = "=" }
+            };
+
+            var result = await GetEntityAsync("messages.get", filters);
+            return result.Cast<GmailMessage>();
+        }
+
+        /// <summary>
+        /// Gets Gmail threads
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetThreads",
+            Caption = "Get Gmail Threads",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Gmail,
+            PointType = EnumPointType.Function,
+            ObjectType = "GmailThread",
+            ClassType = "GmailDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "gmail.png",
+            misc = "ReturnType: IEnumerable<GmailThread>"
+        )]
+        public async Task<IEnumerable<GmailThread>> GetThreads(int maxResults = 10, string? q = null)
+        {
+            var filters = new List<AppFilter>
+            {
+                new AppFilter { FieldName = "maxResults", FilterValue = maxResults.ToString(), Operator = "=" }
+            };
+            if (!string.IsNullOrEmpty(q))
+                filters.Add(new AppFilter { FieldName = "q", FilterValue = q, Operator = "=" });
+
+            var result = await GetEntityAsync("threads.list", filters);
+            return result.Cast<GmailThread>();
+        }
+
+        /// <summary>
+        /// Gets Gmail labels
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetLabels",
+            Caption = "Get Gmail Labels",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Gmail,
+            PointType = EnumPointType.Function,
+            ObjectType = "GmailLabel",
+            ClassType = "GmailDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "gmail.png",
+            misc = "ReturnType: IEnumerable<GmailLabel>"
+        )]
+        public async Task<IEnumerable<GmailLabel>> GetLabels()
+        {
+            var result = await GetEntityAsync("labels.list", new List<AppFilter>());
+            return result.Cast<GmailLabel>();
+        }
+
+        /// <summary>
+        /// Gets Gmail profile
+        /// </summary>
+        [CommandAttribute(
+            Name = "GetProfile",
+            Caption = "Get Gmail Profile",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Gmail,
+            PointType = EnumPointType.Function,
+            ObjectType = "GmailProfile",
+            ClassType = "GmailDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "gmail.png",
+            misc = "ReturnType: IEnumerable<GmailProfile>"
+        )]
+        public async Task<IEnumerable<GmailProfile>> GetProfile()
+        {
+            var result = await GetEntityAsync("profile", new List<AppFilter>());
+            return result.Cast<GmailProfile>();
+        }
+
+        /// <summary>
+        /// Sends a Gmail message
+        /// </summary>
+        [CommandAttribute(
+            Name = "SendMessage",
+            Caption = "Send Gmail Message",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Gmail,
+            PointType = EnumPointType.Function,
+            ObjectType = "GmailMessage",
+            ClassType = "GmailDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "gmail.png",
+            misc = "ReturnType: IEnumerable<GmailMessage>"
+        )]
+        public async Task<IEnumerable<GmailMessage>> SendMessageAsync(GmailMessage message)
+        {
+            var url = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send";
+            var response = await PostAsync(url, message);
+            var json = await response.Content.ReadAsStringAsync();
+            var sentMessage = JsonSerializer.Deserialize<GmailMessage>(json);
+            return sentMessage != null ? new[] { sentMessage } : Array.Empty<GmailMessage>();
+        }
+
+        /// <summary>
+        /// Creates a Gmail label
+        /// </summary>
+        [CommandAttribute(
+            Name = "CreateLabel",
+            Caption = "Create Gmail Label",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Gmail,
+            PointType = EnumPointType.Function,
+            ObjectType = "GmailLabel",
+            ClassType = "GmailDataSource",
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "gmail.png",
+            misc = "ReturnType: IEnumerable<GmailLabel>"
+        )]
+        public async Task<IEnumerable<GmailLabel>> CreateLabelAsync(GmailLabel label)
+        {
+            var url = "https://gmail.googleapis.com/gmail/v1/users/me/labels";
+            var response = await PostAsync(url, label);
+            var json = await response.Content.ReadAsStringAsync();
+            var createdLabel = JsonSerializer.Deserialize<GmailLabel>(json);
+            return createdLabel != null ? new[] { createdLabel } : Array.Empty<GmailLabel>();
+        }
+
+        /// <summary>
+        /// Updates a Gmail label
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateLabel",
+            Caption = "Update Gmail Label",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Gmail,
+            PointType = EnumPointType.Function,
+            ObjectType = "GmailLabel",
+            ClassType = "GmailDataSource",
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "gmail.png",
+            misc = "ReturnType: IEnumerable<GmailLabel>"
+        )]
+        public async Task<IEnumerable<GmailLabel>> UpdateLabelAsync(string id, GmailLabel label)
+        {
+            var url = $"https://gmail.googleapis.com/gmail/v1/users/me/labels/{id}";
+            var response = await PutAsync(url, label);
+            var json = await response.Content.ReadAsStringAsync();
+            var updatedLabel = JsonSerializer.Deserialize<GmailLabel>(json);
+            return updatedLabel != null ? new[] { updatedLabel } : Array.Empty<GmailLabel>();
+        }
+
+        /// <summary>
+        /// Creates a Gmail draft
+        /// </summary>
+        [CommandAttribute(
+            Name = "CreateDraft",
+            Caption = "Create Gmail Draft",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Gmail,
+            PointType = EnumPointType.Function,
+            ObjectType = "GmailDraft",
+            ClassType = "GmailDataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "gmail.png",
+            misc = "ReturnType: IEnumerable<GmailDraft>"
+        )]
+        public async Task<IEnumerable<GmailDraft>> CreateDraftAsync(GmailDraft draft)
+        {
+            var url = "https://gmail.googleapis.com/gmail/v1/users/me/drafts";
+            var response = await PostAsync(url, draft);
+            var json = await response.Content.ReadAsStringAsync();
+            var createdDraft = JsonSerializer.Deserialize<GmailDraft>(json);
+            return createdDraft != null ? new[] { createdDraft } : Array.Empty<GmailDraft>();
+        }
+
+        /// <summary>
+        /// Updates a Gmail draft
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateDraft",
+            Caption = "Update Gmail Draft",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Gmail,
+            PointType = EnumPointType.Function,
+            ObjectType = "GmailDraft",
+            ClassType = "GmailDataSource",
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "gmail.png",
+            misc = "ReturnType: IEnumerable<GmailDraft>"
+        )]
+        public async Task<IEnumerable<GmailDraft>> UpdateDraftAsync(string id, GmailDraft draft)
+        {
+            var url = $"https://gmail.googleapis.com/gmail/v1/users/me/drafts/{id}";
+            var response = await PutAsync(url, draft);
+            var json = await response.Content.ReadAsStringAsync();
+            var updatedDraft = JsonSerializer.Deserialize<GmailDraft>(json);
+            return updatedDraft != null ? new[] { updatedDraft } : Array.Empty<GmailDraft>();
+        }
+
         // Helper methods for parsing
         private IEnumerable<object> ParseMessages(string json)
         {
@@ -269,35 +527,35 @@ namespace TheTechIdea.Beep.Connectors.Gmail
         // Response classes
         private class GmailMessagesListResponse
         {
-            [JsonPropertyName("messages")] public List<GmailMessage> Messages { get; set; }
-            [JsonPropertyName("nextPageToken")] public string NextPageToken { get; set; }
-            [JsonPropertyName("resultSizeEstimate")] public int ResultSizeEstimate { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("messages")] public List<GmailMessage> Messages { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("nextPageToken")] public string NextPageToken { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("resultSizeEstimate")] public int ResultSizeEstimate { get; set; }
         }
 
         private class GmailThreadsListResponse
         {
-            [JsonPropertyName("threads")] public List<GmailThread> Threads { get; set; }
-            [JsonPropertyName("nextPageToken")] public string NextPageToken { get; set; }
-            [JsonPropertyName("resultSizeEstimate")] public int ResultSizeEstimate { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("threads")] public List<GmailThread> Threads { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("nextPageToken")] public string NextPageToken { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("resultSizeEstimate")] public int ResultSizeEstimate { get; set; }
         }
 
         private class GmailLabelsListResponse
         {
-            [JsonPropertyName("labels")] public List<GmailLabel> Labels { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("labels")] public List<GmailLabel> Labels { get; set; }
         }
 
         private class GmailDraftsListResponse
         {
-            [JsonPropertyName("drafts")] public List<GmailDraft> Drafts { get; set; }
-            [JsonPropertyName("nextPageToken")] public string NextPageToken { get; set; }
-            [JsonPropertyName("resultSizeEstimate")] public int ResultSizeEstimate { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("drafts")] public List<GmailDraft> Drafts { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("nextPageToken")] public string NextPageToken { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("resultSizeEstimate")] public int ResultSizeEstimate { get; set; }
         }
 
         private class GmailHistoryListResponse
         {
-            [JsonPropertyName("history")] public List<GmailHistory> History { get; set; }
-            [JsonPropertyName("nextPageToken")] public string NextPageToken { get; set; }
-            [JsonPropertyName("historyId")] public string HistoryId { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("history")] public List<GmailHistory> History { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("nextPageToken")] public string NextPageToken { get; set; }
+            [System.Text.Json.Serialization.JsonPropertyName("historyId")] public string HistoryId { get; set; }
         }
     }
 }

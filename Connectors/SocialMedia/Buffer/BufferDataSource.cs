@@ -330,6 +330,18 @@ namespace TheTechIdea.Beep.BufferDataSource
             return responseObj?.Data ?? new List<BufferCampaign>();
         }
 
+        [CommandAttribute(ObjectType = "BufferPost", PointType = EnumPointType.Function, Name = "CreatePost", Caption = "Create Buffer Post", ClassName = "BufferDataSource", misc = "ReturnType: BufferPost")]
+        public async Task<BufferPost> CreatePostAsync(BufferPost post)
+        {
+            string endpoint = "updates/create.json";
+            var response = await PostAsync(endpoint, post);
+            if (response == null || !response.IsSuccessStatusCode)
+                return null;
+            string json = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<BufferPost>(json);
+            return result;
+        }
+
         private void RequireFilters(string entityName, string query, string[] required)
         {
             foreach (var req in required)

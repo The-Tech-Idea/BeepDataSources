@@ -16,6 +16,7 @@ using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.WebAPI;
 using TheTechIdea.Beep.Connectors.pCloud.Models;
 using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Vis;
 
 namespace TheTechIdea.Beep.Connectors.pCloud
 {
@@ -100,7 +101,14 @@ namespace TheTechIdea.Beep.Connectors.pCloud
 
         public pCloudDataSource(string datasourcename, IDMLogger logger, IDMEEditor dmeEditor, DataSourceType databasetype, IErrorsInfo errorObject) : base(datasourcename, logger, dmeEditor, databasetype, errorObject)
         {
+            // Register entities
+            EntitiesNames = EntityEndpoints.Keys.ToList();
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+                .ToList();
         }
+
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
 
         public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
@@ -249,7 +257,7 @@ namespace TheTechIdea.Beep.Connectors.pCloud
             }
         }
 
-        private List<T> ExtractArray<T>(JsonElement element) where T : pCloudModel
+        private List<T> ExtractArray<T>(JsonElement element) where T : pCloudEntityBase
         {
             try
             {
@@ -261,7 +269,6 @@ namespace TheTechIdea.Beep.Connectors.pCloud
                         var obj = JsonSerializer.Deserialize<T>(item.GetRawText());
                         if (obj != null)
                         {
-                            (obj as pCloudModel)?.Attach<pCloudModel>(this);
                             list.Add(obj);
                         }
                     }
@@ -320,5 +327,96 @@ namespace TheTechIdea.Beep.Connectors.pCloud
 
             return queryParams.Count > 0 ? $"{endpoint}?{string.Join("&", queryParams)}" : endpoint;
         }
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudItem", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "List<pCloudItem>")]
+        public List<pCloudItem> GetFiles(string folderId = "0")
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "folderid", FilterValue = folderId } };
+            return GetEntity("files", filters).Cast<pCloudItem>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudItem", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "List<pCloudItem>")]
+        public List<pCloudItem> GetFolders(string folderId = "0")
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "folderid", FilterValue = folderId } };
+            return GetEntity("folders", filters).Cast<pCloudItem>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudItem", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudItem")]
+        public pCloudItem? GetFileInfo(string fileId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "fileid", FilterValue = fileId } };
+            return GetEntity("fileinfo", filters).Cast<pCloudItem>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudUser", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudUser")]
+        public pCloudUser? GetUserInfo()
+        {
+            return GetEntity("userinfo", new List<AppFilter>()).Cast<pCloudUser>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudUser", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudUser")]
+        public pCloudUser? GetAccountInfo()
+        {
+            return GetEntity("accountinfo", new List<AppFilter>()).Cast<pCloudUser>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudItem", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "List<pCloudItem>")]
+        public List<pCloudItem> Search(string query)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "query", FilterValue = query } };
+            return GetEntity("search", filters).Cast<pCloudItem>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudShare", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudShare")]
+        public pCloudShare? ShareFile(string fileId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "fileid", FilterValue = fileId } };
+            return GetEntity("share", filters).Cast<pCloudShare>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudShare", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudShare")]
+        public pCloudShare? ShareFolder(string folderId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "folderid", FilterValue = folderId } };
+            return GetEntity("sharefolder", filters).Cast<pCloudShare>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Name = "UploadFileAsync", Caption = "Upload pCloud File",
+            ObjectType = "pCloudItem", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud,
+            ClassType = "pCloudDataSource", Showin = ShowinType.Both, Order = 1,
+            iconimage = "pcloud.png", misc = "Upload a file")]
+        public async Task<IEnumerable<pCloudItem>> UploadFileAsync(pCloudItem file, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("https://api.pcloud.com/uploadfile", file, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+        }
+
+        [CommandAttribute(Name = "CreateFolderAsync", Caption = "Create pCloud Folder",
+            ObjectType = "pCloudItem", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud,
+            ClassType = "pCloudDataSource", Showin = ShowinType.Both, Order = 2,
+            iconimage = "pcloud.png", misc = "Create a folder")]
+        public async Task<IEnumerable<pCloudItem>> CreateFolderAsync(pCloudItem folder, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("https://api.pcloud.com/createfolder", folder, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+        }
+
+        [CommandAttribute(Name = "CopyFileAsync", Caption = "Copy pCloud File",
+            ObjectType = "pCloudItem", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud,
+            ClassType = "pCloudDataSource", Showin = ShowinType.Both, Order = 3,
+            iconimage = "pcloud.png", misc = "Copy a file")]
+        public async Task<IEnumerable<pCloudItem>> CopyFileAsync(pCloudItem file, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("https://api.pcloud.com/copyfile", file, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+        }
+
+        #endregion
     }
 }

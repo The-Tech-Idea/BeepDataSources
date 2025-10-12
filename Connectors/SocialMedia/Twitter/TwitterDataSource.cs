@@ -497,5 +497,133 @@ namespace TheTechIdea.Beep.Connectors.Twitter
 
             return list;
         }
+
+        // POST/PUT methods for creating and updating entities
+        [CommandAttribute(
+            Name = "CreateTweet",
+            Caption = "Create Tweet",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterTweet",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "tweet.png",
+            misc = "ReturnType: TwitterTweet"
+        )]
+        public async Task<TwitterTweet> CreateTweet(string text, string replyToTweetId = null, bool isReply = false)
+        {
+            var tweetData = new { text = text };
+            if (isReply && !string.IsNullOrEmpty(replyToTweetId))
+            {
+                tweetData = new { text = text, reply = new { in_reply_to_tweet_id = replyToTweetId } };
+            }
+
+            var response = await PostAsync<TwitterTweet>("tweets", tweetData);
+            return response;
+        }
+
+        [CommandAttribute(
+            Name = "DeleteTweet",
+            Caption = "Delete Tweet",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterTweet",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "delete.png",
+            misc = "ReturnType: bool"
+        )]
+        public async Task<bool> DeleteTweet(string tweetId)
+        {
+            try
+            {
+                var response = await DeleteAsync($"tweets/{tweetId}");
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        [CommandAttribute(
+            Name = "LikeTweet",
+            Caption = "Like Tweet",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterTweet",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 11,
+            iconimage = "like.png",
+            misc = "ReturnType: bool"
+        )]
+        public async Task<bool> LikeTweet(string tweetId, string userId)
+        {
+            try
+            {
+                var likeData = new { tweet_id = tweetId };
+                var response = await PostAsync($"users/{userId}/likes", likeData);
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        [CommandAttribute(
+            Name = "Retweet",
+            Caption = "Retweet",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterTweet",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 12,
+            iconimage = "retweet.png",
+            misc = "ReturnType: bool"
+        )]
+        public async Task<bool> Retweet(string tweetId, string userId)
+        {
+            try
+            {
+                var retweetData = new { tweet_id = tweetId };
+                var response = await PostAsync($"users/{userId}/retweets", retweetData);
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // PUT methods for updating entities
+        [CommandAttribute(
+            Name = "UpdateTweet",
+            Caption = "Update Tweet",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twitter,
+            PointType = EnumPointType.Function,
+            ObjectType = "TwitterTweet",
+            ClassType = "TwitterDataSource",
+            Showin = ShowinType.Both,
+            Order = 13,
+            iconimage = "update.png",
+            misc = "ReturnType: TwitterTweet"
+        )]
+        public async Task<TwitterTweet> UpdateTweet(string tweetId, TwitterTweet tweet)
+        {
+            var response = await PutAsync($"tweets/{tweetId}", tweet);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<TwitterTweet>(json);
+        }
     }
 }

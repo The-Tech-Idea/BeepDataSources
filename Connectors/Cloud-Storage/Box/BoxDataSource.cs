@@ -13,6 +13,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Box.Models;
 
 namespace TheTechIdea.Beep.Connectors.Box
 {
@@ -237,5 +238,136 @@ namespace TheTechIdea.Beep.Connectors.Box
 
             return list;
         }
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxItem", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "List<BoxItem>")]
+        public List<BoxItem> GetFiles(string folderId = "0")
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "folder_id", FilterValue = folderId } };
+            return GetEntity("files", filters).Cast<BoxItem>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxItem", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "BoxItem")]
+        public BoxItem? GetFile(string fileId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "file_id", FilterValue = fileId } };
+            return GetEntity("file_info", filters).Cast<BoxItem>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxItem", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "List<BoxItem>")]
+        public List<BoxItem> GetFolders(string folderId = "0")
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "folder_id", FilterValue = folderId } };
+            return GetEntity("folder_items", filters).Cast<BoxItem>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxItem", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "BoxItem")]
+        public BoxItem? GetFolder(string folderId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "folder_id", FilterValue = folderId } };
+            return GetEntity("folders", filters).Cast<BoxItem>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxFileVersion", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "List<BoxFileVersion>")]
+        public List<BoxFileVersion> GetFileVersions(string fileId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "file_id", FilterValue = fileId } };
+            return GetEntity("file_versions", filters).Cast<BoxFileVersion>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxUser", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "List<BoxUser>")]
+        public List<BoxUser> GetUsers()
+        {
+            return GetEntity("users", new List<AppFilter>()).Cast<BoxUser>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxUser", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "BoxUser")]
+        public BoxUser? GetUser(string userId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "user_id", FilterValue = userId } };
+            return GetEntity("user_info", filters).Cast<BoxUser>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxUser", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "BoxUser")]
+        public BoxUser? GetCurrentUser()
+        {
+            return GetEntity("current_user", new List<AppFilter>()).Cast<BoxUser>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxGroup", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "List<BoxGroup>")]
+        public List<BoxGroup> GetGroups()
+        {
+            return GetEntity("groups", new List<AppFilter>()).Cast<BoxGroup>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxGroup", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "BoxGroup")]
+        public BoxGroup? GetGroup(string groupId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "group_id", FilterValue = groupId } };
+            return GetEntity("group_info", filters).Cast<BoxGroup>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxSharedLink", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "BoxSharedLink")]
+        public BoxSharedLink? GetSharedLink(string fileId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "file_id", FilterValue = fileId } };
+            return GetEntity("shared_links", filters).Cast<BoxSharedLink>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxWebhook", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "List<BoxWebhook>")]
+        public List<BoxWebhook> GetWebhooks()
+        {
+            return GetEntity("webhooks", new List<AppFilter>()).Cast<BoxWebhook>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxWebhook", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "BoxWebhook")]
+        public BoxWebhook? GetWebhook(string webhookId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "webhook_id", FilterValue = webhookId } };
+            return GetEntity("webhook_info", filters).Cast<BoxWebhook>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box, PointType = EnumPointType.Function, ObjectType = "BoxSearchResult", ClassName = "BoxDataSource", Showin = ShowinType.Both, misc = "List<BoxSearchResult>")]
+        public List<BoxSearchResult> Search(string query)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "query", FilterValue = query } };
+            return GetEntity("search", filters).Cast<BoxSearchResult>().ToList();
+        }
+
+        [CommandAttribute(Name = "CreateFolderAsync", Caption = "Create Box Folder",
+            ObjectType = "BoxFolder", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box,
+            ClassType = "BoxDataSource", Showin = ShowinType.Both, Order = 1,
+            iconimage = "box.png", misc = "Create a folder")]
+        public async Task<IEnumerable<BoxFolder>> CreateFolderAsync(BoxFolder folder, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("https://api.box.com/2.0/folders", folder, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<BoxFolder>>(result);
+        }
+
+        [CommandAttribute(Name = "UploadFileAsync", Caption = "Upload Box File",
+            ObjectType = "BoxFile", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box,
+            ClassType = "BoxDataSource", Showin = ShowinType.Both, Order = 2,
+            iconimage = "box.png", misc = "Upload a file")]
+        public async Task<IEnumerable<BoxFile>> UploadFileAsync(BoxFile file, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("https://api.box.com/2.0/files/content", file, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<BoxFile>>(result);
+        }
+
+        [CommandAttribute(Name = "CreateWebhookAsync", Caption = "Create Box Webhook",
+            ObjectType = "BoxWebhook", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box,
+            ClassType = "BoxDataSource", Showin = ShowinType.Both, Order = 3,
+            iconimage = "box.png", misc = "Create a webhook")]
+        public async Task<IEnumerable<BoxWebhook>> CreateWebhookAsync(BoxWebhook webhook, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("https://api.box.com/2.0/webhooks", webhook, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<BoxWebhook>>(result);
+        }
+
+        #endregion
     }
 }

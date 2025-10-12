@@ -14,13 +14,14 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Ecommerce.EcwidDataSource.Models;
 
 namespace TheTechIdea.Beep.Connectors.Ecommerce.EcwidDataSource
 {
     /// <summary>
     /// Ecwid data source implementation using WebAPIDataSource as base class
     /// </summary>
-    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WebApi)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid)]
     public class EcwidDataSource : WebAPIDataSource
     {
         // Entity endpoints mapping for Ecwid API
@@ -298,5 +299,30 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.EcwidDataSource
 
             return list;
         }
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "EcwidDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EcwidProduct>")]
+        public async Task<IEnumerable<EcwidProduct>> GetProducts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("products", new List<AppFilter> { filter });
+            return result.Cast<EcwidProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Orders", ClassName = "EcwidDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EcwidOrder>")]
+        public async Task<IEnumerable<EcwidOrder>> GetOrders(AppFilter filter)
+        {
+            var result = await GetEntityAsync("orders", new List<AppFilter> { filter });
+            return result.Cast<EcwidOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Categories", ClassName = "EcwidDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EcwidCategory>")]
+        public async Task<IEnumerable<EcwidCategory>> GetCategories(AppFilter filter)
+        {
+            var result = await GetEntityAsync("categories", new List<AppFilter> { filter });
+            return result.Cast<EcwidCategory>();
+        }
+
+        #endregion
     }
 }

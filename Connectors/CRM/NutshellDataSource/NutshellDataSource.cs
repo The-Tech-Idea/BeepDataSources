@@ -17,14 +17,22 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.AppManager;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Nutshell.Models;
 
 namespace TheTechIdea.Beep.Connectors.NutshellDataSource
 {
-    /// <summary>
-    /// Nutshell CRM Data Source implementation using Nutshell REST API
-    /// </summary>
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell)]
     public class NutshellDataSource : WebAPIDataSource
     {
+        // Entity endpoints mapping for Nutshell API
+        private static readonly Dictionary<string, string> EntityEndpoints = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["contacts"] = "Contacts",
+            ["accounts"] = "Accounts",
+            ["leads"] = "Leads",
+            ["opportunities"] = "Opportunities"
+        };
+
         #region Configuration Classes
 
         /// <summary>
@@ -80,6 +88,12 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             // Ensure WebAPI connection props exist
             if (Dataconnection != null && Dataconnection.ConnectionProp is not WebAPIConnectionProperties)
                 Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+
+            // Register entities
+            EntitiesNames = EntityEndpoints.Keys.ToList();
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+                .ToList();
 
             // Initialize connection properties
             if (Dataconnection?.ConnectionProp != null)
@@ -231,7 +245,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             }
         }
 
-        public new async Task<object?> GetEntityAsync(string entityName, List<AppFilter>? filter = null)
+        public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter>? filter = null)
         {
             try
             {
@@ -240,7 +254,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
 
                 var request = new
                 {
-                    method = $"get{entityName}",
+                    method = $"get{EntityEndpoints[entityName]}",
                     @params = BuildQueryParameters(filter),
                     id = Guid.NewGuid().ToString()
                 };
@@ -252,24 +266,20 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                 if (response.IsSuccessStatusCode)
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonSerializer.Deserialize<NutshellApiResponse<JsonElement>>(responseContent);
-
-                    if (apiResponse?.Success == true)
-                    {
-                        return apiResponse.Result;
-                    }
+                    var result = ParseResponse(responseContent, entityName);
+                    return result ?? new List<object>();
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
                 ErrorObject.Flag = Errors.Failed;
                 ErrorObject.Message = $"Failed to get {entityName}: {response.StatusCode} - {errorContent}";
-                return null;
+                return new List<object>();
             }
             catch (Exception ex)
             {
                 ErrorObject.Flag = Errors.Failed;
                 ErrorObject.Message = $"Failed to get entity data: {ex.Message}";
-                return null;
+                return new List<object>();
             }
         }
 
@@ -537,7 +547,87 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
 
         #endregion
 
-        #region Standard Interface Methods
+        #region Response Parsing
+
+        private IEnumerable<object>? ParseResponse(string jsonContent, string entityName)
+        {
+            try
+            {
+                return entityName switch
+                {
+                    "contacts" => ExtractArray<Contact>(jsonContent),
+                    "accounts" => ExtractArray<Account>(jsonContent),
+                    "leads" => ExtractArray<Lead>(jsonContent),
+                    "opportunities" => ExtractArray<Opportunity>(jsonContent),
+                    _ => JsonSerializer.Deserialize<NutshellApiResponse<JsonElement>>(jsonContent)?.Result.EnumerateArray().Select(x => (object)x) ?? new List<object>()
+                };
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog($"Error parsing response for {entityName}: {ex.Message}");
+                return JsonSerializer.Deserialize<NutshellApiResponse<JsonElement>>(jsonContent)?.Result.EnumerateArray().Select(x => (object)x) ?? new List<object>();
+            }
+        }
+
+        private List<T> ExtractArray<T>(string jsonContent) where T : NutshellEntityBase
+        {
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var apiResponse = JsonSerializer.Deserialize<NutshellApiResponse<List<T>>>(jsonContent, options);
+                if (apiResponse?.Result != null)
+                {
+                    foreach (var item in apiResponse.Result)
+                    {
+                        item.Attach<T>((IDataSource)this);
+                    }
+                }
+                return apiResponse?.Result ?? new List<T>();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog($"Error extracting array of {typeof(T).Name}: {ex.Message}");
+                return new List<T>();
+            }
+        }
+
+        #endregion
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Contact>")]
+        public async Task<IEnumerable<Contact>> GetContacts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("contacts", new List<AppFilter> { filter });
+            return result.Cast<Contact>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Account>")]
+        public async Task<IEnumerable<Account>> GetAccounts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("accounts", new List<AppFilter> { filter });
+            return result.Cast<Account>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Leads", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Lead>")]
+        public async Task<IEnumerable<Lead>> GetLeads(AppFilter filter)
+        {
+            var result = await GetEntityAsync("leads", new List<AppFilter> { filter });
+            return result.Cast<Lead>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Opportunities", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Opportunity>")]
+        public async Task<IEnumerable<Opportunity>> GetOpportunities(AppFilter filter)
+        {
+            var result = await GetEntityAsync("opportunities", new List<AppFilter> { filter });
+            return result.Cast<Opportunity>();
+        }
+
+        #endregion
 
         public bool CreateEntityAsAsync(string entityname, object entitydata)
         {
@@ -605,7 +695,5 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             Task.Run(() => DisconnectAsync()).GetAwaiter().GetResult();
             _entityCache.Clear();
         }
-
-        #endregion
     }
 }

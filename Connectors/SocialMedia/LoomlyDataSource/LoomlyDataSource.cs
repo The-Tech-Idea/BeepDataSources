@@ -185,5 +185,96 @@ namespace TheTechIdea.Beep.Connectors.Loomly
             }
             return string.Join("&", query);
         }
+
+        // -------------------- CommandAttribute Methods --------------------
+
+        [CommandAttribute(
+            ObjectType = "LoomlyPost",
+            PointType = EnumPointType.Function,
+            Name = "GetPosts",
+            Caption = "Get Loomly Posts",
+            ClassName = "LoomlyDataSource",
+            misc = "ReturnType: IEnumerable<LoomlyPost>"
+        )]
+        public IEnumerable<LoomlyPost> GetPosts()
+        {
+            return GetEntity<LoomlyPost>("posts");
+        }
+
+        [CommandAttribute(
+            ObjectType = "LoomlyPost",
+            PointType = EnumPointType.Function,
+            Name = "GetPost",
+            Caption = "Get Loomly Post by ID",
+            ClassName = "LoomlyDataSource",
+            misc = "ReturnType: IEnumerable<LoomlyPost>"
+        )]
+        public IEnumerable<LoomlyPost> GetPost(string id)
+        {
+            return GetEntity<LoomlyPost>("posts.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+        }
+
+        [CommandAttribute(
+            ObjectType = "LoomlyCampaign",
+            PointType = EnumPointType.Function,
+            Name = "GetCampaigns",
+            Caption = "Get Loomly Campaigns",
+            ClassName = "LoomlyDataSource",
+            misc = "ReturnType: IEnumerable<LoomlyCampaign>"
+        )]
+        public IEnumerable<LoomlyCampaign> GetCampaigns()
+        {
+            return GetEntity<LoomlyCampaign>("campaigns");
+        }
+
+        [CommandAttribute(
+            ObjectType = "LoomlyCampaign",
+            PointType = EnumPointType.Function,
+            Name = "GetCampaign",
+            Caption = "Get Loomly Campaign by ID",
+            ClassName = "LoomlyDataSource",
+            misc = "ReturnType: IEnumerable<LoomlyCampaign>"
+        )]
+        public IEnumerable<LoomlyCampaign> GetCampaign(string id)
+        {
+            return GetEntity<LoomlyCampaign>("campaigns.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+        }
+
+        // POST methods for creating entities
+        [CommandAttribute(ObjectType = "LoomlyPost", PointType = EnumPointType.Function, Name = "CreatePost", Caption = "Create Loomly Post", ClassName = "LoomlyDataSource", misc = "ReturnType: LoomlyPost")]
+        public async Task<LoomlyPost> CreatePostAsync(LoomlyPost post)
+        {
+            var response = await PostAsync("posts", post);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<LoomlyPost>(json);
+        }
+
+        [CommandAttribute(ObjectType = "LoomlyPost", PointType = EnumPointType.Function, Name = "UpdatePost", Caption = "Update Loomly Post", ClassName = "LoomlyDataSource", misc = "ReturnType: LoomlyPost")]
+        public async Task<LoomlyPost> UpdatePostAsync(string postId, LoomlyPost post)
+        {
+            var response = await PutAsync($"posts/{postId}", post);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<LoomlyPost>(json);
+        }
+
+        [CommandAttribute(ObjectType = "LoomlyCampaign", PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Loomly Campaign", ClassName = "LoomlyDataSource", misc = "ReturnType: LoomlyCampaign")]
+        public async Task<LoomlyCampaign> CreateCampaignAsync(LoomlyCampaign campaign)
+        {
+            var response = await PostAsync("campaigns", campaign);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<LoomlyCampaign>(json);
+        }
+
+        [CommandAttribute(ObjectType = "LoomlyCampaign", PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update Loomly Campaign", ClassName = "LoomlyDataSource", misc = "ReturnType: LoomlyCampaign")]
+        public async Task<LoomlyCampaign> UpdateCampaignAsync(string campaignId, LoomlyCampaign campaign)
+        {
+            var response = await PutAsync($"campaigns/{campaignId}", campaign);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<LoomlyCampaign>(json);
+        }
     }
 }

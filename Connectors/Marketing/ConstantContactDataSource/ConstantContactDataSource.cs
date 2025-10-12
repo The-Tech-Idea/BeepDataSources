@@ -194,5 +194,117 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConstantContact
 
             return list;
         }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(ObjectType = nameof(ConstantContactContact), PointType = PointType.Function, Name = "GetContacts", Caption = "Get Contacts", ClassName = "ConstantContactDataSource", misc = "GetContacts")]
+        public IEnumerable<ConstantContactContact> GetContacts()
+        {
+            return GetEntity("contacts", null).Cast<ConstantContactContact>();
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactList), PointType = PointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "ConstantContactDataSource", misc = "GetLists")]
+        public IEnumerable<ConstantContactList> GetLists()
+        {
+            return GetEntity("lists", null).Cast<ConstantContactList>();
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactCampaign), PointType = PointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "ConstantContactDataSource", misc = "GetCampaigns")]
+        public IEnumerable<ConstantContactCampaign> GetCampaigns()
+        {
+            return GetEntity("campaigns", null).Cast<ConstantContactCampaign>();
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactEmailCampaign), PointType = PointType.Function, Name = "GetEmailCampaigns", Caption = "Get Email Campaigns", ClassName = "ConstantContactDataSource", misc = "GetEmailCampaigns")]
+        public IEnumerable<ConstantContactEmailCampaign> GetEmailCampaigns()
+        {
+            return GetEntity("email_campaigns", null).Cast<ConstantContactEmailCampaign>();
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactActivity), PointType = PointType.Function, Name = "GetActivities", Caption = "Get Activities", ClassName = "ConstantContactDataSource", misc = "GetActivities")]
+        public IEnumerable<ConstantContactActivity> GetActivities()
+        {
+            return GetEntity("activities", null).Cast<ConstantContactActivity>();
+        }
+
+        // POST/PUT methods for creating and updating entities
+        [CommandAttribute(ObjectType = nameof(ConstantContactContact), PointType = PointType.Function, Name = "CreateContact", Caption = "Create Contact", ClassName = "ConstantContactDataSource", misc = "CreateContact")]
+        public async Task<ConstantContactContact> CreateContact(ConstantContactContact contact)
+        {
+            var endpoint = "v2/contacts";
+            var response = await PostAsync<ConstantContactContact>(endpoint, contact);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactContact), PointType = PointType.Function, Name = "UpdateContact", Caption = "Update Contact", ClassName = "ConstantContactDataSource", misc = "UpdateContact")]
+        public async Task<ConstantContactContact> UpdateContact(string contactId, ConstantContactContact contact)
+        {
+            var endpoint = $"v2/contacts/{contactId}";
+            var response = await PutAsync<ConstantContactContact>(endpoint, contact);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactList), PointType = PointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "ConstantContactDataSource", misc = "CreateList")]
+        public async Task<ConstantContactList> CreateList(ConstantContactList list)
+        {
+            var endpoint = "v2/lists";
+            var response = await PostAsync<ConstantContactList>(endpoint, list);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactList), PointType = PointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "ConstantContactDataSource", misc = "UpdateList")]
+        public async Task<ConstantContactList> UpdateList(string listId, ConstantContactList list)
+        {
+            var endpoint = $"v2/lists/{listId}";
+            var response = await PutAsync<ConstantContactList>(endpoint, list);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactCampaign), PointType = PointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "ConstantContactDataSource", misc = "CreateCampaign")]
+        public async Task<ConstantContactCampaign> CreateCampaign(ConstantContactCampaign campaign)
+        {
+            var endpoint = "v2/emailmarketing/campaigns";
+            var response = await PostAsync<ConstantContactCampaign>(endpoint, campaign);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactCampaign), PointType = PointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "ConstantContactDataSource", misc = "UpdateCampaign")]
+        public async Task<ConstantContactCampaign> UpdateCampaign(string campaignId, ConstantContactCampaign campaign)
+        {
+            var endpoint = $"v2/emailmarketing/campaigns/{campaignId}";
+            var response = await PutAsync<ConstantContactCampaign>(endpoint, campaign);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactEmailCampaign), PointType = PointType.Function, Name = "CreateEmailCampaign", Caption = "Create Email Campaign", ClassName = "ConstantContactDataSource", misc = "CreateEmailCampaign")]
+        public async Task<ConstantContactEmailCampaign> CreateEmailCampaign(ConstantContactEmailCampaign emailCampaign)
+        {
+            var endpoint = "v3/emailcampaigns";
+            var response = await PostAsync<ConstantContactEmailCampaign>(endpoint, emailCampaign);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactEmailCampaign), PointType = PointType.Function, Name = "UpdateEmailCampaign", Caption = "Update Email Campaign", ClassName = "ConstantContactDataSource", misc = "UpdateEmailCampaign")]
+        public async Task<ConstantContactEmailCampaign> UpdateEmailCampaign(string campaignId, ConstantContactEmailCampaign emailCampaign)
+        {
+            var endpoint = $"v3/emailcampaigns/{campaignId}";
+            var response = await PutAsync<ConstantContactEmailCampaign>(endpoint, emailCampaign);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactActivity), PointType = PointType.Function, Name = "CreateActivity", Caption = "Create Activity", ClassName = "ConstantContactDataSource", misc = "CreateActivity")]
+        public async Task<ConstantContactActivity> CreateActivity(ConstantContactActivity activity)
+        {
+            var endpoint = "v3/activities";
+            var response = await PostAsync<ConstantContactActivity>(endpoint, activity);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = nameof(ConstantContactActivity), PointType = PointType.Function, Name = "UpdateActivity", Caption = "Update Activity", ClassName = "ConstantContactDataSource", misc = "UpdateActivity")]
+        public async Task<ConstantContactActivity> UpdateActivity(string activityId, ConstantContactActivity activity)
+        {
+            var endpoint = $"v3/activities/{activityId}";
+            var response = await PutAsync<ConstantContactActivity>(endpoint, activity);
+            return response;
+        }
     }
 }

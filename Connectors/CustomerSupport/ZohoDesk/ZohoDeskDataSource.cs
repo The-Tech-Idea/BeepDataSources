@@ -4,17 +4,20 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-using TheTechIdea.Beep.DataBase;
-using TheTechIdea.Beep.Report;
-using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.AppManager;
 using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
 
-namespace TheTechIdea.Beep.DataSources
+namespace TheTechIdea.Beep.Connectors.ZohoDesk
 {
-    [AddinAttribute(Catagory = "Connector", DatasourceType = DatasourceType.ZohoDesk)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoDesk)]
     public class ZohoDeskDataSource : WebAPIDataSource
     {
         public ZohoDeskDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
@@ -35,69 +38,7 @@ namespace TheTechIdea.Beep.DataSources
             ["organizations"] = new("/api/v1/organizations", "data", Array.Empty<string>()),
         };
 
-        public override string GetConnectionString()
-        {
-            return $"ZohoDesk:{DatasourceName}";
-        }
-
-        public override string ColumnDelimiter { get => ","; set => base.ColumnDelimiter = value; }
-        public override string ParameterDelimiter { get => ":"; set => base.ParameterDelimiter = value; }
-        public override string RowDelimiter { get => "\n"; set => base.RowDelimiter = value; }
-
-        public override List<string> GetEntitiesList()
-        {
-            return Map.Keys.ToList();
-        }
-
-        public override List<EntityStructure> GetEntityStructure(string EntityName, bool refresh)
-        {
-            return GetEntityStructureAsync(EntityName, refresh).GetAwaiter().GetResult();
-        }
-
-        public override async Task<List<EntityStructure>> GetEntityStructureAsync(string EntityName, bool refresh)
-        {
-            if (!Map.TryGetValue(EntityName, out var m))
-                throw new InvalidOperationException($"Unknown Zoho Desk entity '{EntityName}'.");
-
-            var endpoint = m.endpoint;
-            using var resp = await GetAsync(endpoint).ConfigureAwait(false);
-            if (resp is null || !resp.IsSuccessStatusCode) return new List<EntityStructure>();
-
-            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var doc = JsonDocument.Parse(json);
-            var root = GetJsonProperty(doc.RootElement, m.root.Split('.'));
-
-            if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() == 0)
-                return new List<EntityStructure>();
-
-            var sample = root[0];
-            var structure = new EntityStructure
-            {
-                EntityName = EntityName,
-                ViewID = EntityName,
-                DataSourceID = DatasourceName,
-                Fields = new List<EntityField>()
-            };
-
-            foreach (var prop in sample.EnumerateObject())
-            {
-                structure.Fields.Add(new EntityField
-                {
-                    fieldname = prop.Name,
-                    fieldtype = MapJsonType(prop.Value.ValueKind),
-                    ValueRetrievedFromParent = false,
-                    AllowDBNull = true,
-                    IsAutoIncrement = false,
-                    IsIdentity = false,
-                    IsKey = false,
-                    IsUnique = false
-                });
-            }
-
-            return new List<EntityStructure> { structure };
-        }
-
-        public override object GetEntity(string EntityName, List<AppFilter> Filter)
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> Filter)
         {
             return GetEntityAsync(EntityName, Filter).GetAwaiter().GetResult();
         }
@@ -134,7 +75,7 @@ namespace TheTechIdea.Beep.DataSources
 
             var endpoint = ResolveEndpoint(m.endpoint, q);
 
-            using var resp = Get(endpoint, q);
+            using var resp = GetAsync(endpoint, q).ConfigureAwait(false).GetAwaiter().GetResult();
             if (resp is null || !resp.IsSuccessStatusCode) return new PagedResult();
 
             var data = ExtractArray(resp, m.root);
@@ -187,14 +128,43 @@ namespace TheTechIdea.Beep.DataSources
             return current;
         }
 
-        private string MapJsonType(JsonValueKind kind) => kind switch
+        private static Dictionary<string, string> FiltersToQuery(List<AppFilter> filters)
         {
-            JsonValueKind.String => "System.String",
-            JsonValueKind.Number => "System.Decimal",
-            JsonValueKind.True or JsonValueKind.False => "System.Boolean",
-            JsonValueKind.Array => "System.Object[]",
-            JsonValueKind.Object => "System.Object",
-            _ => "System.String"
-        };
+            var query = new Dictionary<string, string>();
+            foreach (var filter in filters ?? new List<AppFilter>())
+            {
+                query[filter.FieldName] = filter.FilterValue;
+            }
+            return query;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoDesk, PointType = EnumPointType.Function, ObjectType = "tickets", ClassName = "ZohoDeskDataSource", Showin = ShowinType.Both, misc = "Get tickets")]
+        public IEnumerable<object> GetTickets(List<AppFilter> filter = null) => GetEntity("tickets", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoDesk, PointType = EnumPointType.Function, ObjectType = "contacts", ClassName = "ZohoDeskDataSource", Showin = ShowinType.Both, misc = "Get contacts")]
+        public IEnumerable<object> GetContacts(List<AppFilter> filter = null) => GetEntity("contacts", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoDesk, PointType = EnumPointType.Function, ObjectType = "accounts", ClassName = "ZohoDeskDataSource", Showin = ShowinType.Both, misc = "Get accounts")]
+        public IEnumerable<object> GetAccounts(List<AppFilter> filter = null) => GetEntity("accounts", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoDesk, PointType = EnumPointType.Function, ObjectType = "agents", ClassName = "ZohoDeskDataSource", Showin = ShowinType.Both, misc = "Get agents")]
+        public IEnumerable<object> GetAgents(List<AppFilter> filter = null) => GetEntity("agents", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoDesk, PointType = EnumPointType.Function, ObjectType = "departments", ClassName = "ZohoDeskDataSource", Showin = ShowinType.Both, misc = "Get departments")]
+        public IEnumerable<object> GetDepartments(List<AppFilter> filter = null) => GetEntity("departments", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoDesk, PointType = EnumPointType.Function, ObjectType = "comments", ClassName = "ZohoDeskDataSource", Showin = ShowinType.Both, misc = "Get comments for a ticket")]
+        public IEnumerable<object> GetComments(string ticketId, List<AppFilter> filter = null)
+        {
+            var f = filter ?? new List<AppFilter>();
+            f.Add(new AppFilter { FieldName = "ticketId", FilterValue = ticketId });
+            return GetEntity("comments", f);
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoDesk, PointType = EnumPointType.Function, ObjectType = "tasks", ClassName = "ZohoDeskDataSource", Showin = ShowinType.Both, misc = "Get tasks")]
+        public IEnumerable<object> GetTasks(List<AppFilter> filter = null) => GetEntity("tasks", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoDesk, PointType = EnumPointType.Function, ObjectType = "organizations", ClassName = "ZohoDeskDataSource", Showin = ShowinType.Both, misc = "Get organizations")]
+        public IEnumerable<object> GetOrganizations(List<AppFilter> filter = null) => GetEntity("organizations", filter ?? new List<AppFilter>());
     }
 }

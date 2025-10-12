@@ -213,5 +213,101 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ActiveCampaign
 
             return list;
         }
+
+        // CommandAttribute methods for framework integration
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignContact), PointType = PointType.Function, Name = "GetContacts", Caption = "Get Contacts", ClassName = "ActiveCampaignDataSource", misc = "GetContacts")]
+        public IEnumerable<ActiveCampaignContact> GetContacts()
+        {
+            return GetEntity("contacts", null).Cast<ActiveCampaignContact>();
+        }
+
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignList), PointType = PointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "ActiveCampaignDataSource", misc = "GetLists")]
+        public IEnumerable<ActiveCampaignList> GetLists()
+        {
+            return GetEntity("lists", null).Cast<ActiveCampaignList>();
+        }
+
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignTag), PointType = PointType.Function, Name = "GetTags", Caption = "Get Tags", ClassName = "ActiveCampaignDataSource", misc = "GetTags")]
+        public IEnumerable<ActiveCampaignTag> GetTags()
+        {
+            return GetEntity("tags", null).Cast<ActiveCampaignTag>();
+        }
+
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignCampaign), PointType = PointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "ActiveCampaignDataSource", misc = "GetCampaigns")]
+        public IEnumerable<ActiveCampaignCampaign> GetCampaigns()
+        {
+            return GetEntity("campaigns", null).Cast<ActiveCampaignCampaign>();
+        }
+
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignDeal), PointType = PointType.Function, Name = "GetDeals", Caption = "Get Deals", ClassName = "ActiveCampaignDataSource", misc = "GetDeals")]
+        public IEnumerable<ActiveCampaignDeal> GetDeals()
+        {
+            return GetEntity("deals", null).Cast<ActiveCampaignDeal>();
+        }
+
+        // POST/PUT methods for creating and updating entities
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignContact), PointType = PointType.Function, Name = "CreateContact", Caption = "Create Contact", ClassName = "ActiveCampaignDataSource", misc = "CreateContact")]
+        public async Task<ActiveCampaignContact> CreateContact(ActiveCampaignContact contact)
+        {
+            var endpoint = "api/3/contacts";
+            var response = await PostAsync<ActiveCampaignContact>(endpoint, contact);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignContact), PointType = PointType.Function, Name = "UpdateContact", Caption = "Update Contact", ClassName = "ActiveCampaignDataSource", misc = "UpdateContact")]
+        public async Task<ActiveCampaignContact> UpdateContact(string contactId, ActiveCampaignContact contact)
+        {
+            var endpoint = $"api/3/contacts/{contactId}";
+            var response = await PutAsync<ActiveCampaignContact>(endpoint, contact);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignList), PointType = PointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "ActiveCampaignDataSource", misc = "CreateList")]
+        public async Task<ActiveCampaignList> CreateList(ActiveCampaignList list)
+        {
+            var endpoint = "api/3/lists";
+            var response = await PostAsync<ActiveCampaignList>(endpoint, list);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignList), PointType = PointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "ActiveCampaignDataSource", misc = "UpdateList")]
+        public async Task<ActiveCampaignList> UpdateList(string listId, ActiveCampaignList list)
+        {
+            var endpoint = $"api/3/lists/{listId}";
+            var response = await PutAsync<ActiveCampaignList>(endpoint, list);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignCampaign), PointType = PointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "ActiveCampaignDataSource", misc = "CreateCampaign")]
+        public async Task<ActiveCampaignCampaign> CreateCampaign(ActiveCampaignCampaign campaign)
+        {
+            var endpoint = "api/3/campaigns";
+            var response = await PostAsync<ActiveCampaignCampaign>(endpoint, campaign);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignCampaign), PointType = PointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "ActiveCampaignDataSource", misc = "UpdateCampaign")]
+        public async Task<ActiveCampaignCampaign> UpdateCampaign(string campaignId, ActiveCampaignCampaign campaign)
+        {
+            var endpoint = $"api/3/campaigns/{campaignId}";
+            var response = await PutAsync<ActiveCampaignCampaign>(endpoint, campaign);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignDeal), PointType = PointType.Function, Name = "CreateDeal", Caption = "Create Deal", ClassName = "ActiveCampaignDataSource", misc = "CreateDeal")]
+        public async Task<ActiveCampaignDeal> CreateDeal(ActiveCampaignDeal deal)
+        {
+            var endpoint = "api/3/deals";
+            var response = await PostAsync<ActiveCampaignDeal>(endpoint, deal);
+            return response;
+        }
+
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignDeal), PointType = PointType.Function, Name = "UpdateDeal", Caption = "Update Deal", ClassName = "ActiveCampaignDataSource", misc = "UpdateDeal")]
+        public async Task<ActiveCampaignDeal> UpdateDeal(string dealId, ActiveCampaignDeal deal)
+        {
+            var endpoint = $"api/3/deals/{dealId}";
+            var response = await PutAsync<ActiveCampaignDeal>(endpoint, deal);
+            return response;
+        }
     }
 }

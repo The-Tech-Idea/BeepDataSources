@@ -13,6 +13,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.GoogleDrive.Models;
 
 namespace TheTechIdea.Beep.Connectors.GoogleDrive
 {
@@ -113,7 +114,7 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
             using var resp = await GetAsync(resolvedEndpoint, q).ConfigureAwait(false);
             if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
 
-            return ExtractArray(resp, "files");
+            return ExtractArray(resp, EntityName);
         }
 
         // ---------------------------- helpers ----------------------------
@@ -177,41 +178,199 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
             return result;
         }
 
-        // Extracts array from response into a List<object> (Dictionary<string,object> per item).
-        private static List<object> ExtractArray(HttpResponseMessage resp, string root)
+        // Extracts array from response into strongly typed objects based on entity name
+        private static IEnumerable<object> ExtractArray(HttpResponseMessage resp, string entityName)
         {
             var list = new List<object>();
-            if (resp == null) return list;
+            if (resp == null || !resp.IsSuccessStatusCode) return list;
 
             var json = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            using var doc = JsonDocument.Parse(json);
-
-            JsonElement node = doc.RootElement;
-
-            if (!string.IsNullOrWhiteSpace(root))
-            {
-                if (!node.TryGetProperty(root, out node))
-                    return list; // no root -> empty
-            }
+            if (string.IsNullOrWhiteSpace(json)) return list;
 
             var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-            if (node.ValueKind == JsonValueKind.Array)
+            return entityName.ToLowerInvariant() switch
             {
-                list.Capacity = node.GetArrayLength();
-                foreach (var el in node.EnumerateArray())
+                "files" => DeserializeEntity<GoogleDriveFile>(json, opts),
+                "file" => DeserializeEntity<GoogleDriveFile>(json, opts),
+                "folders" => DeserializeEntity<GoogleDriveFile>(json, opts),
+                "folder" => DeserializeEntity<GoogleDriveFile>(json, opts),
+                "permissions" => DeserializeEntity<GoogleDrivePermission>(json, opts),
+                "permission" => DeserializeEntity<GoogleDrivePermission>(json, opts),
+                "revisions" => DeserializeEntity<GoogleDriveRevision>(json, opts),
+                "revision" => DeserializeEntity<GoogleDriveRevision>(json, opts),
+                "comments" => DeserializeEntity<GoogleDriveComment>(json, opts),
+                "comment" => DeserializeEntity<GoogleDriveComment>(json, opts),
+                "changes" => DeserializeEntity<GoogleDriveChange>(json, opts),
+                "change" => DeserializeEntity<GoogleDriveChange>(json, opts),
+                _ => DeserializeEntity<Dictionary<string, object>>(json, opts)
+            };
+        }
+
+        private static List<object> DeserializeEntity<T>(string json, JsonSerializerOptions opts)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                // Check if response has a "files" array (Google Drive API pattern)
+                if (root.TryGetProperty("files", out var filesArray) && filesArray.ValueKind == JsonValueKind.Array)
                 {
-                    var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(el.GetRawText(), opts);
-                    if (obj != null) list.Add(obj);
+                    var list = new List<object>();
+                    foreach (var item in filesArray.EnumerateArray())
+                    {
+                        var entity = JsonSerializer.Deserialize<T>(item.GetRawText(), opts);
+                        if (entity != null) list.Add(entity);
+                    }
+                    return list;
+                }
+                // Check if response has an "items" array (alternative pattern)
+                else if (root.TryGetProperty("items", out var itemsArray) && itemsArray.ValueKind == JsonValueKind.Array)
+                {
+                    var list = new List<object>();
+                    foreach (var item in itemsArray.EnumerateArray())
+                    {
+                        var entity = JsonSerializer.Deserialize<T>(item.GetRawText(), opts);
+                        if (entity != null) list.Add(entity);
+                    }
+                    return list;
+                }
+                // Single object response
+                else
+                {
+                    var entity = JsonSerializer.Deserialize<T>(json, opts);
+                    return entity != null ? new List<object> { entity } : new List<object>();
                 }
             }
-            else if (node.ValueKind == JsonValueKind.Object)
+            catch
             {
-                var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(node.GetRawText(), opts);
-                if (obj != null) list.Add(obj);
+                // Fallback to dictionary if deserialization fails
+                return new List<object> { JsonSerializer.Deserialize<Dictionary<string, object>>(json, opts) ?? new Dictionary<string, object>() };
             }
-
-            return list;
         }
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveFile", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveFile>")]
+        public List<GoogleDriveFile> GetFiles()
+        {
+            return GetEntity("files", new List<AppFilter>()).Cast<GoogleDriveFile>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveFile", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDriveFile")]
+        public GoogleDriveFile? GetFile(string fileId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "fileId", FilterValue = fileId } };
+            return GetEntity("file", filters).Cast<GoogleDriveFile>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveFile", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveFile>")]
+        public List<GoogleDriveFile> GetFolders()
+        {
+            return GetEntity("folders", new List<AppFilter>()).Cast<GoogleDriveFile>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveFile", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDriveFile")]
+        public GoogleDriveFile? GetFolder(string folderId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "folderId", FilterValue = folderId } };
+            return GetEntity("folder", filters).Cast<GoogleDriveFile>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDrivePermission", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDrivePermission>")]
+        public List<GoogleDrivePermission> GetPermissions(string fileId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "fileId", FilterValue = fileId } };
+            return GetEntity("permissions", filters).Cast<GoogleDrivePermission>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDrivePermission", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDrivePermission")]
+        public GoogleDrivePermission? GetPermission(string fileId, string permissionId)
+        {
+            var filters = new List<AppFilter> 
+            { 
+                new AppFilter { FieldName = "fileId", FilterValue = fileId },
+                new AppFilter { FieldName = "permissionId", FilterValue = permissionId }
+            };
+            return GetEntity("permission", filters).Cast<GoogleDrivePermission>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveRevision", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveRevision>")]
+        public List<GoogleDriveRevision> GetRevisions(string fileId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "fileId", FilterValue = fileId } };
+            return GetEntity("revisions", filters).Cast<GoogleDriveRevision>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveRevision", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDriveRevision")]
+        public GoogleDriveRevision? GetRevision(string fileId, string revisionId)
+        {
+            var filters = new List<AppFilter> 
+            { 
+                new AppFilter { FieldName = "fileId", FilterValue = fileId },
+                new AppFilter { FieldName = "revisionId", FilterValue = revisionId }
+            };
+            return GetEntity("revision", filters).Cast<GoogleDriveRevision>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveComment", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveComment>")]
+        public List<GoogleDriveComment> GetComments(string fileId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "fileId", FilterValue = fileId } };
+            return GetEntity("comments", filters).Cast<GoogleDriveComment>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveComment", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDriveComment")]
+        public GoogleDriveComment? GetComment(string fileId, string commentId)
+        {
+            var filters = new List<AppFilter> 
+            { 
+                new AppFilter { FieldName = "fileId", FilterValue = fileId },
+                new AppFilter { FieldName = "commentId", FilterValue = commentId }
+            };
+            return GetEntity("comment", filters).Cast<GoogleDriveComment>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveChange", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveChange>")]
+        public List<GoogleDriveChange> GetChanges()
+        {
+            return GetEntity("changes", new List<AppFilter>()).Cast<GoogleDriveChange>().ToList();
+        }
+
+        [CommandAttribute(Name = "CreateFileAsync", Caption = "Create Google Drive File",
+            ObjectType = "GoogleDriveFile", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive,
+            ClassType = "GoogleDriveDataSource", Showin = ShowinType.Both, Order = 1,
+            iconimage = "googledrive.png", misc = "Create a file or folder")]
+        public async Task<IEnumerable<GoogleDriveFile>> CreateFileAsync(GoogleDriveFile file, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("files", file, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<GoogleDriveFile>>(result);
+        }
+
+        [CommandAttribute(Name = "CreatePermissionAsync", Caption = "Create Google Drive Permission",
+            ObjectType = "GoogleDrivePermission", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive,
+            ClassType = "GoogleDriveDataSource", Showin = ShowinType.Both, Order = 2,
+            iconimage = "googledrive.png", misc = "Create a permission for a file")]
+        public async Task<IEnumerable<GoogleDrivePermission>> CreatePermissionAsync(GoogleDrivePermission permission, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("permissions", permission, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<GoogleDrivePermission>>(result);
+        }
+
+        [CommandAttribute(Name = "CreateCommentAsync", Caption = "Create Google Drive Comment",
+            ObjectType = "GoogleDriveComment", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive,
+            ClassType = "GoogleDriveDataSource", Showin = ShowinType.Both, Order = 3,
+            iconimage = "googledrive.png", misc = "Create a comment on a file")]
+        public async Task<IEnumerable<GoogleDriveComment>> CreateCommentAsync(GoogleDriveComment comment, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("comments", comment, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<GoogleDriveComment>>(result);
+        }
+
+        #endregion
     }
 }

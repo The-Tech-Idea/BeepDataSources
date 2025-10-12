@@ -5,18 +5,21 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Http;
 using TheTechIdea.Beep;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.WebAPI;
 using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Workflow;
-using TheTechIdea.Beep.Report;
-using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Connectors.Zoho.Models;
 
 namespace TheTechIdea.Beep.Connectors.ZohoDataSource
 {
@@ -88,6 +91,37 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
             var handler = new HttpClientHandler();
             _httpClient = new HttpClient(handler);
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "BeepDataConnector/1.0");
+
+            // Register entities
+            EntitiesNames.Add("Leads");
+            EntitiesNames.Add("Contacts");
+            EntitiesNames.Add("Accounts");
+            EntitiesNames.Add("Deals");
+            EntitiesNames.Add("Campaigns");
+            EntitiesNames.Add("Tasks");
+            EntitiesNames.Add("Events");
+            EntitiesNames.Add("Calls");
+            EntitiesNames.Add("Notes");
+            EntitiesNames.Add("Products");
+            EntitiesNames.Add("Quotes");
+            EntitiesNames.Add("Invoices");
+            EntitiesNames.Add("Vendors");
+            EntitiesNames.Add("Users");
+
+            Entities.Add(new EntityStructure { EntityName = "Leads", DatasourceEntityName = "Leads" });
+            Entities.Add(new EntityStructure { EntityName = "Contacts", DatasourceEntityName = "Contacts" });
+            Entities.Add(new EntityStructure { EntityName = "Accounts", DatasourceEntityName = "Accounts" });
+            Entities.Add(new EntityStructure { EntityName = "Deals", DatasourceEntityName = "Deals" });
+            Entities.Add(new EntityStructure { EntityName = "Campaigns", DatasourceEntityName = "Campaigns" });
+            Entities.Add(new EntityStructure { EntityName = "Tasks", DatasourceEntityName = "Tasks" });
+            Entities.Add(new EntityStructure { EntityName = "Events", DatasourceEntityName = "Events" });
+            Entities.Add(new EntityStructure { EntityName = "Calls", DatasourceEntityName = "Calls" });
+            Entities.Add(new EntityStructure { EntityName = "Notes", DatasourceEntityName = "Notes" });
+            Entities.Add(new EntityStructure { EntityName = "Products", DatasourceEntityName = "Products" });
+            Entities.Add(new EntityStructure { EntityName = "Quotes", DatasourceEntityName = "Quotes" });
+            Entities.Add(new EntityStructure { EntityName = "Invoices", DatasourceEntityName = "Invoices" });
+            Entities.Add(new EntityStructure { EntityName = "Vendors", DatasourceEntityName = "Vendors" });
+            Entities.Add(new EntityStructure { EntityName = "Users", DatasourceEntityName = "users" });
         }
 
         #endregion
@@ -232,35 +266,112 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
             }
         }
 
-        public new async Task<object?> GetEntityAsync(string entityName, List<AppFilter>? filter = null)
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
             try
             {
                 if (_httpClient == null)
                     throw new InvalidOperationException("Not connected to Zoho CRM");
 
-                var queryParams = BuildQueryParameters(filter);
-                var url = $"{_config.BaseUrl}/{entityName}{queryParams}";
+                var queryParams = BuildQueryParameters(Filter);
+                var url = $"{_config.BaseUrl}/{EntityName}{queryParams}";
 
                 var response = await _httpClient.GetAsync(url);
-                if (response.IsSuccessStatusCode)
+                if (!response.IsSuccessStatusCode)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    return JsonSerializer.Deserialize<JsonElement>(content);
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Logger.WriteLog($"API request failed: {response.StatusCode} - {errorContent}");
+                    return new List<object>();
                 }
 
-                var errorContent = await response.Content.ReadAsStringAsync();
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Failed to get {entityName}: {response.StatusCode} - {errorContent}";
-                return null;
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                return ParseResponse(jsonContent, EntityName) ?? new List<object>();
             }
             catch (Exception ex)
             {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Failed to get entity data: {ex.Message}";
-                return null;
+                Logger.WriteLog($"Error in GetEntityAsync for {EntityName}: {ex.Message}");
+                return new List<object>();
             }
         }
+
+        #region Response Parsing
+
+        private IEnumerable<object>? ParseResponse(string jsonContent, string entityName)
+        {
+            try
+            {
+                return entityName switch
+                {
+                    "Leads" => ExtractArray<ZohoLead>(jsonContent),
+                    "Contacts" => ExtractArray<ZohoContact>(jsonContent),
+                    "Accounts" => ExtractArray<ZohoAccount>(jsonContent),
+                    "Deals" => ExtractArray<ZohoDeal>(jsonContent),
+                    "Campaigns" => ExtractArray<ZohoCampaign>(jsonContent),
+                    "Tasks" => ExtractArray<ZohoTask>(jsonContent),
+                    "Events" => ExtractArray<ZohoEvent>(jsonContent),
+                    "Calls" => ExtractArray<ZohoCall>(jsonContent),
+                    "Notes" => ExtractArray<ZohoNote>(jsonContent),
+                    "Products" => ExtractArray<ZohoProduct>(jsonContent),
+                    "Quotes" => ExtractArray<ZohoQuote>(jsonContent),
+                    "Invoices" => ExtractArray<ZohoInvoice>(jsonContent),
+                    "Vendors" => ExtractArray<ZohoVendor>(jsonContent),
+                    "Users" => ExtractArray<ZohoUser>(jsonContent),
+                    _ => ExtractRecords(jsonContent)
+                };
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog($"Error parsing response for {entityName}: {ex.Message}");
+                return ExtractRecords(jsonContent);
+            }
+        }
+
+        private List<T> ExtractArray<T>(string jsonContent) where T : ZohoEntityBase
+        {
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var apiResponse = JsonSerializer.Deserialize<ZohoApiResponse<List<T>>>(jsonContent, options);
+                if (apiResponse?.Data != null)
+                {
+                    foreach (var item in apiResponse.Data)
+                    {
+                        item.Attach<T>((IDataSource)this);
+                    }
+                }
+                return apiResponse?.Data ?? new List<T>();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLog($"Error extracting array of {typeof(T).Name}: {ex.Message}");
+                return new List<T>();
+            }
+        }
+
+        private static IEnumerable<object> ExtractRecords(string json)
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind == JsonValueKind.Object &&
+                doc.RootElement.TryGetProperty("data", out var arr) &&
+                arr.ValueKind == JsonValueKind.Array)
+            {
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var list = new List<object>(arr.GetArrayLength());
+                foreach (var el in arr.EnumerateArray())
+                {
+                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(el.GetRawText(), opts);
+                    if (dict != null) list.Add(dict);
+                }
+                return list;
+            }
+            return Array.Empty<object>();
+        }
+
+        #endregion
 
         public async Task<bool> InsertEntityAsync(string entityName, object entityData)
         {
@@ -609,6 +720,136 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
         {
             Task.Run(() => DisconnectAsync()).GetAwaiter().GetResult();
             _entityCache.Clear();
+        }
+
+        #endregion
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Leads", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoLead>")]
+        public async Task<IEnumerable<ZohoLead>> GetLeads(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Leads", new List<AppFilter> { filter });
+            return result.Cast<ZohoLead>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoContact>")]
+        public async Task<IEnumerable<ZohoContact>> GetContacts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Contacts", new List<AppFilter> { filter });
+            return result.Cast<ZohoContact>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoAccount>")]
+        public async Task<IEnumerable<ZohoAccount>> GetAccounts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Accounts", new List<AppFilter> { filter });
+            return result.Cast<ZohoAccount>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Deals", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoDeal>")]
+        public async Task<IEnumerable<ZohoDeal>> GetDeals(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Deals", new List<AppFilter> { filter });
+            return result.Cast<ZohoDeal>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Campaigns", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoCampaign>")]
+        public async Task<IEnumerable<ZohoCampaign>> GetCampaigns(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Campaigns", new List<AppFilter> { filter });
+            return result.Cast<ZohoCampaign>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Tasks", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoTask>")]
+        public async Task<IEnumerable<ZohoTask>> GetTasks(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Tasks", new List<AppFilter> { filter });
+            return result.Cast<ZohoTask>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Events", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoEvent>")]
+        public async Task<IEnumerable<ZohoEvent>> GetEvents(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Events", new List<AppFilter> { filter });
+            return result.Cast<ZohoEvent>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Calls", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoCall>")]
+        public async Task<IEnumerable<ZohoCall>> GetCalls(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Calls", new List<AppFilter> { filter });
+            return result.Cast<ZohoCall>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Notes", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoNote>")]
+        public async Task<IEnumerable<ZohoNote>> GetNotes(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Notes", new List<AppFilter> { filter });
+            return result.Cast<ZohoNote>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoProduct>")]
+        public async Task<IEnumerable<ZohoProduct>> GetProducts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Products", new List<AppFilter> { filter });
+            return result.Cast<ZohoProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Quotes", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoQuote>")]
+        public async Task<IEnumerable<ZohoQuote>> GetQuotes(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Quotes", new List<AppFilter> { filter });
+            return result.Cast<ZohoQuote>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Invoices", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoInvoice>")]
+        public async Task<IEnumerable<ZohoInvoice>> GetInvoices(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Invoices", new List<AppFilter> { filter });
+            return result.Cast<ZohoInvoice>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Vendors", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoVendor>")]
+        public async Task<IEnumerable<ZohoVendor>> GetVendors(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Vendors", new List<AppFilter> { filter });
+            return result.Cast<ZohoVendor>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Users", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoUser>")]
+        public async Task<IEnumerable<ZohoUser>> GetUsers(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Users", new List<AppFilter> { filter });
+            return result.Cast<ZohoUser>();
+        }
+
+        #endregion
+
+        #region Configuration Classes
+
+        private class ZohoApiResponse<T>
+        {
+            [JsonPropertyName("data")]
+            public T? Data { get; set; }
+
+            [JsonPropertyName("info")]
+            public ZohoResponseInfo? Info { get; set; }
+        }
+
+        private class ZohoResponseInfo
+        {
+            [JsonPropertyName("per_page")]
+            public int? PerPage { get; set; }
+
+            [JsonPropertyName("count")]
+            public int? Count { get; set; }
+
+            [JsonPropertyName("page")]
+            public int? Page { get; set; }
+
+            [JsonPropertyName("more_records")]
+            public bool? MoreRecords { get; set; }
         }
 
         #endregion

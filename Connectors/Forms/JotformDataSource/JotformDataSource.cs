@@ -185,5 +185,72 @@ namespace TheTechIdea.Beep.Connectors.Jotform
             }
             return string.Join("&", query);
         }
+
+        // -------------------- CommandAttribute Methods --------------------
+
+        [CommandAttribute(
+            ObjectType = "JotformForm",
+            PointType = EnumPointType.Function,
+            Name = "GetForms",
+            Caption = "Get Jotform Forms",
+            ClassName = "JotformDataSource",
+            misc = "ReturnType: IEnumerable<JotformForm>"
+        )]
+        public IEnumerable<JotformForm> GetForms()
+        {
+            return GetEntity<JotformForm>("forms");
+        }
+
+        [CommandAttribute(
+            ObjectType = "JotformForm",
+            PointType = EnumPointType.Function,
+            Name = "GetForm",
+            Caption = "Get Jotform Form by ID",
+            ClassName = "JotformDataSource",
+            misc = "ReturnType: IEnumerable<JotformForm>"
+        )]
+        public IEnumerable<JotformForm> GetForm(string id)
+        {
+            return GetEntity<JotformForm>("forms.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+        }
+
+        [CommandAttribute(
+            ObjectType = "JotformSubmission",
+            PointType = EnumPointType.Function,
+            Name = "GetSubmissions",
+            Caption = "Get Jotform Submissions",
+            ClassName = "JotformDataSource",
+            misc = "ReturnType: IEnumerable<JotformSubmission>"
+        )]
+        public IEnumerable<JotformSubmission> GetSubmissions()
+        {
+            return GetEntity<JotformSubmission>("submissions");
+        }
+
+        [CommandAttribute(
+            ObjectType = "JotformSubmission",
+            PointType = EnumPointType.Function,
+            Name = "GetSubmission",
+            Caption = "Get Jotform Submission by ID",
+            ClassName = "JotformDataSource",
+            misc = "ReturnType: IEnumerable<JotformSubmission>"
+        )]
+        public IEnumerable<JotformSubmission> GetSubmission(string id)
+        {
+            return GetEntity<JotformSubmission>("submissions.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+        }
+
+        [CommandAttribute(
+            ObjectType = "JotformSubmission",
+            PointType = EnumPointType.Function,
+            Name = "GetFormSubmissions",
+            Caption = "Get Jotform Submissions for a Form",
+            ClassName = "JotformDataSource",
+            misc = "ReturnType: IEnumerable<JotformSubmission>"
+        )]
+        public IEnumerable<JotformSubmission> GetFormSubmissions(string formId)
+        {
+            return GetEntity<JotformSubmission>("forms.submissions", new List<AppFilter> { new AppFilter { FieldName = "form_id", FilterValue = formId } });
+        }
     }
 }

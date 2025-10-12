@@ -13,6 +13,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.AzureIoTHub;
 
 namespace TheTechIdea.Beep.Connectors.AzureIoTHub
 {
@@ -114,7 +115,7 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
             if (resp is null || !resp.IsSuccessStatusCode)
             {
                 // Azure best practice: structured error handling
-                Logger?.WriteLog($"Azure IoT Hub API call failed for entity '{EntityName}': {resp?.StatusCode}", LogType.ERROR);
+                Logger?.LogError($"Azure IoT Hub API call failed for entity '{EntityName}': {resp?.StatusCode}");
                 return Array.Empty<object>();
             }
 
@@ -251,6 +252,53 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
             }
 
             return list;
+        }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "GetDevices", Caption = "Get Devices", ClassName = "AzureIoTHubDataSource", misc = "GetDevices")]
+        public IEnumerable<Device> GetDevices()
+        {
+            return GetEntity("devices", null).Cast<Device>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "GetDevice", Caption = "Get Device", ClassName = "AzureIoTHubDataSource", misc = "GetDevice")]
+        public Device GetDevice(string deviceId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "device_id", FilterValue = deviceId } };
+            return GetEntity("devices", filters).Cast<Device>().FirstOrDefault();
+        }
+
+        [CommandAttribute(ObjectType = typeof(DeviceTwin), PointType = PointType.Function, Name = "GetDeviceTwins", Caption = "Get Device Twins", ClassName = "AzureIoTHubDataSource", misc = "GetDeviceTwins")]
+        public IEnumerable<DeviceTwin> GetDeviceTwins(string deviceId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "device_id", FilterValue = deviceId } };
+            return GetEntity("device_twins", filters).Cast<DeviceTwin>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Job), PointType = PointType.Function, Name = "GetJobs", Caption = "Get Jobs", ClassName = "AzureIoTHubDataSource", misc = "GetJobs")]
+        public IEnumerable<Job> GetJobs()
+        {
+            return GetEntity("jobs", null).Cast<Job>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Configuration), PointType = PointType.Function, Name = "GetConfigurations", Caption = "Get Configurations", ClassName = "AzureIoTHubDataSource", misc = "GetConfigurations")]
+        public IEnumerable<Configuration> GetConfigurations()
+        {
+            return GetEntity("configurations", null).Cast<Configuration>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Telemetry), PointType = PointType.Function, Name = "GetTelemetry", Caption = "Get Telemetry", ClassName = "AzureIoTHubDataSource", misc = "GetTelemetry")]
+        public IEnumerable<Telemetry> GetTelemetry(string deviceId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "device_id", FilterValue = deviceId } };
+            return GetEntity("telemetry", filters).Cast<Telemetry>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Module), PointType = PointType.Function, Name = "GetModules", Caption = "Get Modules", ClassName = "AzureIoTHubDataSource", misc = "GetModules")]
+        public IEnumerable<Module> GetModules(string deviceId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "device_id", FilterValue = deviceId } };
+            return GetEntity("modules", filters).Cast<Module>();
         }
     }
 }

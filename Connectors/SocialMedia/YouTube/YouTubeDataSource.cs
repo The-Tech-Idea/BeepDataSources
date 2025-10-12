@@ -928,5 +928,27 @@ namespace BeepDataSources.Connectors.SocialMedia.YouTube
             var data = JsonSerializer.Deserialize<YouTubeResponse<YouTubeVideo>>(json);
             return data?.Items ?? new List<YouTubeVideo>();
         }
+
+        // POST methods for creating entities
+        [CommandAttribute(ObjectType = "YouTubePlaylist", PointType = EnumPointType.Function, Name = "CreatePlaylist", Caption = "Create YouTube Playlist", ClassName = "YouTubeDataSource", misc = "ReturnType: YouTubePlaylist")]
+        public async Task<YouTubePlaylist> CreatePlaylistAsync(YouTubePlaylist playlist)
+        {
+            string endpoint = "playlists?part=snippet,status";
+            var response = await PostAsync(endpoint, playlist);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<YouTubePlaylist>(json);
+        }
+
+        // PUT methods for updating entities
+        [CommandAttribute(ObjectType = "YouTubePlaylist", PointType = EnumPointType.Function, Name = "UpdatePlaylist", Caption = "Update YouTube Playlist", ClassName = "YouTubeDataSource", misc = "ReturnType: YouTubePlaylist")]
+        public async Task<YouTubePlaylist> UpdatePlaylistAsync(string playlistId, YouTubePlaylist playlist)
+        {
+            string endpoint = $"playlists?part=snippet,status&id={playlistId}";
+            var response = await PutAsync(endpoint, playlist);
+            if (response == null) return null;
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<YouTubePlaylist>(json);
+        }
     }
 }

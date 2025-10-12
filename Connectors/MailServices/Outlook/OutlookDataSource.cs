@@ -297,5 +297,272 @@ namespace TheTechIdea.Beep.Connectors.Outlook
             [JsonPropertyName("canEdit")] public bool CanEdit { get; set; }
             [JsonPropertyName("owner")] public OutlookEmailAddress Owner { get; set; }
         }
+
+        // CommandAttribute methods for Outlook API
+        [CommandAttribute(Name = "GetMessages", Caption = "Get Outlook Messages", ObjectType = "OutlookMessage", PointType = EnumPointType.Function, Category = "Outlook", DatasourceType = DataSourceType.Outlook, ClassType = "OutlookMessage", Showin = ShowinType.Grid, Order = 1, iconimage = "mail.png")]
+        public async Task<IEnumerable<OutlookMessage>> GetMessages(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("messages", filters);
+            return result.Cast<OutlookMessage>();
+        }
+
+        [CommandAttribute(Name = "GetMessage", Caption = "Get Outlook Message", ObjectType = "OutlookMessage", PointType = EnumPointType.Function, Category = "Outlook", DatasourceType = DataSourceType.Outlook, ClassType = "OutlookMessage", Showin = ShowinType.Grid, Order = 2, iconimage = "mail.png")]
+        public async Task<IEnumerable<OutlookMessage>> GetMessage(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("messages.get", filters);
+            return result.Cast<OutlookMessage>();
+        }
+
+        [CommandAttribute(Name = "GetMailFolders", Caption = "Get Outlook Mail Folders", ObjectType = "OutlookMailFolder", PointType = EnumPointType.Function, Category = "Outlook", DatasourceType = DataSourceType.Outlook, ClassType = "OutlookMailFolder", Showin = ShowinType.Grid, Order = 3, iconimage = "folder.png")]
+        public async Task<IEnumerable<OutlookMailFolder>> GetMailFolders(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("mailFolders", filters);
+            return result.Cast<OutlookMailFolder>();
+        }
+
+        [CommandAttribute(Name = "GetContacts", Caption = "Get Outlook Contacts", ObjectType = "OutlookContact", PointType = EnumPointType.Function, Category = "Outlook", DatasourceType = DataSourceType.Outlook, ClassType = "OutlookContact", Showin = ShowinType.Grid, Order = 4, iconimage = "contact.png")]
+        public async Task<IEnumerable<OutlookContact>> GetContacts(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("contacts", filters);
+            return result.Cast<OutlookContact>();
+        }
+
+        [CommandAttribute(Name = "GetEvents", Caption = "Get Outlook Events", ObjectType = "OutlookEvent", PointType = EnumPointType.Function, Category = "Outlook", DatasourceType = DataSourceType.Outlook, ClassType = "OutlookEvent", Showin = ShowinType.Grid, Order = 5, iconimage = "calendar.png")]
+        public async Task<IEnumerable<OutlookEvent>> GetEvents(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("events", filters);
+            return result.Cast<OutlookEvent>();
+        }
+
+        [CommandAttribute(Name = "GetCalendars", Caption = "Get Outlook Calendars", ObjectType = "OutlookCalendar", PointType = EnumPointType.Function, Category = "Outlook", DatasourceType = DataSourceType.Outlook, ClassType = "OutlookCalendar", Showin = ShowinType.Grid, Order = 6, iconimage = "calendar.png")]
+        public async Task<IEnumerable<OutlookCalendar>> GetCalendars(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("calendars", filters);
+            return result.Cast<OutlookCalendar>();
+        }
+
+        /// <summary>
+        /// Sends an Outlook message
+        /// </summary>
+        [CommandAttribute(
+            Name = "SendMessage",
+            Caption = "Send Outlook Message",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Outlook,
+            PointType = EnumPointType.Function,
+            ObjectType = "OutlookMessage",
+            ClassType = "OutlookDataSource",
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "mail.png",
+            misc = "ReturnType: IEnumerable<OutlookMessage>"
+        )]
+        public async Task<IEnumerable<OutlookMessage>> SendMessageAsync(OutlookMessage message)
+        {
+            var url = "https://graph.microsoft.com/v1.0/me/sendMail";
+            var response = await PostAsync(url, message);
+            // SendMail returns no content, so return empty or the original message
+            return new[] { message };
+        }
+
+        /// <summary>
+        /// Creates an Outlook mail folder
+        /// </summary>
+        [CommandAttribute(
+            Name = "CreateMailFolder",
+            Caption = "Create Outlook Mail Folder",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Outlook,
+            PointType = EnumPointType.Function,
+            ObjectType = "OutlookMailFolder",
+            ClassType = "OutlookDataSource",
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "folder.png",
+            misc = "ReturnType: IEnumerable<OutlookMailFolder>"
+        )]
+        public async Task<IEnumerable<OutlookMailFolder>> CreateMailFolderAsync(OutlookMailFolder folder)
+        {
+            var url = "https://graph.microsoft.com/v1.0/me/mailFolders";
+            var response = await PostAsync(url, folder);
+            var json = await response.Content.ReadAsStringAsync();
+            var createdFolder = JsonSerializer.Deserialize<OutlookMailFolder>(json);
+            return createdFolder != null ? new[] { createdFolder } : Array.Empty<OutlookMailFolder>();
+        }
+
+        /// <summary>
+        /// Updates an Outlook mail folder
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateMailFolder",
+            Caption = "Update Outlook Mail Folder",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Outlook,
+            PointType = EnumPointType.Function,
+            ObjectType = "OutlookMailFolder",
+            ClassType = "OutlookDataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "folder.png",
+            misc = "ReturnType: IEnumerable<OutlookMailFolder>"
+        )]
+        public async Task<IEnumerable<OutlookMailFolder>> UpdateMailFolderAsync(string id, OutlookMailFolder folder)
+        {
+            var url = $"https://graph.microsoft.com/v1.0/me/mailFolders/{id}";
+            var response = await PatchAsync(url, folder);
+            var json = await response.Content.ReadAsStringAsync();
+            var updatedFolder = JsonSerializer.Deserialize<OutlookMailFolder>(json);
+            return updatedFolder != null ? new[] { updatedFolder } : Array.Empty<OutlookMailFolder>();
+        }
+
+        /// <summary>
+        /// Creates an Outlook contact
+        /// </summary>
+        [CommandAttribute(
+            Name = "CreateContact",
+            Caption = "Create Outlook Contact",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Outlook,
+            PointType = EnumPointType.Function,
+            ObjectType = "OutlookContact",
+            ClassType = "OutlookDataSource",
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "contact.png",
+            misc = "ReturnType: IEnumerable<OutlookContact>"
+        )]
+        public async Task<IEnumerable<OutlookContact>> CreateContactAsync(OutlookContact contact)
+        {
+            var url = "https://graph.microsoft.com/v1.0/me/contacts";
+            var response = await PostAsync(url, contact);
+            var json = await response.Content.ReadAsStringAsync();
+            var createdContact = JsonSerializer.Deserialize<OutlookContact>(json);
+            return createdContact != null ? new[] { createdContact } : Array.Empty<OutlookContact>();
+        }
+
+        /// <summary>
+        /// Updates an Outlook contact
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateContact",
+            Caption = "Update Outlook Contact",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Outlook,
+            PointType = EnumPointType.Function,
+            ObjectType = "OutlookContact",
+            ClassType = "OutlookDataSource",
+            Showin = ShowinType.Both,
+            Order = 11,
+            iconimage = "contact.png",
+            misc = "ReturnType: IEnumerable<OutlookContact>"
+        )]
+        public async Task<IEnumerable<OutlookContact>> UpdateContactAsync(string id, OutlookContact contact)
+        {
+            var url = $"https://graph.microsoft.com/v1.0/me/contacts/{id}";
+            var response = await PatchAsync(url, contact);
+            var json = await response.Content.ReadAsStringAsync();
+            var updatedContact = JsonSerializer.Deserialize<OutlookContact>(json);
+            return updatedContact != null ? new[] { updatedContact } : Array.Empty<OutlookContact>();
+        }
+
+        /// <summary>
+        /// Creates an Outlook event
+        /// </summary>
+        [CommandAttribute(
+            Name = "CreateEvent",
+            Caption = "Create Outlook Event",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Outlook,
+            PointType = EnumPointType.Function,
+            ObjectType = "OutlookEvent",
+            ClassType = "OutlookDataSource",
+            Showin = ShowinType.Both,
+            Order = 12,
+            iconimage = "calendar.png",
+            misc = "ReturnType: IEnumerable<OutlookEvent>"
+        )]
+        public async Task<IEnumerable<OutlookEvent>> CreateEventAsync(OutlookEvent eventItem)
+        {
+            var url = "https://graph.microsoft.com/v1.0/me/events";
+            var response = await PostAsync(url, eventItem);
+            var json = await response.Content.ReadAsStringAsync();
+            var createdEvent = JsonSerializer.Deserialize<OutlookEvent>(json);
+            return createdEvent != null ? new[] { createdEvent } : Array.Empty<OutlookEvent>();
+        }
+
+        /// <summary>
+        /// Updates an Outlook event
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateEvent",
+            Caption = "Update Outlook Event",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Outlook,
+            PointType = EnumPointType.Function,
+            ObjectType = "OutlookEvent",
+            ClassType = "OutlookDataSource",
+            Showin = ShowinType.Both,
+            Order = 13,
+            iconimage = "calendar.png",
+            misc = "ReturnType: IEnumerable<OutlookEvent>"
+        )]
+        public async Task<IEnumerable<OutlookEvent>> UpdateEventAsync(string id, OutlookEvent eventItem)
+        {
+            var url = $"https://graph.microsoft.com/v1.0/me/events/{id}";
+            var response = await PatchAsync(url, eventItem);
+            var json = await response.Content.ReadAsStringAsync();
+            var updatedEvent = JsonSerializer.Deserialize<OutlookEvent>(json);
+            return updatedEvent != null ? new[] { updatedEvent } : Array.Empty<OutlookEvent>();
+        }
+
+        /// <summary>
+        /// Creates an Outlook calendar
+        /// </summary>
+        [CommandAttribute(
+            Name = "CreateCalendar",
+            Caption = "Create Outlook Calendar",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Outlook,
+            PointType = EnumPointType.Function,
+            ObjectType = "OutlookCalendar",
+            ClassType = "OutlookDataSource",
+            Showin = ShowinType.Both,
+            Order = 14,
+            iconimage = "calendar.png",
+            misc = "ReturnType: IEnumerable<OutlookCalendar>"
+        )]
+        public async Task<IEnumerable<OutlookCalendar>> CreateCalendarAsync(OutlookCalendar calendar)
+        {
+            var url = "https://graph.microsoft.com/v1.0/me/calendars";
+            var response = await PostAsync(url, calendar);
+            var json = await response.Content.ReadAsStringAsync();
+            var createdCalendar = JsonSerializer.Deserialize<OutlookCalendar>(json);
+            return createdCalendar != null ? new[] { createdCalendar } : Array.Empty<OutlookCalendar>();
+        }
+
+        /// <summary>
+        /// Updates an Outlook calendar
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateCalendar",
+            Caption = "Update Outlook Calendar",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Outlook,
+            PointType = EnumPointType.Function,
+            ObjectType = "OutlookCalendar",
+            ClassType = "OutlookDataSource",
+            Showin = ShowinType.Both,
+            Order = 15,
+            iconimage = "calendar.png",
+            misc = "ReturnType: IEnumerable<OutlookCalendar>"
+        )]
+        public async Task<IEnumerable<OutlookCalendar>> UpdateCalendarAsync(string id, OutlookCalendar calendar)
+        {
+            var url = $"https://graph.microsoft.com/v1.0/me/calendars/{id}";
+            var response = await PatchAsync(url, calendar);
+            var json = await response.Content.ReadAsStringAsync();
+            var updatedCalendar = JsonSerializer.Deserialize<OutlookCalendar>(json);
+            return updatedCalendar != null ? new[] { updatedCalendar } : Array.Empty<OutlookCalendar>();
+        }
     }
 }

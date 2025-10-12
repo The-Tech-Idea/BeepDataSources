@@ -184,5 +184,72 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
 
             return list;
         }
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceProduct>")]
+        public async Task<IEnumerable<SquarespaceProduct>> GetProducts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("products", new List<AppFilter> { filter });
+            return result.Cast<SquarespaceProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Orders", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceOrder>")]
+        public async Task<IEnumerable<SquarespaceOrder>> GetOrders(AppFilter filter)
+        {
+            var result = await GetEntityAsync("orders", new List<AppFilter> { filter });
+            return result.Cast<SquarespaceOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Profiles", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceProfile>")]
+        public async Task<IEnumerable<SquarespaceProfile>> GetProfiles(AppFilter filter)
+        {
+            var result = await GetEntityAsync("profiles", new List<AppFilter> { filter });
+            return result.Cast<SquarespaceProfile>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Pages", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespacePage>")]
+        public async Task<IEnumerable<SquarespacePage>> GetPages(AppFilter filter)
+        {
+            var result = await GetEntityAsync("pages", new List<AppFilter> { filter });
+            return result.Cast<SquarespacePage>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Blogs", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceBlog>")]
+        public async Task<IEnumerable<SquarespaceBlog>> GetBlogs(AppFilter filter)
+        {
+            var result = await GetEntityAsync("blogs", new List<AppFilter> { filter });
+            return result.Cast<SquarespaceBlog>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Events", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceEvent>")]
+        public async Task<IEnumerable<SquarespaceEvent>> GetEvents(AppFilter filter)
+        {
+            var result = await GetEntityAsync("events", new List<AppFilter> { filter });
+            return result.Cast<SquarespaceEvent>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Galleries", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceGallery>")]
+        public async Task<IEnumerable<SquarespaceGallery>> GetGalleries(AppFilter filter)
+        {
+            var result = await GetEntityAsync("galleries", new List<AppFilter> { filter });
+            return result.Cast<SquarespaceGallery>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Categories", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceCategory>")]
+        public async Task<IEnumerable<SquarespaceCategory>> GetCategories(AppFilter filter)
+        {
+            var result = await GetEntityAsync("categories", new List<AppFilter> { filter });
+            return result.Cast<SquarespaceCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Inventory", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceInventory>")]
+        public async Task<IEnumerable<SquarespaceInventory>> GetInventory(AppFilter filter)
+        {
+            var result = await GetEntityAsync("inventory", new List<AppFilter> { filter });
+            return result.Cast<SquarespaceInventory>();
+        }
+
+        #endregion
     }
 }

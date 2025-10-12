@@ -14,6 +14,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Communication.Twist.Models;
 
 namespace TheTechIdea.Beep.Connectors.Communication.Twist
 {
@@ -30,24 +31,18 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
             {
                 ["workspaces"] = ("api/v3/workspaces/get", "workspaces", Array.Empty<string>()),
                 ["workspace"] = ("api/v3/workspaces/getone", "workspace", new[] { "id" }),
-                ["workspace_users"] = ("api/v3/workspaces/get_users", "users", new[] { "id" }),
-                ["workspace_groups"] = ("api/v3/workspaces/get_groups", "groups", new[] { "id" }),
                 ["channels"] = ("api/v3/channels/get", "channels", Array.Empty<string>()),
                 ["channel"] = ("api/v3/channels/getone", "channel", new[] { "id" }),
-                ["channel_users"] = ("api/v3/channels/get_users", "users", new[] { "id" }),
                 ["threads"] = ("api/v3/threads/get", "threads", Array.Empty<string>()),
                 ["thread"] = ("api/v3/threads/getone", "thread", new[] { "id" }),
                 ["messages"] = ("api/v3/messages/get", "messages", Array.Empty<string>()),
                 ["message"] = ("api/v3/messages/getone", "message", new[] { "id" }),
-                ["message_reactions"] = ("api/v3/messages/get_reactions", "reactions", new[] { "id" }),
                 ["comments"] = ("api/v3/comments/get", "comments", Array.Empty<string>()),
                 ["comment"] = ("api/v3/comments/getone", "comment", new[] { "id" }),
                 ["users"] = ("api/v3/users/get", "users", Array.Empty<string>()),
                 ["user"] = ("api/v3/users/getone", "user", new[] { "id" }),
-                ["user_workspaces"] = ("api/v3/users/get_workspaces", "workspaces", new[] { "id" }),
                 ["groups"] = ("api/v3/groups/get", "groups", Array.Empty<string>()),
                 ["group"] = ("api/v3/groups/getone", "group", new[] { "id" }),
-                ["group_users"] = ("api/v3/groups/get_users", "users", new[] { "id" }),
                 ["integrations"] = ("api/v3/integrations/get", "integrations", Array.Empty<string>()),
                 ["integration"] = ("api/v3/integrations/getone", "integration", new[] { "id" }),
                 ["attachments"] = ("api/v3/attachments/get", "attachments", Array.Empty<string>()),
@@ -93,7 +88,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
             using var resp = await GetAsync(m.endpoint, q).ConfigureAwait(false);
             if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
 
-            return ExtractArray(resp, m.root);
+            return ExtractArray(resp, m.root, EntityName);
         }
 
         // paged
@@ -110,7 +105,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
             q["offset"] = ((pageNumber - 1) * pageSize).ToString();
 
             var resp = GetAsync(m.endpoint, q).ConfigureAwait(false).GetAwaiter().GetResult();
-            var items = ExtractArray(resp, m.root);
+            var items = ExtractArray(resp, m.root, EntityName);
 
             // Basic pagination estimate
             int totalRecordsSoFar = (pageNumber - 1) * Math.Max(1, pageSize) + items.Count;
@@ -150,7 +145,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
             }
         }
 
-        private static List<object> ExtractArray(HttpResponseMessage resp, string? rootPath)
+        private static List<object> ExtractArray(HttpResponseMessage resp, string? rootPath, string entityName)
         {
             var list = new List<object>();
             if (resp == null) return list;
@@ -176,18 +171,246 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
                 list.Capacity = node.GetArrayLength();
                 foreach (var el in node.EnumerateArray())
                 {
-                    var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(el.GetRawText(), opts);
+                    var obj = DeserializeEntity(el.GetRawText(), entityName, opts);
                     if (obj != null) list.Add(obj);
                 }
             }
             else if (node.ValueKind == JsonValueKind.Object)
             {
                 // wrap single object
-                var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(node.GetRawText(), opts);
+                var obj = DeserializeEntity(node.GetRawText(), entityName, opts);
                 if (obj != null) list.Add(obj);
             }
 
             return list;
         }
+
+        private static object? DeserializeEntity(string json, string entityName, JsonSerializerOptions opts)
+        {
+            return entityName.ToLowerInvariant() switch
+            {
+                "workspaces" or "workspace" => JsonSerializer.Deserialize<TwistWorkspace>(json, opts),
+                "channels" or "channel" => JsonSerializer.Deserialize<TwistChannel>(json, opts),
+                "threads" or "thread" => JsonSerializer.Deserialize<TwistThread>(json, opts),
+                "messages" or "message" => JsonSerializer.Deserialize<TwistMessage>(json, opts),
+                "comments" or "comment" => JsonSerializer.Deserialize<TwistComment>(json, opts),
+                "users" or "user" => JsonSerializer.Deserialize<TwistUser>(json, opts),
+                "groups" or "group" => JsonSerializer.Deserialize<TwistGroup>(json, opts),
+                "integrations" or "integration" => JsonSerializer.Deserialize<TwistIntegration>(json, opts),
+                "attachments" or "attachment" => JsonSerializer.Deserialize<TwistAttachment>(json, opts),
+                "notifications" or "notification" => JsonSerializer.Deserialize<TwistNotification>(json, opts),
+                _ => JsonSerializer.Deserialize<Dictionary<string, object>>(json, opts)
+            };
+        }
+
+        #region CommandAttribute Methods
+
+        /// <summary>
+        /// Gets all workspaces from Twist
+        /// </summary>
+        /// <returns>Enumerable of TwistWorkspace objects</returns>
+        [CommandAttribute(
+            ObjectType = "TwistWorkspace",
+            PointType = EnumPointType.Function,
+            Name = "GetWorkspaces",
+            Caption = "Get Workspaces",
+            ClassName = "TwistDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twist,
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "twist.png",
+            misc = "ReturnType: IEnumerable<TwistWorkspace>"
+        )]
+        public IEnumerable<TwistWorkspace> GetWorkspaces()
+        {
+            return GetEntityAsync("workspaces", new List<AppFilter>())
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<TwistWorkspace>()
+                .Select(x => x.Attach<TwistWorkspace>(this));
+        }
+
+        /// <summary>
+        /// Gets a specific workspace by ID
+        /// </summary>
+        /// <param name="workspaceId">The workspace ID</param>
+        /// <returns>TwistWorkspace object</returns>
+        [CommandAttribute(
+            ObjectType = "TwistWorkspace",
+            PointType = EnumPointType.Function,
+            Name = "GetWorkspace",
+            Caption = "Get Workspace",
+            ClassName = "TwistDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twist,
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "twist.png",
+            misc = "ReturnType: IEnumerable<TwistWorkspace>, Filter: id"
+        )]
+        public IEnumerable<TwistWorkspace> GetWorkspace(int workspaceId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = workspaceId.ToString() } };
+            return GetEntityAsync("workspace", filters)
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<TwistWorkspace>()
+                .Select(x => x.Attach<TwistWorkspace>(this));
+        }
+
+        /// <summary>
+        /// Gets all channels from Twist
+        /// </summary>
+        /// <returns>Enumerable of TwistChannel objects</returns>
+        [CommandAttribute(
+            ObjectType = "TwistChannel",
+            PointType = EnumPointType.Function,
+            Name = "GetChannels",
+            Caption = "Get Channels",
+            ClassName = "TwistDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twist,
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "twist.png",
+            misc = "ReturnType: IEnumerable<TwistChannel>"
+        )]
+        public IEnumerable<TwistChannel> GetChannels()
+        {
+            return GetEntityAsync("channels", new List<AppFilter>())
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<TwistChannel>()
+                .Select(x => x.Attach<TwistChannel>(this));
+        }
+
+        /// <summary>
+        /// Gets a specific channel by ID
+        /// </summary>
+        /// <param name="channelId">The channel ID</param>
+        /// <returns>TwistChannel object</returns>
+        [CommandAttribute(
+            ObjectType = "TwistChannel",
+            PointType = EnumPointType.Function,
+            Name = "GetChannel",
+            Caption = "Get Channel",
+            ClassName = "TwistDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twist,
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "twist.png",
+            misc = "ReturnType: IEnumerable<TwistChannel>, Filter: id"
+        )]
+        public IEnumerable<TwistChannel> GetChannel(int channelId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = channelId.ToString() } };
+            return GetEntityAsync("channel", filters)
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<TwistChannel>()
+                .Select(x => x.Attach<TwistChannel>(this));
+        }
+
+        /// <summary>
+        /// Gets all threads from Twist
+        /// </summary>
+        /// <returns>Enumerable of TwistThread objects</returns>
+        [CommandAttribute(
+            ObjectType = "TwistThread",
+            PointType = EnumPointType.Function,
+            Name = "GetThreads",
+            Caption = "Get Threads",
+            ClassName = "TwistDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twist,
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "twist.png",
+            misc = "ReturnType: IEnumerable<TwistThread>"
+        )]
+        public IEnumerable<TwistThread> GetThreads()
+        {
+            return GetEntityAsync("threads", new List<AppFilter>())
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<TwistThread>()
+                .Select(x => x.Attach<TwistThread>(this));
+        }
+
+        /// <summary>
+        /// Gets all messages from Twist
+        /// </summary>
+        /// <returns>Enumerable of TwistMessage objects</returns>
+        [CommandAttribute(
+            ObjectType = "TwistMessage",
+            PointType = EnumPointType.Function,
+            Name = "GetMessages",
+            Caption = "Get Messages",
+            ClassName = "TwistDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twist,
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "twist.png",
+            misc = "ReturnType: IEnumerable<TwistMessage>"
+        )]
+        public IEnumerable<TwistMessage> GetMessages()
+        {
+            return GetEntityAsync("messages", new List<AppFilter>())
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<TwistMessage>()
+                .Select(x => x.Attach<TwistMessage>(this));
+        }
+
+        /// <summary>
+        /// Gets all users from Twist
+        /// </summary>
+        /// <returns>Enumerable of TwistUser objects</returns>
+        [CommandAttribute(
+            ObjectType = "TwistUser",
+            PointType = EnumPointType.Function,
+            Name = "GetUsers",
+            Caption = "Get Users",
+            ClassName = "TwistDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twist,
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "twist.png",
+            misc = "ReturnType: IEnumerable<TwistUser>"
+        )]
+        public IEnumerable<TwistUser> GetUsers()
+        {
+            return GetEntityAsync("users", new List<AppFilter>())
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<TwistUser>()
+                .Select(x => x.Attach<TwistUser>(this));
+        }
+
+        /// <summary>
+        /// Gets a specific user by ID
+        /// </summary>
+        /// <param name="userId">The user ID</param>
+        /// <returns>TwistUser object</returns>
+        [CommandAttribute(
+            ObjectType = "TwistUser",
+            PointType = EnumPointType.Function,
+            Name = "GetUser",
+            Caption = "Get User",
+            ClassName = "TwistDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twist,
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "twist.png",
+            misc = "ReturnType: IEnumerable<TwistUser>, Filter: id"
+        )]
+        public IEnumerable<TwistUser> GetUser(int userId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = userId.ToString() } };
+            return GetEntityAsync("user", filters)
+                .ConfigureAwait(false).GetAwaiter().GetResult()
+                .Cast<TwistUser>()
+                .Select(x => x.Attach<TwistUser>(this));
+        }
+
+        #endregion
     }
 }

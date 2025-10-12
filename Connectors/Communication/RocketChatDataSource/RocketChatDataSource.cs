@@ -14,6 +14,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Communication.RocketChat.Models;
 
 namespace TheTechIdea.Beep.Connectors.Communication.RocketChat
 {
@@ -89,7 +90,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.RocketChat
             using var resp = await GetAsync(m.endpoint, q).ConfigureAwait(false);
             if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
 
-            return ExtractArray(resp, m.root);
+            return ExtractArray(resp, m.root, EntityName);
         }
 
         // paged
@@ -106,7 +107,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.RocketChat
             q["offset"] = ((pageNumber - 1) * pageSize).ToString();
 
             var resp = GetAsync(m.endpoint, q).ConfigureAwait(false).GetAwaiter().GetResult();
-            var items = ExtractArray(resp, m.root);
+            var items = ExtractArray(resp, m.root, EntityName);
 
             // Basic pagination estimate
             int totalRecordsSoFar = (pageNumber - 1) * Math.Max(1, pageSize) + items.Count;
@@ -146,7 +147,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.RocketChat
             }
         }
 
-        private static List<object> ExtractArray(HttpResponseMessage resp, string? rootPath)
+        private static List<object> ExtractArray(HttpResponseMessage resp, string? rootPath, string entityName)
         {
             var list = new List<object>();
             if (resp == null) return list;
@@ -179,18 +180,194 @@ namespace TheTechIdea.Beep.Connectors.Communication.RocketChat
                 list.Capacity = node.GetArrayLength();
                 foreach (var el in node.EnumerateArray())
                 {
-                    var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(el.GetRawText(), opts);
-                    if (obj != null) list.Add(obj);
+                    var entity = DeserializeEntity(el.GetRawText(), entityName, opts);
+                    if (entity != null) list.Add(entity);
                 }
             }
             else if (node.ValueKind == JsonValueKind.Object)
             {
                 // wrap single object
-                var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(node.GetRawText(), opts);
-                if (obj != null) list.Add(obj);
+                var entity = DeserializeEntity(node.GetRawText(), entityName, opts);
+                if (entity != null) list.Add(entity);
             }
 
             return list;
         }
+
+        private static object? DeserializeEntity(string json, string entityName, JsonSerializerOptions opts)
+        {
+            return entityName.ToLowerInvariant() switch
+            {
+                "users" => JsonSerializer.Deserialize<RocketChatUser>(json, opts),
+                "user" => JsonSerializer.Deserialize<RocketChatUser>(json, opts),
+                "channels" => JsonSerializer.Deserialize<RocketChatChannel>(json, opts),
+                "channel" => JsonSerializer.Deserialize<RocketChatChannel>(json, opts),
+                "channel_members" => JsonSerializer.Deserialize<RocketChatUser>(json, opts),
+                "channel_messages" => JsonSerializer.Deserialize<RocketChatMessage>(json, opts),
+                "groups" => JsonSerializer.Deserialize<RocketChatGroup>(json, opts),
+                "group" => JsonSerializer.Deserialize<RocketChatGroup>(json, opts),
+                "group_members" => JsonSerializer.Deserialize<RocketChatUser>(json, opts),
+                "group_messages" => JsonSerializer.Deserialize<RocketChatMessage>(json, opts),
+                "im_list" => JsonSerializer.Deserialize<RocketChatIm>(json, opts),
+                "im_messages" => JsonSerializer.Deserialize<RocketChatMessage>(json, opts),
+                "im_history" => JsonSerializer.Deserialize<RocketChatMessage>(json, opts),
+                "rooms" => JsonSerializer.Deserialize<RocketChatRoom>(json, opts),
+                "room" => JsonSerializer.Deserialize<RocketChatRoom>(json, opts),
+                "subscriptions" => JsonSerializer.Deserialize<RocketChatSubscription>(json, opts),
+                "roles" => JsonSerializer.Deserialize<RocketChatRole>(json, opts),
+                "permissions" => JsonSerializer.Deserialize<RocketChatPermission>(json, opts),
+                "settings" => JsonSerializer.Deserialize<RocketChatSetting>(json, opts),
+                "statistics" => JsonSerializer.Deserialize<RocketChatStatistics>(json, opts),
+                "integrations" => JsonSerializer.Deserialize<RocketChatIntegration>(json, opts),
+                "webhooks" => JsonSerializer.Deserialize<RocketChatWebhook>(json, opts),
+                _ => JsonSerializer.Deserialize<Dictionary<string, object>>(json, opts)
+            };
+        }
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatUser", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatUser>")]
+        public List<RocketChatUser> GetUsers()
+        {
+            return GetEntity("users", new List<AppFilter>()).Cast<RocketChatUser>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatUser", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "RocketChatUser")]
+        public RocketChatUser? GetUser(string userId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "userId", FilterValue = userId } };
+            return GetEntity("user", filters).Cast<RocketChatUser>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatChannel", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatChannel>")]
+        public List<RocketChatChannel> GetChannels()
+        {
+            return GetEntity("channels", new List<AppFilter>()).Cast<RocketChatChannel>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatChannel", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "RocketChatChannel")]
+        public RocketChatChannel? GetChannel(string roomId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "roomId", FilterValue = roomId } };
+            return GetEntity("channel", filters).Cast<RocketChatChannel>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatUser", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatUser>")]
+        public List<RocketChatUser> GetChannelMembers(string roomId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "roomId", FilterValue = roomId } };
+            return GetEntity("channel_members", filters).Cast<RocketChatUser>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatMessage", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatMessage>")]
+        public List<RocketChatMessage> GetChannelMessages(string roomId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "roomId", FilterValue = roomId } };
+            return GetEntity("channel_messages", filters).Cast<RocketChatMessage>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatGroup", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatGroup>")]
+        public List<RocketChatGroup> GetGroups()
+        {
+            return GetEntity("groups", new List<AppFilter>()).Cast<RocketChatGroup>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatGroup", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "RocketChatGroup")]
+        public RocketChatGroup? GetGroup(string roomId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "roomId", FilterValue = roomId } };
+            return GetEntity("group", filters).Cast<RocketChatGroup>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatUser", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatUser>")]
+        public List<RocketChatUser> GetGroupMembers(string roomId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "roomId", FilterValue = roomId } };
+            return GetEntity("group_members", filters).Cast<RocketChatUser>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatMessage", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatMessage>")]
+        public List<RocketChatMessage> GetGroupMessages(string roomId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "roomId", FilterValue = roomId } };
+            return GetEntity("group_messages", filters).Cast<RocketChatMessage>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatIm", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatIm>")]
+        public List<RocketChatIm> GetImList()
+        {
+            return GetEntity("im_list", new List<AppFilter>()).Cast<RocketChatIm>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatMessage", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatMessage>")]
+        public List<RocketChatMessage> GetImMessages(string roomId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "roomId", FilterValue = roomId } };
+            return GetEntity("im_messages", filters).Cast<RocketChatMessage>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatMessage", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatMessage>")]
+        public List<RocketChatMessage> GetImHistory(string roomId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "roomId", FilterValue = roomId } };
+            return GetEntity("im_history", filters).Cast<RocketChatMessage>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatRoom", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatRoom>")]
+        public List<RocketChatRoom> GetRooms()
+        {
+            return GetEntity("rooms", new List<AppFilter>()).Cast<RocketChatRoom>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatRoom", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "RocketChatRoom")]
+        public RocketChatRoom? GetRoom(string roomId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "roomId", FilterValue = roomId } };
+            return GetEntity("room", filters).Cast<RocketChatRoom>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatSubscription", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatSubscription>")]
+        public List<RocketChatSubscription> GetSubscriptions()
+        {
+            return GetEntity("subscriptions", new List<AppFilter>()).Cast<RocketChatSubscription>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatRole", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatRole>")]
+        public List<RocketChatRole> GetRoles()
+        {
+            return GetEntity("roles", new List<AppFilter>()).Cast<RocketChatRole>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatPermission", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatPermission>")]
+        public List<RocketChatPermission> GetPermissions()
+        {
+            return GetEntity("permissions", new List<AppFilter>()).Cast<RocketChatPermission>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatSetting", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatSetting>")]
+        public List<RocketChatSetting> GetSettings()
+        {
+            return GetEntity("settings", new List<AppFilter>()).Cast<RocketChatSetting>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatStatistics", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "RocketChatStatistics")]
+        public RocketChatStatistics? GetStatistics()
+        {
+            return GetEntity("statistics", new List<AppFilter>()).Cast<RocketChatStatistics>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatIntegration", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatIntegration>")]
+        public List<RocketChatIntegration> GetIntegrations()
+        {
+            return GetEntity("integrations", new List<AppFilter>()).Cast<RocketChatIntegration>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatWebhook", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatWebhook>")]
+        public List<RocketChatWebhook> GetWebhooks()
+        {
+            return GetEntity("webhooks", new List<AppFilter>()).Cast<RocketChatWebhook>().ToList();
+        }
+
+        #endregion
     }
 }

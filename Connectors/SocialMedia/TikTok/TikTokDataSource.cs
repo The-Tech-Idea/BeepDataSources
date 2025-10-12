@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -596,6 +597,19 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
             var response = await GetAsync(url);
             string json = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<TikTokResponse<TikTokVideo>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "TikTokVideo", PointType = EnumPointType.Function, Name = "CreateVideo", Caption = "Create TikTok Video", ClassName = "TikTokDataSource", misc = "ReturnType: TikTokVideo")]
+        public async Task<TikTokVideo> CreateVideoAsync(TikTokVideo video)
+        {
+            // Note: TikTok video posting requires multipart upload, this is a placeholder
+            string endpoint = $"{ConnectionProperties.BaseUrl}/video/publish/";
+            var response = await PostAsync(endpoint, video);
+            if (response == null || !response.IsSuccessStatusCode)
+                return null;
+            string json = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<TikTokResponse<TikTokVideo>>(json);
+            return result?.Data?.FirstOrDefault();
         }
     }
 }

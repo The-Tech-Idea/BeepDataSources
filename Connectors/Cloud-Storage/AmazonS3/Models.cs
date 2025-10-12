@@ -9,16 +9,16 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Base
     // -------------------------------------------------------
-    public abstract class AmazonS3Model
+    public abstract class AmazonS3EntityBase
     {
         [JsonIgnore] public IDataSource? DataSource { get; set; }
-        public T Attach<T>(IDataSource ds) where T : AmazonS3Model { DataSource = ds; return (T)this; }
+        public T Attach<T>(IDataSource ds) where T : AmazonS3EntityBase { DataSource = ds; return (T)this; }
     }
 
     // -------------------------------------------------------
     // Bucket
     // -------------------------------------------------------
-    public class S3Bucket : AmazonS3Model
+    public sealed class AmazonS3Bucket : AmazonS3EntityBase
     {
         [JsonPropertyName("Name")] public string? BucketName { get; set; }
         [JsonPropertyName("CreationDate")] public DateTime? CreationDate { get; set; }
@@ -28,20 +28,20 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Object
     // -------------------------------------------------------
-    public class S3Object : AmazonS3Model
+    public sealed class AmazonS3Object : AmazonS3EntityBase
     {
         [JsonPropertyName("Key")] public string? Key { get; set; }
         [JsonPropertyName("LastModified")] public DateTime? LastModified { get; set; }
         [JsonPropertyName("ETag")] public string? ETag { get; set; }
         [JsonPropertyName("Size")] public long? Size { get; set; }
         [JsonPropertyName("StorageClass")] public string? StorageClass { get; set; }
-        [JsonPropertyName("Owner")] public S3Owner? Owner { get; set; }
+        [JsonPropertyName("Owner")] public AmazonS3Owner? Owner { get; set; }
     }
 
     // -------------------------------------------------------
     // Object Version
     // -------------------------------------------------------
-    public class S3ObjectVersion : AmazonS3Model
+    public sealed class AmazonS3ObjectVersion : AmazonS3EntityBase
     {
         [JsonPropertyName("Key")] public string? Key { get; set; }
         [JsonPropertyName("VersionId")] public string? VersionId { get; set; }
@@ -50,13 +50,13 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
         [JsonPropertyName("Size")] public long? Size { get; set; }
         [JsonPropertyName("StorageClass")] public string? StorageClass { get; set; }
         [JsonPropertyName("IsLatest")] public bool? IsLatest { get; set; }
-        [JsonPropertyName("Owner")] public S3Owner? Owner { get; set; }
+        [JsonPropertyName("Owner")] public AmazonS3Owner? Owner { get; set; }
     }
 
     // -------------------------------------------------------
     // Owner
     // -------------------------------------------------------
-    public class S3Owner : AmazonS3Model
+    public sealed class AmazonS3Owner : AmazonS3EntityBase
     {
         [JsonPropertyName("ID")] public string? Id { get; set; }
         [JsonPropertyName("DisplayName")] public string? DisplayName { get; set; }
@@ -65,12 +65,12 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Multipart Upload
     // -------------------------------------------------------
-    public class S3MultipartUpload : AmazonS3Model
+    public sealed class AmazonS3MultipartUpload : AmazonS3EntityBase
     {
         [JsonPropertyName("Key")] public string? Key { get; set; }
         [JsonPropertyName("UploadId")] public string? UploadId { get; set; }
-        [JsonPropertyName("Initiator")] public S3Owner? Initiator { get; set; }
-        [JsonPropertyName("Owner")] public S3Owner? Owner { get; set; }
+        [JsonPropertyName("Initiator")] public AmazonS3Owner? Initiator { get; set; }
+        [JsonPropertyName("Owner")] public AmazonS3Owner? Owner { get; set; }
         [JsonPropertyName("StorageClass")] public string? StorageClass { get; set; }
         [JsonPropertyName("Initiated")] public DateTime? Initiated { get; set; }
     }
@@ -78,7 +78,7 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Part
     // -------------------------------------------------------
-    public class S3Part : AmazonS3Model
+    public sealed class AmazonS3Part : AmazonS3EntityBase
     {
         [JsonPropertyName("PartNumber")] public int? PartNumber { get; set; }
         [JsonPropertyName("LastModified")] public DateTime? LastModified { get; set; }
@@ -89,17 +89,17 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Bucket Policy
     // -------------------------------------------------------
-    public class S3BucketPolicy : AmazonS3Model
+    public sealed class AmazonS3BucketPolicy : AmazonS3EntityBase
     {
         [JsonPropertyName("Version")] public string? Version { get; set; }
         [JsonPropertyName("Id")] public string? Id { get; set; }
-        [JsonPropertyName("Statement")] public List<S3PolicyStatement>? Statement { get; set; }
+        [JsonPropertyName("Statement")] public List<AmazonS3PolicyStatement>? Statement { get; set; }
     }
 
     // -------------------------------------------------------
     // Policy Statement
     // -------------------------------------------------------
-    public class S3PolicyStatement : AmazonS3Model
+    public sealed class AmazonS3PolicyStatement : AmazonS3EntityBase
     {
         [JsonPropertyName("Sid")] public string? Sid { get; set; }
         [JsonPropertyName("Effect")] public string? Effect { get; set; }
@@ -112,15 +112,15 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // CORS Configuration
     // -------------------------------------------------------
-    public class S3CorsConfiguration : AmazonS3Model
+    public sealed class AmazonS3CorsConfiguration : AmazonS3EntityBase
     {
-        [JsonPropertyName("CORSRules")] public List<S3CorsRule>? CorsRules { get; set; }
+        [JsonPropertyName("CORSRules")] public List<AmazonS3CorsRule>? CorsRules { get; set; }
     }
 
     // -------------------------------------------------------
     // CORS Rule
     // -------------------------------------------------------
-    public class S3CorsRule : AmazonS3Model
+    public sealed class AmazonS3CorsRule : AmazonS3EntityBase
     {
         [JsonPropertyName("ID")] public string? Id { get; set; }
         [JsonPropertyName("AllowedHeaders")] public List<string>? AllowedHeaders { get; set; }
@@ -133,39 +133,39 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Lifecycle Configuration
     // -------------------------------------------------------
-    public class S3LifecycleConfiguration : AmazonS3Model
+    public sealed class AmazonS3LifecycleConfiguration : AmazonS3EntityBase
     {
-        [JsonPropertyName("Rules")] public List<S3LifecycleRule>? Rules { get; set; }
+        [JsonPropertyName("Rules")] public List<AmazonS3LifecycleRule>? Rules { get; set; }
     }
 
     // -------------------------------------------------------
     // Lifecycle Rule
     // -------------------------------------------------------
-    public class S3LifecycleRule : AmazonS3Model
+    public sealed class AmazonS3LifecycleRule : AmazonS3EntityBase
     {
         [JsonPropertyName("ID")] public string? Id { get; set; }
         [JsonPropertyName("Status")] public string? Status { get; set; }
-        [JsonPropertyName("Filter")] public S3LifecycleFilter? Filter { get; set; }
-        [JsonPropertyName("Transitions")] public List<S3Transition>? Transitions { get; set; }
-        [JsonPropertyName("Expiration")] public S3Expiration? Expiration { get; set; }
-        [JsonPropertyName("NoncurrentVersionTransitions")] public List<S3NoncurrentVersionTransition>? NoncurrentVersionTransitions { get; set; }
-        [JsonPropertyName("NoncurrentVersionExpiration")] public S3NoncurrentVersionExpiration? NoncurrentVersionExpiration { get; set; }
+        [JsonPropertyName("Filter")] public AmazonS3LifecycleFilter? Filter { get; set; }
+        [JsonPropertyName("Transitions")] public List<AmazonS3Transition>? Transitions { get; set; }
+        [JsonPropertyName("Expiration")] public AmazonS3Expiration? Expiration { get; set; }
+        [JsonPropertyName("NoncurrentVersionTransitions")] public List<AmazonS3NoncurrentVersionTransition>? NoncurrentVersionTransitions { get; set; }
+        [JsonPropertyName("NoncurrentVersionExpiration")] public AmazonS3NoncurrentVersionExpiration? NoncurrentVersionExpiration { get; set; }
     }
 
     // -------------------------------------------------------
     // Lifecycle Filter
     // -------------------------------------------------------
-    public class S3LifecycleFilter : AmazonS3Model
+    public sealed class AmazonS3LifecycleFilter : AmazonS3EntityBase
     {
         [JsonPropertyName("Prefix")] public string? Prefix { get; set; }
-        [JsonPropertyName("Tag")] public S3Tag? Tag { get; set; }
-        [JsonPropertyName("And")] public S3LifecycleAnd? And { get; set; }
+        [JsonPropertyName("Tag")] public AmazonS3Tag? Tag { get; set; }
+        [JsonPropertyName("And")] public AmazonS3LifecycleAnd? And { get; set; }
     }
 
     // -------------------------------------------------------
     // Tag
     // -------------------------------------------------------
-    public class S3Tag : AmazonS3Model
+    public sealed class AmazonS3Tag : AmazonS3EntityBase
     {
         [JsonPropertyName("Key")] public string? Key { get; set; }
         [JsonPropertyName("Value")] public string? Value { get; set; }
@@ -174,16 +174,16 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Lifecycle And
     // -------------------------------------------------------
-    public class S3LifecycleAnd : AmazonS3Model
+    public sealed class AmazonS3LifecycleAnd : AmazonS3EntityBase
     {
         [JsonPropertyName("Prefix")] public string? Prefix { get; set; }
-        [JsonPropertyName("Tags")] public List<S3Tag>? Tags { get; set; }
+        [JsonPropertyName("Tags")] public List<AmazonS3Tag>? Tags { get; set; }
     }
 
     // -------------------------------------------------------
     // Transition
     // -------------------------------------------------------
-    public class S3Transition : AmazonS3Model
+    public sealed class AmazonS3Transition : AmazonS3EntityBase
     {
         [JsonPropertyName("Days")] public int? Days { get; set; }
         [JsonPropertyName("Date")] public DateTime? Date { get; set; }
@@ -193,7 +193,7 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Expiration
     // -------------------------------------------------------
-    public class S3Expiration : AmazonS3Model
+    public sealed class AmazonS3Expiration : AmazonS3EntityBase
     {
         [JsonPropertyName("Days")] public int? Days { get; set; }
         [JsonPropertyName("Date")] public DateTime? Date { get; set; }
@@ -203,7 +203,7 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Noncurrent Version Transition
     // -------------------------------------------------------
-    public class S3NoncurrentVersionTransition : AmazonS3Model
+    public sealed class AmazonS3NoncurrentVersionTransition : AmazonS3EntityBase
     {
         [JsonPropertyName("NoncurrentDays")] public int? NoncurrentDays { get; set; }
         [JsonPropertyName("StorageClass")] public string? StorageClass { get; set; }
@@ -212,7 +212,7 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Noncurrent Version Expiration
     // -------------------------------------------------------
-    public class S3NoncurrentVersionExpiration : AmazonS3Model
+    public sealed class AmazonS3NoncurrentVersionExpiration : AmazonS3EntityBase
     {
         [JsonPropertyName("NoncurrentDays")] public int? NoncurrentDays { get; set; }
     }
@@ -220,24 +220,24 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Bucket Encryption
     // -------------------------------------------------------
-    public class S3BucketEncryption : AmazonS3Model
+    public sealed class AmazonS3BucketEncryption : AmazonS3EntityBase
     {
-        [JsonPropertyName("Rules")] public List<S3EncryptionRule>? Rules { get; set; }
+        [JsonPropertyName("Rules")] public List<AmazonS3EncryptionRule>? Rules { get; set; }
     }
 
     // -------------------------------------------------------
     // Encryption Rule
     // -------------------------------------------------------
-    public class S3EncryptionRule : AmazonS3Model
+    public sealed class AmazonS3EncryptionRule : AmazonS3EntityBase
     {
-        [JsonPropertyName("ApplyServerSideEncryptionByDefault")] public S3ServerSideEncryptionByDefault? ApplyServerSideEncryptionByDefault { get; set; }
+        [JsonPropertyName("ApplyServerSideEncryptionByDefault")] public AmazonS3ServerSideEncryptionByDefault? ApplyServerSideEncryptionByDefault { get; set; }
         [JsonPropertyName("BucketKeyEnabled")] public bool? BucketKeyEnabled { get; set; }
     }
 
     // -------------------------------------------------------
     // Server Side Encryption By Default
     // -------------------------------------------------------
-    public class S3ServerSideEncryptionByDefault : AmazonS3Model
+    public sealed class AmazonS3ServerSideEncryptionByDefault : AmazonS3EntityBase
     {
         [JsonPropertyName("SSEAlgorithm")] public string? SSEAlgorithm { get; set; }
         [JsonPropertyName("KMSMasterKeyID")] public string? KMSMasterKeyID { get; set; }
@@ -246,25 +246,25 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Access Control List (ACL)
     // -------------------------------------------------------
-    public class S3AccessControlList : AmazonS3Model
+    public sealed class AmazonS3AccessControlList : AmazonS3EntityBase
     {
-        [JsonPropertyName("Owner")] public S3Owner? Owner { get; set; }
-        [JsonPropertyName("Grants")] public List<S3Grant>? Grants { get; set; }
+        [JsonPropertyName("Owner")] public AmazonS3Owner? Owner { get; set; }
+        [JsonPropertyName("Grants")] public List<AmazonS3Grant>? Grants { get; set; }
     }
 
     // -------------------------------------------------------
     // Grant
     // -------------------------------------------------------
-    public class S3Grant : AmazonS3Model
+    public sealed class AmazonS3Grant : AmazonS3EntityBase
     {
-        [JsonPropertyName("Grantee")] public S3Grantee? Grantee { get; set; }
+        [JsonPropertyName("Grantee")] public AmazonS3Grantee? Grantee { get; set; }
         [JsonPropertyName("Permission")] public string? Permission { get; set; }
     }
 
     // -------------------------------------------------------
     // Grantee
     // -------------------------------------------------------
-    public class S3Grantee : AmazonS3Model
+    public sealed class AmazonS3Grantee : AmazonS3EntityBase
     {
         [JsonPropertyName("Type")] public string? Type { get; set; }
         [JsonPropertyName("ID")] public string? Id { get; set; }
@@ -276,15 +276,15 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     // -------------------------------------------------------
     // Tagging
     // -------------------------------------------------------
-    public class S3Tagging : AmazonS3Model
+    public sealed class AmazonS3Tagging : AmazonS3EntityBase
     {
-        [JsonPropertyName("TagSet")] public List<S3Tag>? TagSet { get; set; }
+        [JsonPropertyName("TagSet")] public List<AmazonS3Tag>? TagSet { get; set; }
     }
 
     // -------------------------------------------------------
     // Object Metadata
     // -------------------------------------------------------
-    public class S3ObjectMetadata : AmazonS3Model
+    public sealed class AmazonS3ObjectMetadata : AmazonS3EntityBase
     {
         [JsonPropertyName("CacheControl")] public string? CacheControl { get; set; }
         [JsonPropertyName("ContentDisposition")] public string? ContentDisposition { get; set; }

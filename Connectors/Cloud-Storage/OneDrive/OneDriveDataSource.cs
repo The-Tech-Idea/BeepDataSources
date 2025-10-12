@@ -13,6 +13,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.OneDrive.Models;
 
 namespace TheTechIdea.Beep.Connectors.OneDrive
 {
@@ -204,5 +205,113 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
 
             return list;
         }
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "Drive", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "List<Drive>")]
+        public List<Drive> GetDrives()
+        {
+            return GetEntity("drives", new List<AppFilter>()).Cast<Drive>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "Drive", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "Drive")]
+        public Drive? GetDrive()
+        {
+            return GetEntity("drive_details", new List<AppFilter>()).Cast<Drive>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "DriveItem", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "DriveItem")]
+        public DriveItem? GetRoot()
+        {
+            return GetEntity("root", new List<AppFilter>()).Cast<DriveItem>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "DriveItem", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "List<DriveItem>")]
+        public List<DriveItem> GetRootChildren()
+        {
+            return GetEntity("root_children", new List<AppFilter>()).Cast<DriveItem>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "DriveItem", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "DriveItem")]
+        public DriveItem? GetItem(string itemId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "item_id", FilterValue = itemId } };
+            return GetEntity("items", filters).Cast<DriveItem>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "DriveItem", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "List<DriveItem>")]
+        public List<DriveItem> GetItemChildren(string itemId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "item_id", FilterValue = itemId } };
+            return GetEntity("item_children", filters).Cast<DriveItem>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "Stream", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "Stream")]
+        public Models.Stream? GetItemContent(string itemId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "item_id", FilterValue = itemId } };
+            return GetEntity("item_content", filters).Cast<Models.Stream>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "SearchResult", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "List<SearchResult>")]
+        public List<SearchResult> Search(string query)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "query", FilterValue = query } };
+            return GetEntity("search", filters).Cast<SearchResult>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "DriveItem", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "List<DriveItem>")]
+        public List<DriveItem> GetRecent()
+        {
+            return GetEntity("recent", new List<AppFilter>()).Cast<DriveItem>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "DriveItem", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "List<DriveItem>")]
+        public List<DriveItem> GetSharedWithMe()
+        {
+            return GetEntity("shared", new List<AppFilter>()).Cast<DriveItem>().ToList();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "DriveItem", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "DriveItem")]
+        public DriveItem? GetDocumentsFolder()
+        {
+            return GetEntity("documents", new List<AppFilter>()).Cast<DriveItem>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "DriveItem", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "DriveItem")]
+        public DriveItem? GetPhotosFolder()
+        {
+            return GetEntity("photos", new List<AppFilter>()).Cast<DriveItem>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive, PointType = EnumPointType.Function, ObjectType = "DriveItem", ClassName = "OneDriveDataSource", Showin = ShowinType.Both, misc = "DriveItem")]
+        public DriveItem? GetCameraRollFolder()
+        {
+            return GetEntity("cameraroll", new List<AppFilter>()).Cast<DriveItem>().FirstOrDefault();
+        }
+
+        [CommandAttribute(Name = "CreateItemAsync", Caption = "Create OneDrive Item",
+            ObjectType = "DriveItem", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive,
+            ClassType = "OneDriveDataSource", Showin = ShowinType.Both, Order = 1,
+            iconimage = "onedrive.png", misc = "Create a file or folder")]
+        public async Task<IEnumerable<DriveItem>> CreateItemAsync(DriveItem item, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("root_children", item, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<DriveItem>>(result);
+        }
+
+        [CommandAttribute(Name = "UpdateItemContentAsync", Caption = "Update OneDrive Item Content",
+            ObjectType = "DriveItem", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive,
+            ClassType = "OneDriveDataSource", Showin = ShowinType.Both, Order = 2,
+            iconimage = "onedrive.png", misc = "Update the content of an item")]
+        public async Task<IEnumerable<DriveItem>> UpdateItemContentAsync(DriveItem item, List<AppFilter> filters = null)
+        {
+            var result = await PutAsync("item_content", item, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<DriveItem>>(result);
+        }
+
+        #endregion
     }
 }

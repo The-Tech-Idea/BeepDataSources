@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
@@ -211,6 +212,115 @@ namespace TheTechIdea.Beep.Connectors.AnyDo
                     query.Add($"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}");
             }
             return string.Join("&", query);
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoTask", PointType = EnumPointType.Function, Name = "GetTasks", Caption = "Get Tasks", ClassName = "AnyDoDataSource")]
+        public async Task<List<AnyDoTask>> GetTasks()
+        {
+            var result = await GetEntityAsync("tasks", new List<AppFilter>());
+            return result.Select(item => JsonSerializer.Deserialize<AnyDoTask>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<AnyDoTask>().ToList();
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoTask", PointType = EnumPointType.Function, Name = "GetTask", Caption = "Get Task", ClassName = "AnyDoDataSource")]
+        public async Task<AnyDoTask> GetTask(string id)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id, Operator = "=" } };
+            var result = await GetEntityAsync("tasks.get", filters);
+            return result.FirstOrDefault() as AnyDoTask;
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoTask", PointType = EnumPointType.Function, Name = "GetTasksByList", Caption = "Get Tasks by List", ClassName = "AnyDoDataSource")]
+        public async Task<List<AnyDoTask>> GetTasksByList(string listId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "list_id", FilterValue = listId, Operator = "=" } };
+            var result = await GetEntityAsync("tasks.list", filters);
+            return result.Select(item => JsonSerializer.Deserialize<AnyDoTask>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<AnyDoTask>().ToList();
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoList", PointType = EnumPointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "AnyDoDataSource")]
+        public async Task<List<AnyDoList>> GetLists()
+        {
+            var result = await GetEntityAsync("lists", new List<AppFilter>());
+            return result.Select(item => JsonSerializer.Deserialize<AnyDoList>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<AnyDoList>().ToList();
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoList", PointType = EnumPointType.Function, Name = "GetList", Caption = "Get List", ClassName = "AnyDoDataSource")]
+        public async Task<AnyDoList> GetList(string id)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id, Operator = "=" } };
+            var result = await GetEntityAsync("lists.get", filters);
+            return result.FirstOrDefault() as AnyDoList;
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoCategory", PointType = EnumPointType.Function, Name = "GetCategories", Caption = "Get Categories", ClassName = "AnyDoDataSource")]
+        public async Task<List<AnyDoCategory>> GetCategories()
+        {
+            var result = await GetEntityAsync("categories", new List<AppFilter>());
+            return result.Select(item => JsonSerializer.Deserialize<AnyDoCategory>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<AnyDoCategory>().ToList();
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoCategory", PointType = EnumPointType.Function, Name = "GetCategory", Caption = "Get Category", ClassName = "AnyDoDataSource")]
+        public async Task<AnyDoCategory> GetCategory(string id)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id, Operator = "=" } };
+            var result = await GetEntityAsync("categories.get", filters);
+            return result.FirstOrDefault() as AnyDoCategory;
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoUser", PointType = EnumPointType.Function, Name = "GetUser", Caption = "Get User", ClassName = "AnyDoDataSource")]
+        public async Task<AnyDoUser> GetUser()
+        {
+            var result = await GetEntityAsync("user", new List<AppFilter>());
+            return result.FirstOrDefault() as AnyDoUser;
+        }
+
+        // POST/PUT methods for creating and updating entities
+        [CommandAttribute(ObjectType = "AnyDoTask", PointType = EnumPointType.Function, Name = "CreateTask", Caption = "Create Task", ClassName = "AnyDoDataSource")]
+        public async Task<AnyDoTask> CreateTask(AnyDoTask task)
+        {
+            var endpoint = "api/v2/me/tasks";
+            var response = await PostAsync<AnyDoTask>(endpoint, task);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoTask", PointType = EnumPointType.Function, Name = "UpdateTask", Caption = "Update Task", ClassName = "AnyDoDataSource")]
+        public async Task<AnyDoTask> UpdateTask(string taskId, AnyDoTask task)
+        {
+            var endpoint = $"api/v2/me/tasks/{taskId}";
+            var response = await PutAsync<AnyDoTask>(endpoint, task);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoList", PointType = EnumPointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "AnyDoDataSource")]
+        public async Task<AnyDoList> CreateList(AnyDoList list)
+        {
+            var endpoint = "api/v2/me/lists";
+            var response = await PostAsync<AnyDoList>(endpoint, list);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoList", PointType = EnumPointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "AnyDoDataSource")]
+        public async Task<AnyDoList> UpdateList(string listId, AnyDoList list)
+        {
+            var endpoint = $"api/v2/me/lists/{listId}";
+            var response = await PutAsync<AnyDoList>(endpoint, list);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoCategory", PointType = EnumPointType.Function, Name = "CreateCategory", Caption = "Create Category", ClassName = "AnyDoDataSource")]
+        public async Task<AnyDoCategory> CreateCategory(AnyDoCategory category)
+        {
+            var endpoint = "api/v2/me/categories";
+            var response = await PostAsync<AnyDoCategory>(endpoint, category);
+            return response;
+        }
+
+        [CommandAttribute(ObjectType = "AnyDoCategory", PointType = EnumPointType.Function, Name = "UpdateCategory", Caption = "Update Category", ClassName = "AnyDoDataSource")]
+        public async Task<AnyDoCategory> UpdateCategory(string categoryId, AnyDoCategory category)
+        {
+            var endpoint = $"api/v2/me/categories/{categoryId}";
+            var response = await PutAsync<AnyDoCategory>(endpoint, category);
+            return response;
         }
     }
 }

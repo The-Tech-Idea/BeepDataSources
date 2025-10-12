@@ -4,17 +4,20 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-using TheTechIdea.Beep.DataBase;
-using TheTechIdea.Beep.Report;
-using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.AppManager;
 using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
 
-namespace TheTechIdea.Beep.DataSources
+namespace TheTechIdea.Beep.Connectors.LiveAgent
 {
-    [AddinAttribute(Catagory = "Connector", DatasourceType = DatasourceType.LiveAgent)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LiveAgent)]
     public class LiveAgentDataSource : WebAPIDataSource
     {
         public LiveAgentDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
@@ -35,69 +38,7 @@ namespace TheTechIdea.Beep.DataSources
             ["conversations"] = new("/api/v3/conversations", "conversations", Array.Empty<string>()),
         };
 
-        public override string GetConnectionString()
-        {
-            return $"LiveAgent:{DatasourceName}";
-        }
-
-        public override string ColumnDelimiter { get => ","; set => base.ColumnDelimiter = value; }
-        public override string ParameterDelimiter { get => ":"; set => base.ParameterDelimiter = value; }
-        public override string RowDelimiter { get => "\n"; set => base.RowDelimiter = value; }
-
-        public override List<string> GetEntitiesList()
-        {
-            return Map.Keys.ToList();
-        }
-
-        public override List<EntityStructure> GetEntityStructure(string EntityName, bool refresh)
-        {
-            return GetEntityStructureAsync(EntityName, refresh).GetAwaiter().GetResult();
-        }
-
-        public override async Task<List<EntityStructure>> GetEntityStructureAsync(string EntityName, bool refresh)
-        {
-            if (!Map.TryGetValue(EntityName, out var m))
-                throw new InvalidOperationException($"Unknown LiveAgent entity '{EntityName}'.");
-
-            var endpoint = m.endpoint;
-            using var resp = await GetAsync(endpoint).ConfigureAwait(false);
-            if (resp is null || !resp.IsSuccessStatusCode) return new List<EntityStructure>();
-
-            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var doc = JsonDocument.Parse(json);
-            var root = GetJsonProperty(doc.RootElement, m.root.Split('.'));
-
-            if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() == 0)
-                return new List<EntityStructure>();
-
-            var sample = root[0];
-            var structure = new EntityStructure
-            {
-                EntityName = EntityName,
-                ViewID = EntityName,
-                DataSourceID = DatasourceName,
-                Fields = new List<EntityField>()
-            };
-
-            foreach (var prop in sample.EnumerateObject())
-            {
-                structure.Fields.Add(new EntityField
-                {
-                    fieldname = prop.Name,
-                    fieldtype = MapJsonType(prop.Value.ValueKind),
-                    ValueRetrievedFromParent = false,
-                    AllowDBNull = true,
-                    IsAutoIncrement = false,
-                    IsIdentity = false,
-                    IsKey = false,
-                    IsUnique = false
-                });
-            }
-
-            return new List<EntityStructure> { structure };
-        }
-
-        public override object GetEntity(string EntityName, List<AppFilter> Filter)
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> Filter)
         {
             return GetEntityAsync(EntityName, Filter).GetAwaiter().GetResult();
         }
@@ -134,7 +75,7 @@ namespace TheTechIdea.Beep.DataSources
 
             var endpoint = ResolveEndpoint(m.endpoint, q);
 
-            using var resp = Get(endpoint, q);
+            using var resp = GetAsync(endpoint, q).ConfigureAwait(false).GetAwaiter().GetResult();
             if (resp is null || !resp.IsSuccessStatusCode) return new PagedResult();
 
             var data = ExtractArray(resp, m.root);
@@ -196,5 +137,47 @@ namespace TheTechIdea.Beep.DataSources
             JsonValueKind.Object => "System.Object",
             _ => "System.String"
         };
+
+        private static Dictionary<string, string> FiltersToQuery(List<AppFilter> filters)
+        {
+            var query = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (filters == null) return query;
+
+            foreach (var filter in filters)
+            {
+                if (filter == null || string.IsNullOrWhiteSpace(filter.FieldName)) continue;
+                query[filter.FieldName.Trim()] = filter.FilterValue ?? string.Empty;
+            }
+            return query;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LiveAgent, PointType = EnumPointType.Function, ObjectType = "LiveAgentTicket", ClassName = "LiveAgentDataSource", Showin = ShowinType.Both, misc = "List<LiveAgentTicket>")]
+        public IEnumerable<object> GetTickets(List<AppFilter> filter = null) => GetEntity("tickets", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LiveAgent, PointType = EnumPointType.Function, ObjectType = "LiveAgentChat", ClassName = "LiveAgentDataSource", Showin = ShowinType.Both, misc = "List<LiveAgentChat>")]
+        public IEnumerable<object> GetChats(List<AppFilter> filter = null) => GetEntity("chats", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LiveAgent, PointType = EnumPointType.Function, ObjectType = "LiveAgentCall", ClassName = "LiveAgentDataSource", Showin = ShowinType.Both, misc = "List<LiveAgentCall>")]
+        public IEnumerable<object> GetCalls(List<AppFilter> filter = null) => GetEntity("calls", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LiveAgent, PointType = EnumPointType.Function, ObjectType = "LiveAgentCustomer", ClassName = "LiveAgentDataSource", Showin = ShowinType.Both, misc = "List<LiveAgentCustomer>")]
+        public IEnumerable<object> GetCustomers(List<AppFilter> filter = null) => GetEntity("customers", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LiveAgent, PointType = EnumPointType.Function, ObjectType = "LiveAgentAgent", ClassName = "LiveAgentDataSource", Showin = ShowinType.Both, misc = "List<LiveAgentAgent>")]
+        public IEnumerable<object> GetAgents(List<AppFilter> filter = null) => GetEntity("agents", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LiveAgent, PointType = EnumPointType.Function, ObjectType = "LiveAgentDepartment", ClassName = "LiveAgentDataSource", Showin = ShowinType.Both, misc = "List<LiveAgentDepartment>")]
+        public IEnumerable<object> GetDepartments(List<AppFilter> filter = null) => GetEntity("departments", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LiveAgent, PointType = EnumPointType.Function, ObjectType = "LiveAgentMessage", ClassName = "LiveAgentDataSource", Showin = ShowinType.Both, misc = "List<LiveAgentMessage>")]
+        public IEnumerable<object> GetMessages(string conversationId, List<AppFilter> filter = null)
+        {
+            filter ??= new List<AppFilter>();
+            filter.Add(new AppFilter { FieldName = "conversationId", FilterValue = conversationId });
+            return GetEntity("messages", filter);
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LiveAgent, PointType = EnumPointType.Function, ObjectType = "LiveAgentConversation", ClassName = "LiveAgentDataSource", Showin = ShowinType.Both, misc = "List<LiveAgentConversation>")]
+        public IEnumerable<object> GetConversations(List<AppFilter> filter = null) => GetEntity("conversations", filter ?? new List<AppFilter>());
     }
 }

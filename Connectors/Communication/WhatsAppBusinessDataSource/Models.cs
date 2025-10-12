@@ -5,14 +5,14 @@ using TheTechIdea.Beep.DataBase;
 
 namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness.Models
 {
-    public abstract class WabaEntityBase
+    public abstract class WhatsAppBusinessEntityBase
     {
         [JsonIgnore] public IDataSource? DataSource { get; private set; }
-        public T Attach<T>(IDataSource ds) where T : WabaEntityBase { DataSource = ds; return (T)this; }
+        public T Attach<T>(IDataSource ds) where T : WhatsAppBusinessEntityBase { DataSource = ds; return (T)this; }
     }
 
     // Phone number
-    public sealed class WabaPhoneNumber : WabaEntityBase
+    public sealed class WabaPhoneNumber : WhatsAppBusinessEntityBase
     {
         [JsonPropertyName("id")] public string? Id { get; set; }
         [JsonPropertyName("display_phone_number")] public string? DisplayPhoneNumber { get; set; }
@@ -23,7 +23,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness.Models
     }
 
     // Message template
-    public sealed class WabaMessageTemplate : WabaEntityBase
+    public sealed class WabaMessageTemplate : WhatsAppBusinessEntityBase
     {
         [JsonPropertyName("id")] public string? Id { get; set; }
         [JsonPropertyName("name")] public string? Name { get; set; }
@@ -51,7 +51,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness.Models
     }
 
     // Subscribed app
-    public sealed class WabaSubscribedApp : WabaEntityBase
+    public sealed class WabaSubscribedApp : WhatsAppBusinessEntityBase
     {
         [JsonPropertyName("id")] public string? Id { get; set; }
         [JsonPropertyName("name")] public string? Name { get; set; }
@@ -59,7 +59,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness.Models
     }
 
     // Business profile (list endpoint returns data array)
-    public sealed class WabaBusinessProfile : WabaEntityBase
+    public sealed class WabaBusinessProfile : WhatsAppBusinessEntityBase
     {
         [JsonPropertyName("about")] public string? About { get; set; }
         [JsonPropertyName("address")] public string? Address { get; set; }
@@ -71,7 +71,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness.Models
     }
 
     // Media (single-object lookup)
-    public sealed class WabaMedia : WabaEntityBase
+    public sealed class WabaMedia : WhatsAppBusinessEntityBase
     {
         [JsonPropertyName("id")] public string? Id { get; set; }
         [JsonPropertyName("mime_type")] public string? MimeType { get; set; }

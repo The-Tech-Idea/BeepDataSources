@@ -1,25 +1,35 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using TheTechIdea.Beep.DataBase;
 
-namespace TheTechIdea.Beep.Connectors.CitrixShareFile
+namespace TheTechIdea.Beep.Connectors.CitrixShareFile.Models
 {
     /// <summary>
-    /// Base class for all Citrix ShareFile models
+    /// Base class for all Citrix ShareFile entities
     /// </summary>
-    public abstract class CitrixShareFileModel
+    public abstract class CitrixShareFileEntityBase
     {
         /// <summary>
         /// Reference to the data source
         /// </summary>
         [JsonIgnore]
-        public CitrixShareFileDataSource? DataSource { get; set; }
+        public IDataSource? DataSource { get; set; }
+
+        /// <summary>
+        /// Attach the entity to a data source
+        /// </summary>
+        public T Attach<T>(IDataSource dataSource) where T : CitrixShareFileEntityBase
+        {
+            DataSource = dataSource;
+            return (T)this;
+        }
     }
 
     /// <summary>
     /// Represents a Citrix ShareFile item (file or folder)
     /// </summary>
-    public class ShareFileItem : CitrixShareFileModel
+    public class ShareFileItem : CitrixShareFileEntityBase
     {
         /// <summary>
         /// The unique identifier for this item
@@ -259,7 +269,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
     /// <summary>
     /// Represents a Citrix ShareFile user
     /// </summary>
-    public class ShareFileUser : CitrixShareFileModel
+    public class ShareFileUser : CitrixShareFileEntityBase
     {
         /// <summary>
         /// The unique identifier for this user
@@ -385,7 +395,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
     /// <summary>
     /// Represents a Citrix ShareFile group
     /// </summary>
-    public class ShareFileGroup : CitrixShareFileModel
+    public class ShareFileGroup : CitrixShareFileEntityBase
     {
         /// <summary>
         /// The unique identifier for this group
@@ -463,7 +473,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
     /// <summary>
     /// Represents a Citrix ShareFile share
     /// </summary>
-    public class ShareFileShare : CitrixShareFileModel
+    public class ShareFileShare : CitrixShareFileEntityBase
     {
         /// <summary>
         /// The unique identifier for this share
@@ -589,7 +599,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
     /// <summary>
     /// Represents a Citrix ShareFile access control
     /// </summary>
-    public class ShareFileAccessControl : CitrixShareFileModel
+    public class ShareFileAccessControl : CitrixShareFileEntityBase
     {
         /// <summary>
         /// The unique identifier for this access control
@@ -679,7 +689,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
     /// <summary>
     /// Represents a Citrix ShareFile principal
     /// </summary>
-    public class ShareFilePrincipal : CitrixShareFileModel
+    public class ShareFilePrincipal : CitrixShareFileEntityBase
     {
         /// <summary>
         /// The unique identifier for this principal
@@ -733,7 +743,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
     /// <summary>
     /// Represents a Citrix ShareFile zone
     /// </summary>
-    public class ShareFileZone : CitrixShareFileModel
+    public class ShareFileZone : CitrixShareFileEntityBase
     {
         /// <summary>
         /// The unique identifier for this zone
@@ -781,7 +791,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
     /// <summary>
     /// Represents Citrix ShareFile user preferences
     /// </summary>
-    public class ShareFileUserPreferences : CitrixShareFileModel
+    public class ShareFileUserPreferences : CitrixShareFileEntityBase
     {
         /// <summary>
         /// Whether to enable notifications
@@ -841,7 +851,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
     /// <summary>
     /// Represents a Citrix ShareFile item version
     /// </summary>
-    public class ShareFileItemVersion : CitrixShareFileModel
+    public class ShareFileItemVersion : CitrixShareFileEntityBase
     {
         /// <summary>
         /// The unique identifier for this version
@@ -907,7 +917,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
     /// <summary>
     /// Represents a Citrix ShareFile connector group
     /// </summary>
-    public class ShareFileConnectorGroup : CitrixShareFileModel
+    public class ShareFileConnectorGroup : CitrixShareFileEntityBase
     {
         /// <summary>
         /// The unique identifier for this connector group
@@ -973,7 +983,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
     /// <summary>
     /// Represents a Citrix ShareFile account
     /// </summary>
-    public class ShareFileAccount : CitrixShareFileModel
+    public class ShareFileAccount : CitrixShareFileEntityBase
     {
         /// <summary>
         /// The unique identifier for this account
@@ -1045,7 +1055,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
     /// <summary>
     /// Represents Citrix ShareFile search results
     /// </summary>
-    public class ShareFileSearchResult : CitrixShareFileModel
+    public class ShareFileSearchResult : CitrixShareFileEntityBase
     {
         /// <summary>
         /// The total number of results

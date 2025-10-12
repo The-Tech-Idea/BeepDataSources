@@ -14,6 +14,7 @@ using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Communication.Chanty.Models;
 
 namespace TheTechIdea.Beep.Connectors.Communication.Chanty
 {
@@ -66,137 +67,404 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         // Keep your interface exactly
         public new IEnumerable<string> GetEntitesList() => EntitiesNames;
 
-        // ---------------- overrides (same signatures) ----------------
+        // ---------------- CommandAttribute methods ----------------
 
-        // sync
-        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        [CommandAttribute(
+            ObjectType = "ChantyUser",
+            PointType = EnumPointType.Function,
+            Name = "GetUsers",
+            Caption = "Get Users",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "chanty.png",
+            misc = "ReturnType: IEnumerable<ChantyUser>"
+        )]
+        public async Task<IEnumerable<ChantyUser>> GetUsers()
         {
-            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
-            return data ?? Array.Empty<object>();
+            return (await GetEntityAsync("users", new List<AppFilter>())).Cast<ChantyUser>();
         }
 
-        // async
-        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        [CommandAttribute(
+            ObjectType = "ChantyUser",
+            PointType = EnumPointType.Function,
+            Name = "GetUser",
+            Caption = "Get User",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "chanty.png",
+            misc = "user_id|ReturnType: IEnumerable<ChantyUser>"
+        )]
+        public async Task<IEnumerable<ChantyUser>> GetUser(string userId)
         {
-            if (!Map.TryGetValue(EntityName, out var m))
-                throw new InvalidOperationException($"Unknown Chanty entity '{EntityName}'.");
-
-            var q = FiltersToQuery(Filter);
-            RequireFilters(EntityName, q, m.requiredFilters);
-
-            // Replace path parameters in endpoint
-            var endpoint = ReplacePathParameters(m.endpoint, q);
-
-            using var resp = await GetAsync(endpoint, q).ConfigureAwait(false);
-            if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
-
-            return ExtractArray(resp, m.root);
+            return (await GetEntityAsync("user", new List<AppFilter> { new AppFilter { FieldName = "user_id", FilterValue = userId } })).Cast<ChantyUser>();
         }
 
-        // paged
-        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        [CommandAttribute(
+            ObjectType = "ChantyTeam",
+            PointType = EnumPointType.Function,
+            Name = "GetTeams",
+            Caption = "Get Teams",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "chanty.png",
+            misc = "ReturnType: IEnumerable<ChantyTeam>"
+        )]
+        public async Task<IEnumerable<ChantyTeam>> GetTeams()
         {
-            if (!Map.TryGetValue(EntityName, out var m))
-                throw new InvalidOperationException($"Unknown Chanty entity '{EntityName}'.");
-
-            var q = FiltersToQuery(filter);
-            RequireFilters(EntityName, q, m.requiredFilters);
-
-            // Chanty API supports pagination with limit and offset
-            q["limit"] = Math.Max(1, Math.Min(pageSize, 100)).ToString(); // Chanty max is usually 100
-            q["offset"] = ((pageNumber - 1) * pageSize).ToString();
-
-            var endpoint = ReplacePathParameters(m.endpoint, q);
-
-            var resp = GetAsync(endpoint, q).ConfigureAwait(false).GetAwaiter().GetResult();
-            var items = ExtractArray(resp, m.root);
-
-            // Basic pagination estimate
-            int totalRecordsSoFar = (pageNumber - 1) * Math.Max(1, pageSize) + items.Count;
-
-            return new PagedResult
-            {
-                Data = items,
-                PageNumber = Math.Max(1, pageNumber),
-                PageSize = pageSize,
-                TotalRecords = totalRecordsSoFar,
-                TotalPages = pageNumber, // Can't determine total pages without count
-                HasPreviousPage = pageNumber > 1,
-                HasNextPage = items.Count == pageSize // Assume more if we got full page
-            };
+            return (await GetEntityAsync("teams", new List<AppFilter>())).Cast<ChantyTeam>();
         }
 
-        // -------------------------- helpers --------------------------
-
-        private static Dictionary<string, string> FiltersToQuery(List<AppFilter> filters)
+        [CommandAttribute(
+            ObjectType = "ChantyTeam",
+            PointType = EnumPointType.Function,
+            Name = "GetTeam",
+            Caption = "Get Team",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "chanty.png",
+            misc = "team_id|ReturnType: IEnumerable<ChantyTeam>"
+        )]
+        public async Task<IEnumerable<ChantyTeam>> GetTeam(string teamId)
         {
-            var q = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            if (filters == null) return q;
-            foreach (var f in filters)
-            {
-                if (f == null || string.IsNullOrWhiteSpace(f.FieldName)) continue;
-                q[f.FieldName.Trim()] = f.FilterValue?.ToString() ?? string.Empty;
-            }
-            return q;
+            return (await GetEntityAsync("team", new List<AppFilter> { new AppFilter { FieldName = "team_id", FilterValue = teamId } })).Cast<ChantyTeam>();
         }
 
-        private static void RequireFilters(string entity, Dictionary<string, string> q, string[] required)
+        [CommandAttribute(
+            ObjectType = "ChantyTeamMember",
+            PointType = EnumPointType.Function,
+            Name = "GetTeamMembers",
+            Caption = "Get Team Members",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "chanty.png",
+            misc = "team_id|ReturnType: IEnumerable<ChantyTeamMember>"
+        )]
+        public async Task<IEnumerable<ChantyTeamMember>> GetTeamMembers(string teamId)
         {
-            foreach (var req in required)
-            {
-                if (!q.ContainsKey(req) || string.IsNullOrWhiteSpace(q[req]))
-                    throw new ArgumentException($"Chanty entity '{entity}' requires '{req}' parameter in filters.");
-            }
+            return (await GetEntityAsync("team_members", new List<AppFilter> { new AppFilter { FieldName = "team_id", FilterValue = teamId } })).Cast<ChantyTeamMember>();
         }
 
-        private static string ReplacePathParameters(string endpoint, Dictionary<string, string> parameters)
+        [CommandAttribute(
+            ObjectType = "ChantyChannel",
+            PointType = EnumPointType.Function,
+            Name = "GetChannels",
+            Caption = "Get Channels",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "chanty.png",
+            misc = "team_id|ReturnType: IEnumerable<ChantyChannel>"
+        )]
+        public async Task<IEnumerable<ChantyChannel>> GetChannels(string teamId)
         {
-            var result = endpoint;
-            foreach (var param in parameters)
-            {
-                result = result.Replace($"{{{param.Key}}}", param.Value);
-            }
-            return result;
+            return (await GetEntityAsync("channels", new List<AppFilter> { new AppFilter { FieldName = "team_id", FilterValue = teamId } })).Cast<ChantyChannel>();
         }
 
-        private static List<object> ExtractArray(HttpResponseMessage resp, string? rootPath)
+        [CommandAttribute(
+            ObjectType = "ChantyChannel",
+            PointType = EnumPointType.Function,
+            Name = "GetChannel",
+            Caption = "Get Channel",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "chanty.png",
+            misc = "channel_id|ReturnType: IEnumerable<ChantyChannel>"
+        )]
+        public async Task<IEnumerable<ChantyChannel>> GetChannel(string channelId)
         {
-            var list = new List<object>();
-            if (resp == null) return list;
+            return (await GetEntityAsync("channel", new List<AppFilter> { new AppFilter { FieldName = "channel_id", FilterValue = channelId } })).Cast<ChantyChannel>();
+        }
 
-            var json = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            using var doc = JsonDocument.Parse(json);
+        [CommandAttribute(
+            ObjectType = "ChantyChannelMember",
+            PointType = EnumPointType.Function,
+            Name = "GetChannelMembers",
+            Caption = "Get Channel Members",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "chanty.png",
+            misc = "channel_id|ReturnType: IEnumerable<ChantyChannelMember>"
+        )]
+        public async Task<IEnumerable<ChantyChannelMember>> GetChannelMembers(string channelId)
+        {
+            return (await GetEntityAsync("channel_members", new List<AppFilter> { new AppFilter { FieldName = "channel_id", FilterValue = channelId } })).Cast<ChantyChannelMember>();
+        }
 
-            JsonElement node = doc.RootElement;
+        [CommandAttribute(
+            ObjectType = "ChantyMessage",
+            PointType = EnumPointType.Function,
+            Name = "GetMessages",
+            Caption = "Get Messages",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "chanty.png",
+            misc = "channel_id|ReturnType: IEnumerable<ChantyMessage>"
+        )]
+        public async Task<IEnumerable<ChantyMessage>> GetMessages(string channelId)
+        {
+            return (await GetEntityAsync("messages", new List<AppFilter> { new AppFilter { FieldName = "channel_id", FilterValue = channelId } })).Cast<ChantyMessage>();
+        }
 
-            if (!string.IsNullOrWhiteSpace(rootPath))
-            {
-                foreach (var part in rootPath.Split('.'))
-                {
-                    if (node.ValueKind != JsonValueKind.Object || !node.TryGetProperty(part, out node))
-                        return list; // path not found
-                }
-            }
+        [CommandAttribute(
+            ObjectType = "ChantyMessage",
+            PointType = EnumPointType.Function,
+            Name = "GetMessage",
+            Caption = "Get Message",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "chanty.png",
+            misc = "message_id|ReturnType: IEnumerable<ChantyMessage>"
+        )]
+        public async Task<IEnumerable<ChantyMessage>> GetMessage(string messageId)
+        {
+            return (await GetEntityAsync("message", new List<AppFilter> { new AppFilter { FieldName = "message_id", FilterValue = messageId } })).Cast<ChantyMessage>();
+        }
 
-            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        [CommandAttribute(
+            ObjectType = "ChantyReaction",
+            PointType = EnumPointType.Function,
+            Name = "GetMessageReactions",
+            Caption = "Get Message Reactions",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 11,
+            iconimage = "chanty.png",
+            misc = "message_id|ReturnType: IEnumerable<ChantyReaction>"
+        )]
+        public async Task<IEnumerable<ChantyReaction>> GetMessageReactions(string messageId)
+        {
+            return (await GetEntityAsync("message_reactions", new List<AppFilter> { new AppFilter { FieldName = "message_id", FilterValue = messageId } })).Cast<ChantyReaction>();
+        }
 
-            if (node.ValueKind == JsonValueKind.Array)
-            {
-                list.Capacity = node.GetArrayLength();
-                foreach (var el in node.EnumerateArray())
-                {
-                    var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(el.GetRawText(), opts);
-                    if (obj != null) list.Add(obj);
-                }
-            }
-            else if (node.ValueKind == JsonValueKind.Object)
-            {
-                // wrap single object
-                var obj = JsonSerializer.Deserialize<Dictionary<string, object>>(node.GetRawText(), opts);
-                if (obj != null) list.Add(obj);
-            }
+        [CommandAttribute(
+            ObjectType = "ChantyMessageReply",
+            PointType = EnumPointType.Function,
+            Name = "GetMessageReplies",
+            Caption = "Get Message Replies",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 12,
+            iconimage = "chanty.png",
+            misc = "message_id|ReturnType: IEnumerable<ChantyMessageReply>"
+        )]
+        public async Task<IEnumerable<ChantyMessageReply>> GetMessageReplies(string messageId)
+        {
+            return (await GetEntityAsync("message_replies", new List<AppFilter> { new AppFilter { FieldName = "message_id", FilterValue = messageId } })).Cast<ChantyMessageReply>();
+        }
 
-            return list;
+        [CommandAttribute(
+            ObjectType = "ChantyFile",
+            PointType = EnumPointType.Function,
+            Name = "GetFiles",
+            Caption = "Get Files",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 13,
+            iconimage = "chanty.png",
+            misc = "channel_id|ReturnType: IEnumerable<ChantyFile>"
+        )]
+        public async Task<IEnumerable<ChantyFile>> GetFiles(string channelId)
+        {
+            return (await GetEntityAsync("files", new List<AppFilter> { new AppFilter { FieldName = "channel_id", FilterValue = channelId } })).Cast<ChantyFile>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "ChantyFile",
+            PointType = EnumPointType.Function,
+            Name = "GetFile",
+            Caption = "Get File",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 14,
+            iconimage = "chanty.png",
+            misc = "file_id|ReturnType: IEnumerable<ChantyFile>"
+        )]
+        public async Task<IEnumerable<ChantyFile>> GetFile(string fileId)
+        {
+            return (await GetEntityAsync("file", new List<AppFilter> { new AppFilter { FieldName = "file_id", FilterValue = fileId } })).Cast<ChantyFile>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "ChantyNotification",
+            PointType = EnumPointType.Function,
+            Name = "GetNotifications",
+            Caption = "Get Notifications",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 15,
+            iconimage = "chanty.png",
+            misc = "user_id|ReturnType: IEnumerable<ChantyNotification>"
+        )]
+        public async Task<IEnumerable<ChantyNotification>> GetNotifications(string userId)
+        {
+            return (await GetEntityAsync("notifications", new List<AppFilter> { new AppFilter { FieldName = "user_id", FilterValue = userId } })).Cast<ChantyNotification>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "ChantyUserSettings",
+            PointType = EnumPointType.Function,
+            Name = "GetUserSettings",
+            Caption = "Get User Settings",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 16,
+            iconimage = "chanty.png",
+            misc = "user_id|ReturnType: IEnumerable<ChantyUserSettings>"
+        )]
+        public async Task<IEnumerable<ChantyUserSettings>> GetUserSettings(string userId)
+        {
+            return (await GetEntityAsync("user_settings", new List<AppFilter> { new AppFilter { FieldName = "user_id", FilterValue = userId } })).Cast<ChantyUserSettings>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "ChantyTeamSettings",
+            PointType = EnumPointType.Function,
+            Name = "GetTeamSettings",
+            Caption = "Get Team Settings",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 17,
+            iconimage = "chanty.png",
+            misc = "team_id|ReturnType: IEnumerable<ChantyTeamSettings>"
+        )]
+        public async Task<IEnumerable<ChantyTeamSettings>> GetTeamSettings(string teamId)
+        {
+            return (await GetEntityAsync("team_settings", new List<AppFilter> { new AppFilter { FieldName = "team_id", FilterValue = teamId } })).Cast<ChantyTeamSettings>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "ChantyIntegration",
+            PointType = EnumPointType.Function,
+            Name = "GetIntegrations",
+            Caption = "Get Integrations",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 18,
+            iconimage = "chanty.png",
+            misc = "team_id|ReturnType: IEnumerable<ChantyIntegration>"
+        )]
+        public async Task<IEnumerable<ChantyIntegration>> GetIntegrations(string teamId)
+        {
+            return (await GetEntityAsync("integrations", new List<AppFilter> { new AppFilter { FieldName = "team_id", FilterValue = teamId } })).Cast<ChantyIntegration>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "ChantyWebhook",
+            PointType = EnumPointType.Function,
+            Name = "GetWebhooks",
+            Caption = "Get Webhooks",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 19,
+            iconimage = "chanty.png",
+            misc = "team_id|ReturnType: IEnumerable<ChantyWebhook>"
+        )]
+        public async Task<IEnumerable<ChantyWebhook>> GetWebhooks(string teamId)
+        {
+            return (await GetEntityAsync("webhooks", new List<AppFilter> { new AppFilter { FieldName = "team_id", FilterValue = teamId } })).Cast<ChantyWebhook>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "ChantyAuditLog",
+            PointType = EnumPointType.Function,
+            Name = "GetAuditLogs",
+            Caption = "Get Audit Logs",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 20,
+            iconimage = "chanty.png",
+            misc = "team_id|ReturnType: IEnumerable<ChantyAuditLog>"
+        )]
+        public async Task<IEnumerable<ChantyAuditLog>> GetAuditLogs(string teamId)
+        {
+            return (await GetEntityAsync("audit_logs", new List<AppFilter> { new AppFilter { FieldName = "team_id", FilterValue = teamId } })).Cast<ChantyAuditLog>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "ChantyMessage",
+            PointType = EnumPointType.Function,
+            Name = "CreateMessageAsync",
+            Caption = "Create Chanty Message",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 21,
+            iconimage = "chanty.png",
+            misc = "ReturnType: IEnumerable<ChantyMessage>"
+        )]
+        public async Task<IEnumerable<ChantyMessage>> CreateMessageAsync(ChantyMessage message, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("channels/{channel_id}/messages", message, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<ChantyMessage>>(result);
+        }
+
+        [CommandAttribute(
+            ObjectType = "ChantyChannel",
+            PointType = EnumPointType.Function,
+            Name = "CreateChannelAsync",
+            Caption = "Create Chanty Channel",
+            ClassName = "ChantyDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            Showin = ShowinType.Both,
+            Order = 22,
+            iconimage = "chanty.png",
+            misc = "ReturnType: IEnumerable<ChantyChannel>"
+        )]
+        public async Task<IEnumerable<ChantyChannel>> CreateChannelAsync(ChantyChannel channel, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("teams/{team_id}/channels", channel, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<ChantyChannel>>(result);
         }
     }
 }

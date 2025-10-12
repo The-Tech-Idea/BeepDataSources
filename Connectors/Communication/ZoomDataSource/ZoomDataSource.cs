@@ -17,6 +17,7 @@ using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.Connectors.Communication.Zoom
 {
+    using Models;
     /// <summary>
     /// Zoom API data source built on WebAPIDataSource.
     /// Configure WebAPIConnectionProperties.Url to Zoom API base URL and set Authorization header.
@@ -196,6 +197,217 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
             }
 
             return list;
+        }
+
+        // -------------------------- Command Methods --------------------------
+
+        [CommandAttribute(Name = "GetUsers", Caption = "Get Zoom Users",
+            ObjectType = "ZoomUser", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 1,
+            iconimage = "zoom.png", misc = "Get list of users")]
+        public async Task<IEnumerable<ZoomUser>> GetUsers(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("users", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomUser>().Select(u => u.Attach<ZoomUser>(this));
+        }
+
+        [CommandAttribute(Name = "GetMeetings", Caption = "Get Zoom Meetings",
+            ObjectType = "ZoomMeeting", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 2,
+            iconimage = "zoom.png", misc = "Get meetings for a user (requires user_id)")]
+        public async Task<IEnumerable<ZoomMeeting>> GetMeetings(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("meetings", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomMeeting>().Select(m => m.Attach<ZoomMeeting>(this));
+        }
+
+        [CommandAttribute(Name = "GetMeeting", Caption = "Get Zoom Meeting Details",
+            ObjectType = "ZoomMeeting", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 3,
+            iconimage = "zoom.png", misc = "Get specific meeting details (requires meeting_id)")]
+        public async Task<IEnumerable<ZoomMeeting>> GetMeeting(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("meeting", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomMeeting>().Select(m => m.Attach<ZoomMeeting>(this));
+        }
+
+        [CommandAttribute(Name = "GetMeetingParticipants", Caption = "Get Zoom Meeting Participants",
+            ObjectType = "ZoomMeetingParticipant", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 4,
+            iconimage = "zoom.png", misc = "Get meeting participants report (requires meeting_id)")]
+        public async Task<IEnumerable<ZoomMeetingParticipant>> GetMeetingParticipants(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("meeting_participants", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomMeetingParticipant>().Select(p => p.Attach<ZoomMeetingParticipant>(this));
+        }
+
+        [CommandAttribute(Name = "GetMeetingRecordings", Caption = "Get Zoom Meeting Recordings",
+            ObjectType = "ZoomMeetingRecording", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 5,
+            iconimage = "zoom.png", misc = "Get meeting recordings (requires meeting_id)")]
+        public async Task<IEnumerable<ZoomMeetingRecording>> GetMeetingRecordings(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("meeting_recordings", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomMeetingRecording>().Select(r => r.Attach<ZoomMeetingRecording>(this));
+        }
+
+        [CommandAttribute(Name = "GetWebinars", Caption = "Get Zoom Webinars",
+            ObjectType = "ZoomWebinar", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 6,
+            iconimage = "zoom.png", misc = "Get webinars for a user (requires user_id)")]
+        public async Task<IEnumerable<ZoomWebinar>> GetWebinars(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("webinars", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomWebinar>().Select(w => w.Attach<ZoomWebinar>(this));
+        }
+
+        [CommandAttribute(Name = "GetWebinar", Caption = "Get Zoom Webinar Details",
+            ObjectType = "ZoomWebinar", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 7,
+            iconimage = "zoom.png", misc = "Get specific webinar details (requires webinar_id)")]
+        public async Task<IEnumerable<ZoomWebinar>> GetWebinar(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("webinar", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomWebinar>().Select(w => w.Attach<ZoomWebinar>(this));
+        }
+
+        [CommandAttribute(Name = "GetWebinarParticipants", Caption = "Get Zoom Webinar Participants",
+            ObjectType = "ZoomWebinarParticipant", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 8,
+            iconimage = "zoom.png", misc = "Get webinar participants report (requires webinar_id)")]
+        public async Task<IEnumerable<ZoomWebinarParticipant>> GetWebinarParticipants(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("webinar_participants", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomWebinarParticipant>().Select(p => p.Attach<ZoomWebinarParticipant>(this));
+        }
+
+        [CommandAttribute(Name = "GetWebinarRecordings", Caption = "Get Zoom Webinar Recordings",
+            ObjectType = "ZoomWebinarRecording", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 9,
+            iconimage = "zoom.png", misc = "Get webinar recordings (requires webinar_id)")]
+        public async Task<IEnumerable<ZoomWebinarRecording>> GetWebinarRecordings(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("webinar_recordings", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomWebinarRecording>().Select(r => r.Attach<ZoomWebinarRecording>(this));
+        }
+
+        [CommandAttribute(Name = "GetGroups", Caption = "Get Zoom Groups",
+            ObjectType = "ZoomGroup", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 10,
+            iconimage = "zoom.png", misc = "Get list of groups")]
+        public async Task<IEnumerable<ZoomGroup>> GetGroups(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("groups", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomGroup>().Select(g => g.Attach<ZoomGroup>(this));
+        }
+
+        [CommandAttribute(Name = "GetGroupMembers", Caption = "Get Zoom Group Members",
+            ObjectType = "ZoomGroupMember", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 11,
+            iconimage = "zoom.png", misc = "Get group members (requires group_id)")]
+        public async Task<IEnumerable<ZoomGroupMember>> GetGroupMembers(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("group_members", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomGroupMember>().Select(m => m.Attach<ZoomGroupMember>(this));
+        }
+
+        [CommandAttribute(Name = "GetChannels", Caption = "Get Zoom Channels",
+            ObjectType = "ZoomChannel", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 12,
+            iconimage = "zoom.png", misc = "Get chat channels for a user (requires user_id)")]
+        public async Task<IEnumerable<ZoomChannel>> GetChannels(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("channels", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomChannel>().Select(c => c.Attach<ZoomChannel>(this));
+        }
+
+        [CommandAttribute(Name = "GetChannelMessages", Caption = "Get Zoom Channel Messages",
+            ObjectType = "ZoomChannelMessage", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 13,
+            iconimage = "zoom.png", misc = "Get channel messages (requires channel_id)")]
+        public async Task<IEnumerable<ZoomChannelMessage>> GetChannelMessages(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("channel_messages", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomChannelMessage>().Select(m => m.Attach<ZoomChannelMessage>(this));
+        }
+
+        [CommandAttribute(Name = "GetAccountSettings", Caption = "Get Zoom Account Settings",
+            ObjectType = "ZoomAccountSettings", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 14,
+            iconimage = "zoom.png", misc = "Get account settings (requires account_id)")]
+        public async Task<IEnumerable<ZoomAccountSettings>> GetAccountSettings(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("account_settings", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomAccountSettings>().Select(s => s.Attach<ZoomAccountSettings>(this));
+        }
+
+        [CommandAttribute(Name = "GetUserSettings", Caption = "Get Zoom User Settings",
+            ObjectType = "ZoomUserSettings", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 15,
+            iconimage = "zoom.png", misc = "Get user settings (requires user_id)")]
+        public async Task<IEnumerable<ZoomUserSettings>> GetUserSettings(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("user_settings", filters ?? new List<AppFilter>());
+            return result.Cast<ZoomUserSettings>().Select(s => s.Attach<ZoomUserSettings>(this));
+        }
+
+        [CommandAttribute(Name = "CreateMeetingAsync", Caption = "Create Zoom Meeting",
+            ObjectType = "ZoomMeeting", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 16,
+            iconimage = "zoom.png", misc = "Create a meeting")]
+        public async Task<IEnumerable<ZoomMeeting>> CreateMeetingAsync(ZoomMeeting meeting, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("users/{user_id}/meetings", meeting, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<ZoomMeeting>>(result);
+        }
+
+        [CommandAttribute(Name = "CreateWebinarAsync", Caption = "Create Zoom Webinar",
+            ObjectType = "ZoomWebinar", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 17,
+            iconimage = "zoom.png", misc = "Create a webinar")]
+        public async Task<IEnumerable<ZoomWebinar>> CreateWebinarAsync(ZoomWebinar webinar, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("users/{user_id}/webinars", webinar, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<ZoomWebinar>>(result);
+        }
+
+        [CommandAttribute(Name = "CreateChannelAsync", Caption = "Create Zoom Channel",
+            ObjectType = "ZoomChannel", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 18,
+            iconimage = "zoom.png", misc = "Create a channel")]
+        public async Task<IEnumerable<ZoomChannel>> CreateChannelAsync(ZoomChannel channel, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("chat/users/{user_id}/channels", channel, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<ZoomChannel>>(result);
+        }
+
+        [CommandAttribute(Name = "SendChannelMessageAsync", Caption = "Send Zoom Channel Message",
+            ObjectType = "ZoomChannelMessage", PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
+            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 19,
+            iconimage = "zoom.png", misc = "Send a message to a channel")]
+        public async Task<IEnumerable<ZoomChannelMessage>> SendChannelMessageAsync(ZoomChannelMessage message, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("chat/channels/{channel_id}/messages", message, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<ZoomChannelMessage>>(result);
         }
     }
 }

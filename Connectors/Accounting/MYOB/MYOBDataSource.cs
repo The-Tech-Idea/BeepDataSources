@@ -237,5 +237,45 @@ namespace TheTechIdea.Beep.Connectors.MYOB
 
             return list;
         }
+
+        // CommandAttribute methods for framework integration
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "Customers", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Customer>")]
+        public IEnumerable<Customer> GetCustomers(List<AppFilter> filter) => GetEntity("customers", filter).Cast<Customer>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "Suppliers", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Supplier>")]
+        public IEnumerable<Supplier> GetSuppliers(List<AppFilter> filter) => GetEntity("suppliers", filter).Cast<Supplier>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "Items", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Item>")]
+        public IEnumerable<Item> GetItems(List<AppFilter> filter) => GetEntity("items", filter).Cast<Item>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "Invoices", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Invoice>")]
+        public IEnumerable<Invoice> GetInvoices(List<AppFilter> filter) => GetEntity("invoices", filter).Cast<Invoice>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "Bills", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Bill>")]
+        public IEnumerable<Bill> GetBills(List<AppFilter> filter) => GetEntity("bills", filter).Cast<Bill>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "Payments", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Payment>")]
+        public IEnumerable<Payment> GetPayments(List<AppFilter> filter) => GetEntity("payments", filter).Cast<Payment>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "SupplierPayments", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<SupplierPayment>")]
+        public IEnumerable<SupplierPayment> GetSupplierPayments(List<AppFilter> filter) => GetEntity("supplierpayments", filter).Cast<SupplierPayment>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "Journals", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<JournalTransaction>")]
+        public IEnumerable<JournalTransaction> GetJournals(List<AppFilter> filter) => GetEntity("journals", filter).Cast<JournalTransaction>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Account>")]
+        public IEnumerable<Account> GetAccounts(List<AppFilter> filter) => GetEntity("accounts", filter).Cast<Account>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "TaxCodes", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TaxCode>")]
+        public IEnumerable<TaxCode> GetTaxCodes(List<AppFilter> filter) => GetEntity("taxcodes", filter).Cast<TaxCode>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "Employees", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Employee>")]
+        public IEnumerable<Employee> GetEmployees(List<AppFilter> filter) => GetEntity("employees", filter).Cast<Employee>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "PayrollCategories", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<PayrollCategory>")]
+        public IEnumerable<PayrollCategory> GetPayrollCategories(List<AppFilter> filter) => GetEntity("payrollcategories", filter).Cast<PayrollCategory>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MYOB, PointType = EnumPointType.Function, ObjectType = "Pays", ClassName = "MYOBDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Pay>")]
+        public IEnumerable<Pay> GetPays(List<AppFilter> filter) => GetEntity("pays", filter).Cast<Pay>();
     }
 }

@@ -1,13 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using TheTechIdea.Beep.DataBase;
 
-namespace BeepDM.Connectors.Communication.Discord
+namespace TheTechIdea.Beep.Connectors.Communication.Discord
 {
+    // -------------------------------------------------------
+    // Base
+    // -------------------------------------------------------
+    public abstract class DiscordEntityBase
+    {
+        [JsonIgnore] public IDataSource DataSource { get; private set; }
+        public T Attach<T>(IDataSource ds) where T : DiscordEntityBase { DataSource = ds; return (T)this; }
+    }
+
     /// <summary>
     /// Discord Guild (Server) entity
     /// </summary>
-    public class DiscordGuild
+    public sealed class DiscordGuild : DiscordEntityBase
     {
         [JsonPropertyName("id")]
         public string Id { get; set; }
@@ -169,7 +179,7 @@ namespace BeepDM.Connectors.Communication.Discord
     /// <summary>
     /// Discord Channel entity
     /// </summary>
-    public class DiscordChannel
+    public sealed class DiscordChannel : DiscordEntityBase
     {
         [JsonPropertyName("id")]
         public string Id { get; set; }
@@ -259,7 +269,7 @@ namespace BeepDM.Connectors.Communication.Discord
     /// <summary>
     /// Discord Message entity
     /// </summary>
-    public class DiscordMessage
+    public sealed class DiscordMessage : DiscordEntityBase
     {
         [JsonPropertyName("id")]
         public string Id { get; set; }
@@ -358,7 +368,7 @@ namespace BeepDM.Connectors.Communication.Discord
     /// <summary>
     /// Discord User entity
     /// </summary>
-    public class DiscordUser
+    public sealed class DiscordUser : DiscordEntityBase
     {
         [JsonPropertyName("id")]
         public string Id { get; set; }
@@ -415,7 +425,7 @@ namespace BeepDM.Connectors.Communication.Discord
     /// <summary>
     /// Discord Guild Member entity
     /// </summary>
-    public class DiscordGuildMember
+    public sealed class DiscordGuildMember : DiscordEntityBase
     {
         [JsonPropertyName("user")]
         public DiscordUser User { get; set; }

@@ -235,5 +235,44 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCart
 
             return list;
         }
+
+        #region Command Methods
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartProduct>")]
+        public async Task<IEnumerable<OpenCartProduct>> GetProducts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("products", new List<AppFilter> { filter });
+            return result.Cast<OpenCartProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Orders", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartOrder>")]
+        public async Task<IEnumerable<OpenCartOrder>> GetOrders(AppFilter filter)
+        {
+            var result = await GetEntityAsync("orders", new List<AppFilter> { filter });
+            return result.Cast<OpenCartOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Customers", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartCustomer>")]
+        public async Task<IEnumerable<OpenCartCustomer>> GetCustomers(AppFilter filter)
+        {
+            var result = await GetEntityAsync("customers", new List<AppFilter> { filter });
+            return result.Cast<OpenCartCustomer>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Categories", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartCategory>")]
+        public async Task<IEnumerable<OpenCartCategory>> GetCategories(AppFilter filter)
+        {
+            var result = await GetEntityAsync("categories", new List<AppFilter> { filter });
+            return result.Cast<OpenCartCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Manufacturers", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartManufacturer>")]
+        public async Task<IEnumerable<OpenCartManufacturer>> GetManufacturers(AppFilter filter)
+        {
+            var result = await GetEntityAsync("manufacturers", new List<AppFilter> { filter });
+            return result.Cast<OpenCartManufacturer>();
+        }
+
+        #endregion
     }
 }

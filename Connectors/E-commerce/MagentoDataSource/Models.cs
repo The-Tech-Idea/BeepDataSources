@@ -16,7 +16,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento.Models
         [JsonPropertyName("created_at")] public DateTimeOffset? CreatedAt { get; set; }
         [JsonPropertyName("updated_at")] public DateTimeOffset? UpdatedAt { get; set; }
 
-        [JsonIgnore] public IDataSource DataSource { get; private set; }
+        [JsonIgnore] public IDataSource? DataSource { get; private set; }
         public T Attach<T>(IDataSource ds) where T : MagentoEntityBase { DataSource = ds; return (T)this; }
     }
 
@@ -50,6 +50,35 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento.Models
     public sealed class StockItem
     {
         [JsonPropertyName("item_id")] public int? ItemId { get; set; }
+        [JsonPropertyName("product_id")] public int? ProductId { get; set; }
+        [JsonPropertyName("stock_id")] public int? StockId { get; set; }
+        [JsonPropertyName("qty")] public decimal? Qty { get; set; }
+        [JsonPropertyName("is_in_stock")] public bool? IsInStock { get; set; }
+        [JsonPropertyName("is_qty_decimal")] public bool? IsQtyDecimal { get; set; }
+        [JsonPropertyName("show_default_notification_message")] public bool? ShowDefaultNotificationMessage { get; set; }
+        [JsonPropertyName("use_config_min_qty")] public bool? UseConfigMinQty { get; set; }
+        [JsonPropertyName("min_qty")] public decimal? MinQty { get; set; }
+        [JsonPropertyName("use_config_min_sale_qty")] public bool? UseConfigMinSaleQty { get; set; }
+        [JsonPropertyName("min_sale_qty")] public decimal? MinSaleQty { get; set; }
+        [JsonPropertyName("use_config_max_sale_qty")] public bool? UseConfigMaxSaleQty { get; set; }
+        [JsonPropertyName("max_sale_qty")] public decimal? MaxSaleQty { get; set; }
+        [JsonPropertyName("use_config_backorders")] public bool? UseConfigBackorders { get; set; }
+        [JsonPropertyName("backorders")] public int? Backorders { get; set; }
+        [JsonPropertyName("use_config_notify_stock_qty")] public bool? UseConfigNotifyStockQty { get; set; }
+        [JsonPropertyName("notify_stock_qty")] public decimal? NotifyStockQty { get; set; }
+        [JsonPropertyName("use_config_qty_increments")] public bool? UseConfigQtyIncrements { get; set; }
+        [JsonPropertyName("qty_increments")] public decimal? QtyIncrements { get; set; }
+        [JsonPropertyName("use_config_enable_qty_inc")] public bool? UseConfigEnableQtyInc { get; set; }
+        [JsonPropertyName("enable_qty_increments")] public bool? EnableQtyIncrements { get; set; }
+        [JsonPropertyName("use_config_manage_stock")] public bool? UseConfigManageStock { get; set; }
+        [JsonPropertyName("manage_stock")] public bool? ManageStock { get; set; }
+        [JsonPropertyName("low_stock_date")] public DateTimeOffset? LowStockDate { get; set; }
+        [JsonPropertyName("is_decimal_divided")] public bool? IsDecimalDivided { get; set; }
+        [JsonPropertyName("stock_status_changed_auto")] public int? StockStatusChangedAuto { get; set; }
+    }
+
+    public sealed class InventoryItem : MagentoEntityBase
+    {
         [JsonPropertyName("product_id")] public int? ProductId { get; set; }
         [JsonPropertyName("stock_id")] public int? StockId { get; set; }
         [JsonPropertyName("qty")] public decimal? Qty { get; set; }
@@ -365,7 +394,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento.Models
         // Add extension attributes as needed
     }
 
-    public sealed class Cart
+    public sealed class Cart : MagentoEntityBase
     {
         [JsonPropertyName("id")] public int? Id { get; set; }
         [JsonPropertyName("created_at")] public DateTimeOffset? CreatedAt { get; set; }
@@ -478,7 +507,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento.Models
         [JsonPropertyName("negotiated_price_value")] public decimal? NegotiatedPriceValue { get; set; }
     }
 
-    public sealed class Review
+    public sealed class Review : MagentoEntityBase
     {
         [JsonPropertyName("review_id")] public int? ReviewId { get; set; }
         [JsonPropertyName("created_at")] public DateTimeOffset? CreatedAt { get; set; }
@@ -507,7 +536,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento.Models
         [JsonPropertyName("rating_code")] public string? RatingCode { get; set; }
     }
 
-    public sealed class StoreConfig
+    public sealed class StoreConfig : MagentoEntityBase
     {
         [JsonPropertyName("id")] public int? Id { get; set; }
         [JsonPropertyName("code")] public string? Code { get; set; }
@@ -545,6 +574,41 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento.Models
         [JsonPropertyName("options")] public List<AttributeOption>? Options { get; set; } = new();
     }
 
+    public sealed class Attribute : MagentoEntityBase
+    {
+        [JsonPropertyName("attribute_id")] public int? AttributeId { get; set; }
+        [JsonPropertyName("attribute_code")] public string? AttributeCode { get; set; }
+        [JsonPropertyName("frontend_input")] public string? FrontendInput { get; set; }
+        [JsonPropertyName("entity_type_id")] public string? EntityTypeId { get; set; }
+        [JsonPropertyName("is_required")] public bool? IsRequired { get; set; }
+        [JsonPropertyName("options")] public List<AttributeOption>? Options { get; set; } = new();
+        [JsonPropertyName("frontend_labels")] public List<AttributeLabel>? FrontendLabels { get; set; } = new();
+        [JsonPropertyName("default_frontend_label")] public string? DefaultFrontendLabel { get; set; }
+        [JsonPropertyName("is_unique")] public bool? IsUnique { get; set; }
+        [JsonPropertyName("is_global")] public bool? IsGlobal { get; set; }
+        [JsonPropertyName("is_visible")] public bool? IsVisible { get; set; }
+        [JsonPropertyName("is_searchable")] public bool? IsSearchable { get; set; }
+        [JsonPropertyName("is_filterable")] public bool? IsFilterable { get; set; }
+        [JsonPropertyName("is_comparable")] public bool? IsComparable { get; set; }
+        [JsonPropertyName("is_visible_on_front")] public bool? IsVisibleOnFront { get; set; }
+        [JsonPropertyName("is_html_allowed_on_front")] public bool? IsHtmlAllowedOnFront { get; set; }
+        [JsonPropertyName("is_used_for_price_rules")] public bool? IsUsedForPriceRules { get; set; }
+        [JsonPropertyName("is_filterable_in_search")] public bool? IsFilterableInSearch { get; set; }
+        [JsonPropertyName("used_in_product_listing")] public bool? UsedInProductListing { get; set; }
+        [JsonPropertyName("used_for_sort_by")] public bool? UsedForSortBy { get; set; }
+        [JsonPropertyName("apply_to")] public List<string>? ApplyTo { get; set; } = new();
+        [JsonPropertyName("is_visible_in_advanced_search")] public bool? IsVisibleInAdvancedSearch { get; set; }
+        [JsonPropertyName("position")] public int? Position { get; set; }
+        [JsonPropertyName("is_wysiwyg_enabled")] public bool? IsWysiwygEnabled { get; set; }
+        [JsonPropertyName("is_used_for_promo_rules")] public bool? IsUsedForPromoRules { get; set; }
+        [JsonPropertyName("is_required_in_admin_store")] public bool? IsRequiredInAdminStore { get; set; }
+        [JsonPropertyName("is_used_in_grid")] public bool? IsUsedInGrid { get; set; }
+        [JsonPropertyName("is_visible_in_grid")] public bool? IsVisibleInGrid { get; set; }
+        [JsonPropertyName("is_filterable_in_grid")] public bool? IsFilterableInGrid { get; set; }
+        [JsonPropertyName("search_weight")] public int? SearchWeight { get; set; }
+        [JsonPropertyName("additional_data")] public string? AdditionalData { get; set; }
+    }
+
     public sealed class AttributeLabel
     {
         [JsonPropertyName("store_id")] public int? StoreId { get; set; }
@@ -560,7 +624,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento.Models
         [JsonPropertyName("store_labels")] public List<AttributeLabel>? StoreLabels { get; set; } = new();
     }
 
-    public sealed class TaxRule
+    public sealed class TaxRule : MagentoEntityBase
     {
         [JsonPropertyName("id")] public int? Id { get; set; }
         [JsonPropertyName("code")] public string? Code { get; set; }

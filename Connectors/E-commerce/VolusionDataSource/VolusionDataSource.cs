@@ -12,12 +12,13 @@ using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Ecommerce.Volusion.Models;
 
 namespace TheTechIdea.Beep.Connectors.Ecommerce.Volusion
 {
-    // Optional: enable discovery if your enum has Volusion
-    // [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion)]
     public class VolusionDataSource : WebAPIDataSource
     {
         // Logical entity -> (endpoint template, root property, required filters)
@@ -66,6 +67,29 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Volusion
 
         // Expose the fixed list
         public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // -------------------- CommandAttribute Methods --------------------
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "VolusionDataSource", Showin = ShowinType.Both, misc = "IEnumerable<VProduct>")]
+        public async Task<IEnumerable<Models.VProduct>> GetProducts(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Products", new List<AppFilter> { filter });
+            return result.Cast<Models.VProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Orders", ClassName = "VolusionDataSource", Showin = ShowinType.Both, misc = "IEnumerable<VOrder>")]
+        public async Task<IEnumerable<Models.VOrder>> GetOrders(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Orders", new List<AppFilter> { filter });
+            return result.Cast<Models.VOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Categories", ClassName = "VolusionDataSource", Showin = ShowinType.Both, misc = "IEnumerable<VCategory>")]
+        public async Task<IEnumerable<Models.VCategory>> GetCategories(AppFilter filter)
+        {
+            var result = await GetEntityAsync("Categories", new List<AppFilter> { filter });
+            return result.Cast<Models.VCategory>();
+        }
 
         // -------------------- Overrides (same signatures) --------------------
 

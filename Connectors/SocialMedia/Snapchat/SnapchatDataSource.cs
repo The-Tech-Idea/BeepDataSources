@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -595,6 +596,30 @@ namespace BeepDataSources.Connectors.SocialMedia.Snapchat
             var response = await GetAsync(url);
             string json = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<SnapchatResponse<SnapchatCreative>>(json);
+        }
+
+        [CommandAttribute(ObjectType = "SnapchatCampaign", PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Snapchat Campaign", ClassName = "SnapchatDataSource", misc = "ReturnType: SnapchatCampaign")]
+        public async Task<SnapchatCampaign> CreateCampaignAsync(SnapchatCampaign campaign)
+        {
+            string endpoint = $"{ConnectionProperties.BaseUrl}/campaigns";
+            var response = await PostAsync(endpoint, campaign);
+            if (response == null || !response.IsSuccessStatusCode)
+                return null;
+            string json = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<SnapchatResponse<SnapchatCampaign>>(json);
+            return result?.Campaigns?.FirstOrDefault();
+        }
+
+        [CommandAttribute(ObjectType = "SnapchatCampaign", PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update Snapchat Campaign", ClassName = "SnapchatDataSource", misc = "ReturnType: SnapchatCampaign")]
+        public async Task<SnapchatCampaign> UpdateCampaignAsync(string campaignId, SnapchatCampaign campaign)
+        {
+            string endpoint = $"{ConnectionProperties.BaseUrl}/campaigns/{campaignId}";
+            var response = await PutAsync(endpoint, campaign);
+            if (response == null || !response.IsSuccessStatusCode)
+                return null;
+            string json = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<SnapchatResponse<SnapchatCampaign>>(json);
+            return result?.Campaigns?.FirstOrDefault();
         }
     }
 }

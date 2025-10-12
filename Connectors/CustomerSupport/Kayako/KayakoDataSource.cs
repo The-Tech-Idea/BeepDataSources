@@ -11,10 +11,12 @@ using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.DataSources
 {
-    [AddinAttribute(Catagory = "Connector", DatasourceType = DatasourceType.Kayako)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Kayako)]
     public class KayakoDataSource : WebAPIDataSource
     {
         public KayakoDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
@@ -35,69 +37,7 @@ namespace TheTechIdea.Beep.DataSources
             ["conversations"] = new("/api/v1/conversations.json", "conversations", Array.Empty<string>()),
         };
 
-        public override string GetConnectionString()
-        {
-            return $"Kayako:{DatasourceName}";
-        }
-
-        public override string ColumnDelimiter { get => ","; set => base.ColumnDelimiter = value; }
-        public override string ParameterDelimiter { get => ":"; set => base.ParameterDelimiter = value; }
-        public override string RowDelimiter { get => "\n"; set => base.RowDelimiter = value; }
-
-        public override List<string> GetEntitiesList()
-        {
-            return Map.Keys.ToList();
-        }
-
-        public override List<EntityStructure> GetEntityStructure(string EntityName, bool refresh)
-        {
-            return GetEntityStructureAsync(EntityName, refresh).GetAwaiter().GetResult();
-        }
-
-        public override async Task<List<EntityStructure>> GetEntityStructureAsync(string EntityName, bool refresh)
-        {
-            if (!Map.TryGetValue(EntityName, out var m))
-                throw new InvalidOperationException($"Unknown Kayako entity '{EntityName}'.");
-
-            var endpoint = m.endpoint;
-            using var resp = await GetAsync(endpoint).ConfigureAwait(false);
-            if (resp is null || !resp.IsSuccessStatusCode) return new List<EntityStructure>();
-
-            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var doc = JsonDocument.Parse(json);
-            var root = GetJsonProperty(doc.RootElement, m.root.Split('.'));
-
-            if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() == 0)
-                return new List<EntityStructure>();
-
-            var sample = root[0];
-            var structure = new EntityStructure
-            {
-                EntityName = EntityName,
-                ViewID = EntityName,
-                DataSourceID = DatasourceName,
-                Fields = new List<EntityField>()
-            };
-
-            foreach (var prop in sample.EnumerateObject())
-            {
-                structure.Fields.Add(new EntityField
-                {
-                    fieldname = prop.Name,
-                    fieldtype = MapJsonType(prop.Value.ValueKind),
-                    ValueRetrievedFromParent = false,
-                    AllowDBNull = true,
-                    IsAutoIncrement = false,
-                    IsIdentity = false,
-                    IsKey = false,
-                    IsUnique = false
-                });
-            }
-
-            return new List<EntityStructure> { structure };
-        }
-
-        public override object GetEntity(string EntityName, List<AppFilter> Filter)
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> Filter)
         {
             return GetEntityAsync(EntityName, Filter).GetAwaiter().GetResult();
         }
@@ -134,7 +74,7 @@ namespace TheTechIdea.Beep.DataSources
 
             var endpoint = ResolveEndpoint(m.endpoint, q);
 
-            using var resp = Get(endpoint, q);
+            using var resp = GetAsync(endpoint, q).ConfigureAwait(false).GetAwaiter().GetResult();
             if (resp is null || !resp.IsSuccessStatusCode) return new PagedResult();
 
             var data = ExtractArray(resp, m.root);
@@ -187,14 +127,46 @@ namespace TheTechIdea.Beep.DataSources
             return current;
         }
 
-        private string MapJsonType(JsonValueKind kind) => kind switch
+        private static Dictionary<string, string> FiltersToQuery(List<AppFilter> filters)
         {
-            JsonValueKind.String => "System.String",
-            JsonValueKind.Number => "System.Decimal",
-            JsonValueKind.True or JsonValueKind.False => "System.Boolean",
-            JsonValueKind.Array => "System.Object[]",
-            JsonValueKind.Object => "System.Object",
-            _ => "System.String"
-        };
+            var query = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (filters == null) return query;
+
+            foreach (var filter in filters)
+            {
+                if (filter == null || string.IsNullOrWhiteSpace(filter.FieldName)) continue;
+                query[filter.FieldName.Trim()] = filter.FilterValue ?? string.Empty;
+            }
+            return query;
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Kayako, PointType = EnumPointType.Function, ObjectType = "KayakoTicket", ClassName = "KayakoDataSource", Showin = ShowinType.Both, misc = "List<KayakoTicket>")]
+        public IEnumerable<object> GetTickets(List<AppFilter> filter = null) => GetEntity("tickets", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Kayako, PointType = EnumPointType.Function, ObjectType = "KayakoUser", ClassName = "KayakoDataSource", Showin = ShowinType.Both, misc = "List<KayakoUser>")]
+        public IEnumerable<object> GetUsers(List<AppFilter> filter = null) => GetEntity("users", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Kayako, PointType = EnumPointType.Function, ObjectType = "KayakoOrganization", ClassName = "KayakoDataSource", Showin = ShowinType.Both, misc = "List<KayakoOrganization>")]
+        public IEnumerable<object> GetOrganizations(List<AppFilter> filter = null) => GetEntity("organizations", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Kayako, PointType = EnumPointType.Function, ObjectType = "KayakoTeam", ClassName = "KayakoDataSource", Showin = ShowinType.Both, misc = "List<KayakoTeam>")]
+        public IEnumerable<object> GetTeams(List<AppFilter> filter = null) => GetEntity("teams", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Kayako, PointType = EnumPointType.Function, ObjectType = "KayakoComment", ClassName = "KayakoDataSource", Showin = ShowinType.Both, misc = "List<KayakoComment>")]
+        public IEnumerable<object> GetComments(int ticketId, List<AppFilter> filter = null)
+        {
+            filter ??= new List<AppFilter>();
+            filter.Add(new AppFilter { FieldName = "ticketId", FilterValue = ticketId.ToString() });
+            return GetEntity("comments", filter);
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Kayako, PointType = EnumPointType.Function, ObjectType = "KayakoKnowledgebase", ClassName = "KayakoDataSource", Showin = ShowinType.Both, misc = "List<KayakoKnowledgebase>")]
+        public IEnumerable<object> GetKnowledgebase(List<AppFilter> filter = null) => GetEntity("knowledgebase", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Kayako, PointType = EnumPointType.Function, ObjectType = "KayakoDepartment", ClassName = "KayakoDataSource", Showin = ShowinType.Both, misc = "List<KayakoDepartment>")]
+        public IEnumerable<object> GetDepartments(List<AppFilter> filter = null) => GetEntity("departments", filter ?? new List<AppFilter>());
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Kayako, PointType = EnumPointType.Function, ObjectType = "KayakoConversation", ClassName = "KayakoDataSource", Showin = ShowinType.Both, misc = "List<KayakoConversation>")]
+        public IEnumerable<object> GetConversations(List<AppFilter> filter = null) => GetEntity("conversations", filter ?? new List<AppFilter>());
     }
 }

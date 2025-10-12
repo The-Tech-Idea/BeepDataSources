@@ -233,5 +233,59 @@ namespace TheTechIdea.Beep.Connectors.Fathom
             }
             return string.Join("&", query);
         }
+
+        [CommandAttribute(ObjectType = "FathomVideo", PointType = EnumPointType.Function, Name = "GetVideos", Caption = "Get Videos", ClassName = "FathomDataSource")]
+        public async Task<List<FathomVideo>> GetVideos()
+        {
+            var result = await GetEntityAsync("videos", new List<AppFilter>());
+            return result.Select(item => JsonSerializer.Deserialize<FathomVideo>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<FathomVideo>().ToList();
+        }
+
+        [CommandAttribute(ObjectType = "FathomInsight", PointType = EnumPointType.Function, Name = "GetInsights", Caption = "Get Insights", ClassName = "FathomDataSource")]
+        public async Task<List<FathomInsight>> GetInsights(string videoId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "video_id", FilterValue = videoId, Operator = "=" } };
+            var result = await GetEntityAsync("insights", filters);
+            return result.Select(item => JsonSerializer.Deserialize<FathomInsight>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<FathomInsight>().ToList();
+        }
+
+        [CommandAttribute(ObjectType = "FathomChapter", PointType = EnumPointType.Function, Name = "GetChapters", Caption = "Get Chapters", ClassName = "FathomDataSource")]
+        public async Task<List<FathomChapter>> GetChapters(string videoId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "video_id", FilterValue = videoId, Operator = "=" } };
+            var result = await GetEntityAsync("chapters", filters);
+            return result.Select(item => JsonSerializer.Deserialize<FathomChapter>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<FathomChapter>().ToList();
+        }
+
+        [CommandAttribute(ObjectType = "FathomTranscript", PointType = EnumPointType.Function, Name = "GetTranscripts", Caption = "Get Transcripts", ClassName = "FathomDataSource")]
+        public async Task<List<FathomTranscript>> GetTranscripts(string videoId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "video_id", FilterValue = videoId, Operator = "=" } };
+            var result = await GetEntityAsync("transcripts", filters);
+            return result.Select(item => JsonSerializer.Deserialize<FathomTranscript>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<FathomTranscript>().ToList();
+        }
+
+        [CommandAttribute(ObjectType = "FathomSummary", PointType = EnumPointType.Function, Name = "GetSummaries", Caption = "Get Summaries", ClassName = "FathomDataSource")]
+        public async Task<List<FathomSummary>> GetSummaries(string videoId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "video_id", FilterValue = videoId, Operator = "=" } };
+            var result = await GetEntityAsync("summaries", filters);
+            return result.Select(item => JsonSerializer.Deserialize<FathomSummary>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<FathomSummary>().ToList();
+        }
+
+        [CommandAttribute(ObjectType = "FathomComment", PointType = EnumPointType.Function, Name = "GetComments", Caption = "Get Comments", ClassName = "FathomDataSource")]
+        public async Task<List<FathomComment>> GetComments(string videoId)
+        {
+            var filters = new List<AppFilter> { new AppFilter { FieldName = "video_id", FilterValue = videoId, Operator = "=" } };
+            var result = await GetEntityAsync("comments", filters);
+            return result.Select(item => JsonSerializer.Deserialize<FathomComment>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<FathomComment>().ToList();
+        }
+
+        [CommandAttribute(ObjectType = "FathomTeam", PointType = EnumPointType.Function, Name = "GetTeams", Caption = "Get Teams", ClassName = "FathomDataSource")]
+        public async Task<List<FathomTeam>> GetTeams()
+        {
+            var result = await GetEntityAsync("teams", new List<AppFilter>());
+            return result.Select(item => JsonSerializer.Deserialize<FathomTeam>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<FathomTeam>().ToList();
+        }
     }
 }

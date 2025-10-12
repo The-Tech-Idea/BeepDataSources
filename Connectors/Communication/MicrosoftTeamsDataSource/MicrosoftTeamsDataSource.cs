@@ -17,6 +17,8 @@ using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
 {
+    using Models;
+
     /// <summary>
     /// Microsoft Teams API data source built on WebAPIDataSource.
     /// Configure WebAPIConnectionProperties.Url to Microsoft Graph API base URL and set Authorization header.
@@ -205,6 +207,409 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             }
 
             return list;
+        }
+
+        // =======================================================
+        // CommandAttribute Methods
+        // =======================================================
+
+        [CommandAttribute(
+            Name = "GetTeams",
+            Caption = "Get Microsoft Teams",
+            ObjectType = "TeamsTeam",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "teams.png",
+            misc = "ReturnType: IEnumerable<TeamsTeam>"
+        )]
+        public async Task<IEnumerable<TeamsTeam>> GetTeams(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("teams", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsTeam>().Select(t => t.Attach<TeamsTeam>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetTeam",
+            Caption = "Get Microsoft Team by ID",
+            ObjectType = "TeamsTeam",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "team.png",
+            misc = "ReturnType: IEnumerable<TeamsTeam>"
+        )]
+        public async Task<IEnumerable<TeamsTeam>> GetTeam(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("team", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsTeam>().Select(t => t.Attach<TeamsTeam>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetChannels",
+            Caption = "Get Microsoft Teams Channels",
+            ObjectType = "TeamsChannel",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "channels.png",
+            misc = "ReturnType: IEnumerable<TeamsChannel>"
+        )]
+        public async Task<IEnumerable<TeamsChannel>> GetChannels(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("channels", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsChannel>().Select(c => c.Attach<TeamsChannel>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetChannel",
+            Caption = "Get Microsoft Teams Channel by ID",
+            ObjectType = "TeamsChannel",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "channel.png",
+            misc = "ReturnType: IEnumerable<TeamsChannel>"
+        )]
+        public async Task<IEnumerable<TeamsChannel>> GetChannel(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("channel", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsChannel>().Select(c => c.Attach<TeamsChannel>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetChannelMessages",
+            Caption = "Get Microsoft Teams Channel Messages",
+            ObjectType = "TeamsMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "messages.png",
+            misc = "ReturnType: IEnumerable<TeamsMessage>"
+        )]
+        public async Task<IEnumerable<TeamsMessage>> GetChannelMessages(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("channel_messages", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsMessage>().Select(m => m.Attach<TeamsMessage>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetChannelMessage",
+            Caption = "Get Microsoft Teams Channel Message by ID",
+            ObjectType = "TeamsMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "message.png",
+            misc = "ReturnType: IEnumerable<TeamsMessage>"
+        )]
+        public async Task<IEnumerable<TeamsMessage>> GetChannelMessage(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("channel_message", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsMessage>().Select(m => m.Attach<TeamsMessage>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetTeamMembers",
+            Caption = "Get Microsoft Teams Team Members",
+            ObjectType = "TeamsTeamMember",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "members.png",
+            misc = "ReturnType: IEnumerable<TeamsTeamMember>"
+        )]
+        public async Task<IEnumerable<TeamsTeamMember>> GetTeamMembers(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("team_members", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsTeamMember>().Select(m => m.Attach<TeamsTeamMember>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetChats",
+            Caption = "Get Microsoft Teams Chats",
+            ObjectType = "TeamsChat",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "chats.png",
+            misc = "ReturnType: IEnumerable<TeamsChat>"
+        )]
+        public async Task<IEnumerable<TeamsChat>> GetChats(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("chats", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsChat>().Select(c => c.Attach<TeamsChat>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetChat",
+            Caption = "Get Microsoft Teams Chat by ID",
+            ObjectType = "TeamsChat",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "chat.png",
+            misc = "ReturnType: IEnumerable<TeamsChat>"
+        )]
+        public async Task<IEnumerable<TeamsChat>> GetChat(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("chat", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsChat>().Select(c => c.Attach<TeamsChat>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetChatMessages",
+            Caption = "Get Microsoft Teams Chat Messages",
+            ObjectType = "TeamsMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "chatmessages.png",
+            misc = "ReturnType: IEnumerable<TeamsMessage>"
+        )]
+        public async Task<IEnumerable<TeamsMessage>> GetChatMessages(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("chat_messages", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsMessage>().Select(m => m.Attach<TeamsMessage>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetUsers",
+            Caption = "Get Microsoft Teams Users",
+            ObjectType = "TeamsUser",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 11,
+            iconimage = "users.png",
+            misc = "ReturnType: IEnumerable<TeamsUser>"
+        )]
+        public async Task<IEnumerable<TeamsUser>> GetUsers(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("users", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsUser>().Select(u => u.Attach<TeamsUser>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetMe",
+            Caption = "Get Current Microsoft Teams User",
+            ObjectType = "TeamsMe",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 12,
+            iconimage = "me.png",
+            misc = "ReturnType: IEnumerable<TeamsMe>"
+        )]
+        public async Task<IEnumerable<TeamsMe>> GetMe(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("me", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsMe>().Select(m => m.Attach<TeamsMe>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetMyJoinedTeams",
+            Caption = "Get My Joined Microsoft Teams",
+            ObjectType = "TeamsJoinedTeam",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 13,
+            iconimage = "myteams.png",
+            misc = "ReturnType: IEnumerable<TeamsJoinedTeam>"
+        )]
+        public async Task<IEnumerable<TeamsJoinedTeam>> GetMyJoinedTeams(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("me_joined_teams", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsJoinedTeam>().Select(t => t.Attach<TeamsJoinedTeam>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetMyChats",
+            Caption = "Get My Microsoft Teams Chats",
+            ObjectType = "TeamsMeChat",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 14,
+            iconimage = "mychats.png",
+            misc = "ReturnType: IEnumerable<TeamsMeChat>"
+        )]
+        public async Task<IEnumerable<TeamsMeChat>> GetMyChats(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("me_chats", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsMeChat>().Select(c => c.Attach<TeamsMeChat>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetApps",
+            Caption = "Get Microsoft Teams Apps",
+            ObjectType = "TeamsApp",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 15,
+            iconimage = "apps.png",
+            misc = "ReturnType: IEnumerable<TeamsApp>"
+        )]
+        public async Task<IEnumerable<TeamsApp>> GetApps(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("apps", filters ?? new List<AppFilter>());
+            return result.Cast<TeamsApp>().Select(a => a.Attach<TeamsApp>(this));
+        }
+
+        [CommandAttribute(
+            Name = "CreateMessageAsync",
+            Caption = "Create Microsoft Teams Message",
+            ObjectType = "TeamsMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "createmessage.png",
+            misc = "ReturnType: IEnumerable<TeamsMessage>"
+        )]
+        public async Task<IEnumerable<TeamsMessage>> CreateMessageAsync(TeamsMessage message, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("teams/{team_id}/channels/{channel_id}/messages", message, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<TeamsMessage>>(result);
+        }
+
+        [CommandAttribute(
+            Name = "CreateChannelAsync",
+            Caption = "Create Microsoft Teams Channel",
+            ObjectType = "TeamsChannel",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "createchannel.png",
+            misc = "ReturnType: IEnumerable<TeamsChannel>"
+        )]
+        public async Task<IEnumerable<TeamsChannel>> CreateChannelAsync(TeamsChannel channel, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("teams/{team_id}/channels", channel, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<TeamsChannel>>(result);
+        }
+
+        [CommandAttribute(
+            Name = "CreateTeamAsync",
+            Caption = "Create Microsoft Teams Team",
+            ObjectType = "TeamsTeam",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "createteam.png",
+            misc = "ReturnType: IEnumerable<TeamsTeam>"
+        )]
+        public async Task<IEnumerable<TeamsTeam>> CreateTeamAsync(TeamsTeam team, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("teams", team, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<TeamsTeam>>(result);
+        }
+
+        [CommandAttribute(
+            Name = "UpdateTeamAsync",
+            Caption = "Update Microsoft Teams Team",
+            ObjectType = "TeamsTeam",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "updateteam.png",
+            misc = "ReturnType: IEnumerable<TeamsTeam>"
+        )]
+        public async Task<IEnumerable<TeamsTeam>> UpdateTeamAsync(TeamsTeam team, List<AppFilter> filters = null)
+        {
+            var result = await PutAsync("teams/{team_id}", team, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<TeamsTeam>>(result);
+        }
+
+        [CommandAttribute(
+            Name = "CreateChatAsync",
+            Caption = "Create Microsoft Teams Chat",
+            ObjectType = "TeamsChat",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "createchat.png",
+            misc = "ReturnType: IEnumerable<TeamsChat>"
+        )]
+        public async Task<IEnumerable<TeamsChat>> CreateChatAsync(TeamsChat chat, List<AppFilter> filters = null)
+        {
+            var result = await PostAsync("chats", chat, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<TeamsChat>>(result);
+        }
+
+        [CommandAttribute(
+            Name = "UpdateChatAsync",
+            Caption = "Update Microsoft Teams Chat",
+            ObjectType = "TeamsChat",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 11,
+            iconimage = "updatechat.png",
+            misc = "ReturnType: IEnumerable<TeamsChat>"
+        )]
+        public async Task<IEnumerable<TeamsChat>> UpdateChatAsync(TeamsChat chat, List<AppFilter> filters = null)
+        {
+            var result = await PutAsync("chats/{chat_id}", chat, filters ?? new List<AppFilter>());
+            return JsonSerializer.Deserialize<IEnumerable<TeamsChat>>(result);
         }
     }
 }

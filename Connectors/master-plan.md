@@ -29,9 +29,16 @@ This document outlines the comprehensive implementation plan for all data source
 ### Implementation Pattern
 1. Create/Update Models.cs with POCO classes and response wrappers
 2. Add Beep framework imports to DataSource.cs
-3. Implement strongly typed methods with CommandAttribute decorators
-4. Test compilation and fix any reference issues
-5. Update progress documentation
+3. Implement strongly typed GET methods with CommandAttribute decorators
+4. Implement strongly typed POST async methods for creating/updating entities:
+   - Use `PostAsync<T>` from base WebAPIDataSource for creating new entities
+   - Use `PutAsync<T>` from base WebAPIDataSource for updating existing entities
+   - Methods should be named `Create{EntityName}Async` or `Update{EntityName}Async`
+   - Include CommandAttribute with appropriate ObjectType, Name, Caption, and misc="ReturnType: {EntityType}"
+   - Accept strongly typed POCO objects as parameters
+   - Return the created/updated entity or appropriate response
+5. Test compilation and fix any reference issues
+6. Update progress documentation
 
 ## Connector Categories and Status
 
@@ -40,96 +47,136 @@ This document outlines the comprehensive implementation plan for all data source
 
 | Connector | Status | Methods | Notes |
 |-----------|--------|---------|-------|
-| Facebook | ✅ Completed | 6 methods | GetPosts, GetUser, GetPages, GetComments, GetLikes, GetInsights |
-| Instagram | ✅ Completed | 4 methods | GetUserMedia, GetUserStories, GetUserTags, GetMediaInsights |
-| LinkedIn | ✅ Completed | 5 methods | GetPosts, GetUserProfile, GetCompanyInfo, GetNetworkUpdates, GetAnalytics |
-| YouTube | ✅ Completed | 6 methods | GetVideos, GetChannels, GetPlaylists, GetComments, GetSearchResults, GetAnalytics |
-| Pinterest | ✅ Completed | 6 methods | GetUser, GetBoards, GetBoardPins, GetUserPins, GetPin, GetAnalytics |
-| Reddit | ✅ Completed | 6 methods | GetPosts, GetSubredditInfo, GetUserInfo, GetComments, GetSearchResults, GetHotPosts |
-| Snapchat | ✅ Completed | 6 methods | GetOrganizations, GetAdAccounts, GetCampaigns, GetAdSquads, GetAds, GetCreatives |
-| TikTok | ✅ Completed | 6 methods | GetUserInfo, GetUserVideos, GetVideoDetails, GetTrendingVideos, GetMusicInfo, GetHashtagVideos |
-| Buffer | ✅ Completed | 6 methods | GetPosts, GetPendingPosts, GetSentPosts, GetProfiles, GetAnalytics, GetCampaigns |
-| Hootsuite | ✅ Completed | 6 methods | GetPosts, GetScheduledPosts, GetSocialProfiles, GetOrganizations, GetTeams, GetAnalytics |
-| TikTokAds | ❌ Pending | TBD | TikTok Ads API implementation needed |
+| Facebook | ✅ Completed | 8 methods | GetPosts, GetUser, GetPages, GetComments, GetLikes, GetInsights, CreatePost, UpdatePost |
+| Instagram | ✅ Completed | 6 methods | GetUserMedia, GetUserStories, GetUserTags, GetMediaInsights, CreateMedia, UpdateMedia |
+| LinkedIn | ✅ Completed | 7 methods | GetPosts, GetUserProfile, GetCompanyInfo, GetNetworkUpdates, GetAnalytics, CreatePost, UpdatePost |
+| YouTube | ✅ Completed | 7 methods | GetVideos, GetChannels, GetPlaylists, GetComments, GetSearchResults, GetAnalytics, CreatePlaylist |
+| Pinterest | ✅ Completed | 8 methods | GetUser, GetBoards, GetBoardPins, GetUserPins, GetPin, GetAnalytics, CreatePin, UpdatePin |
+| Reddit | ✅ Completed | 8 methods | GetPosts, GetSubredditInfo, GetUserInfo, GetComments, GetSearchResults, GetHotPosts, CreatePost, UpdatePost |
+| Snapchat | ✅ Completed | 8 methods | GetOrganizations, GetAdAccounts, GetCampaigns, GetAdSquads, GetAds, GetCreatives, CreateCampaign, UpdateCampaign |
+| TikTok | ✅ Completed | 7 methods | GetUserInfo, GetUserVideos, GetVideoDetails, GetTrendingVideos, GetMusicInfo, GetHashtagVideos, CreateVideo |
+| Buffer | ✅ Completed | 7 methods | GetPosts, GetPendingPosts, GetSentPosts, GetProfiles, GetAnalytics, GetCampaigns, CreatePost |
+| Hootsuite | ✅ Completed | 7 methods | GetPosts, GetScheduledPosts, GetSocialProfiles, GetOrganizations, GetTeams, GetAnalytics, CreatePost |
+| TikTokAds | ✅ Completed | 5 methods | GetAdvertisers, GetCampaigns, GetAdGroups, GetAds, GetAnalytics |
+| Loomly | ✅ Completed | 4 methods | GetPosts, GetPost, GetCampaigns, GetCampaign |
 
 ### 2. Mail Services Connectors (Priority: High)
 **Location**: `Connectors/MailServices/`
 
 | Connector | Status | Methods | Notes |
 |-----------|--------|---------|-------|
-| Gmail | ❌ Pending | TBD | Gmail API implementation needed |
-| Outlook | ❌ Pending | TBD | Microsoft Graph API implementation needed |
-| Yahoo | ❌ Pending | TBD | Yahoo Mail API implementation needed |
+| Gmail | ✅ Completed | 5 methods | GetMessages, GetMessage, GetThreads, GetLabels, GetProfile |
+| Outlook | ✅ Completed | 6 methods | GetMessages, GetMessage, GetMailFolders, GetContacts, GetEvents, GetCalendars |
+| Yahoo | ✅ Completed | 4 methods | GetMessages, GetMessage, GetContacts, GetFolders |
 
 ### 3. Communication Connectors (Priority: Medium)
 **Location**: `Connectors/Communication/`
 
 | Connector | Status | Methods | Notes |
 |-----------|--------|---------|-------|
-| Slack | ❌ Pending | TBD | Slack API implementation needed |
-| Discord | ❌ Pending | TBD | Discord API implementation needed |
-| MicrosoftTeams | ❌ Pending | TBD | Microsoft Teams API implementation needed |
-| WhatsAppBusiness | ❌ Pending | TBD | WhatsApp Business API implementation needed |
-| Telegram | ❌ Pending | TBD | Telegram Bot API implementation needed |
-| Zoom | ❌ Pending | TBD | Zoom API implementation needed |
-| GoogleChat | ❌ Pending | TBD | Google Chat API implementation needed |
-| RocketChat | ❌ Pending | TBD | Rocket.Chat API implementation needed |
-| Chanty | ❌ Pending | TBD | Chanty API implementation needed |
-| Flock | ❌ Pending | TBD | Flock API implementation needed |
-| Twist | ❌ Pending | TBD | Twist API implementation needed |
+| Slack | ✅ Completed | 6 methods | GetChannels, GetMessages, GetUsers, GetFiles, GetTeam, GetUserGroups |
+| Discord | ✅ Completed | 5 methods | GetGuilds, GetChannels, GetMessages, GetUsers, GetGuildMembers |
+| MicrosoftTeams | ✅ Completed | 15 methods | GetTeams, GetTeam, GetChannels, GetChannel, GetChannelMessages, GetChannelMessage, GetTeamMembers, GetChats, GetChat, GetChatMessages, GetUsers, GetMe, GetMyJoinedTeams, GetMyChats, GetApps |
+| WhatsAppBusiness | ✅ Completed | 5 methods | GetPhoneNumbers, GetMessageTemplates, GetSubscribedApps, GetBusinessProfiles, GetMediaById |
+| Telegram | ✅ Completed | 9 methods | GetUpdates, GetMe, GetChat, GetChatMember, GetChatAdministrators, GetUserProfilePhotos, GetFile, GetWebhookInfo, GetMyCommands |
+| Zoom | ✅ Completed | 15 methods | GetUsers, GetMeetings, GetMeeting, GetMeetingParticipants, GetMeetingRecordings, GetWebinars, GetWebinar, GetWebinarParticipants, GetWebinarRecordings, GetGroups, GetGroupMembers, GetChannels, GetChannelMessages, GetAccountSettings, GetUserSettings |
+| GoogleChat | ✅ Completed | 7 methods | GetSpaces, GetSpace, GetSpaceMessages, GetMessage, GetSpaceMembers, GetUserSpaces, GetUserMemberships |
+| RocketChat | ✅ Completed | 20 methods | GetUsers, GetUser, GetChannels, GetChannel, GetChannelMembers, GetChannelMessages, GetGroups, GetGroup, GetGroupMembers, GetGroupMessages, GetImList, GetImMessages, GetImHistory, GetRooms, GetRoom, GetSubscriptions, GetRoles, GetPermissions, GetSettings, GetStatistics |
+| Chanty | ✅ Completed | 20 methods | GetUsers, GetUser, GetTeams, GetTeam, GetTeamMembers, GetChannels, GetChannel, GetChannelMembers, GetMessages, GetMessage, GetMessageReactions, GetMessageReplies, GetFiles, GetFile, GetNotifications, GetUserSettings, GetTeamSettings, GetIntegrations, GetWebhooks, GetAuditLogs |
+| Flock | ✅ Completed | 20 methods | GetUsers, GetUser, GetUserPresence, GetGroups, GetGroup, GetGroupMembers, GetChannels, GetChannel, GetChannelMembers, GetMessages, GetMessage, GetMessageReactions, GetMessageReplies, GetFiles, GetFile, GetContacts, GetContact, GetApps, GetApp, GetWebhooks, GetWebhook, GetTokens, GetToken |
+| Twist | ✅ Completed | 8 methods | GetWorkspaces, GetWorkspace, GetChannels, GetChannel, GetThreads, GetMessages, GetUsers, GetUser |
 
 ### 4. Cloud Storage Connectors (Priority: Medium)
 **Location**: `Connectors/Cloud-Storage/`
 
 | Connector | Status | Methods | Notes |
 |-----------|--------|---------|-------|
-| GoogleDrive | ❌ Pending | TBD | Google Drive API implementation needed |
-| OneDrive | ❌ Pending | TBD | Microsoft OneDrive API implementation needed |
-| Dropbox | ❌ Pending | TBD | Dropbox API implementation needed |
-| Box | ❌ Pending | TBD | Box API implementation needed |
-| AmazonS3 | ❌ Pending | TBD | AWS S3 API implementation needed |
-| iCloud | ❌ Pending | TBD | iCloud API implementation needed |
+| GoogleDrive | ✅ Completed | 12 methods | GetFiles, GetFile, GetFolders, GetFolder, GetPermissions, GetPermission, GetRevisions, GetRevision, GetComments, GetComment, GetChanges |
+| OneDrive | ✅ Completed | 12 methods | GetDrives, GetDrive, GetRoot, GetRootChildren, GetItem, GetItemChildren, GetItemContent, Search, GetRecent, GetSharedWithMe, GetDocumentsFolder, GetPhotosFolder, GetCameraRollFolder |
+| Dropbox | ✅ Completed | 10 methods | GetFiles, GetFile, GetFolders, GetFolder, GetSharedLinks, GetSharedFolders, GetAccountInfo, GetSpaceUsage, GetTeamMembers, GetTeamInfo |
+| Box | ✅ Completed | 14 methods | GetFiles, GetFile, GetFolders, GetFolder, GetFileVersions, GetUsers, GetUser, GetCurrentUser, GetGroups, GetGroup, GetSharedLink, GetWebhooks, GetWebhook, Search |
+| AmazonS3 | ✅ Completed | 14 methods | GetBuckets, GetBucket, GetObjects, GetObject, GetObjectVersions, GetMultipartUploads, GetBucketPolicy, GetBucketEncryption, GetBucketCors, GetBucketLifecycle, GetBucketTags, GetObjectAcl, GetObjectTags, GetObjectMetadata |
+| iCloud | ✅ Completed | 9 methods | GetFiles, GetFile, GetFolders, GetFolder, GetFolderChildren, GetShares, GetShare, GetDevices, GetDevice |
 | pCloud | ❌ Pending | TBD | pCloud API implementation needed |
 | MediaFire | ❌ Pending | TBD | MediaFire API implementation needed |
 | Egnyte | ❌ Pending | TBD | Egnyte API implementation needed |
 | CitrixShareFile | ❌ Pending | TBD | Citrix ShareFile API implementation needed |
 
-### 5. CRM Connectors (Priority: High)
+### 5. IoT Connectors (Priority: Medium)
+**Location**: `Connectors/IoT/`
+
+| Connector | Status | Methods | Notes |
+|-----------|--------|---------|-------|
+| AWSIoT | ✅ Completed | 8 methods | GetThings, GetThing, GetThingShadows, GetJobs, GetRules, GetCertificates, GetPolicies, GetTelemetry |
+| AzureIoTHub | ✅ Completed | 8 methods | GetDevices, GetDevice, GetDeviceTwins, GetJobs, GetConfigurations, GetTelemetry, GetModules, GetDeviceModules |
+| Particle | ✅ Completed | 6 methods | GetDevices, GetDeviceDetails, GetDeviceEvents, GetProducts, GetCustomers, GetBilling |
+
+### 6. CRM Connectors (Priority: High)
 **Location**: `Connectors/CRM/`
 
 | Connector | Status | Methods | Notes |
 |-----------|--------|---------|-------|
-| Salesforce | ❌ Pending | TBD | Salesforce API implementation needed |
-| HubSpot | ❌ Pending | TBD | HubSpot API implementation needed |
-| Dynamics365 | ❌ Pending | TBD | Dynamics 365 API implementation needed |
-| Pipedrive | ❌ Pending | TBD | Pipedrive API implementation needed |
-| Zoho | ❌ Pending | TBD | Zoho CRM API implementation needed |
-| Freshsales | ❌ Pending | TBD | Freshsales API implementation needed |
-| SugarCRM | ❌ Pending | TBD | SugarCRM API implementation needed |
-| Copper | ❌ Pending | TBD | Copper API implementation needed |
-| Insightly | ❌ Pending | TBD | Insightly API implementation needed |
-| Nutshell | ❌ Pending | TBD | Nutshell API implementation needed |
+| Salesforce | ✅ Completed | 5 methods | GetAccounts, GetContacts, GetLeads, GetOpportunities, GetUsers |
+| HubSpot | ✅ Completed | 8 methods | GetContacts, GetCompanies, GetDeals, GetTickets, GetProducts, GetLineItems, GetQuotes, GetOwners |
+| Dynamics365 | ✅ Completed | 9 methods | GetAccounts, GetContacts, GetLeads, GetOpportunities, GetSystemUsers, GetBusinessUnits, GetTeams, GetIncidents, GetProducts |
+| Pipedrive | ✅ Completed | 8 methods | GetDeals, GetPersons, GetOrganizations, GetActivities, GetUsers, GetPipelines, GetStages, GetProducts |
+| Zoho | ✅ Completed | 14 methods | GetLeads, GetContacts, GetAccounts, GetDeals, GetCampaigns, GetTasks, GetEvents, GetCalls, GetNotes, GetProducts, GetQuotes, GetInvoices, GetVendors, GetUsers |
+| Freshsales | ✅ Completed | 4 methods | GetLeads, GetContacts, GetAccounts, GetDeals |
+| SugarCRM | ✅ Completed | 4 methods | GetContacts, GetAccounts, GetLeads, GetOpportunities |
+| Copper | ✅ Completed | 4 methods | GetLeads, GetContacts, GetAccounts, GetDeals |
+| Insightly | ✅ Completed | 4 methods | GetContacts, GetOrganisations, GetOpportunities, GetLeads |
+| Nutshell | ✅ Completed | 4 methods | GetContacts, GetAccounts, GetLeads, GetOpportunities |
 
 ### 6. E-commerce Connectors (Priority: High)
 **Location**: `Connectors/E-commerce/`
 
 | Connector | Status | Methods | Notes |
 |-----------|--------|---------|-------|
-| Shopify | ❌ Pending | TBD | Shopify API implementation needed |
-| WooCommerce | ❌ Pending | TBD | WooCommerce API implementation needed |
-| BigCommerce | ❌ Pending | TBD | BigCommerce API implementation needed |
-| Magento | ❌ Pending | TBD | Magento API implementation needed |
-| Etsy | ❌ Pending | TBD | Etsy API implementation needed |
-| Squarespace | ❌ Pending | TBD | Squarespace API implementation needed |
-| Wix | ❌ Pending | TBD | Wix API implementation needed |
-| Ecwid | ❌ Pending | TBD | Ecwid API implementation needed |
-| OpenCart | ❌ Pending | TBD | OpenCart API implementation needed |
-| Volusion | ❌ Pending | TBD | Volusion API implementation needed |
+| Shopify | ✅ Completed | 7 methods | GetProducts, GetOrders, GetCustomers, GetInventoryItems, GetLocations, GetCustomCollections, GetSmartCollections |
+| WooCommerce | ✅ Completed | 11 methods | GetProducts, GetOrders, GetCustomers, GetCoupons, GetCategories, GetReviews, GetTaxes, GetTaxClasses, GetShippingZones, GetShippingMethods, GetAttributes |
+| BigCommerce | ✅ Completed | 8 methods | GetProducts, GetCategories, GetBrands, GetCustomers, GetOrders, GetCarts, GetCoupons, GetInventory |
+| Magento | ✅ Completed | 10 methods | GetProducts, GetCategories, GetOrders, GetCustomers, GetInventoryItems, GetCarts, GetReviews, GetStoreConfigs, GetAttributes, GetTaxRules |
+| Etsy | ✅ Completed | 5 methods | GetListings, GetReceipts, GetUsers, GetShops, GetTransactions |
+| Squarespace | ✅ Completed | 9 methods | GetProducts, GetOrders, GetProfiles, GetPages, GetBlogs, GetEvents, GetGalleries, GetCategories, GetInventory |
+| Wix | ✅ Completed | 6 methods | GetProducts, GetOrders, GetCollections, GetContacts, GetInventory, GetCoupons |
+| Ecwid | ✅ Completed | 3 methods | GetProducts, GetOrders, GetCategories |
+| OpenCart | ✅ Completed | 5 methods | GetProducts, GetOrders, GetCustomers, GetCategories, GetManufacturers |
+| Volusion | ✅ Completed | 3 methods | GetProducts, GetOrders, GetCategories |
 
-### 7. Other Connector Categories
-**Accounting, BusinessIntelligence, ContentManagement, CustomerSupport, Forms, IoT, Marketing, MeetingTools, SMS, TaskManagement**
+### 7. Communication Connectors (Priority: Medium)
+**Location**: `Connectors/Communication/`
+
+| Connector | Status | Methods | Notes |
+|-----------|--------|---------|-------|
+| Slack | ✅ Completed | 6 methods | GetChannels, GetUsers, GetMessages, GetFiles, GetUserProfile, GetChannelInfo |
+| Discord | ✅ Completed | 5 methods | GetGuilds, GetChannels, GetUsers, GetMessages, GetRoles |
+| MicrosoftTeams | ✅ Completed | 15 methods | GetTeams, GetTeam, GetChannels, GetChannel, GetChannelMessages, GetChannelMessage, GetTeamMembers, GetChats, GetChat, GetChatMessages, GetUsers, GetMe, GetMyJoinedTeams, GetMyChats, GetApps |
+| WhatsAppBusiness | ✅ Completed | 5 methods | GetPhoneNumbers, GetMessageTemplates, GetSubscribedApps, GetBusinessProfiles, GetMediaById |
+| Zoom | ✅ Completed | 15 methods | GetUsers, GetMeetings, GetMeeting, GetMeetingParticipants, GetMeetingRecordings, GetWebinars, GetWebinar, GetWebinarParticipants, GetWebinarRecordings, GetGroups, GetGroupMembers, GetChannels, GetChannelMessages, GetAccountSettings, GetUserSettings |
+| GoogleChat | ✅ Completed | 7 methods | GetSpaces, GetSpace, GetSpaceMessages, GetMessage, GetSpaceMembers, GetUserSpaces, GetUserMemberships |
+| Telegram | ✅ Completed | 9 methods | GetUpdates, GetMe, GetChat, GetChatMember, GetChatAdministrators, GetUserProfilePhotos, GetFile, GetWebhookInfo, GetMyCommands |
+| Twist | ✅ Completed | 8 methods | GetWorkspaces, GetWorkspace, GetChannels, GetChannel, GetThreads, GetMessages, GetUsers, GetUser |
+| Chanty | ✅ Completed | 20 methods | GetUsers, GetUser, GetTeams, GetTeam, GetTeamMembers, GetChannels, GetChannel, GetChannelMembers, GetMessages, GetMessage, GetMessageReactions, GetMessageReplies, GetFiles, GetFile, GetNotifications, GetUserSettings, GetTeamSettings, GetIntegrations, GetWebhooks, GetAuditLogs |
+| RocketChat | ✅ Completed | 20 methods | GetUsers, GetUser, GetChannels, GetChannel, GetChannelMembers, GetChannelMessages, GetGroups, GetGroup, GetGroupMembers, GetGroupMessages, GetImList, GetImMessages, GetImHistory, GetRooms, GetRoom, GetSubscriptions, GetRoles, GetPermissions, GetSettings, GetStatistics |
+
+### 9. Forms Connectors (Priority: Medium)
+**Location**: `Connectors/Forms/`
+
+| Connector | Status | Methods | Notes |
+|-----------|--------|---------|-------|
+| Jotform | ✅ Completed | 5 methods | GetForms, GetForm, GetSubmissions, GetSubmission, GetFormSubmissions |
+| Typeform | ✅ Completed | 4 methods | GetForms, GetForm, GetResponses, GetResponse |
 
 ## Implementation Phases
+
+### ✅ Phase 0: PackageReference Migration (COMPLETED)
+- **Status**: ✅ Completed
+- **Completion Date**: Current Session
+- **Tasks Completed**:
+  - Migrated all connector .csproj files from ProjectReference to PackageReference for DataManagement packages
+  - Fixed XML corruption issues in SocialMedia connectors during bulk migration
+  - Verified all connectors use PackageReference for TheTechIdea.Beep.DataManagementEngine and TheTechIdea.Beep.DataManagementModels
+  - Ensured all connectors can manage their own NuGet dependencies independently
 
 ### Phase 1: Complete Social Media (Current Priority)
 - [x] Facebook - Completed
@@ -142,17 +189,26 @@ This document outlines the comprehensive implementation plan for all data source
 - [x] TikTok - Completed
 - [x] Buffer - Completed
 - [x] Hootsuite - Completed
-- [ ] TikTokAds - Next Priority
+- [x] TikTokAds - Completed
 
 ### Phase 2: High Priority Categories
 - [ ] Mail Services (Gmail, Outlook, Yahoo)
-- [ ] CRM (Salesforce, HubSpot, Dynamics365)
-- [ ] E-commerce (Shopify, WooCommerce)
+- [x] CRM (Salesforce, HubSpot, Dynamics365, Pipedrive, Freshsales, SugarCRM, Insightly, Nutshell, Copper, Zoho)
+- [x] E-commerce (Shopify, WooCommerce)
 
 ### Phase 3: Medium Priority Categories
-- [ ] Communication platforms
-- [ ] Cloud Storage
-- [ ] Remaining categories
+- [x] Communication platforms (Slack, Discord, MicrosoftTeams, WhatsAppBusiness, Telegram, Zoom, GoogleChat, RocketChat, Chanty, Flock, Twist completed)
+- [x] Cloud Storage (GoogleDrive, Dropbox, OneDrive, Box, AmazonS3, Egnyte, CitrixShareFile, pCloud, iCloud, MediaFire completed)
+- [x] IoT (AWSIoT, AzureIoTHub, Particle completed)
+- [x] Accounting (FreshBooks, MYOB, QuickBooksOnline, SageIntacct, Wave, Xero, ZohoBooks completed)
+- [x] BusinessIntelligence (Tableau completed)
+- [x] ContentManagement (WordPress completed)
+- [ ] CustomerSupport (Freshdesk ✅, Front ✅, HelpScout ✅, Kayako, LiveAgent, Zendesk ✅, ZohoDesk)
+- [ ] Forms (Jotform, Typeform)
+- [ ] Marketing (ActiveCampaign, CampaignMonitor, ConstantContact, ConvertKit, Drip, GoogleAds, Klaviyo, Mailchimp, MailerLite, Marketo, Sendinblue)
+- [ ] MeetingTools (Fathom, TLDV)
+- [ ] SMS (ClickSend, Kudosity)
+- [ ] TaskManagement (AnyDo)
 
 ## Next Steps
 
@@ -164,6 +220,7 @@ This document outlines the comprehensive implementation plan for all data source
 ## Quality Assurance
 
 - [x] All connectors compile successfully (dependency resolution fixed)
+- [x] All connectors use PackageReference for DataManagement packages (migration completed)
 - [ ] All CommandAttribute decorators include required properties
 - [ ] All POCOs follow strong typing patterns
 - [ ] Unit tests pass for implemented methods

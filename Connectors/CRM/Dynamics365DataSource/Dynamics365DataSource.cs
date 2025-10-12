@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
@@ -16,6 +17,7 @@ using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.Connectors.Dynamics365
 {
+    using Models;
     /// <summary>
     /// Dynamics 365 data source implementation using WebAPIDataSource as base class
     /// Supports core CRM entities: Account, Contact, Lead, Opportunity, SystemUser, BusinessUnit, Team, Incident, Product
@@ -347,6 +349,177 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
             }
 
             return list;
+        }
+
+        [CommandAttribute(
+            Name = "GetAccounts",
+            Caption = "Get Dynamics 365 Accounts",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftDynamics365,
+            PointType = EnumPointType.Function,
+            ObjectType = "Account",
+            ClassType = "Dynamics365DataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "dynamics365.png",
+            misc = "ReturnType: IEnumerable<Account>"
+        )]
+        public async Task<IEnumerable<Account>> GetAccounts(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("accounts", filters ?? new List<AppFilter>());
+            return result.Cast<Account>().Select(a => a.Attach<Account>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetContacts",
+            Caption = "Get Dynamics 365 Contacts",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftDynamics365,
+            PointType = EnumPointType.Function,
+            ObjectType = "Contact",
+            ClassType = "Dynamics365DataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "dynamics365.png",
+            misc = "ReturnType: IEnumerable<Contact>"
+        )]
+        public async Task<IEnumerable<Contact>> GetContacts(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("contacts", filters ?? new List<AppFilter>());
+            return result.Cast<Contact>().Select(c => c.Attach<Contact>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetLeads",
+            Caption = "Get Dynamics 365 Leads",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftDynamics365,
+            PointType = EnumPointType.Function,
+            ObjectType = "Lead",
+            ClassType = "Dynamics365DataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "dynamics365.png",
+            misc = "ReturnType: IEnumerable<Lead>"
+        )]
+        public async Task<IEnumerable<Lead>> GetLeads(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("leads", filters ?? new List<AppFilter>());
+            return result.Cast<Lead>().Select(l => l.Attach<Lead>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetOpportunities",
+            Caption = "Get Dynamics 365 Opportunities",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftDynamics365,
+            PointType = EnumPointType.Function,
+            ObjectType = "Opportunity",
+            ClassType = "Dynamics365DataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "dynamics365.png",
+            misc = "ReturnType: IEnumerable<Opportunity>"
+        )]
+        public async Task<IEnumerable<Opportunity>> GetOpportunities(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("opportunities", filters ?? new List<AppFilter>());
+            return result.Cast<Opportunity>().Select(o => o.Attach<Opportunity>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetSystemUsers",
+            Caption = "Get Dynamics 365 System Users",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftDynamics365,
+            PointType = EnumPointType.Function,
+            ObjectType = "SystemUser",
+            ClassType = "Dynamics365DataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "dynamics365.png",
+            misc = "ReturnType: IEnumerable<SystemUser>"
+        )]
+        public async Task<IEnumerable<SystemUser>> GetSystemUsers(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("systemusers", filters ?? new List<AppFilter>());
+            return result.Cast<SystemUser>().Select(s => s.Attach<SystemUser>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetBusinessUnits",
+            Caption = "Get Dynamics 365 Business Units",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftDynamics365,
+            PointType = EnumPointType.Function,
+            ObjectType = "BusinessUnit",
+            ClassType = "Dynamics365DataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "dynamics365.png",
+            misc = "ReturnType: IEnumerable<BusinessUnit>"
+        )]
+        public async Task<IEnumerable<BusinessUnit>> GetBusinessUnits(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("businessunits", filters ?? new List<AppFilter>());
+            return result.Cast<BusinessUnit>().Select(b => b.Attach<BusinessUnit>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetTeams",
+            Caption = "Get Dynamics 365 Teams",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftDynamics365,
+            PointType = EnumPointType.Function,
+            ObjectType = "Team",
+            ClassType = "Dynamics365DataSource",
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "dynamics365.png",
+            misc = "ReturnType: IEnumerable<Team>"
+        )]
+        public async Task<IEnumerable<Team>> GetTeams(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("teams", filters ?? new List<AppFilter>());
+            return result.Cast<Team>().Select(t => t.Attach<Team>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetIncidents",
+            Caption = "Get Dynamics 365 Incidents",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftDynamics365,
+            PointType = EnumPointType.Function,
+            ObjectType = "Incident",
+            ClassType = "Dynamics365DataSource",
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "dynamics365.png",
+            misc = "ReturnType: IEnumerable<Incident>"
+        )]
+        public async Task<IEnumerable<Incident>> GetIncidents(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("incidents", filters ?? new List<AppFilter>());
+            return result.Cast<Incident>().Select(i => i.Attach<Incident>(this));
+        }
+
+        [CommandAttribute(
+            Name = "GetProducts",
+            Caption = "Get Dynamics 365 Products",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftDynamics365,
+            PointType = EnumPointType.Function,
+            ObjectType = "Product",
+            ClassType = "Dynamics365DataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "dynamics365.png",
+            misc = "ReturnType: IEnumerable<Product>"
+        )]
+        public async Task<IEnumerable<Product>> GetProducts(List<AppFilter> filters = null)
+        {
+            var result = await GetEntityAsync("products", filters ?? new List<AppFilter>());
+            return result.Cast<Product>().Select(p => p.Attach<Product>(this));
         }
     }
 }

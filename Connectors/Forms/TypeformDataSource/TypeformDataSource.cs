@@ -183,5 +183,59 @@ namespace TheTechIdea.Beep.Connectors.Typeform
             }
             return string.Join("&", query);
         }
+
+        // -------------------- CommandAttribute Methods --------------------
+
+        [CommandAttribute(
+            ObjectType = "TypeformForm",
+            PointType = EnumPointType.Function,
+            Name = "GetForms",
+            Caption = "Get Typeform Forms",
+            ClassName = "TypeformDataSource",
+            misc = "ReturnType: IEnumerable<TypeformForm>"
+        )]
+        public IEnumerable<TypeformForm> GetForms()
+        {
+            return GetEntity<TypeformForm>("forms");
+        }
+
+        [CommandAttribute(
+            ObjectType = "TypeformForm",
+            PointType = EnumPointType.Function,
+            Name = "GetForm",
+            Caption = "Get Typeform Form by ID",
+            ClassName = "TypeformDataSource",
+            misc = "ReturnType: IEnumerable<TypeformForm>"
+        )]
+        public IEnumerable<TypeformForm> GetForm(string id)
+        {
+            return GetEntity<TypeformForm>("forms.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+        }
+
+        [CommandAttribute(
+            ObjectType = "TypeformResponse",
+            PointType = EnumPointType.Function,
+            Name = "GetResponses",
+            Caption = "Get Typeform Responses for a Form",
+            ClassName = "TypeformDataSource",
+            misc = "ReturnType: IEnumerable<TypeformResponse>"
+        )]
+        public IEnumerable<TypeformResponse> GetResponses(string formId)
+        {
+            return GetEntity<TypeformResponse>("responses", new List<AppFilter> { new AppFilter { FieldName = "form_id", FilterValue = formId } });
+        }
+
+        [CommandAttribute(
+            ObjectType = "TypeformResponse",
+            PointType = EnumPointType.Function,
+            Name = "GetResponse",
+            Caption = "Get Typeform Response by ID",
+            ClassName = "TypeformDataSource",
+            misc = "ReturnType: IEnumerable<TypeformResponse>"
+        )]
+        public IEnumerable<TypeformResponse> GetResponse(string id)
+        {
+            return GetEntity<TypeformResponse>("responses.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+        }
     }
 }
