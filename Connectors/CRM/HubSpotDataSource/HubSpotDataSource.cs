@@ -272,5 +272,202 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
             var result = await GetEntityAsync("owners", filters ?? new List<AppFilter>());
             return result.Cast<Owner>().Select(o => o.Attach(this));
         }
+
+        // -------------------- Create / Update (POST/PATCH) methods --------------------
+
+        [CommandAttribute(Name = "CreateContact", Caption = "Create HubSpot Contact", ObjectType = "Contact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Contact", Showin = ShowinType.Both, Order = 9, iconimage = "contact.png", misc = "Contact")]
+        public async Task<IEnumerable<Contact>> CreateContactAsync(Contact contact)
+        {
+            if (contact == null) return Array.Empty<Contact>();
+            using var resp = await PostAsync("/crm/v3/objects/contacts", contact).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Contact>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Contact>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Contact>();
+            }
+            catch
+            {
+                return Array.Empty<Contact>();
+            }
+        }
+
+        [CommandAttribute(Name = "UpdateContact", Caption = "Update HubSpot Contact", ObjectType = "Contact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Contact", Showin = ShowinType.Both, Order = 10, iconimage = "contact.png", misc = "Contact")]
+        public async Task<IEnumerable<Contact>> UpdateContactAsync(string contactId, Contact contact)
+        {
+            if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<Contact>();
+            var endpoint = $"/crm/v3/objects/contacts/{Uri.EscapeDataString(contactId)}";
+            using var resp = await PatchAsync(endpoint, contact).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Contact>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Contact>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Contact>();
+            }
+            catch
+            {
+                return Array.Empty<Contact>();
+            }
+        }
+
+        [CommandAttribute(Name = "CreateCompany", Caption = "Create HubSpot Company", ObjectType = "Company", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Company", Showin = ShowinType.Both, Order = 11, iconimage = "company.png", misc = "Company")]
+        public async Task<IEnumerable<Company>> CreateCompanyAsync(Company company)
+        {
+            if (company == null) return Array.Empty<Company>();
+            using var resp = await PostAsync("/crm/v3/objects/companies", company).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Company>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Company>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Company>();
+            }
+            catch
+            {
+                return Array.Empty<Company>();
+            }
+        }
+
+        [CommandAttribute(Name = "UpdateCompany", Caption = "Update HubSpot Company", ObjectType = "Company", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Company", Showin = ShowinType.Both, Order = 12, iconimage = "company.png", misc = "Company")]
+        public async Task<IEnumerable<Company>> UpdateCompanyAsync(string companyId, Company company)
+        {
+            if (string.IsNullOrWhiteSpace(companyId) || company == null) return Array.Empty<Company>();
+            var endpoint = $"/crm/v3/objects/companies/{Uri.EscapeDataString(companyId)}";
+            using var resp = await PatchAsync(endpoint, company).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Company>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Company>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Company>();
+            }
+            catch
+            {
+                return Array.Empty<Company>();
+            }
+        }
+
+        [CommandAttribute(Name = "CreateDeal", Caption = "Create HubSpot Deal", ObjectType = "Deal", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Deal", Showin = ShowinType.Both, Order = 13, iconimage = "deal.png", misc = "Deal")]
+        public async Task<IEnumerable<Deal>> CreateDealAsync(Deal deal)
+        {
+            if (deal == null) return Array.Empty<Deal>();
+            using var resp = await PostAsync("/crm/v3/objects/deals", deal).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Deal>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Deal>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Deal>();
+            }
+            catch
+            {
+                return Array.Empty<Deal>();
+            }
+        }
+
+        [CommandAttribute(Name = "UpdateDeal", Caption = "Update HubSpot Deal", ObjectType = "Deal", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Deal", Showin = ShowinType.Both, Order = 14, iconimage = "deal.png", misc = "Deal")]
+        public async Task<IEnumerable<Deal>> UpdateDealAsync(string dealId, Deal deal)
+        {
+            if (string.IsNullOrWhiteSpace(dealId) || deal == null) return Array.Empty<Deal>();
+            var endpoint = $"/crm/v3/objects/deals/{Uri.EscapeDataString(dealId)}";
+            using var resp = await PatchAsync(endpoint, deal).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Deal>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Deal>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Deal>();
+            }
+            catch
+            {
+                return Array.Empty<Deal>();
+            }
+        }
+
+        [CommandAttribute(Name = "CreateTicket", Caption = "Create HubSpot Ticket", ObjectType = "Ticket", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Ticket", Showin = ShowinType.Both, Order = 15, iconimage = "ticket.png", misc = "Ticket")]
+        public async Task<IEnumerable<Ticket>> CreateTicketAsync(Ticket ticket)
+        {
+            if (ticket == null) return Array.Empty<Ticket>();
+            using var resp = await PostAsync("/crm/v3/objects/tickets", ticket).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Ticket>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Ticket>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Ticket>();
+            }
+            catch
+            {
+                return Array.Empty<Ticket>();
+            }
+        }
+
+        [CommandAttribute(Name = "UpdateTicket", Caption = "Update HubSpot Ticket", ObjectType = "Ticket", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Ticket", Showin = ShowinType.Both, Order = 16, iconimage = "ticket.png", misc = "Ticket")]
+        public async Task<IEnumerable<Ticket>> UpdateTicketAsync(string ticketId, Ticket ticket)
+        {
+            if (string.IsNullOrWhiteSpace(ticketId) || ticket == null) return Array.Empty<Ticket>();
+            var endpoint = $"/crm/v3/objects/tickets/{Uri.EscapeDataString(ticketId)}";
+            using var resp = await PatchAsync(endpoint, ticket).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Ticket>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Ticket>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Ticket>();
+            }
+            catch
+            {
+                return Array.Empty<Ticket>();
+            }
+        }
+
+        [CommandAttribute(Name = "CreateProduct", Caption = "Create HubSpot Product", ObjectType = "Product", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Product", Showin = ShowinType.Both, Order = 17, iconimage = "product.png", misc = "Product")]
+        public async Task<IEnumerable<Product>> CreateProductAsync(Product product)
+        {
+            if (product == null) return Array.Empty<Product>();
+            using var resp = await PostAsync("/crm/v3/objects/products", product).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Product>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Product>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Product>();
+            }
+            catch
+            {
+                return Array.Empty<Product>();
+            }
+        }
+
+        [CommandAttribute(Name = "UpdateProduct", Caption = "Update HubSpot Product", ObjectType = "Product", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Product", Showin = ShowinType.Both, Order = 18, iconimage = "product.png", misc = "Product")]
+        public async Task<IEnumerable<Product>> UpdateProductAsync(string productId, Product product)
+        {
+            if (string.IsNullOrWhiteSpace(productId) || product == null) return Array.Empty<Product>();
+            var endpoint = $"/crm/v3/objects/products/{Uri.EscapeDataString(productId)}";
+            using var resp = await PatchAsync(endpoint, product).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Product>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Product>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Product>();
+            }
+            catch
+            {
+                return Array.Empty<Product>();
+            }
+        }
     }
 }

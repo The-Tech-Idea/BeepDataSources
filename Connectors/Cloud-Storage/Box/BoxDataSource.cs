@@ -335,37 +335,214 @@ namespace TheTechIdea.Beep.Connectors.Box
             return GetEntity("search", filters).Cast<BoxSearchResult>().ToList();
         }
 
-        [CommandAttribute(Name = "CreateFolderAsync", Caption = "Create Box Folder",
-            ObjectType = "BoxFolder", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box,
-            ClassType = "BoxDataSource", Showin = ShowinType.Both, Order = 1,
-            iconimage = "box.png", misc = "Create a folder")]
-        public async Task<IEnumerable<BoxFolder>> CreateFolderAsync(BoxFolder folder, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateFolderAsync",
+            Caption = "Create Box Folder",
+            ObjectType = "BoxFolder",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Box,
+            ClassType = "BoxDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "createfolder.png",
+            misc = "ReturnType: IEnumerable<BoxFolder>"
+        )]
+        public async Task<IEnumerable<BoxFolder>> CreateFolderAsync(BoxFolder folder)
         {
-            var result = await PostAsync("https://api.box.com/2.0/folders", folder, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<BoxFolder>>(result);
+            try
+            {
+                var result = await PostAsync("folders", folder);
+                var folders = JsonSerializer.Deserialize<IEnumerable<BoxFolder>>(result);
+                if (folders != null)
+                {
+                    foreach (var f in folders)
+                    {
+                        f.Attach<BoxFolder>(this);
+                    }
+                }
+                return folders;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating folder: {ex.Message}");
+            }
+            return new List<BoxFolder>();
         }
 
-        [CommandAttribute(Name = "UploadFileAsync", Caption = "Upload Box File",
-            ObjectType = "BoxFile", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box,
-            ClassType = "BoxDataSource", Showin = ShowinType.Both, Order = 2,
-            iconimage = "box.png", misc = "Upload a file")]
-        public async Task<IEnumerable<BoxFile>> UploadFileAsync(BoxFile file, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "UploadFileAsync",
+            Caption = "Upload Box File",
+            ObjectType = "BoxFile",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Box,
+            ClassType = "BoxDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "uploadfile.png",
+            misc = "ReturnType: IEnumerable<BoxFile>"
+        )]
+        public async Task<IEnumerable<BoxFile>> UploadFileAsync(BoxFile file)
         {
-            var result = await PostAsync("https://api.box.com/2.0/files/content", file, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<BoxFile>>(result);
+            try
+            {
+                var result = await PostAsync("files_content", file);
+                var files = JsonSerializer.Deserialize<IEnumerable<BoxFile>>(result);
+                if (files != null)
+                {
+                    foreach (var f in files)
+                    {
+                        f.Attach<BoxFile>(this);
+                    }
+                }
+                return files;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error uploading file: {ex.Message}");
+            }
+            return new List<BoxFile>();
         }
 
-        [CommandAttribute(Name = "CreateWebhookAsync", Caption = "Create Box Webhook",
-            ObjectType = "BoxWebhook", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Box,
-            ClassType = "BoxDataSource", Showin = ShowinType.Both, Order = 3,
-            iconimage = "box.png", misc = "Create a webhook")]
-        public async Task<IEnumerable<BoxWebhook>> CreateWebhookAsync(BoxWebhook webhook, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateWebhookAsync",
+            Caption = "Create Box Webhook",
+            ObjectType = "BoxWebhook",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Box,
+            ClassType = "BoxDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "createwebhook.png",
+            misc = "ReturnType: IEnumerable<BoxWebhook>"
+        )]
+        public async Task<IEnumerable<BoxWebhook>> CreateWebhookAsync(BoxWebhook webhook)
         {
-            var result = await PostAsync("https://api.box.com/2.0/webhooks", webhook, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<BoxWebhook>>(result);
+            try
+            {
+                var result = await PostAsync("webhooks", webhook);
+                var webhooks = JsonSerializer.Deserialize<IEnumerable<BoxWebhook>>(result);
+                if (webhooks != null)
+                {
+                    foreach (var w in webhooks)
+                    {
+                        w.Attach<BoxWebhook>(this);
+                    }
+                }
+                return webhooks;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating webhook: {ex.Message}");
+            }
+            return new List<BoxWebhook>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFolderAsync",
+            Caption = "Update Box Folder",
+            ObjectType = "BoxFolder",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Box,
+            ClassType = "BoxDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "updatefolder.png",
+            misc = "ReturnType: IEnumerable<BoxFolder>"
+        )]
+        public async Task<IEnumerable<BoxFolder>> UpdateFolderAsync(BoxFolder folder)
+        {
+            try
+            {
+                var result = await PutAsync("folders", folder);
+                var folders = JsonSerializer.Deserialize<IEnumerable<BoxFolder>>(result);
+                if (folders != null)
+                {
+                    foreach (var f in folders)
+                    {
+                        f.Attach<BoxFolder>(this);
+                    }
+                }
+                return folders;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating folder: {ex.Message}");
+            }
+            return new List<BoxFolder>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFileAsync",
+            Caption = "Update Box File",
+            ObjectType = "BoxFile",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Box,
+            ClassType = "BoxDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "updatefile.png",
+            misc = "ReturnType: IEnumerable<BoxFile>"
+        )]
+        public async Task<IEnumerable<BoxFile>> UpdateFileAsync(BoxFile file)
+        {
+            try
+            {
+                var result = await PutAsync("files", file);
+                var files = JsonSerializer.Deserialize<IEnumerable<BoxFile>>(result);
+                if (files != null)
+                {
+                    foreach (var f in files)
+                    {
+                        f.Attach<BoxFile>(this);
+                    }
+                }
+                return files;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating file: {ex.Message}");
+            }
+            return new List<BoxFile>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateWebhookAsync",
+            Caption = "Update Box Webhook",
+            ObjectType = "BoxWebhook",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Box,
+            ClassType = "BoxDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "updatewebhook.png",
+            misc = "ReturnType: IEnumerable<BoxWebhook>"
+        )]
+        public async Task<IEnumerable<BoxWebhook>> UpdateWebhookAsync(BoxWebhook webhook)
+        {
+            try
+            {
+                var result = await PutAsync("webhooks", webhook);
+                var webhooks = JsonSerializer.Deserialize<IEnumerable<BoxWebhook>>(result);
+                if (webhooks != null)
+                {
+                    foreach (var w in webhooks)
+                    {
+                        w.Attach<BoxWebhook>(this);
+                    }
+                }
+                return webhooks;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating webhook: {ex.Message}");
+            }
+            return new List<BoxWebhook>();
         }
 
         #endregion

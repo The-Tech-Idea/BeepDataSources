@@ -179,5 +179,46 @@ namespace TheTechIdea.Beep.Connectors.LiveAgent
 
         [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LiveAgent, PointType = EnumPointType.Function, ObjectType = "LiveAgentConversation", ClassName = "LiveAgentDataSource", Showin = ShowinType.Both, misc = "List<LiveAgentConversation>")]
         public IEnumerable<object> GetConversations(List<AppFilter> filter = null) => GetEntity("conversations", filter ?? new List<AppFilter>());
+
+        // POST methods for creating entities
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LiveAgent, PointType = EnumPointType.Function, ObjectType = "LiveAgentTicket", Name = "CreateTicket", Caption = "Create LiveAgent Ticket", ClassType = "LiveAgentDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "liveagent.png", misc = "ReturnType: IEnumerable<LiveAgentTicket>")]
+        public async Task<IEnumerable<LiveAgentTicket>> CreateTicketAsync(LiveAgentTicket ticket)
+        {
+            try
+            {
+                var result = await PostAsync("api/v3/tickets", ticket);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdTicket = JsonSerializer.Deserialize<LiveAgentTicket>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<LiveAgentTicket> { createdTicket }.Select(t => t.Attach<LiveAgentTicket>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating ticket: {ex.Message}");
+            }
+            return new List<LiveAgentTicket>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LiveAgent, PointType = EnumPointType.Function, ObjectType = "LiveAgentTicket", Name = "UpdateTicket", Caption = "Update LiveAgent Ticket", ClassType = "LiveAgentDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "liveagent.png", misc = "ReturnType: IEnumerable<LiveAgentTicket>")]
+        public async Task<IEnumerable<LiveAgentTicket>> UpdateTicketAsync(LiveAgentTicket ticket)
+        {
+            try
+            {
+                var result = await PutAsync($"api/v3/tickets/{ticket.Id}", ticket);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedTicket = JsonSerializer.Deserialize<LiveAgentTicket>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<LiveAgentTicket> { updatedTicket }.Select(t => t.Attach<LiveAgentTicket>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating ticket: {ex.Message}");
+            }
+            return new List<LiveAgentTicket>();
+        }
     }
 }

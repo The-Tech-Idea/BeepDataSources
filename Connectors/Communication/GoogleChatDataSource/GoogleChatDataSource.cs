@@ -404,6 +404,158 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
                 .Select(x => x.Attach<GoogleChatUserMembership>(this));
         }
 
+        /// <summary>
+        /// Creates a message in a Google Chat space
+        /// </summary>
+        [CommandAttribute(
+            Name = "CreateMessageAsync",
+            Caption = "Create Google Chat Message",
+            ObjectType = "GoogleChatMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleChat,
+            ClassType = "GoogleChatDataSource",
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "createmessage.png",
+            misc = "ReturnType: IEnumerable<GoogleChatMessage>"
+        )]
+        public async Task<IEnumerable<GoogleChatMessage>> CreateMessageAsync(GoogleChatMessage message)
+        {
+            try
+            {
+                var result = await PostAsync("v1/spaces/{space_name}/messages", message);
+                var messages = JsonSerializer.Deserialize<IEnumerable<GoogleChatMessage>>(result);
+                if (messages != null)
+                {
+                    foreach (var m in messages)
+                    {
+                        m.Attach<GoogleChatMessage>(this);
+                    }
+                }
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating message: {ex.Message}");
+            }
+            return new List<GoogleChatMessage>();
+        }
+
+        /// <summary>
+        /// Creates a space in Google Chat
+        /// </summary>
+        [CommandAttribute(
+            Name = "CreateSpaceAsync",
+            Caption = "Create Google Chat Space",
+            ObjectType = "GoogleChatSpace",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleChat,
+            ClassType = "GoogleChatDataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "createspace.png",
+            misc = "ReturnType: IEnumerable<GoogleChatSpace>"
+        )]
+        public async Task<IEnumerable<GoogleChatSpace>> CreateSpaceAsync(GoogleChatSpace space)
+        {
+            try
+            {
+                var result = await PostAsync("v1/spaces", space);
+                var spaces = JsonSerializer.Deserialize<IEnumerable<GoogleChatSpace>>(result);
+                if (spaces != null)
+                {
+                    foreach (var s in spaces)
+                    {
+                        s.Attach<GoogleChatSpace>(this);
+                    }
+                }
+                return spaces;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating space: {ex.Message}");
+            }
+            return new List<GoogleChatSpace>();
+        }
+
+        /// <summary>
+        /// Updates a message in a Google Chat space
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateMessageAsync",
+            Caption = "Update Google Chat Message",
+            ObjectType = "GoogleChatMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleChat,
+            ClassType = "GoogleChatDataSource",
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "updatemessage.png",
+            misc = "ReturnType: IEnumerable<GoogleChatMessage>"
+        )]
+        public async Task<IEnumerable<GoogleChatMessage>> UpdateMessageAsync(GoogleChatMessage message)
+        {
+            try
+            {
+                var result = await PutAsync("v1/spaces/{space_name}/messages/{message_name}", message);
+                var messages = JsonSerializer.Deserialize<IEnumerable<GoogleChatMessage>>(result);
+                if (messages != null)
+                {
+                    foreach (var m in messages)
+                    {
+                        m.Attach<GoogleChatMessage>(this);
+                    }
+                }
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating message: {ex.Message}");
+            }
+            return new List<GoogleChatMessage>();
+        }
+
+        /// <summary>
+        /// Updates a space in Google Chat
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateSpaceAsync",
+            Caption = "Update Google Chat Space",
+            ObjectType = "GoogleChatSpace",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleChat,
+            ClassType = "GoogleChatDataSource",
+            Showin = ShowinType.Both,
+            Order = 11,
+            iconimage = "updatespace.png",
+            misc = "ReturnType: IEnumerable<GoogleChatSpace>"
+        )]
+        public async Task<IEnumerable<GoogleChatSpace>> UpdateSpaceAsync(GoogleChatSpace space)
+        {
+            try
+            {
+                var result = await PatchAsync("v1/spaces/{space_name}", space);
+                var spaces = JsonSerializer.Deserialize<IEnumerable<GoogleChatSpace>>(result);
+                if (spaces != null)
+                {
+                    foreach (var s in spaces)
+                    {
+                        s.Attach<GoogleChatSpace>(this);
+                    }
+                }
+                return spaces;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating space: {ex.Message}");
+            }
+            return new List<GoogleChatSpace>();
+        }
+
         #endregion
     }
 }

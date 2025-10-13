@@ -611,45 +611,70 @@ namespace TheTechIdea.Beep.Connectors.Reddit
             return JsonSerializer.Deserialize<RedditResponse<RedditPost>>(json);
         }
 
-        [CommandAttribute(ObjectType = "RedditPost", PointType = EnumPointType.Function, Name = "CreatePost", Caption = "Create Reddit Post", ClassName = "RedditDataSource", misc = "ReturnType: RedditPost")]
-        public async Task<RedditPost> CreatePostAsync(RedditPost post)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Reddit, PointType = EnumPointType.Function, ObjectType = "RedditPost", Name = "CreatePost", Caption = "Create Reddit Post", ClassType = "RedditDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "reddit.png", misc = "ReturnType: IEnumerable<RedditPost>")]
+        public async Task<IEnumerable<RedditPost>> CreatePostAsync(RedditPost post)
         {
-            string endpoint = $"{ConnectionProperties.BaseUrl}/api/submit";
-            var query = new Dictionary<string, string>
+            try
             {
-                ["title"] = post.Title,
-                ["text"] = post.SelfText ?? "",
-                ["sr"] = post.Subreddit,
-                ["kind"] = "self" // for text posts
-            };
-            var response = await PostAsync(endpoint, null, query);
-            if (response == null || !response.IsSuccessStatusCode)
-                return null;
-            string json = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<RedditSubmitResponse>(json);
-            if (result?.Success == true && result?.Data?.Name != null)
-            {
-                // Fetch the created post
-                string postId = result.Data.Name.Split('_')[1]; // t3_xxxx
-                return await GetPostAsync(postId);
+                string endpoint = $"{ConnectionProperties.BaseUrl}/api/submit";
+                var query = new Dictionary<string, string>
+                {
+                    ["title"] = post.Title,
+                    ["text"] = post.SelfText ?? "",
+                    ["sr"] = post.Subreddit,
+                    ["kind"] = "self" // for text posts
+                };
+                var result = await PostAsync(endpoint, null, query);
+                if (result.IsSuccessStatusCode)
+                {
+                    string json = await result.Content.ReadAsStringAsync();
+                    var submitResult = JsonSerializer.Deserialize<RedditSubmitResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (submitResult?.Success == true && submitResult?.Data?.Name != null)
+                    {
+                        // Fetch the created post
+                        string postId = submitResult.Data.Name.Split('_')[1]; // t3_xxxx
+                        var createdPost = await GetPostAsync(postId);
+                        if (createdPost != null)
+                        {
+                            return new List<RedditPost> { createdPost }.Select(p => p.Attach<RedditPost>(this));
+                        }
+                    }
+                }
             }
-            return null;
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating post: {ex.Message}");
+            }
+            return new List<RedditPost>();
         }
 
-        [CommandAttribute(ObjectType = "RedditPost", PointType = EnumPointType.Function, Name = "UpdatePost", Caption = "Update Reddit Post", ClassName = "RedditDataSource", misc = "ReturnType: RedditPost")]
-        public async Task<RedditPost> UpdatePostAsync(string postId, RedditPost post)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Reddit, PointType = EnumPointType.Function, ObjectType = "RedditPost", Name = "UpdatePost", Caption = "Update Reddit Post", ClassType = "RedditDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "reddit.png", misc = "ReturnType: IEnumerable<RedditPost>")]
+        public async Task<IEnumerable<RedditPost>> UpdatePostAsync(RedditPost post)
         {
-            string endpoint = $"{ConnectionProperties.BaseUrl}/api/editusertext";
-            var query = new Dictionary<string, string>
+            try
             {
-                ["thing_id"] = $"t3_{postId}",
-                ["text"] = post.SelfText ?? ""
-            };
-            var response = await PostAsync(endpoint, null, query);
-            if (response == null || !response.IsSuccessStatusCode)
-                return null;
-            // Fetch updated post
-            return await GetPostAsync(postId);
+                string endpoint = $"{ConnectionProperties.BaseUrl}/api/editusertext";
+                var query = new Dictionary<string, string>
+                {
+                    ["thing_id"] = $"t3_{post.Id}",
+                    ["text"] = post.SelfText ?? ""
+                };
+                var result = await PostAsync(endpoint, null, query);
+                if (result.IsSuccessStatusCode)
+                {
+                    // Fetch updated post
+                    var updatedPost = await GetPostAsync(post.Id);
+                    if (updatedPost != null)
+                    {
+                        return new List<RedditPost> { updatedPost }.Select(p => p.Attach<RedditPost>(this));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating post: {ex.Message}");
+            }
+            return new List<RedditPost>();
         }
 
         private async Task<RedditPost> GetPostAsync(string postId)

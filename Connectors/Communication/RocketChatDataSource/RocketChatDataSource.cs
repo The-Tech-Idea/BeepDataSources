@@ -350,19 +350,195 @@ namespace TheTechIdea.Beep.Connectors.Communication.RocketChat
             return GetEntity("settings", new List<AppFilter>()).Cast<RocketChatSetting>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatStatistics", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "RocketChatStatistics")]
+        [CommandAttribute(
+            Name = "CreateMessageAsync",
+            Caption = "Create Rocket.Chat Message",
+            ObjectType = "RocketChatMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.RocketChat,
+            ClassType = "RocketChatDataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "createmessage.png",
+            misc = "ReturnType: IEnumerable<RocketChatMessage>"
+        )]
+        public async Task<IEnumerable<RocketChatMessage>> CreateMessageAsync(RocketChatMessage message)
+        {
+            try
+            {
+                var result = await PostAsync("chat.postMessage", message);
+                var messages = JsonSerializer.Deserialize<IEnumerable<RocketChatMessage>>(result);
+                if (messages != null)
+                {
+                    foreach (var m in messages)
+                    {
+                        m.Attach<RocketChatMessage>(this);
+                    }
+                }
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating message: {ex.Message}");
+            }
+            return new List<RocketChatMessage>();
+        }
+
+        [CommandAttribute(
+            Name = "CreateChannelAsync",
+            Caption = "Create Rocket.Chat Channel",
+            ObjectType = "RocketChatChannel",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.RocketChat,
+            ClassType = "RocketChatDataSource",
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "createchannel.png",
+            misc = "ReturnType: IEnumerable<RocketChatChannel>"
+        )]
+        public async Task<IEnumerable<RocketChatChannel>> CreateChannelAsync(RocketChatChannel channel)
+        {
+            try
+            {
+                var result = await PostAsync("channels.create", channel);
+                var channels = JsonSerializer.Deserialize<IEnumerable<RocketChatChannel>>(result);
+                if (channels != null)
+                {
+                    foreach (var c in channels)
+                    {
+                        c.Attach<RocketChatChannel>(this);
+                    }
+                }
+                return channels;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating channel: {ex.Message}");
+            }
+            return new List<RocketChatChannel>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateMessageAsync",
+            Caption = "Update Rocket.Chat Message",
+            ObjectType = "RocketChatMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.RocketChat,
+            ClassType = "RocketChatDataSource",
+            Showin = ShowinType.Both,
+            Order = 11,
+            iconimage = "updatemessage.png",
+            misc = "ReturnType: IEnumerable<RocketChatMessage>"
+        )]
+        public async Task<IEnumerable<RocketChatMessage>> UpdateMessageAsync(RocketChatMessage message)
+        {
+            try
+            {
+                var result = await PutAsync("chat.update", message);
+                var messages = JsonSerializer.Deserialize<IEnumerable<RocketChatMessage>>(result);
+                if (messages != null)
+                {
+                    foreach (var m in messages)
+                    {
+                        m.Attach<RocketChatMessage>(this);
+                    }
+                }
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating message: {ex.Message}");
+            }
+            return new List<RocketChatMessage>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateChannelAsync",
+            Caption = "Update Rocket.Chat Channel",
+            ObjectType = "RocketChatChannel",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.RocketChat,
+            ClassType = "RocketChatDataSource",
+            Showin = ShowinType.Both,
+            Order = 12,
+            iconimage = "updatechannel.png",
+            misc = "ReturnType: IEnumerable<RocketChatChannel>"
+        )]
+        public async Task<IEnumerable<RocketChatChannel>> UpdateChannelAsync(RocketChatChannel channel)
+        {
+            try
+            {
+                var result = await PutAsync("channels.setDescription", channel);
+                var channels = JsonSerializer.Deserialize<IEnumerable<RocketChatChannel>>(result);
+                if (channels != null)
+                {
+                    foreach (var c in channels)
+                    {
+                        c.Attach<RocketChatChannel>(this);
+                    }
+                }
+                return channels;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating channel: {ex.Message}");
+            }
+            return new List<RocketChatChannel>();
+        }
+
+        [CommandAttribute(
+            Name = "GetStatistics",
+            Caption = "Get Rocket.Chat Statistics",
+            ObjectType = "RocketChatStatistics",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.RocketChat,
+            ClassType = "RocketChatDataSource",
+            Showin = ShowinType.Both,
+            Order = 13,
+            iconimage = "statistics.png",
+            misc = "ReturnType: RocketChatStatistics"
+        )]
         public RocketChatStatistics? GetStatistics()
         {
             return GetEntity("statistics", new List<AppFilter>()).Cast<RocketChatStatistics>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatIntegration", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatIntegration>")]
+        [CommandAttribute(
+            Name = "GetIntegrations",
+            Caption = "Get Rocket.Chat Integrations",
+            ObjectType = "RocketChatIntegration",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.RocketChat,
+            ClassType = "RocketChatDataSource",
+            Showin = ShowinType.Both,
+            Order = 14,
+            iconimage = "integrations.png",
+            misc = "ReturnType: IEnumerable<RocketChatIntegration>"
+        )]
         public List<RocketChatIntegration> GetIntegrations()
         {
             return GetEntity("integrations", new List<AppFilter>()).Cast<RocketChatIntegration>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.RocketChat, PointType = EnumPointType.Function, ObjectType = "RocketChatWebhook", ClassName = "RocketChatDataSource", Showin = ShowinType.Both, misc = "List<RocketChatWebhook>")]
+        [CommandAttribute(
+            Name = "GetWebhooks",
+            Caption = "Get Rocket.Chat Webhooks",
+            ObjectType = "RocketChatWebhook",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.RocketChat,
+            ClassType = "RocketChatDataSource",
+            Showin = ShowinType.Both,
+            Order = 15,
+            iconimage = "webhooks.png",
+            misc = "ReturnType: IEnumerable<RocketChatWebhook>"
+        )]
         public List<RocketChatWebhook> GetWebhooks()
         {
             return GetEntity("webhooks", new List<AppFilter>()).Cast<RocketChatWebhook>().ToList();

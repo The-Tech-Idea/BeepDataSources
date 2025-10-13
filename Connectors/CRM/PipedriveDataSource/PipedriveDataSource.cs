@@ -764,6 +764,88 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
             return result.Cast<Product>().Select(p => p.Attach<Product>(this));
         }
 
+        // -------------------- Create / Update (POST/PUT) methods --------------------
+
+        [CommandAttribute(Name = "CreateDeal", Caption = "Create Pipedrive Deal", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Deal", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "pipedrive.png", misc = "Deal")]
+        public async Task<IEnumerable<Deal>> CreateDealAsync(Deal deal)
+        {
+            if (deal == null) return Array.Empty<Deal>();
+            var success = await CreateEntityAsync("deals", deal).ConfigureAwait(false);
+            return success ? new[] { deal } : Array.Empty<Deal>();
+        }
+
+        [CommandAttribute(Name = "UpdateDeal", Caption = "Update Pipedrive Deal", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Deal", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "pipedrive.png", misc = "Deal")]
+        public async Task<IEnumerable<Deal>> UpdateDealAsync(string dealId, Deal deal)
+        {
+            if (string.IsNullOrWhiteSpace(dealId) || deal == null) return Array.Empty<Deal>();
+            var success = await UpdateEntityAsync("deals", deal, dealId).ConfigureAwait(false);
+            return success ? new[] { deal } : Array.Empty<Deal>();
+        }
+
+        [CommandAttribute(Name = "CreatePerson", Caption = "Create Pipedrive Person", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Person", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "pipedrive.png", misc = "Person")]
+        public async Task<IEnumerable<Person>> CreatePersonAsync(Person person)
+        {
+            if (person == null) return Array.Empty<Person>();
+            var success = await CreateEntityAsync("persons", person).ConfigureAwait(false);
+            return success ? new[] { person } : Array.Empty<Person>();
+        }
+
+        [CommandAttribute(Name = "UpdatePerson", Caption = "Update Pipedrive Person", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Person", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "pipedrive.png", misc = "Person")]
+        public async Task<IEnumerable<Person>> UpdatePersonAsync(string personId, Person person)
+        {
+            if (string.IsNullOrWhiteSpace(personId) || person == null) return Array.Empty<Person>();
+            var success = await UpdateEntityAsync("persons", person, personId).ConfigureAwait(false);
+            return success ? new[] { person } : Array.Empty<Person>();
+        }
+
+        [CommandAttribute(Name = "CreateOrganization", Caption = "Create Pipedrive Organization", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Organization", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "pipedrive.png", misc = "Organization")]
+        public async Task<IEnumerable<Organization>> CreateOrganizationAsync(Organization organization)
+        {
+            if (organization == null) return Array.Empty<Organization>();
+            var success = await CreateEntityAsync("organizations", organization).ConfigureAwait(false);
+            return success ? new[] { organization } : Array.Empty<Organization>();
+        }
+
+        [CommandAttribute(Name = "UpdateOrganization", Caption = "Update Pipedrive Organization", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Organization", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "pipedrive.png", misc = "Organization")]
+        public async Task<IEnumerable<Organization>> UpdateOrganizationAsync(string organizationId, Organization organization)
+        {
+            if (string.IsNullOrWhiteSpace(organizationId) || organization == null) return Array.Empty<Organization>();
+            var success = await UpdateEntityAsync("organizations", organization, organizationId).ConfigureAwait(false);
+            return success ? new[] { organization } : Array.Empty<Organization>();
+        }
+
+        [CommandAttribute(Name = "CreateActivity", Caption = "Create Pipedrive Activity", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Activity", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "pipedrive.png", misc = "Activity")]
+        public async Task<IEnumerable<Activity>> CreateActivityAsync(Activity activity)
+        {
+            if (activity == null) return Array.Empty<Activity>();
+            var success = await CreateEntityAsync("activities", activity).ConfigureAwait(false);
+            return success ? new[] { activity } : Array.Empty<Activity>();
+        }
+
+        [CommandAttribute(Name = "UpdateActivity", Caption = "Update Pipedrive Activity", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Activity", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "pipedrive.png", misc = "Activity")]
+        public async Task<IEnumerable<Activity>> UpdateActivityAsync(string activityId, Activity activity)
+        {
+            if (string.IsNullOrWhiteSpace(activityId) || activity == null) return Array.Empty<Activity>();
+            var success = await UpdateEntityAsync("activities", activity, activityId).ConfigureAwait(false);
+            return success ? new[] { activity } : Array.Empty<Activity>();
+        }
+
+        [CommandAttribute(Name = "CreateProduct", Caption = "Create Pipedrive Product", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Product", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "pipedrive.png", misc = "Product")]
+        public async Task<IEnumerable<Product>> CreateProductAsync(Product product)
+        {
+            if (product == null) return Array.Empty<Product>();
+            var success = await CreateEntityAsync("products", product).ConfigureAwait(false);
+            return success ? new[] { product } : Array.Empty<Product>();
+        }
+
+        [CommandAttribute(Name = "UpdateProduct", Caption = "Update Pipedrive Product", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Product", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "pipedrive.png", misc = "Product")]
+        public async Task<IEnumerable<Product>> UpdateProductAsync(string productId, Product product)
+        {
+            if (string.IsNullOrWhiteSpace(productId) || product == null) return Array.Empty<Product>();
+            var success = await UpdateEntityAsync("products", product, productId).ConfigureAwait(false);
+            return success ? new[] { product } : Array.Empty<Product>();
+        }
+
         #endregion
     }
 }

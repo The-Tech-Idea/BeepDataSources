@@ -444,37 +444,214 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
             return GetEntity("access_controls", filters).Cast<ShareFileAccessControl>().ToList();
         }
 
-        [CommandAttribute(Name = "CreateItemAsync", Caption = "Create Citrix ShareFile Item",
-            ObjectType = "ShareFileItem", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile,
-            ClassType = "CitrixShareFileDataSource", Showin = ShowinType.Both, Order = 1,
-            iconimage = "citrixsharefile.png", misc = "Create a file or folder")]
-        public async Task<IEnumerable<ShareFileItem>> CreateItemAsync(ShareFileItem item, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateItemAsync",
+            Caption = "Create Citrix ShareFile Item",
+            ObjectType = "ShareFileItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.CitrixShareFile,
+            ClassType = "CitrixShareFileDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "createitem.png",
+            misc = "ReturnType: IEnumerable<ShareFileItem>"
+        )]
+        public async Task<IEnumerable<ShareFileItem>> CreateItemAsync(ShareFileItem item)
         {
-            var result = await PostAsync("https://api.sharefile.com/sf/v3/Items", item, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<ShareFileItem>>(result);
+            try
+            {
+                var result = await PostAsync("Items", item);
+                var items = JsonSerializer.Deserialize<IEnumerable<ShareFileItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<ShareFileItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating item: {ex.Message}");
+            }
+            return new List<ShareFileItem>();
         }
 
-        [CommandAttribute(Name = "CreateShareAsync", Caption = "Create Citrix ShareFile Share",
-            ObjectType = "ShareFileShare", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile,
-            ClassType = "CitrixShareFileDataSource", Showin = ShowinType.Both, Order = 2,
-            iconimage = "citrixsharefile.png", misc = "Create a share")]
-        public async Task<IEnumerable<ShareFileShare>> CreateShareAsync(ShareFileShare share, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateShareAsync",
+            Caption = "Create Citrix ShareFile Share",
+            ObjectType = "ShareFileShare",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.CitrixShareFile,
+            ClassType = "CitrixShareFileDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "createshare.png",
+            misc = "ReturnType: IEnumerable<ShareFileShare>"
+        )]
+        public async Task<IEnumerable<ShareFileShare>> CreateShareAsync(ShareFileShare share)
         {
-            var result = await PostAsync("https://api.sharefile.com/sf/v3/Shares", share, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<ShareFileShare>>(result);
+            try
+            {
+                var result = await PostAsync("Shares", share);
+                var shares = JsonSerializer.Deserialize<IEnumerable<ShareFileShare>>(result);
+                if (shares != null)
+                {
+                    foreach (var s in shares)
+                    {
+                        s.Attach<ShareFileShare>(this);
+                    }
+                }
+                return shares;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating share: {ex.Message}");
+            }
+            return new List<ShareFileShare>();
         }
 
-        [CommandAttribute(Name = "CreateGroupAsync", Caption = "Create Citrix ShareFile Group",
-            ObjectType = "ShareFileGroup", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile,
-            ClassType = "CitrixShareFileDataSource", Showin = ShowinType.Both, Order = 3,
-            iconimage = "citrixsharefile.png", misc = "Create a group")]
-        public async Task<IEnumerable<ShareFileGroup>> CreateGroupAsync(ShareFileGroup group, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateGroupAsync",
+            Caption = "Create Citrix ShareFile Group",
+            ObjectType = "ShareFileGroup",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.CitrixShareFile,
+            ClassType = "CitrixShareFileDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "creategroup.png",
+            misc = "ReturnType: IEnumerable<ShareFileGroup>"
+        )]
+        public async Task<IEnumerable<ShareFileGroup>> CreateGroupAsync(ShareFileGroup group)
         {
-            var result = await PostAsync("https://api.sharefile.com/sf/v3/Groups", group, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<ShareFileGroup>>(result);
+            try
+            {
+                var result = await PostAsync("Groups", group);
+                var groups = JsonSerializer.Deserialize<IEnumerable<ShareFileGroup>>(result);
+                if (groups != null)
+                {
+                    foreach (var g in groups)
+                    {
+                        g.Attach<ShareFileGroup>(this);
+                    }
+                }
+                return groups;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating group: {ex.Message}");
+            }
+            return new List<ShareFileGroup>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateItemAsync",
+            Caption = "Update Citrix ShareFile Item",
+            ObjectType = "ShareFileItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.CitrixShareFile,
+            ClassType = "CitrixShareFileDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "updateitem.png",
+            misc = "ReturnType: IEnumerable<ShareFileItem>"
+        )]
+        public async Task<IEnumerable<ShareFileItem>> UpdateItemAsync(ShareFileItem item)
+        {
+            try
+            {
+                var result = await PatchAsync("Items", item);
+                var items = JsonSerializer.Deserialize<IEnumerable<ShareFileItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<ShareFileItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating item: {ex.Message}");
+            }
+            return new List<ShareFileItem>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateShareAsync",
+            Caption = "Update Citrix ShareFile Share",
+            ObjectType = "ShareFileShare",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.CitrixShareFile,
+            ClassType = "CitrixShareFileDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "updateshare.png",
+            misc = "ReturnType: IEnumerable<ShareFileShare>"
+        )]
+        public async Task<IEnumerable<ShareFileShare>> UpdateShareAsync(ShareFileShare share)
+        {
+            try
+            {
+                var result = await PatchAsync("Shares", share);
+                var shares = JsonSerializer.Deserialize<IEnumerable<ShareFileShare>>(result);
+                if (shares != null)
+                {
+                    foreach (var s in shares)
+                    {
+                        s.Attach<ShareFileShare>(this);
+                    }
+                }
+                return shares;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating share: {ex.Message}");
+            }
+            return new List<ShareFileShare>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateGroupAsync",
+            Caption = "Update Citrix ShareFile Group",
+            ObjectType = "ShareFileGroup",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.CitrixShareFile,
+            ClassType = "CitrixShareFileDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "updategroup.png",
+            misc = "ReturnType: IEnumerable<ShareFileGroup>"
+        )]
+        public async Task<IEnumerable<ShareFileGroup>> UpdateGroupAsync(ShareFileGroup group)
+        {
+            try
+            {
+                var result = await PatchAsync("Groups", group);
+                var groups = JsonSerializer.Deserialize<IEnumerable<ShareFileGroup>>(result);
+                if (groups != null)
+                {
+                    foreach (var g in groups)
+                    {
+                        g.Attach<ShareFileGroup>(this);
+                    }
+                }
+                return groups;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating group: {ex.Message}");
+            }
+            return new List<ShareFileGroup>();
         }
 
         #endregion

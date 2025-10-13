@@ -272,5 +272,465 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
             var filters = new List<AppFilter> { new AppFilter { FieldName = "topic", FilterValue = topic } };
             return GetEntity("telemetry", filters).Cast<Telemetry>();
         }
+        
+        // -------------------- Create / Update (POST/PUT) methods --------------------
+
+        [CommandAttribute(
+            Name = "CreateThingAsync",
+            Caption = "Create AWS IoT Thing",
+            ObjectType = "Device",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AWSIoT,
+            ClassType = "AWSIoTDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "creatething.png",
+            misc = "ReturnType: IEnumerable<Device>"
+        )]
+        public async Task<IEnumerable<Device>> CreateThingAsync(Device thing)
+        {
+            try
+            {
+                var result = await PostAsync("things", thing);
+                var devices = JsonSerializer.Deserialize<IEnumerable<Device>>(result);
+                if (devices != null)
+                {
+                    foreach (var d in devices)
+                    {
+                        d.Attach<Device>(this);
+                    }
+                }
+                return devices;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating thing: {ex.Message}");
+            }
+            return new List<Device>();
+        }
+
+        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "UpdateThing", Caption = "Update Thing", ClassName = "AWSIoTDataSource", misc = "UpdateThing")]
+        public async Task<IEnumerable<Device>> UpdateThingAsync(string thingName, Device thing)
+        {
+            if (string.IsNullOrWhiteSpace(thingName) || thing == null) return Array.Empty<Device>();
+            var endpoint = $"things/{Uri.EscapeDataString(thingName)}";
+            using var resp = await PutAsync(endpoint, thing).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Device>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                return JsonSerializer.Deserialize<IEnumerable<Device>>(json, opts) ?? Array.Empty<Device>();
+            }
+            catch
+            {
+                return Array.Empty<Device>();
+            }
+        }
+
+        [CommandAttribute(ObjectType = typeof(Shadow), PointType = PointType.Function, Name = "UpdateThingShadow", Caption = "Update Thing Shadow", ClassName = "AWSIoTDataSource", misc = "UpdateThingShadow")]
+        public async Task<IEnumerable<Shadow>> UpdateShadowAsync(string thingName, Shadow shadow)
+        {
+            if (string.IsNullOrWhiteSpace(thingName) || shadow == null) return Array.Empty<Shadow>();
+            var endpoint = $"things/{Uri.EscapeDataString(thingName)}/shadow";
+            using var resp = await PutAsync(endpoint, shadow).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Shadow>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                return JsonSerializer.Deserialize<IEnumerable<Shadow>>(json, opts) ?? Array.Empty<Shadow>();
+            }
+            catch
+            {
+                return Array.Empty<Shadow>();
+            }
+        }
+
+        [CommandAttribute(
+            Name = "CreateJobAsync",
+            Caption = "Create AWS IoT Job",
+            ObjectType = "Job",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AWSIoT,
+            ClassType = "AWSIoTDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "createjob.png",
+            misc = "ReturnType: IEnumerable<Job>"
+        )]
+        public async Task<IEnumerable<Job>> CreateJobAsync(Job job)
+        {
+            try
+            {
+                var result = await PostAsync("jobs", job);
+                var jobs = JsonSerializer.Deserialize<IEnumerable<Job>>(result);
+                if (jobs != null)
+                {
+                    foreach (var j in jobs)
+                    {
+                        j.Attach<Job>(this);
+                    }
+                }
+                return jobs;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating job: {ex.Message}");
+            }
+            return new List<Job>();
+        }
+
+        [CommandAttribute(
+            Name = "CreateRuleAsync",
+            Caption = "Create AWS IoT Rule",
+            ObjectType = "Rule",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AWSIoT,
+            ClassType = "AWSIoTDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "createrule.png",
+            misc = "ReturnType: IEnumerable<Rule>"
+        )]
+        public async Task<IEnumerable<Rule>> CreateRuleAsync(Rule rule)
+        {
+            try
+            {
+                var result = await PostAsync("rules", rule);
+                var rules = JsonSerializer.Deserialize<IEnumerable<Rule>>(result);
+                if (rules != null)
+                {
+                    foreach (var r in rules)
+                    {
+                        r.Attach<Rule>(this);
+                    }
+                }
+                return rules;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating rule: {ex.Message}");
+            }
+            return new List<Rule>();
+        }
+
+        [CommandAttribute(
+            Name = "CreateCertificateAsync",
+            Caption = "Create AWS IoT Certificate",
+            ObjectType = "Certificate",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AWSIoT,
+            ClassType = "AWSIoTDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "createcertificate.png",
+            misc = "ReturnType: IEnumerable<Certificate>"
+        )]
+        public async Task<IEnumerable<Certificate>> CreateCertificateAsync(Certificate certificate)
+        {
+            try
+            {
+                var result = await PostAsync("certificates", certificate);
+                var certificates = JsonSerializer.Deserialize<IEnumerable<Certificate>>(result);
+                if (certificates != null)
+                {
+                    foreach (var c in certificates)
+                    {
+                        c.Attach<Certificate>(this);
+                    }
+                }
+                return certificates;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating certificate: {ex.Message}");
+            }
+            return new List<Certificate>();
+        }
+
+        [CommandAttribute(
+            Name = "CreatePolicyAsync",
+            Caption = "Create AWS IoT Policy",
+            ObjectType = "Policy",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AWSIoT,
+            ClassType = "AWSIoTDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "createpolicy.png",
+            misc = "ReturnType: IEnumerable<Policy>"
+        )]
+        public async Task<IEnumerable<Policy>> CreatePolicyAsync(Policy policy)
+        {
+            try
+            {
+                var result = await PostAsync("policies", policy);
+                var policies = JsonSerializer.Deserialize<IEnumerable<Policy>>(result);
+                if (policies != null)
+                {
+                    foreach (var p in policies)
+                    {
+                        p.Attach<Policy>(this);
+                    }
+                }
+                return policies;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating policy: {ex.Message}");
+            }
+            return new List<Policy>();
+        }
+
+        [CommandAttribute(
+            Name = "PublishTelemetryAsync",
+            Caption = "Publish AWS IoT Telemetry",
+            ObjectType = "Telemetry",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AWSIoT,
+            ClassType = "AWSIoTDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "publish.png",
+            misc = "ReturnType: IEnumerable<Telemetry>"
+        )]
+        public async Task<IEnumerable<Telemetry>> PublishTelemetryAsync(string topic, Telemetry telemetry)
+        {
+            try
+            {
+                var result = await PostAsync("telemetry", telemetry);
+                var telemetries = JsonSerializer.Deserialize<IEnumerable<Telemetry>>(result);
+                if (telemetries != null)
+                {
+                    foreach (var t in telemetries)
+                    {
+                        t.Attach<Telemetry>(this);
+                    }
+                }
+                return telemetries;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error publishing telemetry: {ex.Message}");
+            }
+            return new List<Telemetry>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateThingAsync",
+            Caption = "Update AWS IoT Thing",
+            ObjectType = "Device",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AWSIoT,
+            ClassType = "AWSIoTDataSource",
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "updatething.png",
+            misc = "ReturnType: IEnumerable<Device>"
+        )]
+        public async Task<IEnumerable<Device>> UpdateThingAsync(Device thing)
+        {
+            try
+            {
+                var result = await PatchAsync("things", thing);
+                var devices = JsonSerializer.Deserialize<IEnumerable<Device>>(result);
+                if (devices != null)
+                {
+                    foreach (var d in devices)
+                    {
+                        d.Attach<Device>(this);
+                    }
+                }
+                return devices;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating thing: {ex.Message}");
+            }
+            return new List<Device>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateJobAsync",
+            Caption = "Update AWS IoT Job",
+            ObjectType = "Job",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AWSIoT,
+            ClassType = "AWSIoTDataSource",
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "updatejob.png",
+            misc = "ReturnType: IEnumerable<Job>"
+        )]
+        public async Task<IEnumerable<Job>> UpdateJobAsync(Job job)
+        {
+            try
+            {
+                var result = await PatchAsync("jobs", job);
+                var jobs = JsonSerializer.Deserialize<IEnumerable<Job>>(result);
+                if (jobs != null)
+                {
+                    foreach (var j in jobs)
+                    {
+                        j.Attach<Job>(this);
+                    }
+                }
+                return jobs;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating job: {ex.Message}");
+            }
+            return new List<Job>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateRuleAsync",
+            Caption = "Update AWS IoT Rule",
+            ObjectType = "Rule",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AWSIoT,
+            ClassType = "AWSIoTDataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "updaterule.png",
+            misc = "ReturnType: IEnumerable<Rule>"
+        )]
+        public async Task<IEnumerable<Rule>> UpdateRuleAsync(Rule rule)
+        {
+            try
+            {
+                var result = await PatchAsync("rules", rule);
+                var rules = JsonSerializer.Deserialize<IEnumerable<Rule>>(result);
+                if (rules != null)
+                {
+                    foreach (var r in rules)
+                    {
+                        r.Attach<Rule>(this);
+                    }
+                }
+                return rules;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating rule: {ex.Message}");
+            }
+            return new List<Rule>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateCertificateAsync",
+            Caption = "Update AWS IoT Certificate",
+            ObjectType = "Certificate",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AWSIoT,
+            ClassType = "AWSIoTDataSource",
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "updatecertificate.png",
+            misc = "ReturnType: IEnumerable<Certificate>"
+        )]
+        public async Task<IEnumerable<Certificate>> UpdateCertificateAsync(Certificate certificate)
+        {
+            try
+            {
+                var result = await PatchAsync("certificates", certificate);
+                var certificates = JsonSerializer.Deserialize<IEnumerable<Certificate>>(result);
+                if (certificates != null)
+                {
+                    foreach (var c in certificates)
+                    {
+                        c.Attach<Certificate>(this);
+                    }
+                }
+                return certificates;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating certificate: {ex.Message}");
+            }
+            return new List<Certificate>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdatePolicyAsync",
+            Caption = "Update AWS IoT Policy",
+            ObjectType = "Policy",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AWSIoT,
+            ClassType = "AWSIoTDataSource",
+            Showin = ShowinType.Both,
+            Order = 11,
+            iconimage = "updatepolicy.png",
+            misc = "ReturnType: IEnumerable<Policy>"
+        )]
+        public async Task<IEnumerable<Policy>> UpdatePolicyAsync(Policy policy)
+        {
+            try
+            {
+                var result = await PatchAsync("policies", policy);
+                var policies = JsonSerializer.Deserialize<IEnumerable<Policy>>(result);
+                if (policies != null)
+                {
+                    foreach (var p in policies)
+                    {
+                        p.Attach<Policy>(this);
+                    }
+                }
+                return policies;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating policy: {ex.Message}");
+            }
+            return new List<Policy>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateTelemetryAsync",
+            Caption = "Update AWS IoT Telemetry",
+            ObjectType = "Telemetry",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AWSIoT,
+            ClassType = "AWSIoTDataSource",
+            Showin = ShowinType.Both,
+            Order = 12,
+            iconimage = "update.png",
+            misc = "ReturnType: IEnumerable<Telemetry>"
+        )]
+        public async Task<IEnumerable<Telemetry>> UpdateTelemetryAsync(Telemetry telemetry)
+        {
+            try
+            {
+                var result = await PatchAsync("telemetry", telemetry);
+                var telemetries = JsonSerializer.Deserialize<IEnumerable<Telemetry>>(result);
+                if (telemetries != null)
+                {
+                    foreach (var t in telemetries)
+                    {
+                        t.Attach<Telemetry>(this);
+                    }
+                }
+                return telemetries;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating telemetry: {ex.Message}");
+            }
+            return new List<Telemetry>();
+        }
     }
 }

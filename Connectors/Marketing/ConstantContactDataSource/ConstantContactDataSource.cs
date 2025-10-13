@@ -196,25 +196,25 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConstantContact
         }
 
         // CommandAttribute methods for framework integration
-        [CommandAttribute(ObjectType = nameof(ConstantContactContact), PointType = PointType.Function, Name = "GetContacts", Caption = "Get Contacts", ClassName = "ConstantContactDataSource", misc = "GetContacts")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactContact), PointType = EnumPointType.Function, Name = "GetContacts", Caption = "Get Contacts", ClassName = "ConstantContactDataSource", misc = "GetContacts")]
         public IEnumerable<ConstantContactContact> GetContacts()
         {
             return GetEntity("contacts", null).Cast<ConstantContactContact>();
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactList), PointType = PointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "ConstantContactDataSource", misc = "GetLists")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactList), PointType = EnumPointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "ConstantContactDataSource", misc = "GetLists")]
         public IEnumerable<ConstantContactList> GetLists()
         {
             return GetEntity("lists", null).Cast<ConstantContactList>();
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactCampaign), PointType = PointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "ConstantContactDataSource", misc = "GetCampaigns")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactCampaign), PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "ConstantContactDataSource", misc = "GetCampaigns")]
         public IEnumerable<ConstantContactCampaign> GetCampaigns()
         {
             return GetEntity("campaigns", null).Cast<ConstantContactCampaign>();
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactEmailCampaign), PointType = PointType.Function, Name = "GetEmailCampaigns", Caption = "Get Email Campaigns", ClassName = "ConstantContactDataSource", misc = "GetEmailCampaigns")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactEmailCampaign), PointType = EnumPointType.Function, Name = "GetEmailCampaigns", Caption = "Get Email Campaigns", ClassName = "ConstantContactDataSource", misc = "GetEmailCampaigns")]
         public IEnumerable<ConstantContactEmailCampaign> GetEmailCampaigns()
         {
             return GetEntity("email_campaigns", null).Cast<ConstantContactEmailCampaign>();

@@ -384,37 +384,214 @@ namespace TheTechIdea.Beep.Connectors.pCloud
             return GetEntity("sharefolder", filters).Cast<pCloudShare>().FirstOrDefault();
         }
 
-        [CommandAttribute(Name = "UploadFileAsync", Caption = "Upload pCloud File",
-            ObjectType = "pCloudItem", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud,
-            ClassType = "pCloudDataSource", Showin = ShowinType.Both, Order = 1,
-            iconimage = "pcloud.png", misc = "Upload a file")]
-        public async Task<IEnumerable<pCloudItem>> UploadFileAsync(pCloudItem file, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "UploadFileAsync",
+            Caption = "Upload pCloud File",
+            ObjectType = "pCloudItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.pCloud,
+            ClassType = "pCloudDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "uploadfile.png",
+            misc = "ReturnType: IEnumerable<pCloudItem>"
+        )]
+        public async Task<IEnumerable<pCloudItem>> UploadFileAsync(pCloudItem file)
         {
-            var result = await PostAsync("https://api.pcloud.com/uploadfile", file, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+            try
+            {
+                var result = await PostAsync("uploadfile", file);
+                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<pCloudItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error uploading file: {ex.Message}");
+            }
+            return new List<pCloudItem>();
         }
 
-        [CommandAttribute(Name = "CreateFolderAsync", Caption = "Create pCloud Folder",
-            ObjectType = "pCloudItem", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud,
-            ClassType = "pCloudDataSource", Showin = ShowinType.Both, Order = 2,
-            iconimage = "pcloud.png", misc = "Create a folder")]
-        public async Task<IEnumerable<pCloudItem>> CreateFolderAsync(pCloudItem folder, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateFolderAsync",
+            Caption = "Create pCloud Folder",
+            ObjectType = "pCloudItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.pCloud,
+            ClassType = "pCloudDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "createfolder.png",
+            misc = "ReturnType: IEnumerable<pCloudItem>"
+        )]
+        public async Task<IEnumerable<pCloudItem>> CreateFolderAsync(pCloudItem folder)
         {
-            var result = await PostAsync("https://api.pcloud.com/createfolder", folder, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+            try
+            {
+                var result = await PostAsync("createfolder", folder);
+                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<pCloudItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating folder: {ex.Message}");
+            }
+            return new List<pCloudItem>();
         }
 
-        [CommandAttribute(Name = "CopyFileAsync", Caption = "Copy pCloud File",
-            ObjectType = "pCloudItem", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud,
-            ClassType = "pCloudDataSource", Showin = ShowinType.Both, Order = 3,
-            iconimage = "pcloud.png", misc = "Copy a file")]
-        public async Task<IEnumerable<pCloudItem>> CopyFileAsync(pCloudItem file, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CopyFileAsync",
+            Caption = "Copy pCloud File",
+            ObjectType = "pCloudItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.pCloud,
+            ClassType = "pCloudDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "copyfile.png",
+            misc = "ReturnType: IEnumerable<pCloudItem>"
+        )]
+        public async Task<IEnumerable<pCloudItem>> CopyFileAsync(pCloudItem file)
         {
-            var result = await PostAsync("https://api.pcloud.com/copyfile", file, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+            try
+            {
+                var result = await PostAsync("copyfile", file);
+                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<pCloudItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error copying file: {ex.Message}");
+            }
+            return new List<pCloudItem>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFileAsync",
+            Caption = "Update pCloud File",
+            ObjectType = "pCloudItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.pCloud,
+            ClassType = "pCloudDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "updatefile.png",
+            misc = "ReturnType: IEnumerable<pCloudItem>"
+        )]
+        public async Task<IEnumerable<pCloudItem>> UpdateFileAsync(pCloudItem file)
+        {
+            try
+            {
+                var result = await PatchAsync("uploadfile", file);
+                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<pCloudItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating file: {ex.Message}");
+            }
+            return new List<pCloudItem>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFolderAsync",
+            Caption = "Update pCloud Folder",
+            ObjectType = "pCloudItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.pCloud,
+            ClassType = "pCloudDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "updatefolder.png",
+            misc = "ReturnType: IEnumerable<pCloudItem>"
+        )]
+        public async Task<IEnumerable<pCloudItem>> UpdateFolderAsync(pCloudItem folder)
+        {
+            try
+            {
+                var result = await PatchAsync("createfolder", folder);
+                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<pCloudItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating folder: {ex.Message}");
+            }
+            return new List<pCloudItem>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateCopyAsync",
+            Caption = "Update pCloud Copy",
+            ObjectType = "pCloudItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.pCloud,
+            ClassType = "pCloudDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "updatecopy.png",
+            misc = "ReturnType: IEnumerable<pCloudItem>"
+        )]
+        public async Task<IEnumerable<pCloudItem>> UpdateCopyAsync(pCloudItem file)
+        {
+            try
+            {
+                var result = await PatchAsync("copyfile", file);
+                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<pCloudItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating copy: {ex.Message}");
+            }
+            return new List<pCloudItem>();
         }
 
         #endregion

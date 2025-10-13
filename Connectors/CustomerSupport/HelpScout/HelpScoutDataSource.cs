@@ -267,5 +267,46 @@ namespace TheTechIdea.Beep.DataSources
         {
             return GetEntity("reports", new List<AppFilter>());
         }
+
+        // POST methods for creating entities
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HelpScout, PointType = EnumPointType.Function, ObjectType = "Conversation", Name = "CreateConversation", Caption = "Create HelpScout Conversation", ClassType = "HelpScoutDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "helpscout.png", misc = "ReturnType: IEnumerable<Conversation>")]
+        public async Task<IEnumerable<Conversation>> CreateConversationAsync(Conversation conversation)
+        {
+            try
+            {
+                var result = await PostAsync("conversations", conversation);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdConversation = JsonSerializer.Deserialize<Conversation>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Conversation> { createdConversation }.Select(c => c.Attach<Conversation>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating conversation: {ex.Message}");
+            }
+            return new List<Conversation>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HelpScout, PointType = EnumPointType.Function, ObjectType = "Conversation", Name = "UpdateConversation", Caption = "Update HelpScout Conversation", ClassType = "HelpScoutDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "helpscout.png", misc = "ReturnType: IEnumerable<Conversation>")]
+        public async Task<IEnumerable<Conversation>> UpdateConversationAsync(Conversation conversation)
+        {
+            try
+            {
+                var result = await PutAsync($"conversations/{conversation.Id}", conversation);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedConversation = JsonSerializer.Deserialize<Conversation>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Conversation> { updatedConversation }.Select(c => c.Attach<Conversation>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating conversation: {ex.Message}");
+            }
+            return new List<Conversation>();
+        }
     }
 }

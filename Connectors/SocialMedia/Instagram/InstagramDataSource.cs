@@ -332,23 +332,45 @@ namespace TheTechIdea.Beep.Connectors.Instagram
         }
 
         // POST methods for creating entities
-        [CommandAttribute(ObjectType = "IgMedia", PointType = EnumPointType.Function, Name = "CreateMedia", Caption = "Create Instagram Media", ClassName = "InstagramDataSource", misc = "ReturnType: IgMedia")]
-        public async Task<IgMedia> CreateMediaAsync(IgMedia media)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Instagram, PointType = EnumPointType.Function, ObjectType = "IgMedia", Name = "CreateMedia", Caption = "Create Instagram Media", ClassType = "InstagramDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "instagram.png", misc = "ReturnType: IEnumerable<IgMedia>")]
+        public async Task<IEnumerable<IgMedia>> CreateMediaAsync(IgMedia media)
         {
-            var response = await PostAsync("media", media);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<IgMedia>(json);
+            try
+            {
+                var result = await PostAsync("media", media);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdMedia = JsonSerializer.Deserialize<IgMedia>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<IgMedia> { createdMedia }.Select(m => m.Attach<IgMedia>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating media: {ex.Message}");
+            }
+            return new List<IgMedia>();
         }
 
         // PUT methods for updating entities
-        [CommandAttribute(ObjectType = "IgMedia", PointType = EnumPointType.Function, Name = "UpdateMedia", Caption = "Update Instagram Media", ClassName = "InstagramDataSource", misc = "ReturnType: IgMedia")]
-        public async Task<IgMedia> UpdateMediaAsync(string mediaId, IgMedia media)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Instagram, PointType = EnumPointType.Function, ObjectType = "IgMedia", Name = "UpdateMedia", Caption = "Update Instagram Media", ClassType = "InstagramDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "instagram.png", misc = "ReturnType: IEnumerable<IgMedia>")]
+        public async Task<IEnumerable<IgMedia>> UpdateMediaAsync(IgMedia media)
         {
-            var response = await PutAsync($"media/{mediaId}", media);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<IgMedia>(json);
+            try
+            {
+                var result = await PutAsync($"media/{media.Id}", media);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedMedia = JsonSerializer.Deserialize<IgMedia>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<IgMedia> { updatedMedia }.Select(m => m.Attach<IgMedia>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating media: {ex.Message}");
+            }
+            return new List<IgMedia>();
         }
     }
 }

@@ -930,25 +930,45 @@ namespace BeepDataSources.Connectors.SocialMedia.YouTube
         }
 
         // POST methods for creating entities
-        [CommandAttribute(ObjectType = "YouTubePlaylist", PointType = EnumPointType.Function, Name = "CreatePlaylist", Caption = "Create YouTube Playlist", ClassName = "YouTubeDataSource", misc = "ReturnType: YouTubePlaylist")]
-        public async Task<YouTubePlaylist> CreatePlaylistAsync(YouTubePlaylist playlist)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.YouTube, PointType = EnumPointType.Function, ObjectType = "YouTubePlaylist", Name = "CreatePlaylist", Caption = "Create YouTube Playlist", ClassType = "YouTubeDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "youtube.png", misc = "ReturnType: IEnumerable<YouTubePlaylist>")]
+        public async Task<IEnumerable<YouTubePlaylist>> CreatePlaylistAsync(YouTubePlaylist playlist)
         {
-            string endpoint = "playlists?part=snippet,status";
-            var response = await PostAsync(endpoint, playlist);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<YouTubePlaylist>(json);
+            try
+            {
+                var result = await PostAsync("playlists?part=snippet,status", playlist);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdPlaylist = JsonSerializer.Deserialize<YouTubePlaylist>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<YouTubePlaylist> { createdPlaylist }.Select(p => p.Attach<YouTubePlaylist>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating playlist: {ex.Message}");
+            }
+            return new List<YouTubePlaylist>();
         }
 
         // PUT methods for updating entities
-        [CommandAttribute(ObjectType = "YouTubePlaylist", PointType = EnumPointType.Function, Name = "UpdatePlaylist", Caption = "Update YouTube Playlist", ClassName = "YouTubeDataSource", misc = "ReturnType: YouTubePlaylist")]
-        public async Task<YouTubePlaylist> UpdatePlaylistAsync(string playlistId, YouTubePlaylist playlist)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.YouTube, PointType = EnumPointType.Function, ObjectType = "YouTubePlaylist", Name = "UpdatePlaylist", Caption = "Update YouTube Playlist", ClassType = "YouTubeDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "youtube.png", misc = "ReturnType: IEnumerable<YouTubePlaylist>")]
+        public async Task<IEnumerable<YouTubePlaylist>> UpdatePlaylistAsync(YouTubePlaylist playlist)
         {
-            string endpoint = $"playlists?part=snippet,status&id={playlistId}";
-            var response = await PutAsync(endpoint, playlist);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<YouTubePlaylist>(json);
+            try
+            {
+                var result = await PutAsync($"playlists?part=snippet,status&id={playlist.Id}", playlist);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedPlaylist = JsonSerializer.Deserialize<YouTubePlaylist>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<YouTubePlaylist> { updatedPlaylist }.Select(p => p.Attach<YouTubePlaylist>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating playlist: {ex.Message}");
+            }
+            return new List<YouTubePlaylist>();
         }
     }
 }

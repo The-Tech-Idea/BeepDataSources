@@ -214,32 +214,32 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Klaviyo
         }
 
         // CommandAttribute methods for framework integration
-    [CommandAttribute(ObjectType = nameof(KlaviyoProfile), PointType = PointType.Function, Name = "GetProfiles", Caption = "Get Profiles", ClassName = "KlaviyoDataSource", misc = "GetProfiles")]
+    [CommandAttribute(ObjectType = nameof(KlaviyoProfile), PointType = EnumPointType.Function, Name = "GetProfiles", Caption = "Get Profiles", ClassName = "KlaviyoDataSource", misc = "GetProfiles")]
         public IEnumerable<KlaviyoProfile> GetProfiles()
         {
             return GetEntity("profiles", null).Cast<KlaviyoProfile>();
         }
 
-    [CommandAttribute(ObjectType = nameof(KlaviyoList), PointType = PointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "KlaviyoDataSource", misc = "GetLists")]
+    [CommandAttribute(ObjectType = nameof(KlaviyoList), PointType = EnumPointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "KlaviyoDataSource", misc = "GetLists")]
         public IEnumerable<KlaviyoList> GetLists()
         {
             return GetEntity("lists", null).Cast<KlaviyoList>();
         }
 
-    [CommandAttribute(ObjectType = nameof(KlaviyoSegment), PointType = PointType.Function, Name = "GetSegments", Caption = "Get Segments", ClassName = "KlaviyoDataSource", misc = "GetSegments")]
+    [CommandAttribute(ObjectType = nameof(KlaviyoSegment), PointType = EnumPointType.Function, Name = "GetSegments", Caption = "Get Segments", ClassName = "KlaviyoDataSource", misc = "GetSegments")]
         public IEnumerable<KlaviyoSegment> GetSegments()
         {
             return GetEntity("segments", null).Cast<KlaviyoSegment>();
         }
 
-    [CommandAttribute(ObjectType = nameof(KlaviyoCampaign), PointType = PointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "KlaviyoDataSource", misc = "GetCampaigns")]
+    [CommandAttribute(ObjectType = nameof(KlaviyoCampaign), PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "KlaviyoDataSource", misc = "GetCampaigns")]
         public IEnumerable<KlaviyoCampaign> GetCampaigns()
         {
             return GetEntity("campaigns", null).Cast<KlaviyoCampaign>();
         }
 
         // POST/PUT methods for creating and updating entities
-    [CommandAttribute(ObjectType = nameof(KlaviyoProfile), PointType = PointType.Function, Name = "CreateProfile", Caption = "Create Profile", ClassName = "KlaviyoDataSource", misc = "CreateProfile")]
+    [CommandAttribute(ObjectType = nameof(KlaviyoProfile), PointType = EnumPointType.Function, Name = "CreateProfile", Caption = "Create Profile", ClassName = "KlaviyoDataSource", misc = "CreateProfile")]
         public async Task<KlaviyoProfile> CreateProfile(KlaviyoProfile profile)
         {
             var endpoint = "profiles";
@@ -247,7 +247,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Klaviyo
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(KlaviyoProfile), PointType = PointType.Function, Name = "UpdateProfile", Caption = "Update Profile", ClassName = "KlaviyoDataSource", misc = "UpdateProfile")]
+    [CommandAttribute(ObjectType = nameof(KlaviyoProfile), PointType = EnumPointType.Function, Name = "UpdateProfile", Caption = "Update Profile", ClassName = "KlaviyoDataSource", misc = "UpdateProfile")]
         public async Task<KlaviyoProfile> UpdateProfile(string profileId, KlaviyoProfile profile)
         {
             var endpoint = $"profiles/{profileId}";
@@ -255,7 +255,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Klaviyo
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(KlaviyoList), PointType = PointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "KlaviyoDataSource", misc = "CreateList")]
+    [CommandAttribute(ObjectType = nameof(KlaviyoList), PointType = EnumPointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "KlaviyoDataSource", misc = "CreateList")]
         public async Task<KlaviyoList> CreateList(KlaviyoList list)
         {
             var endpoint = "lists";
@@ -263,7 +263,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Klaviyo
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(KlaviyoList), PointType = PointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "KlaviyoDataSource", misc = "UpdateList")]
+    [CommandAttribute(ObjectType = nameof(KlaviyoList), PointType = EnumPointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "KlaviyoDataSource", misc = "UpdateList")]
         public async Task<KlaviyoList> UpdateList(string listId, KlaviyoList list)
         {
             var endpoint = $"lists/{listId}";
@@ -271,7 +271,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Klaviyo
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(KlaviyoCampaign), PointType = PointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "KlaviyoDataSource", misc = "CreateCampaign")]
+    [CommandAttribute(ObjectType = nameof(KlaviyoCampaign), PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "KlaviyoDataSource", misc = "CreateCampaign")]
         public async Task<KlaviyoCampaign> CreateCampaign(KlaviyoCampaign campaign)
         {
             var endpoint = "campaigns";
@@ -279,7 +279,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Klaviyo
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(KlaviyoCampaign), PointType = PointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "KlaviyoDataSource", misc = "UpdateCampaign")]
+    [CommandAttribute(ObjectType = nameof(KlaviyoCampaign), PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "KlaviyoDataSource", misc = "UpdateCampaign")]
         public async Task<KlaviyoCampaign> UpdateCampaign(string campaignId, KlaviyoCampaign campaign)
         {
             var endpoint = $"campaigns/{campaignId}";
@@ -287,7 +287,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Klaviyo
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(KlaviyoSegment), PointType = PointType.Function, Name = "CreateSegment", Caption = "Create Segment", ClassName = "KlaviyoDataSource", misc = "CreateSegment")]
+    [CommandAttribute(ObjectType = nameof(KlaviyoSegment), PointType = EnumPointType.Function, Name = "CreateSegment", Caption = "Create Segment", ClassName = "KlaviyoDataSource", misc = "CreateSegment")]
         public async Task<KlaviyoSegment> CreateSegment(KlaviyoSegment segment)
         {
             var endpoint = "segments";
@@ -295,7 +295,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Klaviyo
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(KlaviyoSegment), PointType = PointType.Function, Name = "UpdateSegment", Caption = "Update Segment", ClassName = "KlaviyoDataSource", misc = "UpdateSegment")]
+    [CommandAttribute(ObjectType = nameof(KlaviyoSegment), PointType = EnumPointType.Function, Name = "UpdateSegment", Caption = "Update Segment", ClassName = "KlaviyoDataSource", misc = "UpdateSegment")]
         public async Task<KlaviyoSegment> UpdateSegment(string segmentId, KlaviyoSegment segment)
         {
             var endpoint = $"segments/{segmentId}";

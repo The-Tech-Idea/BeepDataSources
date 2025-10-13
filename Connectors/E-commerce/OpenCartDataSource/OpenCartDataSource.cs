@@ -273,6 +273,206 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCart
             return result.Cast<OpenCartManufacturer>();
         }
 
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Products", Name = "CreateProduct", Caption = "Create OpenCart Product", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 6, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartProduct>")]
+        public async Task<IEnumerable<OpenCartProduct>> CreateProductAsync(OpenCartProduct product)
+        {
+            try
+            {
+                var result = await PostAsync("products", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdProduct = JsonSerializer.Deserialize<OpenCartProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<OpenCartProduct> { createdProduct }.Select(p => p.Attach<OpenCartProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating product: {ex.Message}");
+            }
+            return new List<OpenCartProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Products", Name = "UpdateProduct", Caption = "Update OpenCart Product", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 7, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartProduct>")]
+        public async Task<IEnumerable<OpenCartProduct>> UpdateProductAsync(OpenCartProduct product)
+        {
+            try
+            {
+                var result = await PutAsync($"products/{product.Id}", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedProduct = JsonSerializer.Deserialize<OpenCartProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<OpenCartProduct> { updatedProduct }.Select(p => p.Attach<OpenCartProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating product: {ex.Message}");
+            }
+            return new List<OpenCartProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "CreateOrder", Caption = "Create OpenCart Order", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 8, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartOrder>")]
+        public async Task<IEnumerable<OpenCartOrder>> CreateOrderAsync(OpenCartOrder order)
+        {
+            try
+            {
+                var result = await PostAsync("orders", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdOrder = JsonSerializer.Deserialize<OpenCartOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<OpenCartOrder> { createdOrder }.Select(o => o.Attach<OpenCartOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating order: {ex.Message}");
+            }
+            return new List<OpenCartOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "UpdateOrder", Caption = "Update OpenCart Order", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartOrder>")]
+        public async Task<IEnumerable<OpenCartOrder>> UpdateOrderAsync(OpenCartOrder order)
+        {
+            try
+            {
+                var result = await PutAsync($"orders/{order.Id}", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedOrder = JsonSerializer.Deserialize<OpenCartOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<OpenCartOrder> { updatedOrder }.Select(o => o.Attach<OpenCartOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating order: {ex.Message}");
+            }
+            return new List<OpenCartOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Customers", Name = "CreateCustomer", Caption = "Create OpenCart Customer", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartCustomer>")]
+        public async Task<IEnumerable<OpenCartCustomer>> CreateCustomerAsync(OpenCartCustomer customer)
+        {
+            try
+            {
+                var result = await PostAsync("customers", customer);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCustomer = JsonSerializer.Deserialize<OpenCartCustomer>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<OpenCartCustomer> { createdCustomer }.Select(c => c.Attach<OpenCartCustomer>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating customer: {ex.Message}");
+            }
+            return new List<OpenCartCustomer>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Customers", Name = "UpdateCustomer", Caption = "Update OpenCart Customer", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartCustomer>")]
+        public async Task<IEnumerable<OpenCartCustomer>> UpdateCustomerAsync(OpenCartCustomer customer)
+        {
+            try
+            {
+                var result = await PutAsync($"customers/{customer.Id}", customer);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCustomer = JsonSerializer.Deserialize<OpenCartCustomer>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<OpenCartCustomer> { updatedCustomer }.Select(c => c.Attach<OpenCartCustomer>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating customer: {ex.Message}");
+            }
+            return new List<OpenCartCustomer>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "CreateCategory", Caption = "Create OpenCart Category", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartCategory>")]
+        public async Task<IEnumerable<OpenCartCategory>> CreateCategoryAsync(OpenCartCategory category)
+        {
+            try
+            {
+                var result = await PostAsync("categories", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCategory = JsonSerializer.Deserialize<OpenCartCategory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<OpenCartCategory> { createdCategory }.Select(c => c.Attach<OpenCartCategory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating category: {ex.Message}");
+            }
+            return new List<OpenCartCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "UpdateCategory", Caption = "Update OpenCart Category", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartCategory>")]
+        public async Task<IEnumerable<OpenCartCategory>> UpdateCategoryAsync(OpenCartCategory category)
+        {
+            try
+            {
+                var result = await PutAsync($"categories/{category.Id}", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCategory = JsonSerializer.Deserialize<OpenCartCategory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<OpenCartCategory> { updatedCategory }.Select(c => c.Attach<OpenCartCategory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating category: {ex.Message}");
+            }
+            return new List<OpenCartCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Manufacturers", Name = "CreateManufacturer", Caption = "Create OpenCart Manufacturer", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartManufacturer>")]
+        public async Task<IEnumerable<OpenCartManufacturer>> CreateManufacturerAsync(OpenCartManufacturer manufacturer)
+        {
+            try
+            {
+                var result = await PostAsync("manufacturers", manufacturer);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdManufacturer = JsonSerializer.Deserialize<OpenCartManufacturer>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<OpenCartManufacturer> { createdManufacturer }.Select(m => m.Attach<OpenCartManufacturer>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating manufacturer: {ex.Message}");
+            }
+            return new List<OpenCartManufacturer>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Manufacturers", Name = "UpdateManufacturer", Caption = "Update OpenCart Manufacturer", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartManufacturer>")]
+        public async Task<IEnumerable<OpenCartManufacturer>> UpdateManufacturerAsync(OpenCartManufacturer manufacturer)
+        {
+            try
+            {
+                var result = await PutAsync($"manufacturers/{manufacturer.Id}", manufacturer);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedManufacturer = JsonSerializer.Deserialize<OpenCartManufacturer>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<OpenCartManufacturer> { updatedManufacturer }.Select(m => m.Attach<OpenCartManufacturer>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating manufacturer: {ex.Message}");
+            }
+            return new List<OpenCartManufacturer>();
+        }
+
         #endregion
     }
 }

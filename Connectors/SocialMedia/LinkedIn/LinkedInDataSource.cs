@@ -582,25 +582,45 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
         }
 
         // POST methods for creating entities
-        [CommandAttribute(ObjectType = "LinkedInPost", PointType = EnumPointType.Function, Name = "CreatePost", Caption = "Create LinkedIn Post", ClassName = "LinkedInDataSource", misc = "ReturnType: LinkedInPost")]
-        public async Task<LinkedInPost> CreatePostAsync(LinkedInPost post)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LinkedIn, PointType = EnumPointType.Function, ObjectType = "LinkedInPost", Name = "CreatePost", Caption = "Create LinkedIn Post", ClassType = "LinkedInDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "linkedin.png", misc = "ReturnType: IEnumerable<LinkedInPost>")]
+        public async Task<IEnumerable<LinkedInPost>> CreatePostAsync(LinkedInPost post)
         {
-            string endpoint = "posts";
-            var response = await PostAsync(endpoint, post);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<LinkedInPost>(json);
+            try
+            {
+                var result = await PostAsync("posts", post);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdPost = JsonSerializer.Deserialize<LinkedInPost>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<LinkedInPost> { createdPost }.Select(p => p.Attach<LinkedInPost>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating post: {ex.Message}");
+            }
+            return new List<LinkedInPost>();
         }
 
         // PUT methods for updating entities
-        [CommandAttribute(ObjectType = "LinkedInPost", PointType = EnumPointType.Function, Name = "UpdatePost", Caption = "Update LinkedIn Post", ClassName = "LinkedInDataSource", misc = "ReturnType: LinkedInPost")]
-        public async Task<LinkedInPost> UpdatePostAsync(string postId, LinkedInPost post)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LinkedIn, PointType = EnumPointType.Function, ObjectType = "LinkedInPost", Name = "UpdatePost", Caption = "Update LinkedIn Post", ClassType = "LinkedInDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "linkedin.png", misc = "ReturnType: IEnumerable<LinkedInPost>")]
+        public async Task<IEnumerable<LinkedInPost>> UpdatePostAsync(LinkedInPost post)
         {
-            string endpoint = $"posts/{postId}";
-            var response = await PutAsync(endpoint, post);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<LinkedInPost>(json);
+            try
+            {
+                var result = await PutAsync($"posts/{post.Id}", post);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedPost = JsonSerializer.Deserialize<LinkedInPost>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<LinkedInPost> { updatedPost }.Select(p => p.Attach<LinkedInPost>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating post: {ex.Message}");
+            }
+            return new List<LinkedInPost>();
         }
     }
 }

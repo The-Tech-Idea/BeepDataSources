@@ -338,37 +338,214 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
             return GetEntity("changes", new List<AppFilter>()).Cast<GoogleDriveChange>().ToList();
         }
 
-        [CommandAttribute(Name = "CreateFileAsync", Caption = "Create Google Drive File",
-            ObjectType = "GoogleDriveFile", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive,
-            ClassType = "GoogleDriveDataSource", Showin = ShowinType.Both, Order = 1,
-            iconimage = "googledrive.png", misc = "Create a file or folder")]
-        public async Task<IEnumerable<GoogleDriveFile>> CreateFileAsync(GoogleDriveFile file, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateFileAsync",
+            Caption = "Create Google Drive File",
+            ObjectType = "GoogleDriveFile",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleDrive,
+            ClassType = "GoogleDriveDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "createfile.png",
+            misc = "ReturnType: IEnumerable<GoogleDriveFile>"
+        )]
+        public async Task<IEnumerable<GoogleDriveFile>> CreateFileAsync(GoogleDriveFile file)
         {
-            var result = await PostAsync("files", file, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<GoogleDriveFile>>(result);
+            try
+            {
+                var result = await PostAsync("files", file);
+                var files = JsonSerializer.Deserialize<IEnumerable<GoogleDriveFile>>(result);
+                if (files != null)
+                {
+                    foreach (var f in files)
+                    {
+                        f.Attach<GoogleDriveFile>(this);
+                    }
+                }
+                return files;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating file: {ex.Message}");
+            }
+            return new List<GoogleDriveFile>();
         }
 
-        [CommandAttribute(Name = "CreatePermissionAsync", Caption = "Create Google Drive Permission",
-            ObjectType = "GoogleDrivePermission", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive,
-            ClassType = "GoogleDriveDataSource", Showin = ShowinType.Both, Order = 2,
-            iconimage = "googledrive.png", misc = "Create a permission for a file")]
-        public async Task<IEnumerable<GoogleDrivePermission>> CreatePermissionAsync(GoogleDrivePermission permission, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreatePermissionAsync",
+            Caption = "Create Google Drive Permission",
+            ObjectType = "GoogleDrivePermission",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleDrive,
+            ClassType = "GoogleDriveDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "createpermission.png",
+            misc = "ReturnType: IEnumerable<GoogleDrivePermission>"
+        )]
+        public async Task<IEnumerable<GoogleDrivePermission>> CreatePermissionAsync(GoogleDrivePermission permission)
         {
-            var result = await PostAsync("permissions", permission, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<GoogleDrivePermission>>(result);
+            try
+            {
+                var result = await PostAsync("permissions", permission);
+                var permissions = JsonSerializer.Deserialize<IEnumerable<GoogleDrivePermission>>(result);
+                if (permissions != null)
+                {
+                    foreach (var p in permissions)
+                    {
+                        p.Attach<GoogleDrivePermission>(this);
+                    }
+                }
+                return permissions;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating permission: {ex.Message}");
+            }
+            return new List<GoogleDrivePermission>();
         }
 
-        [CommandAttribute(Name = "CreateCommentAsync", Caption = "Create Google Drive Comment",
-            ObjectType = "GoogleDriveComment", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive,
-            ClassType = "GoogleDriveDataSource", Showin = ShowinType.Both, Order = 3,
-            iconimage = "googledrive.png", misc = "Create a comment on a file")]
-        public async Task<IEnumerable<GoogleDriveComment>> CreateCommentAsync(GoogleDriveComment comment, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateCommentAsync",
+            Caption = "Create Google Drive Comment",
+            ObjectType = "GoogleDriveComment",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleDrive,
+            ClassType = "GoogleDriveDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "createcomment.png",
+            misc = "ReturnType: IEnumerable<GoogleDriveComment>"
+        )]
+        public async Task<IEnumerable<GoogleDriveComment>> CreateCommentAsync(GoogleDriveComment comment)
         {
-            var result = await PostAsync("comments", comment, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<GoogleDriveComment>>(result);
+            try
+            {
+                var result = await PostAsync("comments", comment);
+                var comments = JsonSerializer.Deserialize<IEnumerable<GoogleDriveComment>>(result);
+                if (comments != null)
+                {
+                    foreach (var c in comments)
+                    {
+                        c.Attach<GoogleDriveComment>(this);
+                    }
+                }
+                return comments;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating comment: {ex.Message}");
+            }
+            return new List<GoogleDriveComment>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFileAsync",
+            Caption = "Update Google Drive File",
+            ObjectType = "GoogleDriveFile",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleDrive,
+            ClassType = "GoogleDriveDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "updatefile.png",
+            misc = "ReturnType: IEnumerable<GoogleDriveFile>"
+        )]
+        public async Task<IEnumerable<GoogleDriveFile>> UpdateFileAsync(GoogleDriveFile file)
+        {
+            try
+            {
+                var result = await PatchAsync("files/{file_id}", file);
+                var files = JsonSerializer.Deserialize<IEnumerable<GoogleDriveFile>>(result);
+                if (files != null)
+                {
+                    foreach (var f in files)
+                    {
+                        f.Attach<GoogleDriveFile>(this);
+                    }
+                }
+                return files;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating file: {ex.Message}");
+            }
+            return new List<GoogleDriveFile>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdatePermissionAsync",
+            Caption = "Update Google Drive Permission",
+            ObjectType = "GoogleDrivePermission",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleDrive,
+            ClassType = "GoogleDriveDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "updatepermission.png",
+            misc = "ReturnType: IEnumerable<GoogleDrivePermission>"
+        )]
+        public async Task<IEnumerable<GoogleDrivePermission>> UpdatePermissionAsync(GoogleDrivePermission permission)
+        {
+            try
+            {
+                var result = await PatchAsync("permissions/{permission_id}", permission);
+                var permissions = JsonSerializer.Deserialize<IEnumerable<GoogleDrivePermission>>(result);
+                if (permissions != null)
+                {
+                    foreach (var p in permissions)
+                    {
+                        p.Attach<GoogleDrivePermission>(this);
+                    }
+                }
+                return permissions;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating permission: {ex.Message}");
+            }
+            return new List<GoogleDrivePermission>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateCommentAsync",
+            Caption = "Update Google Drive Comment",
+            ObjectType = "GoogleDriveComment",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.GoogleDrive,
+            ClassType = "GoogleDriveDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "updatecomment.png",
+            misc = "ReturnType: IEnumerable<GoogleDriveComment>"
+        )]
+        public async Task<IEnumerable<GoogleDriveComment>> UpdateCommentAsync(GoogleDriveComment comment)
+        {
+            try
+            {
+                var result = await PatchAsync("comments/{comment_id}", comment);
+                var comments = JsonSerializer.Deserialize<IEnumerable<GoogleDriveComment>>(result);
+                if (comments != null)
+                {
+                    foreach (var c in comments)
+                    {
+                        c.Attach<GoogleDriveComment>(this);
+                    }
+                }
+                return comments;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating comment: {ex.Message}");
+            }
+            return new List<GoogleDriveComment>();
         }
 
         #endregion

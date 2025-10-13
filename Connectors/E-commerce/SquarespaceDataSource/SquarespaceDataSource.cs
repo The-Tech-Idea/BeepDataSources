@@ -250,6 +250,366 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return result.Cast<SquarespaceInventory>();
         }
 
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Products", Name = "CreateProduct", Caption = "Create Squarespace Product", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceProduct>")]
+        public async Task<IEnumerable<SquarespaceProduct>> CreateProductAsync(SquarespaceProduct product)
+        {
+            try
+            {
+                var result = await PostAsync("products", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdProduct = JsonSerializer.Deserialize<SquarespaceProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceProduct> { createdProduct }.Select(p => p.Attach<SquarespaceProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating product: {ex.Message}");
+            }
+            return new List<SquarespaceProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Products", Name = "UpdateProduct", Caption = "Update Squarespace Product", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceProduct>")]
+        public async Task<IEnumerable<SquarespaceProduct>> UpdateProductAsync(SquarespaceProduct product)
+        {
+            try
+            {
+                var result = await PutAsync($"products/{product.Id}", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedProduct = JsonSerializer.Deserialize<SquarespaceProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceProduct> { updatedProduct }.Select(p => p.Attach<SquarespaceProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating product: {ex.Message}");
+            }
+            return new List<SquarespaceProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "CreateOrder", Caption = "Create Squarespace Order", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceOrder>")]
+        public async Task<IEnumerable<SquarespaceOrder>> CreateOrderAsync(SquarespaceOrder order)
+        {
+            try
+            {
+                var result = await PostAsync("orders", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdOrder = JsonSerializer.Deserialize<SquarespaceOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceOrder> { createdOrder }.Select(o => o.Attach<SquarespaceOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating order: {ex.Message}");
+            }
+            return new List<SquarespaceOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "UpdateOrder", Caption = "Update Squarespace Order", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceOrder>")]
+        public async Task<IEnumerable<SquarespaceOrder>> UpdateOrderAsync(SquarespaceOrder order)
+        {
+            try
+            {
+                var result = await PutAsync($"orders/{order.Id}", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedOrder = JsonSerializer.Deserialize<SquarespaceOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceOrder> { updatedOrder }.Select(o => o.Attach<SquarespaceOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating order: {ex.Message}");
+            }
+            return new List<SquarespaceOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Profiles", Name = "CreateProfile", Caption = "Create Squarespace Profile", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceProfile>")]
+        public async Task<IEnumerable<SquarespaceProfile>> CreateProfileAsync(SquarespaceProfile profile)
+        {
+            try
+            {
+                var result = await PostAsync("profiles", profile);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdProfile = JsonSerializer.Deserialize<SquarespaceProfile>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceProfile> { createdProfile }.Select(p => p.Attach<SquarespaceProfile>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating profile: {ex.Message}");
+            }
+            return new List<SquarespaceProfile>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Profiles", Name = "UpdateProfile", Caption = "Update Squarespace Profile", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceProfile>")]
+        public async Task<IEnumerable<SquarespaceProfile>> UpdateProfileAsync(SquarespaceProfile profile)
+        {
+            try
+            {
+                var result = await PutAsync($"profiles/{profile.Id}", profile);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedProfile = JsonSerializer.Deserialize<SquarespaceProfile>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceProfile> { updatedProfile }.Select(p => p.Attach<SquarespaceProfile>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating profile: {ex.Message}");
+            }
+            return new List<SquarespaceProfile>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Pages", Name = "CreatePage", Caption = "Create Squarespace Page", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespacePage>")]
+        public async Task<IEnumerable<SquarespacePage>> CreatePageAsync(SquarespacePage page)
+        {
+            try
+            {
+                var result = await PostAsync("pages", page);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdPage = JsonSerializer.Deserialize<SquarespacePage>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespacePage> { createdPage }.Select(p => p.Attach<SquarespacePage>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating page: {ex.Message}");
+            }
+            return new List<SquarespacePage>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Pages", Name = "UpdatePage", Caption = "Update Squarespace Page", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespacePage>")]
+        public async Task<IEnumerable<SquarespacePage>> UpdatePageAsync(SquarespacePage page)
+        {
+            try
+            {
+                var result = await PutAsync($"pages/{page.Id}", page);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedPage = JsonSerializer.Deserialize<SquarespacePage>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespacePage> { updatedPage }.Select(p => p.Attach<SquarespacePage>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating page: {ex.Message}");
+            }
+            return new List<SquarespacePage>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Blogs", Name = "CreateBlog", Caption = "Create Squarespace Blog", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceBlog>")]
+        public async Task<IEnumerable<SquarespaceBlog>> CreateBlogAsync(SquarespaceBlog blog)
+        {
+            try
+            {
+                var result = await PostAsync("blogs", blog);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdBlog = JsonSerializer.Deserialize<SquarespaceBlog>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceBlog> { createdBlog }.Select(b => b.Attach<SquarespaceBlog>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating blog: {ex.Message}");
+            }
+            return new List<SquarespaceBlog>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Blogs", Name = "UpdateBlog", Caption = "Update Squarespace Blog", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceBlog>")]
+        public async Task<IEnumerable<SquarespaceBlog>> UpdateBlogAsync(SquarespaceBlog blog)
+        {
+            try
+            {
+                var result = await PutAsync($"blogs/{blog.Id}", blog);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedBlog = JsonSerializer.Deserialize<SquarespaceBlog>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceBlog> { updatedBlog }.Select(b => b.Attach<SquarespaceBlog>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating blog: {ex.Message}");
+            }
+            return new List<SquarespaceBlog>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Events", Name = "CreateEvent", Caption = "Create Squarespace Event", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceEvent>")]
+        public async Task<IEnumerable<SquarespaceEvent>> CreateEventAsync(SquarespaceEvent @event)
+        {
+            try
+            {
+                var result = await PostAsync("events", @event);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdEvent = JsonSerializer.Deserialize<SquarespaceEvent>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceEvent> { createdEvent }.Select(e => e.Attach<SquarespaceEvent>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating event: {ex.Message}");
+            }
+            return new List<SquarespaceEvent>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Events", Name = "UpdateEvent", Caption = "Update Squarespace Event", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceEvent>")]
+        public async Task<IEnumerable<SquarespaceEvent>> UpdateEventAsync(SquarespaceEvent @event)
+        {
+            try
+            {
+                var result = await PutAsync($"events/{@event.Id}", @event);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedEvent = JsonSerializer.Deserialize<SquarespaceEvent>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceEvent> { updatedEvent }.Select(e => e.Attach<SquarespaceEvent>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating event: {ex.Message}");
+            }
+            return new List<SquarespaceEvent>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Galleries", Name = "CreateGallery", Caption = "Create Squarespace Gallery", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 22, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceGallery>")]
+        public async Task<IEnumerable<SquarespaceGallery>> CreateGalleryAsync(SquarespaceGallery gallery)
+        {
+            try
+            {
+                var result = await PostAsync("galleries", gallery);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdGallery = JsonSerializer.Deserialize<SquarespaceGallery>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceGallery> { createdGallery }.Select(g => g.Attach<SquarespaceGallery>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating gallery: {ex.Message}");
+            }
+            return new List<SquarespaceGallery>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Galleries", Name = "UpdateGallery", Caption = "Update Squarespace Gallery", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 23, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceGallery>")]
+        public async Task<IEnumerable<SquarespaceGallery>> UpdateGalleryAsync(SquarespaceGallery gallery)
+        {
+            try
+            {
+                var result = await PutAsync($"galleries/{gallery.Id}", gallery);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedGallery = JsonSerializer.Deserialize<SquarespaceGallery>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceGallery> { updatedGallery }.Select(g => g.Attach<SquarespaceGallery>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating gallery: {ex.Message}");
+            }
+            return new List<SquarespaceGallery>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "CreateCategory", Caption = "Create Squarespace Category", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 24, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceCategory>")]
+        public async Task<IEnumerable<SquarespaceCategory>> CreateCategoryAsync(SquarespaceCategory category)
+        {
+            try
+            {
+                var result = await PostAsync("categories", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCategory = JsonSerializer.Deserialize<SquarespaceCategory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceCategory> { createdCategory }.Select(c => c.Attach<SquarespaceCategory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating category: {ex.Message}");
+            }
+            return new List<SquarespaceCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "UpdateCategory", Caption = "Update Squarespace Category", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 25, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceCategory>")]
+        public async Task<IEnumerable<SquarespaceCategory>> UpdateCategoryAsync(SquarespaceCategory category)
+        {
+            try
+            {
+                var result = await PutAsync($"categories/{category.Id}", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCategory = JsonSerializer.Deserialize<SquarespaceCategory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceCategory> { updatedCategory }.Select(c => c.Attach<SquarespaceCategory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating category: {ex.Message}");
+            }
+            return new List<SquarespaceCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Inventory", Name = "CreateInventory", Caption = "Create Squarespace Inventory", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 26, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceInventory>")]
+        public async Task<IEnumerable<SquarespaceInventory>> CreateInventoryAsync(SquarespaceInventory inventory)
+        {
+            try
+            {
+                var result = await PostAsync("inventory", inventory);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdInventory = JsonSerializer.Deserialize<SquarespaceInventory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceInventory> { createdInventory }.Select(i => i.Attach<SquarespaceInventory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating inventory: {ex.Message}");
+            }
+            return new List<SquarespaceInventory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Inventory", Name = "UpdateInventory", Caption = "Update Squarespace Inventory", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 27, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceInventory>")]
+        public async Task<IEnumerable<SquarespaceInventory>> UpdateInventoryAsync(SquarespaceInventory inventory)
+        {
+            try
+            {
+                var result = await PutAsync($"inventory/{inventory.Id}", inventory);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedInventory = JsonSerializer.Deserialize<SquarespaceInventory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SquarespaceInventory> { updatedInventory }.Select(i => i.Attach<SquarespaceInventory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating inventory: {ex.Message}");
+            }
+            return new List<SquarespaceInventory>();
+        }
+
         #endregion
     }
 }

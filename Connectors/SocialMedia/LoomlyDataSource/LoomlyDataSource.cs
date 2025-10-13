@@ -241,40 +241,84 @@ namespace TheTechIdea.Beep.Connectors.Loomly
         }
 
         // POST methods for creating entities
-        [CommandAttribute(ObjectType = "LoomlyPost", PointType = EnumPointType.Function, Name = "CreatePost", Caption = "Create Loomly Post", ClassName = "LoomlyDataSource", misc = "ReturnType: LoomlyPost")]
-        public async Task<LoomlyPost> CreatePostAsync(LoomlyPost post)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Loomly, PointType = EnumPointType.Function, ObjectType = "LoomlyPost", Name = "CreatePost", Caption = "Create Loomly Post", ClassType = "LoomlyDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "loomly.png", misc = "ReturnType: IEnumerable<LoomlyPost>")]
+        public async Task<IEnumerable<LoomlyPost>> CreatePostAsync(LoomlyPost post)
         {
-            var response = await PostAsync("posts", post);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<LoomlyPost>(json);
+            try
+            {
+                var result = await PostAsync("posts", post);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdPost = JsonSerializer.Deserialize<LoomlyPost>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<LoomlyPost> { createdPost }.Select(p => p.Attach<LoomlyPost>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating post: {ex.Message}");
+            }
+            return new List<LoomlyPost>();
         }
 
-        [CommandAttribute(ObjectType = "LoomlyPost", PointType = EnumPointType.Function, Name = "UpdatePost", Caption = "Update Loomly Post", ClassName = "LoomlyDataSource", misc = "ReturnType: LoomlyPost")]
-        public async Task<LoomlyPost> UpdatePostAsync(string postId, LoomlyPost post)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Loomly, PointType = EnumPointType.Function, ObjectType = "LoomlyPost", Name = "UpdatePost", Caption = "Update Loomly Post", ClassType = "LoomlyDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "loomly.png", misc = "ReturnType: IEnumerable<LoomlyPost>")]
+        public async Task<IEnumerable<LoomlyPost>> UpdatePostAsync(LoomlyPost post)
         {
-            var response = await PutAsync($"posts/{postId}", post);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<LoomlyPost>(json);
+            try
+            {
+                var result = await PutAsync($"posts/{post.Id}", post);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedPost = JsonSerializer.Deserialize<LoomlyPost>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<LoomlyPost> { updatedPost }.Select(p => p.Attach<LoomlyPost>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating post: {ex.Message}");
+            }
+            return new List<LoomlyPost>();
         }
 
-        [CommandAttribute(ObjectType = "LoomlyCampaign", PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Loomly Campaign", ClassName = "LoomlyDataSource", misc = "ReturnType: LoomlyCampaign")]
-        public async Task<LoomlyCampaign> CreateCampaignAsync(LoomlyCampaign campaign)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Loomly, PointType = EnumPointType.Function, ObjectType = "LoomlyCampaign", Name = "CreateCampaign", Caption = "Create Loomly Campaign", ClassType = "LoomlyDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "loomly.png", misc = "ReturnType: IEnumerable<LoomlyCampaign>")]
+        public async Task<IEnumerable<LoomlyCampaign>> CreateCampaignAsync(LoomlyCampaign campaign)
         {
-            var response = await PostAsync("campaigns", campaign);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<LoomlyCampaign>(json);
+            try
+            {
+                var result = await PostAsync("campaigns", campaign);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCampaign = JsonSerializer.Deserialize<LoomlyCampaign>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<LoomlyCampaign> { createdCampaign }.Select(c => c.Attach<LoomlyCampaign>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating campaign: {ex.Message}");
+            }
+            return new List<LoomlyCampaign>();
         }
 
-        [CommandAttribute(ObjectType = "LoomlyCampaign", PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update Loomly Campaign", ClassName = "LoomlyDataSource", misc = "ReturnType: LoomlyCampaign")]
-        public async Task<LoomlyCampaign> UpdateCampaignAsync(string campaignId, LoomlyCampaign campaign)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Loomly, PointType = EnumPointType.Function, ObjectType = "LoomlyCampaign", Name = "UpdateCampaign", Caption = "Update Loomly Campaign", ClassType = "LoomlyDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "loomly.png", misc = "ReturnType: IEnumerable<LoomlyCampaign>")]
+        public async Task<IEnumerable<LoomlyCampaign>> UpdateCampaignAsync(LoomlyCampaign campaign)
         {
-            var response = await PutAsync($"campaigns/{campaignId}", campaign);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<LoomlyCampaign>(json);
+            try
+            {
+                var result = await PutAsync($"campaigns/{campaign.Id}", campaign);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCampaign = JsonSerializer.Deserialize<LoomlyCampaign>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<LoomlyCampaign> { updatedCampaign }.Select(c => c.Attach<LoomlyCampaign>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating campaign: {ex.Message}");
+            }
+            return new List<LoomlyCampaign>();
         }
     }
 }

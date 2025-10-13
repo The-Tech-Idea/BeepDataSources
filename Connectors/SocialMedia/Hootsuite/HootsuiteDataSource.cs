@@ -406,21 +406,29 @@ namespace TheTechIdea.Beep.HootsuiteDataSource
             return JsonSerializer.Deserialize<HootsuiteResponse<HootsuiteAnalytics>>(json, options);
         }
 
-        [CommandAttribute(Name = "CreatePost", Caption = "Create Hootsuite Post", ClassName = "HootsuiteDataSource", ObjectType = "HootsuitePost", PointType = EnumPointType.Function, misc = "ReturnType: HootsuitePost")]
-        public async Task<HootsuitePost> CreatePostAsync(HootsuitePost post)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Hootsuite, PointType = EnumPointType.Function, ObjectType = "HootsuitePost", Name = "CreatePost", Caption = "Create Hootsuite Post", ClassType = "HootsuiteDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "hootsuite.png", misc = "ReturnType: IEnumerable<HootsuitePost>")]
+        public async Task<IEnumerable<HootsuitePost>> CreatePostAsync(HootsuitePost post)
         {
-            var response = await PostAsync("v1/messages", post);
-            if (!response.IsSuccessStatusCode)
-                throw new InvalidOperationException($"Hootsuite API request failed: {response.StatusCode}");
-
-            var json = await response.Content.ReadAsStringAsync();
-            var options = new JsonSerializerOptions
+            try
             {
-                PropertyNameCaseInsensitive = true,
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-            };
-
-            return JsonSerializer.Deserialize<HootsuitePost>(json, options);
+                var result = await PostAsync("v1/messages", post);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                    };
+                    var createdPost = JsonSerializer.Deserialize<HootsuitePost>(content, options);
+                    return new List<HootsuitePost> { createdPost }.Select(p => p.Attach<HootsuitePost>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating post: {ex.Message}");
+            }
+            return new List<HootsuitePost>();
         }
     }
 }

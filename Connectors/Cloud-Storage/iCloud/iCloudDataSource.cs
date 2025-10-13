@@ -461,37 +461,214 @@ namespace TheTechIdea.Beep.Connectors.iCloud
             return GetEntity("device", new List<AppFilter> { deviceIdFilter }).Cast<iCloudDevice>();
         }
 
-        [CommandAttribute(Name = "UploadFileAsync", Caption = "Upload iCloud File",
-            ObjectType = "iCloudFile", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.iCloud,
-            ClassType = "iCloudDataSource", Showin = ShowinType.Both, Order = 1,
-            iconimage = "icloud.png", misc = "Upload a file")]
-        public async Task<IEnumerable<iCloudFile>> UploadFileAsync(iCloudFile file, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "UploadFileAsync",
+            Caption = "Upload iCloud File",
+            ObjectType = "iCloudFile",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.iCloud,
+            ClassType = "iCloudDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "uploadfile.png",
+            misc = "ReturnType: IEnumerable<iCloudFile>"
+        )]
+        public async Task<IEnumerable<iCloudFile>> UploadFileAsync(iCloudFile file)
         {
-            var result = await PostAsync("https://icloud.com/api/files", file, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<iCloudFile>>(result);
+            try
+            {
+                var result = await PostAsync("files", file);
+                var files = JsonSerializer.Deserialize<IEnumerable<iCloudFile>>(result);
+                if (files != null)
+                {
+                    foreach (var f in files)
+                    {
+                        f.Attach<iCloudFile>(this);
+                    }
+                }
+                return files;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error uploading file: {ex.Message}");
+            }
+            return new List<iCloudFile>();
         }
 
-        [CommandAttribute(Name = "CreateFolderAsync", Caption = "Create iCloud Folder",
-            ObjectType = "iCloudFolder", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.iCloud,
-            ClassType = "iCloudDataSource", Showin = ShowinType.Both, Order = 2,
-            iconimage = "icloud.png", misc = "Create a folder")]
-        public async Task<IEnumerable<iCloudFolder>> CreateFolderAsync(iCloudFolder folder, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateFolderAsync",
+            Caption = "Create iCloud Folder",
+            ObjectType = "iCloudFolder",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.iCloud,
+            ClassType = "iCloudDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "createfolder.png",
+            misc = "ReturnType: IEnumerable<iCloudFolder>"
+        )]
+        public async Task<IEnumerable<iCloudFolder>> CreateFolderAsync(iCloudFolder folder)
         {
-            var result = await PostAsync("https://icloud.com/api/folders", folder, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<iCloudFolder>>(result);
+            try
+            {
+                var result = await PostAsync("folders", folder);
+                var folders = JsonSerializer.Deserialize<IEnumerable<iCloudFolder>>(result);
+                if (folders != null)
+                {
+                    foreach (var f in folders)
+                    {
+                        f.Attach<iCloudFolder>(this);
+                    }
+                }
+                return folders;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating folder: {ex.Message}");
+            }
+            return new List<iCloudFolder>();
         }
 
-        [CommandAttribute(Name = "CreateShareAsync", Caption = "Create iCloud Share",
-            ObjectType = "iCloudShare", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.iCloud,
-            ClassType = "iCloudDataSource", Showin = ShowinType.Both, Order = 3,
-            iconimage = "icloud.png", misc = "Create a share")]
-        public async Task<IEnumerable<iCloudShare>> CreateShareAsync(iCloudShare share, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateShareAsync",
+            Caption = "Create iCloud Share",
+            ObjectType = "iCloudShare",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.iCloud,
+            ClassType = "iCloudDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "createshare.png",
+            misc = "ReturnType: IEnumerable<iCloudShare>"
+        )]
+        public async Task<IEnumerable<iCloudShare>> CreateShareAsync(iCloudShare share)
         {
-            var result = await PostAsync("https://icloud.com/api/shares", share, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<iCloudShare>>(result);
+            try
+            {
+                var result = await PostAsync("shares", share);
+                var shares = JsonSerializer.Deserialize<IEnumerable<iCloudShare>>(result);
+                if (shares != null)
+                {
+                    foreach (var s in shares)
+                    {
+                        s.Attach<iCloudShare>(this);
+                    }
+                }
+                return shares;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating share: {ex.Message}");
+            }
+            return new List<iCloudShare>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFileAsync",
+            Caption = "Update iCloud File",
+            ObjectType = "iCloudFile",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.iCloud,
+            ClassType = "iCloudDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "updatefile.png",
+            misc = "ReturnType: IEnumerable<iCloudFile>"
+        )]
+        public async Task<IEnumerable<iCloudFile>> UpdateFileAsync(iCloudFile file)
+        {
+            try
+            {
+                var result = await PatchAsync("files", file);
+                var files = JsonSerializer.Deserialize<IEnumerable<iCloudFile>>(result);
+                if (files != null)
+                {
+                    foreach (var f in files)
+                    {
+                        f.Attach<iCloudFile>(this);
+                    }
+                }
+                return files;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating file: {ex.Message}");
+            }
+            return new List<iCloudFile>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFolderAsync",
+            Caption = "Update iCloud Folder",
+            ObjectType = "iCloudFolder",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.iCloud,
+            ClassType = "iCloudDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "updatefolder.png",
+            misc = "ReturnType: IEnumerable<iCloudFolder>"
+        )]
+        public async Task<IEnumerable<iCloudFolder>> UpdateFolderAsync(iCloudFolder folder)
+        {
+            try
+            {
+                var result = await PatchAsync("folders", folder);
+                var folders = JsonSerializer.Deserialize<IEnumerable<iCloudFolder>>(result);
+                if (folders != null)
+                {
+                    foreach (var f in folders)
+                    {
+                        f.Attach<iCloudFolder>(this);
+                    }
+                }
+                return folders;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating folder: {ex.Message}");
+            }
+            return new List<iCloudFolder>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateShareAsync",
+            Caption = "Update iCloud Share",
+            ObjectType = "iCloudShare",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.iCloud,
+            ClassType = "iCloudDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "updateshare.png",
+            misc = "ReturnType: IEnumerable<iCloudShare>"
+        )]
+        public async Task<IEnumerable<iCloudShare>> UpdateShareAsync(iCloudShare share)
+        {
+            try
+            {
+                var result = await PatchAsync("shares", share);
+                var shares = JsonSerializer.Deserialize<IEnumerable<iCloudShare>>(result);
+                if (shares != null)
+                {
+                    foreach (var s in shares)
+                    {
+                        s.Attach<iCloudShare>(this);
+                    }
+                }
+                return shares;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating share: {ex.Message}");
+            }
+            return new List<iCloudShare>();
         }
     }
 }

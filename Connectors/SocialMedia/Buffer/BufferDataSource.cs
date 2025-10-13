@@ -330,16 +330,24 @@ namespace TheTechIdea.Beep.BufferDataSource
             return responseObj?.Data ?? new List<BufferCampaign>();
         }
 
-        [CommandAttribute(ObjectType = "BufferPost", PointType = EnumPointType.Function, Name = "CreatePost", Caption = "Create Buffer Post", ClassName = "BufferDataSource", misc = "ReturnType: BufferPost")]
-        public async Task<BufferPost> CreatePostAsync(BufferPost post)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Buffer, PointType = EnumPointType.Function, ObjectType = "BufferPost", Name = "CreatePost", Caption = "Create Buffer Post", ClassType = "BufferDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "buffer.png", misc = "ReturnType: IEnumerable<BufferPost>")]
+        public async Task<IEnumerable<BufferPost>> CreatePostAsync(BufferPost post)
         {
-            string endpoint = "updates/create.json";
-            var response = await PostAsync(endpoint, post);
-            if (response == null || !response.IsSuccessStatusCode)
-                return null;
-            string json = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<BufferPost>(json);
-            return result;
+            try
+            {
+                var result = await PostAsync("updates/create.json", post);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdPost = JsonSerializer.Deserialize<BufferPost>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BufferPost> { createdPost }.Select(p => p.Attach<BufferPost>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating post: {ex.Message}");
+            }
+            return new List<BufferPost>();
         }
 
         private void RequireFilters(string entityName, string query, string[] required)

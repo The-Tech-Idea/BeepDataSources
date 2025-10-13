@@ -356,37 +356,144 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
         return result.Cast<TgBotCommand>().Select(c => c.Attach<TgBotCommand>(this));
     }
 
-    [CommandAttribute(Name = "SendMessageAsync", Caption = "Send Telegram Message",
-        ObjectType = "TgMessage", PointType = EnumPointType.Function,
-        Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Telegram,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 10,
-        iconimage = "telegram.png", misc = "Send a message to a chat")]
-    public async Task<IEnumerable<TgMessage>> SendMessageAsync(TgMessage message, List<AppFilter> filters = null)
+    [CommandAttribute(
+        Name = "SendMessageAsync",
+        Caption = "Send Telegram Message",
+        ObjectType = "TgMessage",
+        PointType = EnumPointType.Function,
+        Category = DatasourceCategory.Connector,
+        DatasourceType = DataSourceType.Telegram,
+        ClassType = "TelegramDataSource",
+        Showin = ShowinType.Both,
+        Order = 10,
+        iconimage = "sendmessage.png",
+        misc = "ReturnType: IEnumerable<TgMessage>"
+    )]
+    public async Task<IEnumerable<TgMessage>> SendMessageAsync(TgMessage message)
     {
-        var result = await PostAsync("sendMessage", message, filters ?? new List<AppFilter>());
-        return JsonSerializer.Deserialize<IEnumerable<TgMessage>>(result);
+        try
+        {
+            var result = await PostAsync("sendMessage", message);
+            var messages = JsonSerializer.Deserialize<IEnumerable<TgMessage>>(result);
+            if (messages != null)
+            {
+                foreach (var m in messages)
+                {
+                    m.Attach<TgMessage>(this);
+                }
+            }
+            return messages;
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError($"Error sending message: {ex.Message}");
+        }
+        return new List<TgMessage>();
     }
 
-    [CommandAttribute(Name = "SendPhotoAsync", Caption = "Send Telegram Photo",
-        ObjectType = "TgMessage", PointType = EnumPointType.Function,
-        Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Telegram,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 11,
-        iconimage = "telegram.png", misc = "Send a photo to a chat")]
-    public async Task<IEnumerable<TgMessage>> SendPhotoAsync(TgMessage message, List<AppFilter> filters = null)
+    [CommandAttribute(
+        Name = "SendPhotoAsync",
+        Caption = "Send Telegram Photo",
+        ObjectType = "TgMessage",
+        PointType = EnumPointType.Function,
+        Category = DatasourceCategory.Connector,
+        DatasourceType = DataSourceType.Telegram,
+        ClassType = "TelegramDataSource",
+        Showin = ShowinType.Both,
+        Order = 11,
+        iconimage = "sendphoto.png",
+        misc = "ReturnType: IEnumerable<TgMessage>"
+    )]
+    public async Task<IEnumerable<TgMessage>> SendPhotoAsync(TgMessage message)
     {
-        var result = await PostAsync("sendPhoto", message, filters ?? new List<AppFilter>());
-        return JsonSerializer.Deserialize<IEnumerable<TgMessage>>(result);
+        try
+        {
+            var result = await PostAsync("sendPhoto", message);
+            var messages = JsonSerializer.Deserialize<IEnumerable<TgMessage>>(result);
+            if (messages != null)
+            {
+                foreach (var m in messages)
+                {
+                    m.Attach<TgMessage>(this);
+                }
+            }
+            return messages;
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError($"Error sending photo: {ex.Message}");
+        }
+        return new List<TgMessage>();
     }
 
-    [CommandAttribute(Name = "SendDocumentAsync", Caption = "Send Telegram Document",
-        ObjectType = "TgMessage", PointType = EnumPointType.Function,
-        Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Telegram,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 12,
-        iconimage = "telegram.png", misc = "Send a document to a chat")]
-    public async Task<IEnumerable<TgMessage>> SendDocumentAsync(TgMessage message, List<AppFilter> filters = null)
+    [CommandAttribute(
+        Name = "SendDocumentAsync",
+        Caption = "Send Telegram Document",
+        ObjectType = "TgMessage",
+        PointType = EnumPointType.Function,
+        Category = DatasourceCategory.Connector,
+        DatasourceType = DataSourceType.Telegram,
+        ClassType = "TelegramDataSource",
+        Showin = ShowinType.Both,
+        Order = 12,
+        iconimage = "senddocument.png",
+        misc = "ReturnType: IEnumerable<TgMessage>"
+    )]
+    public async Task<IEnumerable<TgMessage>> SendDocumentAsync(TgMessage message)
     {
-        var result = await PostAsync("sendDocument", message, filters ?? new List<AppFilter>());
-        return JsonSerializer.Deserialize<IEnumerable<TgMessage>>(result);
+        try
+        {
+            var result = await PostAsync("sendDocument", message);
+            var messages = JsonSerializer.Deserialize<IEnumerable<TgMessage>>(result);
+            if (messages != null)
+            {
+                foreach (var m in messages)
+                {
+                    m.Attach<TgMessage>(this);
+                }
+            }
+            return messages;
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError($"Error sending document: {ex.Message}");
+        }
+        return new List<TgMessage>();
+    }
+
+    [CommandAttribute(
+        Name = "UpdateMessageAsync",
+        Caption = "Update Telegram Message",
+        ObjectType = "TgMessage",
+        PointType = EnumPointType.Function,
+        Category = DatasourceCategory.Connector,
+        DatasourceType = DataSourceType.Telegram,
+        ClassType = "TelegramDataSource",
+        Showin = ShowinType.Both,
+        Order = 13,
+        iconimage = "updatemessage.png",
+        misc = "ReturnType: IEnumerable<TgMessage>"
+    )]
+    public async Task<IEnumerable<TgMessage>> UpdateMessageAsync(TgMessage message)
+    {
+        try
+        {
+            var result = await PostAsync("editMessageText", message);
+            var messages = JsonSerializer.Deserialize<IEnumerable<TgMessage>>(result);
+            if (messages != null)
+            {
+                foreach (var m in messages)
+                {
+                    m.Attach<TgMessage>(this);
+                }
+            }
+            return messages;
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError($"Error updating message: {ex.Message}");
+        }
+        return new List<TgMessage>();
     }
 }
 }

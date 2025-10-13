@@ -411,6 +411,158 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
                 .Select(x => x.Attach<TwistUser>(this));
         }
 
+        /// <summary>
+        /// Creates a message in a Twist thread
+        /// </summary>
+        [CommandAttribute(
+            Name = "CreateMessageAsync",
+            Caption = "Create Twist Message",
+            ObjectType = "TwistMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twist,
+            ClassType = "TwistDataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "createmessage.png",
+            misc = "ReturnType: IEnumerable<TwistMessage>"
+        )]
+        public async Task<IEnumerable<TwistMessage>> CreateMessageAsync(TwistMessage message)
+        {
+            try
+            {
+                var result = await PostAsync("thread_messages/add", message);
+                var messages = JsonSerializer.Deserialize<IEnumerable<TwistMessage>>(result);
+                if (messages != null)
+                {
+                    foreach (var m in messages)
+                    {
+                        m.Attach<TwistMessage>(this);
+                    }
+                }
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating message: {ex.Message}");
+            }
+            return new List<TwistMessage>();
+        }
+
+        /// <summary>
+        /// Creates a channel in a Twist workspace
+        /// </summary>
+        [CommandAttribute(
+            Name = "CreateChannelAsync",
+            Caption = "Create Twist Channel",
+            ObjectType = "TwistChannel",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twist,
+            ClassType = "TwistDataSource",
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "createchannel.png",
+            misc = "ReturnType: IEnumerable<TwistChannel>"
+        )]
+        public async Task<IEnumerable<TwistChannel>> CreateChannelAsync(TwistChannel channel)
+        {
+            try
+            {
+                var result = await PostAsync("channels/add", channel);
+                var channels = JsonSerializer.Deserialize<IEnumerable<TwistChannel>>(result);
+                if (channels != null)
+                {
+                    foreach (var c in channels)
+                    {
+                        c.Attach<TwistChannel>(this);
+                    }
+                }
+                return channels;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating channel: {ex.Message}");
+            }
+            return new List<TwistChannel>();
+        }
+
+        /// <summary>
+        /// Updates a message in a Twist thread
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateMessageAsync",
+            Caption = "Update Twist Message",
+            ObjectType = "TwistMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twist,
+            ClassType = "TwistDataSource",
+            Showin = ShowinType.Both,
+            Order = 11,
+            iconimage = "updatemessage.png",
+            misc = "ReturnType: IEnumerable<TwistMessage>"
+        )]
+        public async Task<IEnumerable<TwistMessage>> UpdateMessageAsync(TwistMessage message)
+        {
+            try
+            {
+                var result = await PutAsync("thread_messages/update", message);
+                var messages = JsonSerializer.Deserialize<IEnumerable<TwistMessage>>(result);
+                if (messages != null)
+                {
+                    foreach (var m in messages)
+                    {
+                        m.Attach<TwistMessage>(this);
+                    }
+                }
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating message: {ex.Message}");
+            }
+            return new List<TwistMessage>();
+        }
+
+        /// <summary>
+        /// Updates a channel in a Twist workspace
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateChannelAsync",
+            Caption = "Update Twist Channel",
+            ObjectType = "TwistChannel",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Twist,
+            ClassType = "TwistDataSource",
+            Showin = ShowinType.Both,
+            Order = 12,
+            iconimage = "updatechannel.png",
+            misc = "ReturnType: IEnumerable<TwistChannel>"
+        )]
+        public async Task<IEnumerable<TwistChannel>> UpdateChannelAsync(TwistChannel channel)
+        {
+            try
+            {
+                var result = await PutAsync("channels/update", channel);
+                var channels = JsonSerializer.Deserialize<IEnumerable<TwistChannel>>(result);
+                if (channels != null)
+                {
+                    foreach (var c in channels)
+                    {
+                        c.Attach<TwistChannel>(this);
+                    }
+                }
+                return channels;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating channel: {ex.Message}");
+            }
+            return new List<TwistChannel>();
+        }
+
         #endregion
     }
 }

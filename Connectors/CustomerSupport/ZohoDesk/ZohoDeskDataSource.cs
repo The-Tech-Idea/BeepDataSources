@@ -166,5 +166,46 @@ namespace TheTechIdea.Beep.Connectors.ZohoDesk
 
         [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoDesk, PointType = EnumPointType.Function, ObjectType = "organizations", ClassName = "ZohoDeskDataSource", Showin = ShowinType.Both, misc = "Get organizations")]
         public IEnumerable<object> GetOrganizations(List<AppFilter> filter = null) => GetEntity("organizations", filter ?? new List<AppFilter>());
+
+        // POST methods for creating entities
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoDesk, PointType = EnumPointType.Function, ObjectType = "tickets", Name = "CreateTicket", Caption = "Create Zoho Desk Ticket", ClassType = "ZohoDeskDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "zohodesk.png", misc = "ReturnType: IEnumerable<tickets>")]
+        public async Task<IEnumerable<tickets>> CreateTicketAsync(tickets ticket)
+        {
+            try
+            {
+                var result = await PostAsync("api/v1/tickets", ticket);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdTicket = JsonSerializer.Deserialize<tickets>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<tickets> { createdTicket }.Select(t => t.Attach<tickets>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating ticket: {ex.Message}");
+            }
+            return new List<tickets>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.ZohoDesk, PointType = EnumPointType.Function, ObjectType = "tickets", Name = "UpdateTicket", Caption = "Update Zoho Desk Ticket", ClassType = "ZohoDeskDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "zohodesk.png", misc = "ReturnType: IEnumerable<tickets>")]
+        public async Task<IEnumerable<tickets>> UpdateTicketAsync(tickets ticket)
+        {
+            try
+            {
+                var result = await PutAsync($"api/v1/tickets/{ticket.Id}", ticket);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedTicket = JsonSerializer.Deserialize<tickets>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<tickets> { updatedTicket }.Select(t => t.Attach<tickets>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating ticket: {ex.Message}");
+            }
+            return new List<tickets>();
+        }
     }
 }

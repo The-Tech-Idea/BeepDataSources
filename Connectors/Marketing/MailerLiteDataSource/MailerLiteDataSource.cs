@@ -182,38 +182,38 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MailerLite
         }
 
         // CommandAttribute methods for framework integration
-        [CommandAttribute(ObjectType = nameof(MailerLiteSubscriber), PointType = PointType.Function, Name = "GetSubscribers", Caption = "Get Subscribers", ClassName = "MailerLiteDataSource", misc = "GetSubscribers")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteSubscriber), PointType = EnumPointType.Function, Name = "GetSubscribers", Caption = "Get Subscribers", ClassName = "MailerLiteDataSource", misc = "GetSubscribers")]
         public IEnumerable<MailerLiteSubscriber> GetSubscribers()
         {
             return GetEntity("subscribers", null).Cast<MailerLiteSubscriber>();
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteGroup), PointType = PointType.Function, Name = "GetGroups", Caption = "Get Groups", ClassName = "MailerLiteDataSource", misc = "GetGroups")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteGroup), PointType = EnumPointType.Function, Name = "GetGroups", Caption = "Get Groups", ClassName = "MailerLiteDataSource", misc = "GetGroups")]
         public IEnumerable<MailerLiteGroup> GetGroups()
         {
             return GetEntity("groups", null).Cast<MailerLiteGroup>();
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteCampaign), PointType = PointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "MailerLiteDataSource", misc = "GetCampaigns")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteCampaign), PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "MailerLiteDataSource", misc = "GetCampaigns")]
         public IEnumerable<MailerLiteCampaign> GetCampaigns()
         {
             return GetEntity("campaigns", null).Cast<MailerLiteCampaign>();
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteForm), PointType = PointType.Function, Name = "GetForms", Caption = "Get Forms", ClassName = "MailerLiteDataSource", misc = "GetForms")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteForm), PointType = EnumPointType.Function, Name = "GetForms", Caption = "Get Forms", ClassName = "MailerLiteDataSource", misc = "GetForms")]
         public IEnumerable<MailerLiteForm> GetForms()
         {
             return GetEntity("forms", null).Cast<MailerLiteForm>();
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteAutomation), PointType = PointType.Function, Name = "GetAutomations", Caption = "Get Automations", ClassName = "MailerLiteDataSource", misc = "GetAutomations")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteAutomation), PointType = EnumPointType.Function, Name = "GetAutomations", Caption = "Get Automations", ClassName = "MailerLiteDataSource", misc = "GetAutomations")]
         public IEnumerable<MailerLiteAutomation> GetAutomations()
         {
             return GetEntity("automations", null).Cast<MailerLiteAutomation>();
         }
 
         // POST/PUT methods for creating and updating entities
-        [CommandAttribute(ObjectType = nameof(MailerLiteSubscriber), PointType = PointType.Function, Name = "CreateSubscriber", Caption = "Create Subscriber", ClassName = "MailerLiteDataSource", misc = "CreateSubscriber")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteSubscriber), PointType = EnumPointType.Function, Name = "CreateSubscriber", Caption = "Create Subscriber", ClassName = "MailerLiteDataSource", misc = "CreateSubscriber")]
         public async Task<MailerLiteSubscriber> CreateSubscriber(MailerLiteSubscriber subscriber)
         {
             var endpoint = "api/v2/subscribers";
@@ -221,7 +221,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MailerLite
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteSubscriber), PointType = PointType.Function, Name = "UpdateSubscriber", Caption = "Update Subscriber", ClassName = "MailerLiteDataSource", misc = "UpdateSubscriber")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteSubscriber), PointType = EnumPointType.Function, Name = "UpdateSubscriber", Caption = "Update Subscriber", ClassName = "MailerLiteDataSource", misc = "UpdateSubscriber")]
         public async Task<MailerLiteSubscriber> UpdateSubscriber(string subscriberId, MailerLiteSubscriber subscriber)
         {
             var endpoint = $"api/v2/subscribers/{subscriberId}";
@@ -229,7 +229,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MailerLite
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteGroup), PointType = PointType.Function, Name = "CreateGroup", Caption = "Create Group", ClassName = "MailerLiteDataSource", misc = "CreateGroup")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteGroup), PointType = EnumPointType.Function, Name = "CreateGroup", Caption = "Create Group", ClassName = "MailerLiteDataSource", misc = "CreateGroup")]
         public async Task<MailerLiteGroup> CreateGroup(MailerLiteGroup group)
         {
             var endpoint = "api/v2/groups";
@@ -237,7 +237,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MailerLite
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteGroup), PointType = PointType.Function, Name = "UpdateGroup", Caption = "Update Group", ClassName = "MailerLiteDataSource", misc = "UpdateGroup")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteGroup), PointType = EnumPointType.Function, Name = "UpdateGroup", Caption = "Update Group", ClassName = "MailerLiteDataSource", misc = "UpdateGroup")]
         public async Task<MailerLiteGroup> UpdateGroup(string groupId, MailerLiteGroup group)
         {
             var endpoint = $"api/v2/groups/{groupId}";
@@ -245,7 +245,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MailerLite
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteCampaign), PointType = PointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "MailerLiteDataSource", misc = "CreateCampaign")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteCampaign), PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "MailerLiteDataSource", misc = "CreateCampaign")]
         public async Task<MailerLiteCampaign> CreateCampaign(MailerLiteCampaign campaign)
         {
             var endpoint = "api/v2/campaigns";
@@ -253,7 +253,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MailerLite
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteCampaign), PointType = PointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "MailerLiteDataSource", misc = "UpdateCampaign")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteCampaign), PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "MailerLiteDataSource", misc = "UpdateCampaign")]
         public async Task<MailerLiteCampaign> UpdateCampaign(string campaignId, MailerLiteCampaign campaign)
         {
             var endpoint = $"api/v2/campaigns/{campaignId}";
@@ -261,7 +261,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MailerLite
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteForm), PointType = PointType.Function, Name = "CreateForm", Caption = "Create Form", ClassName = "MailerLiteDataSource", misc = "CreateForm")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteForm), PointType = EnumPointType.Function, Name = "CreateForm", Caption = "Create Form", ClassName = "MailerLiteDataSource", misc = "CreateForm")]
         public async Task<MailerLiteForm> CreateForm(MailerLiteForm form)
         {
             var endpoint = "api/v2/forms";
@@ -269,7 +269,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MailerLite
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteForm), PointType = PointType.Function, Name = "UpdateForm", Caption = "Update Form", ClassName = "MailerLiteDataSource", misc = "UpdateForm")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteForm), PointType = EnumPointType.Function, Name = "UpdateForm", Caption = "Update Form", ClassName = "MailerLiteDataSource", misc = "UpdateForm")]
         public async Task<MailerLiteForm> UpdateForm(string formId, MailerLiteForm form)
         {
             var endpoint = $"api/v2/forms/{formId}";
@@ -277,7 +277,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MailerLite
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteAutomation), PointType = PointType.Function, Name = "CreateAutomation", Caption = "Create Automation", ClassName = "MailerLiteDataSource", misc = "CreateAutomation")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteAutomation), PointType = EnumPointType.Function, Name = "CreateAutomation", Caption = "Create Automation", ClassName = "MailerLiteDataSource", misc = "CreateAutomation")]
         public async Task<MailerLiteAutomation> CreateAutomation(MailerLiteAutomation automation)
         {
             var endpoint = "api/v2/automations";
@@ -285,7 +285,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MailerLite
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(MailerLiteAutomation), PointType = PointType.Function, Name = "UpdateAutomation", Caption = "Update Automation", ClassName = "MailerLiteDataSource", misc = "UpdateAutomation")]
+        [CommandAttribute(ObjectType = nameof(MailerLiteAutomation), PointType = EnumPointType.Function, Name = "UpdateAutomation", Caption = "Update Automation", ClassName = "MailerLiteDataSource", misc = "UpdateAutomation")]
         public async Task<MailerLiteAutomation> UpdateAutomation(string automationId, MailerLiteAutomation automation)
         {
             var endpoint = $"api/v2/automations/{automationId}";

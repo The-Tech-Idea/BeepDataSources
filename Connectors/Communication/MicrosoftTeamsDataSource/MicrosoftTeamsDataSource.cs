@@ -508,13 +508,26 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             ClassType = "MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 6,
-            iconimage = "createmessage.png",
+            iconimage = "microsoftteams.png",
             misc = "ReturnType: IEnumerable<TeamsMessage>"
         )]
-        public async Task<IEnumerable<TeamsMessage>> CreateMessageAsync(TeamsMessage message, List<AppFilter> filters = null)
+        public async Task<IEnumerable<TeamsMessage>> CreateMessageAsync(TeamsMessage message)
         {
-            var result = await PostAsync("teams/{team_id}/channels/{channel_id}/messages", message, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<TeamsMessage>>(result);
+            try
+            {
+                var result = await PostAsync("teams/{team_id}/channels/{channel_id}/messages", message);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdMessage = JsonSerializer.Deserialize<TeamsMessage>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<TeamsMessage> { createdMessage }.Select(m => m.Attach<TeamsMessage>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating message: {ex.Message}");
+            }
+            return new List<TeamsMessage>();
         }
 
         [CommandAttribute(
@@ -527,13 +540,26 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             ClassType = "MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 7,
-            iconimage = "createchannel.png",
+            iconimage = "microsoftteams.png",
             misc = "ReturnType: IEnumerable<TeamsChannel>"
         )]
-        public async Task<IEnumerable<TeamsChannel>> CreateChannelAsync(TeamsChannel channel, List<AppFilter> filters = null)
+        public async Task<IEnumerable<TeamsChannel>> CreateChannelAsync(TeamsChannel channel)
         {
-            var result = await PostAsync("teams/{team_id}/channels", channel, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<TeamsChannel>>(result);
+            try
+            {
+                var result = await PostAsync("teams/{team_id}/channels", channel);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdChannel = JsonSerializer.Deserialize<TeamsChannel>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<TeamsChannel> { createdChannel }.Select(c => c.Attach<TeamsChannel>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating channel: {ex.Message}");
+            }
+            return new List<TeamsChannel>();
         }
 
         [CommandAttribute(
@@ -546,13 +572,26 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             ClassType = "MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 8,
-            iconimage = "createteam.png",
+            iconimage = "microsoftteams.png",
             misc = "ReturnType: IEnumerable<TeamsTeam>"
         )]
-        public async Task<IEnumerable<TeamsTeam>> CreateTeamAsync(TeamsTeam team, List<AppFilter> filters = null)
+        public async Task<IEnumerable<TeamsTeam>> CreateTeamAsync(TeamsTeam team)
         {
-            var result = await PostAsync("teams", team, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<TeamsTeam>>(result);
+            try
+            {
+                var result = await PostAsync("teams", team);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdTeam = JsonSerializer.Deserialize<TeamsTeam>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<TeamsTeam> { createdTeam }.Select(t => t.Attach<TeamsTeam>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating team: {ex.Message}");
+            }
+            return new List<TeamsTeam>();
         }
 
         [CommandAttribute(
@@ -568,10 +607,26 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             iconimage = "updateteam.png",
             misc = "ReturnType: IEnumerable<TeamsTeam>"
         )]
-        public async Task<IEnumerable<TeamsTeam>> UpdateTeamAsync(TeamsTeam team, List<AppFilter> filters = null)
+        public async Task<IEnumerable<TeamsTeam>> UpdateTeamAsync(TeamsTeam team)
         {
-            var result = await PutAsync("teams/{team_id}", team, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<TeamsTeam>>(result);
+            try
+            {
+                var result = await PutAsync("teams/{team_id}", team);
+                var teams = JsonSerializer.Deserialize<IEnumerable<TeamsTeam>>(result);
+                if (teams != null)
+                {
+                    foreach (var t in teams)
+                    {
+                        t.Attach<TeamsTeam>(this);
+                    }
+                }
+                return teams;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating team: {ex.Message}");
+            }
+            return new List<TeamsTeam>();
         }
 
         [CommandAttribute(
@@ -587,10 +642,26 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             iconimage = "createchat.png",
             misc = "ReturnType: IEnumerable<TeamsChat>"
         )]
-        public async Task<IEnumerable<TeamsChat>> CreateChatAsync(TeamsChat chat, List<AppFilter> filters = null)
+        public async Task<IEnumerable<TeamsChat>> CreateChatAsync(TeamsChat chat)
         {
-            var result = await PostAsync("chats", chat, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<TeamsChat>>(result);
+            try
+            {
+                var result = await PostAsync("chats", chat);
+                var chats = JsonSerializer.Deserialize<IEnumerable<TeamsChat>>(result);
+                if (chats != null)
+                {
+                    foreach (var c in chats)
+                    {
+                        c.Attach<TeamsChat>(this);
+                    }
+                }
+                return chats;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating chat: {ex.Message}");
+            }
+            return new List<TeamsChat>();
         }
 
         [CommandAttribute(
@@ -606,10 +677,109 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             iconimage = "updatechat.png",
             misc = "ReturnType: IEnumerable<TeamsChat>"
         )]
-        public async Task<IEnumerable<TeamsChat>> UpdateChatAsync(TeamsChat chat, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "UpdateChannelAsync",
+            Caption = "Update Microsoft Teams Channel",
+            ObjectType = "TeamsChannel",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 12,
+            iconimage = "updatechannel.png",
+            misc = "ReturnType: IEnumerable<TeamsChannel>"
+        )]
+        public async Task<IEnumerable<TeamsChannel>> UpdateChannelAsync(TeamsChannel channel)
         {
-            var result = await PutAsync("chats/{chat_id}", chat, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<TeamsChat>>(result);
+            try
+            {
+                var result = await PutAsync("teams/{team_id}/channels/{channel_id}", channel);
+                var channels = JsonSerializer.Deserialize<IEnumerable<TeamsChannel>>(result);
+                if (channels != null)
+                {
+                    foreach (var c in channels)
+                    {
+                        c.Attach<TeamsChannel>(this);
+                    }
+                }
+                return channels;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating channel: {ex.Message}");
+            }
+            return new List<TeamsChannel>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateMessageAsync",
+            Caption = "Update Microsoft Teams Message",
+            ObjectType = "TeamsMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 13,
+            iconimage = "updatemessage.png",
+            misc = "ReturnType: IEnumerable<TeamsMessage>"
+        )]
+        public async Task<IEnumerable<TeamsMessage>> UpdateMessageAsync(TeamsMessage message)
+        {
+            try
+            {
+                var result = await PutAsync("teams/{team_id}/channels/{channel_id}/messages/{message_id}", message);
+                var messages = JsonSerializer.Deserialize<IEnumerable<TeamsMessage>>(result);
+                if (messages != null)
+                {
+                    foreach (var m in messages)
+                    {
+                        m.Attach<TeamsMessage>(this);
+                    }
+                }
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating message: {ex.Message}");
+            }
+            return new List<TeamsMessage>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateChatAsync",
+            Caption = "Update Microsoft Teams Chat",
+            ObjectType = "TeamsChat",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MicrosoftTeams,
+            ClassType = "MicrosoftTeamsDataSource",
+            Showin = ShowinType.Both,
+            Order = 14,
+            iconimage = "updatechat.png",
+            misc = "ReturnType: IEnumerable<TeamsChat>"
+        )]
+        public async Task<IEnumerable<TeamsChat>> UpdateChatAsync(TeamsChat chat)
+        {
+            try
+            {
+                var result = await PutAsync("chats/{chat_id}", chat);
+                var chats = JsonSerializer.Deserialize<IEnumerable<TeamsChat>>(result);
+                if (chats != null)
+                {
+                    foreach (var c in chats)
+                    {
+                        c.Attach<TeamsChat>(this);
+                    }
+                }
+                return chats;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating chat: {ex.Message}");
+            }
+            return new List<TeamsChat>();
         }
     }
 }

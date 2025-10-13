@@ -348,11 +348,22 @@ namespace TheTechIdea.Beep.Connectors.Communication.Slack
         )]
         public async Task<IEnumerable<SlackMessage>> PostMessageAsync(SlackMessage message)
         {
-            var url = "https://slack.com/api/chat.postMessage";
-            var response = await PostAsync(url, message);
-            var json = await response.Content.ReadAsStringAsync();
-            var postedMessage = JsonSerializer.Deserialize<SlackMessage>(json);
-            return postedMessage != null ? new[] { postedMessage } : Array.Empty<SlackMessage>();
+            try
+            {
+                var url = "https://slack.com/api/chat.postMessage";
+                var result = await PostAsync(url, message);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var postedMessage = JsonSerializer.Deserialize<SlackMessage>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SlackMessage> { postedMessage }.Select(m => m.Attach<SlackMessage>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error posting message: {ex.Message}");
+            }
+            return new List<SlackMessage>();
         }
 
         /// <summary>
@@ -373,11 +384,22 @@ namespace TheTechIdea.Beep.Connectors.Communication.Slack
         )]
         public async Task<IEnumerable<SlackChannel>> CreateChannelAsync(SlackChannel channel)
         {
-            var url = "https://slack.com/api/conversations.create";
-            var response = await PostAsync(url, channel);
-            var json = await response.Content.ReadAsStringAsync();
-            var createdChannel = JsonSerializer.Deserialize<SlackChannel>(json);
-            return createdChannel != null ? new[] { createdChannel } : Array.Empty<SlackChannel>();
+            try
+            {
+                var url = "https://slack.com/api/conversations.create";
+                var result = await PostAsync(url, channel);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdChannel = JsonSerializer.Deserialize<SlackChannel>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SlackChannel> { createdChannel }.Select(c => c.Attach<SlackChannel>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating channel: {ex.Message}");
+            }
+            return new List<SlackChannel>();
         }
 
         /// <summary>
@@ -398,11 +420,22 @@ namespace TheTechIdea.Beep.Connectors.Communication.Slack
         )]
         public async Task<IEnumerable<SlackUserGroup>> CreateUserGroupAsync(SlackUserGroup userGroup)
         {
-            var url = "https://slack.com/api/usergroups.create";
-            var response = await PostAsync(url, userGroup);
-            var json = await response.Content.ReadAsStringAsync();
-            var createdGroup = JsonSerializer.Deserialize<SlackUserGroup>(json);
-            return createdGroup != null ? new[] { createdGroup } : Array.Empty<SlackUserGroup>();
+            try
+            {
+                var url = "https://slack.com/api/usergroups.create";
+                var result = await PostAsync(url, userGroup);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdGroup = JsonSerializer.Deserialize<SlackUserGroup>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SlackUserGroup> { createdGroup }.Select(g => g.Attach<SlackUserGroup>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating user group: {ex.Message}");
+            }
+            return new List<SlackUserGroup>();
         }
 
         /// <summary>
@@ -418,17 +451,28 @@ namespace TheTechIdea.Beep.Connectors.Communication.Slack
             ClassType = "SlackDataSource",
             Showin = ShowinType.Both,
             Order = 10,
-            iconimage = "group.png",
+            iconimage = "slack.png",
             misc = "ReturnType: IEnumerable<SlackUserGroup>"
         )]
-        public async Task<IEnumerable<SlackUserGroup>> UpdateUserGroupAsync(string id, SlackUserGroup userGroup)
+        public async Task<IEnumerable<SlackUserGroup>> UpdateUserGroupAsync(SlackUserGroup userGroup)
         {
-            var url = $"https://slack.com/api/usergroups.update";
-            var payload = new { usergroup = id, name = userGroup.Name, description = userGroup.Description };
-            var response = await PostAsync(url, payload);
-            var json = await response.Content.ReadAsStringAsync();
-            var updatedGroup = JsonSerializer.Deserialize<SlackUserGroup>(json);
-            return updatedGroup != null ? new[] { updatedGroup } : Array.Empty<SlackUserGroup>();
+            try
+            {
+                var url = $"https://slack.com/api/usergroups.update";
+                var payload = new { usergroup = userGroup.Id, name = userGroup.Name, description = userGroup.Description };
+                var result = await PostAsync(url, payload);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedGroup = JsonSerializer.Deserialize<SlackUserGroup>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<SlackUserGroup> { updatedGroup }.Select(g => g.Attach<SlackUserGroup>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating user group: {ex.Message}");
+            }
+            return new List<SlackUserGroup>();
         }
     }
 }

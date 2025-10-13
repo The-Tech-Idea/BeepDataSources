@@ -261,37 +261,214 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
             return GetEntity("team_info", new List<AppFilter>()).Cast<DropboxTeamInfo>().FirstOrDefault();
         }
 
-        [CommandAttribute(Name = "CreateFolderAsync", Caption = "Create Dropbox Folder",
-            ObjectType = "DropboxFolderMetadata", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox,
-            ClassType = "DropboxDataSource", Showin = ShowinType.Both, Order = 1,
-            iconimage = "dropbox.png", misc = "Create a folder")]
-        public async Task<IEnumerable<DropboxFolderMetadata>> CreateFolderAsync(DropboxFolderMetadata folder, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateFolderAsync",
+            Caption = "Create Dropbox Folder",
+            ObjectType = "DropboxFolderMetadata",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Dropbox,
+            ClassType = "DropboxDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "createfolder.png",
+            misc = "ReturnType: IEnumerable<DropboxFolderMetadata>"
+        )]
+        public async Task<IEnumerable<DropboxFolderMetadata>> CreateFolderAsync(DropboxFolderMetadata folder)
         {
-            var result = await PostAsync("https://api.dropboxapi.com/2/files/create_folder", folder, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<DropboxFolderMetadata>>(result);
+            try
+            {
+                var result = await PostAsync("https://api.dropboxapi.com/2/files/create_folder", folder);
+                var folders = JsonSerializer.Deserialize<IEnumerable<DropboxFolderMetadata>>(result);
+                if (folders != null)
+                {
+                    foreach (var f in folders)
+                    {
+                        f.Attach<DropboxFolderMetadata>(this);
+                    }
+                }
+                return folders;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating folder: {ex.Message}");
+            }
+            return new List<DropboxFolderMetadata>();
         }
 
-        [CommandAttribute(Name = "UploadFileAsync", Caption = "Upload Dropbox File",
-            ObjectType = "DropboxFileMetadata", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox,
-            ClassType = "DropboxDataSource", Showin = ShowinType.Both, Order = 2,
-            iconimage = "dropbox.png", misc = "Upload a file")]
-        public async Task<IEnumerable<DropboxFileMetadata>> UploadFileAsync(DropboxFileMetadata file, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "UploadFileAsync",
+            Caption = "Upload Dropbox File",
+            ObjectType = "DropboxFileMetadata",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Dropbox,
+            ClassType = "DropboxDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "uploadfile.png",
+            misc = "ReturnType: IEnumerable<DropboxFileMetadata>"
+        )]
+        public async Task<IEnumerable<DropboxFileMetadata>> UploadFileAsync(DropboxFileMetadata file)
         {
-            var result = await PostAsync("https://content.dropboxapi.com/2/files/upload", file, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<DropboxFileMetadata>>(result);
+            try
+            {
+                var result = await PostAsync("https://content.dropboxapi.com/2/files/upload", file);
+                var files = JsonSerializer.Deserialize<IEnumerable<DropboxFileMetadata>>(result);
+                if (files != null)
+                {
+                    foreach (var f in files)
+                    {
+                        f.Attach<DropboxFileMetadata>(this);
+                    }
+                }
+                return files;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error uploading file: {ex.Message}");
+            }
+            return new List<DropboxFileMetadata>();
         }
 
-        [CommandAttribute(Name = "CreateSharedLinkAsync", Caption = "Create Dropbox Shared Link",
-            ObjectType = "DropboxSharedLink", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox,
-            ClassType = "DropboxDataSource", Showin = ShowinType.Both, Order = 3,
-            iconimage = "dropbox.png", misc = "Create a shared link")]
-        public async Task<IEnumerable<DropboxSharedLink>> CreateSharedLinkAsync(DropboxSharedLink link, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateSharedLinkAsync",
+            Caption = "Create Dropbox Shared Link",
+            ObjectType = "DropboxSharedLink",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Dropbox,
+            ClassType = "DropboxDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "createsharedlink.png",
+            misc = "ReturnType: IEnumerable<DropboxSharedLink>"
+        )]
+        public async Task<IEnumerable<DropboxSharedLink>> CreateSharedLinkAsync(DropboxSharedLink link)
         {
-            var result = await PostAsync("https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings", link, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<DropboxSharedLink>>(result);
+            try
+            {
+                var result = await PostAsync("https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings", link);
+                var links = JsonSerializer.Deserialize<IEnumerable<DropboxSharedLink>>(result);
+                if (links != null)
+                {
+                    foreach (var l in links)
+                    {
+                        l.Attach<DropboxSharedLink>(this);
+                    }
+                }
+                return links;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating shared link: {ex.Message}");
+            }
+            return new List<DropboxSharedLink>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFolderAsync",
+            Caption = "Update Dropbox Folder",
+            ObjectType = "DropboxFolderMetadata",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Dropbox,
+            ClassType = "DropboxDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "updatefolder.png",
+            misc = "ReturnType: IEnumerable<DropboxFolderMetadata>"
+        )]
+        public async Task<IEnumerable<DropboxFolderMetadata>> UpdateFolderAsync(DropboxFolderMetadata folder)
+        {
+            try
+            {
+                var result = await PostAsync("https://api.dropboxapi.com/2/files/move_v2", folder);
+                var folders = JsonSerializer.Deserialize<IEnumerable<DropboxFolderMetadata>>(result);
+                if (folders != null)
+                {
+                    foreach (var f in folders)
+                    {
+                        f.Attach<DropboxFolderMetadata>(this);
+                    }
+                }
+                return folders;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating folder: {ex.Message}");
+            }
+            return new List<DropboxFolderMetadata>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFileAsync",
+            Caption = "Update Dropbox File",
+            ObjectType = "DropboxFileMetadata",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Dropbox,
+            ClassType = "DropboxDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "updatefile.png",
+            misc = "ReturnType: IEnumerable<DropboxFileMetadata>"
+        )]
+        public async Task<IEnumerable<DropboxFileMetadata>> UpdateFileAsync(DropboxFileMetadata file)
+        {
+            try
+            {
+                var result = await PostAsync("https://api.dropboxapi.com/2/files/move_v2", file);
+                var files = JsonSerializer.Deserialize<IEnumerable<DropboxFileMetadata>>(result);
+                if (files != null)
+                {
+                    foreach (var f in files)
+                    {
+                        f.Attach<DropboxFileMetadata>(this);
+                    }
+                }
+                return files;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating file: {ex.Message}");
+            }
+            return new List<DropboxFileMetadata>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateSharedLinkAsync",
+            Caption = "Update Dropbox Shared Link",
+            ObjectType = "DropboxSharedLink",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Dropbox,
+            ClassType = "DropboxDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "updatesharedlink.png",
+            misc = "ReturnType: IEnumerable<DropboxSharedLink>"
+        )]
+        public async Task<IEnumerable<DropboxSharedLink>> UpdateSharedLinkAsync(DropboxSharedLink link)
+        {
+            try
+            {
+                var result = await PostAsync("https://api.dropboxapi.com/2/sharing/modify_shared_link_settings", link);
+                var links = JsonSerializer.Deserialize<IEnumerable<DropboxSharedLink>>(result);
+                if (links != null)
+                {
+                    foreach (var l in links)
+                    {
+                        l.Attach<DropboxSharedLink>(this);
+                    }
+                }
+                return links;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating shared link: {ex.Message}");
+            }
+            return new List<DropboxSharedLink>();
         }
 
         #endregion

@@ -313,37 +313,144 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
         return result.Cast<WabaMedia>().Select(m => m.Attach<WabaMedia>(this));
     }
 
-    [CommandAttribute(Name = "CreateMessageTemplateAsync", Caption = "Create WhatsApp Message Template",
-        ObjectType = "WabaMessageTemplate", PointType = EnumPointType.Function,
-        Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WhatsAppBusiness,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 6,
-        iconimage = "whatsapp.png", misc = "Create a message template")]
-    public async Task<IEnumerable<WabaMessageTemplate>> CreateMessageTemplateAsync(WabaMessageTemplate template, List<AppFilter> filters = null)
+    [CommandAttribute(
+        Name = "CreateMessageTemplateAsync",
+        Caption = "Create WhatsApp Message Template",
+        ObjectType = "WabaMessageTemplate",
+        PointType = EnumPointType.Function,
+        Category = DatasourceCategory.Connector,
+        DatasourceType = DataSourceType.WhatsAppBusiness,
+        ClassType = "WhatsAppBusinessDataSource",
+        Showin = ShowinType.Both,
+        Order = 6,
+        iconimage = "createtemplate.png",
+        misc = "ReturnType: IEnumerable<WabaMessageTemplate>"
+    )]
+    public async Task<IEnumerable<WabaMessageTemplate>> CreateMessageTemplateAsync(WabaMessageTemplate template)
     {
-        var result = await PostAsync("{waba_id}/message_templates", template, filters ?? new List<AppFilter>());
-        return JsonSerializer.Deserialize<IEnumerable<WabaMessageTemplate>>(result);
+        try
+        {
+            var result = await PostAsync("{waba_id}/message_templates", template);
+            var templates = JsonSerializer.Deserialize<IEnumerable<WabaMessageTemplate>>(result);
+            if (templates != null)
+            {
+                foreach (var t in templates)
+                {
+                    t.Attach<WabaMessageTemplate>(this);
+                }
+            }
+            return templates;
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError($"Error creating message template: {ex.Message}");
+        }
+        return new List<WabaMessageTemplate>();
     }
 
-    [CommandAttribute(Name = "UploadMediaAsync", Caption = "Upload WhatsApp Media",
-        ObjectType = "WabaMedia", PointType = EnumPointType.Function,
-        Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WhatsAppBusiness,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 7,
-        iconimage = "whatsapp.png", misc = "Upload media file")]
-    public async Task<IEnumerable<WabaMedia>> UploadMediaAsync(WabaMedia media, List<AppFilter> filters = null)
+    [CommandAttribute(
+        Name = "UploadMediaAsync",
+        Caption = "Upload WhatsApp Media",
+        ObjectType = "WabaMedia",
+        PointType = EnumPointType.Function,
+        Category = DatasourceCategory.Connector,
+        DatasourceType = DataSourceType.WhatsAppBusiness,
+        ClassType = "WhatsAppBusinessDataSource",
+        Showin = ShowinType.Both,
+        Order = 7,
+        iconimage = "uploadmedia.png",
+        misc = "ReturnType: IEnumerable<WabaMedia>"
+    )]
+    public async Task<IEnumerable<WabaMedia>> UploadMediaAsync(WabaMedia media)
     {
-        var result = await PostAsync("{phone_number_id}/media", media, filters ?? new List<AppFilter>());
-        return JsonSerializer.Deserialize<IEnumerable<WabaMedia>>(result);
+        try
+        {
+            var result = await PostAsync("{phone_number_id}/media", media);
+            var medias = JsonSerializer.Deserialize<IEnumerable<WabaMedia>>(result);
+            if (medias != null)
+            {
+                foreach (var m in medias)
+                {
+                    m.Attach<WabaMedia>(this);
+                }
+            }
+            return medias;
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError($"Error uploading media: {ex.Message}");
+        }
+        return new List<WabaMedia>();
     }
 
-    [CommandAttribute(Name = "UpdateBusinessProfileAsync", Caption = "Update WhatsApp Business Profile",
-        ObjectType = "WabaBusinessProfile", PointType = EnumPointType.Function,
-        Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WhatsAppBusiness,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 8,
-        iconimage = "whatsapp.png", misc = "Update business profile")]
-    public async Task<IEnumerable<WabaBusinessProfile>> UpdateBusinessProfileAsync(WabaBusinessProfile profile, List<AppFilter> filters = null)
+    [CommandAttribute(
+        Name = "UpdateBusinessProfileAsync",
+        Caption = "Update WhatsApp Business Profile",
+        ObjectType = "WabaBusinessProfile",
+        PointType = EnumPointType.Function,
+        Category = DatasourceCategory.Connector,
+        DatasourceType = DataSourceType.WhatsAppBusiness,
+        ClassType = "WhatsAppBusinessDataSource",
+        Showin = ShowinType.Both,
+        Order = 8,
+        iconimage = "updateprofile.png",
+        misc = "ReturnType: IEnumerable<WabaBusinessProfile>"
+    )]
+    public async Task<IEnumerable<WabaBusinessProfile>> UpdateBusinessProfileAsync(WabaBusinessProfile profile)
     {
-        var result = await PostAsync("{phone_number_id}/whatsapp_business_profile", profile, filters ?? new List<AppFilter>());
-        return JsonSerializer.Deserialize<IEnumerable<WabaBusinessProfile>>(result);
+        try
+        {
+            var result = await PostAsync("{phone_number_id}/whatsapp_business_profile", profile);
+            var profiles = JsonSerializer.Deserialize<IEnumerable<WabaBusinessProfile>>(result);
+            if (profiles != null)
+            {
+                foreach (var p in profiles)
+                {
+                    p.Attach<WabaBusinessProfile>(this);
+                }
+            }
+            return profiles;
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError($"Error updating business profile: {ex.Message}");
+        }
+        return new List<WabaBusinessProfile>();
+    }
+
+    [CommandAttribute(
+        Name = "SendMessageAsync",
+        Caption = "Send WhatsApp Message",
+        ObjectType = "WabaMessage",
+        PointType = EnumPointType.Function,
+        Category = DatasourceCategory.Connector,
+        DatasourceType = DataSourceType.WhatsAppBusiness,
+        ClassType = "WhatsAppBusinessDataSource",
+        Showin = ShowinType.Both,
+        Order = 9,
+        iconimage = "sendmessage.png",
+        misc = "ReturnType: IEnumerable<WabaMessage>"
+    )]
+    public async Task<IEnumerable<WabaMessage>> SendMessageAsync(WabaMessage message)
+    {
+        try
+        {
+            var result = await PostAsync("{phone_number_id}/messages", message);
+            var messages = JsonSerializer.Deserialize<IEnumerable<WabaMessage>>(result);
+            if (messages != null)
+            {
+                foreach (var m in messages)
+                {
+                    m.Attach<WabaMessage>(this);
+                }
+            }
+            return messages;
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError($"Error sending message: {ex.Message}");
+        }
+        return new List<WabaMessage>();
     }
 }
 }

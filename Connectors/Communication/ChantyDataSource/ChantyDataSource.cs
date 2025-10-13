@@ -430,41 +430,143 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyMessage",
-            PointType = EnumPointType.Function,
             Name = "CreateMessageAsync",
             Caption = "Create Chanty Message",
-            ClassName = "ChantyDataSource",
+            ObjectType = "ChantyMessage",
+            PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Chanty,
+            ClassType = "ChantyDataSource",
             Showin = ShowinType.Both,
             Order = 21,
-            iconimage = "chanty.png",
+            iconimage = "createmessage.png",
             misc = "ReturnType: IEnumerable<ChantyMessage>"
         )]
-        public async Task<IEnumerable<ChantyMessage>> CreateMessageAsync(ChantyMessage message, List<AppFilter> filters = null)
+        public async Task<IEnumerable<ChantyMessage>> CreateMessageAsync(ChantyMessage message)
         {
-            var result = await PostAsync("channels/{channel_id}/messages", message, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<ChantyMessage>>(result);
+            try
+            {
+                var result = await PostAsync("channels/{channel_id}/messages", message);
+                var messages = JsonSerializer.Deserialize<IEnumerable<ChantyMessage>>(result);
+                if (messages != null)
+                {
+                    foreach (var m in messages)
+                    {
+                        m.Attach<ChantyMessage>(this);
+                    }
+                }
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating message: {ex.Message}");
+            }
+            return new List<ChantyMessage>();
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyChannel",
-            PointType = EnumPointType.Function,
             Name = "CreateChannelAsync",
             Caption = "Create Chanty Channel",
-            ClassName = "ChantyDataSource",
+            ObjectType = "ChantyChannel",
+            PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Chanty,
+            ClassType = "ChantyDataSource",
             Showin = ShowinType.Both,
             Order = 22,
-            iconimage = "chanty.png",
+            iconimage = "createchannel.png",
             misc = "ReturnType: IEnumerable<ChantyChannel>"
         )]
-        public async Task<IEnumerable<ChantyChannel>> CreateChannelAsync(ChantyChannel channel, List<AppFilter> filters = null)
+        public async Task<IEnumerable<ChantyChannel>> CreateChannelAsync(ChantyChannel channel)
         {
-            var result = await PostAsync("teams/{team_id}/channels", channel, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<ChantyChannel>>(result);
+            try
+            {
+                var result = await PostAsync("teams/{team_id}/channels", channel);
+                var channels = JsonSerializer.Deserialize<IEnumerable<ChantyChannel>>(result);
+                if (channels != null)
+                {
+                    foreach (var c in channels)
+                    {
+                        c.Attach<ChantyChannel>(this);
+                    }
+                }
+                return channels;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating channel: {ex.Message}");
+            }
+            return new List<ChantyChannel>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateMessageAsync",
+            Caption = "Update Chanty Message",
+            ObjectType = "ChantyMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            ClassType = "ChantyDataSource",
+            Showin = ShowinType.Both,
+            Order = 23,
+            iconimage = "updatemessage.png",
+            misc = "ReturnType: IEnumerable<ChantyMessage>"
+        )]
+        public async Task<IEnumerable<ChantyMessage>> UpdateMessageAsync(ChantyMessage message)
+        {
+            try
+            {
+                var result = await PutAsync("messages/{message_id}", message);
+                var messages = JsonSerializer.Deserialize<IEnumerable<ChantyMessage>>(result);
+                if (messages != null)
+                {
+                    foreach (var m in messages)
+                    {
+                        m.Attach<ChantyMessage>(this);
+                    }
+                }
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating message: {ex.Message}");
+            }
+            return new List<ChantyMessage>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateChannelAsync",
+            Caption = "Update Chanty Channel",
+            ObjectType = "ChantyChannel",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Chanty,
+            ClassType = "ChantyDataSource",
+            Showin = ShowinType.Both,
+            Order = 24,
+            iconimage = "updatechannel.png",
+            misc = "ReturnType: IEnumerable<ChantyChannel>"
+        )]
+        public async Task<IEnumerable<ChantyChannel>> UpdateChannelAsync(ChantyChannel channel)
+        {
+            try
+            {
+                var result = await PutAsync("channels/{channel_id}", channel);
+                var channels = JsonSerializer.Deserialize<IEnumerable<ChantyChannel>>(result);
+                if (channels != null)
+                {
+                    foreach (var c in channels)
+                    {
+                        c.Attach<ChantyChannel>(this);
+                    }
+                }
+                return channels;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating channel: {ex.Message}");
+            }
+            return new List<ChantyChannel>();
         }
     }
 }

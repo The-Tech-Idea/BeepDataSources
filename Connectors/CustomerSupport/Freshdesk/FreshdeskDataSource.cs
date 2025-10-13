@@ -344,5 +344,46 @@ namespace TheTechIdea.Beep.FreshdeskDataSource
         {
             return GetEntity("company_fields", new List<AppFilter>()).Cast<FreshdeskCompanyField>().ToList();
         }
+
+        // POST methods for creating entities
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskTicket", Name = "CreateTicket", Caption = "Create Freshdesk Ticket", ClassType = "FreshdeskDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "freshdesk.png", misc = "ReturnType: IEnumerable<FreshdeskTicket>")]
+        public async Task<IEnumerable<FreshdeskTicket>> CreateTicketAsync(FreshdeskTicket ticket)
+        {
+            try
+            {
+                var result = await PostAsync("api/v2/tickets", ticket);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdTicket = JsonSerializer.Deserialize<FreshdeskTicket>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<FreshdeskTicket> { createdTicket }.Select(t => t.Attach<FreshdeskTicket>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating ticket: {ex.Message}");
+            }
+            return new List<FreshdeskTicket>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshdesk, PointType = EnumPointType.Function, ObjectType = "FreshdeskTicket", Name = "UpdateTicket", Caption = "Update Freshdesk Ticket", ClassType = "FreshdeskDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "freshdesk.png", misc = "ReturnType: IEnumerable<FreshdeskTicket>")]
+        public async Task<IEnumerable<FreshdeskTicket>> UpdateTicketAsync(FreshdeskTicket ticket)
+        {
+            try
+            {
+                var result = await PutAsync($"api/v2/tickets/{ticket.Id}", ticket);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedTicket = JsonSerializer.Deserialize<FreshdeskTicket>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<FreshdeskTicket> { updatedTicket }.Select(t => t.Attach<FreshdeskTicket>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating ticket: {ex.Message}");
+            }
+            return new List<FreshdeskTicket>();
+        }
     }
 }

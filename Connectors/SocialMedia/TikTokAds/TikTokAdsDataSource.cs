@@ -176,22 +176,44 @@ namespace TheTechIdea.Beep.TikTokAdsDataSource
         }
 
         // POST methods for creating entities
-        [CommandAttribute(ObjectType = "TikTokCampaign", PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create TikTok Campaign", ClassName = "TikTokAdsDataSource", misc = "ReturnType: TikTokCampaign")]
-        public async Task<TikTokCampaign> CreateCampaignAsync(TikTokCampaign campaign)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.TikTokAds, PointType = EnumPointType.Function, ObjectType = "TikTokCampaign", Name = "CreateCampaign", Caption = "Create TikTok Campaign", ClassType = "TikTokAdsDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "tiktokads.png", misc = "ReturnType: IEnumerable<TikTokCampaign>")]
+        public async Task<IEnumerable<TikTokCampaign>> CreateCampaignAsync(TikTokCampaign campaign)
         {
-            var response = await PostAsync("campaigns", campaign);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<TikTokCampaign>(json);
+            try
+            {
+                var result = await PostAsync("campaigns", campaign);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCampaign = JsonSerializer.Deserialize<TikTokCampaign>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<TikTokCampaign> { createdCampaign }.Select(c => c.Attach<TikTokCampaign>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating campaign: {ex.Message}");
+            }
+            return new List<TikTokCampaign>();
         }
 
-        [CommandAttribute(ObjectType = "TikTokCampaign", PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update TikTok Campaign", ClassName = "TikTokAdsDataSource", misc = "ReturnType: TikTokCampaign")]
-        public async Task<TikTokCampaign> UpdateCampaignAsync(string campaignId, TikTokCampaign campaign)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.TikTokAds, PointType = EnumPointType.Function, ObjectType = "TikTokCampaign", Name = "UpdateCampaign", Caption = "Update TikTok Campaign", ClassType = "TikTokAdsDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "tiktokads.png", misc = "ReturnType: IEnumerable<TikTokCampaign>")]
+        public async Task<IEnumerable<TikTokCampaign>> UpdateCampaignAsync(TikTokCampaign campaign)
         {
-            var response = await PutAsync($"campaigns/{campaignId}", campaign);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<TikTokCampaign>(json);
+            try
+            {
+                var result = await PutAsync($"campaigns/{campaign.Id}", campaign);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCampaign = JsonSerializer.Deserialize<TikTokCampaign>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<TikTokCampaign> { updatedCampaign }.Select(c => c.Attach<TikTokCampaign>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating campaign: {ex.Message}");
+            }
+            return new List<TikTokCampaign>();
         }
     }
 }

@@ -323,6 +323,126 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.EcwidDataSource
             return result.Cast<EcwidCategory>();
         }
 
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Products", Name = "CreateProduct", Caption = "Create Ecwid Product", ClassType = "EcwidDataSource", Showin = ShowinType.Both, Order = 4, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidProduct>")]
+        public async Task<IEnumerable<EcwidProduct>> CreateProductAsync(EcwidProduct product)
+        {
+            try
+            {
+                var result = await PostAsync("products", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdProduct = JsonSerializer.Deserialize<EcwidProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<EcwidProduct> { createdProduct }.Select(p => p.Attach<EcwidProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating product: {ex.Message}");
+            }
+            return new List<EcwidProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Products", Name = "UpdateProduct", Caption = "Update Ecwid Product", ClassType = "EcwidDataSource", Showin = ShowinType.Both, Order = 5, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidProduct>")]
+        public async Task<IEnumerable<EcwidProduct>> UpdateProductAsync(EcwidProduct product)
+        {
+            try
+            {
+                var result = await PutAsync($"products/{product.Id}", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedProduct = JsonSerializer.Deserialize<EcwidProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<EcwidProduct> { updatedProduct }.Select(p => p.Attach<EcwidProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating product: {ex.Message}");
+            }
+            return new List<EcwidProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "CreateOrder", Caption = "Create Ecwid Order", ClassType = "EcwidDataSource", Showin = ShowinType.Both, Order = 6, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidOrder>")]
+        public async Task<IEnumerable<EcwidOrder>> CreateOrderAsync(EcwidOrder order)
+        {
+            try
+            {
+                var result = await PostAsync("orders", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdOrder = JsonSerializer.Deserialize<EcwidOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<EcwidOrder> { createdOrder }.Select(o => o.Attach<EcwidOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating order: {ex.Message}");
+            }
+            return new List<EcwidOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "UpdateOrder", Caption = "Update Ecwid Order", ClassType = "EcwidDataSource", Showin = ShowinType.Both, Order = 7, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidOrder>")]
+        public async Task<IEnumerable<EcwidOrder>> UpdateOrderAsync(EcwidOrder order)
+        {
+            try
+            {
+                var result = await PutAsync($"orders/{order.Id}", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedOrder = JsonSerializer.Deserialize<EcwidOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<EcwidOrder> { updatedOrder }.Select(o => o.Attach<EcwidOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating order: {ex.Message}");
+            }
+            return new List<EcwidOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "CreateCategory", Caption = "Create Ecwid Category", ClassType = "EcwidDataSource", Showin = ShowinType.Both, Order = 8, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidCategory>")]
+        public async Task<IEnumerable<EcwidCategory>> CreateCategoryAsync(EcwidCategory category)
+        {
+            try
+            {
+                var result = await PostAsync("categories", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCategory = JsonSerializer.Deserialize<EcwidCategory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<EcwidCategory> { createdCategory }.Select(c => c.Attach<EcwidCategory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating category: {ex.Message}");
+            }
+            return new List<EcwidCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "UpdateCategory", Caption = "Update Ecwid Category", ClassType = "EcwidDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidCategory>")]
+        public async Task<IEnumerable<EcwidCategory>> UpdateCategoryAsync(EcwidCategory category)
+        {
+            try
+            {
+                var result = await PutAsync($"categories/{category.Id}", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCategory = JsonSerializer.Deserialize<EcwidCategory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<EcwidCategory> { updatedCategory }.Select(c => c.Attach<EcwidCategory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating category: {ex.Message}");
+            }
+            return new List<EcwidCategory>();
+        }
+
         #endregion
     }
 }

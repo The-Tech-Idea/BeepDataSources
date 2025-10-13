@@ -177,6 +177,164 @@ namespace TheTechIdea.Beep.Connectors.Freshsales
         [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Deals", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesDeal>")]
         public IEnumerable<FreshsalesDeal> GetDeals(List<AppFilter> filter) => GetEntity("deals", filter).Cast<FreshsalesDeal>();
 
+        // -------------------- Create / Update (POST/PUT) methods --------------------
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesLead")]
+        public async Task<IEnumerable<FreshsalesLead>> CreateLeadAsync(FreshsalesLead lead)
+        {
+            if (lead == null) return Array.Empty<FreshsalesLead>();
+            using var resp = await PostAsync("crm/sales/api/leads", lead).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<FreshsalesLead>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<FreshsalesLead>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<FreshsalesLead>();
+            }
+            catch
+            {
+                return Array.Empty<FreshsalesLead>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesLead")]
+        public async Task<IEnumerable<FreshsalesLead>> UpdateLeadAsync(string leadId, FreshsalesLead lead)
+        {
+            if (string.IsNullOrWhiteSpace(leadId) || lead == null) return Array.Empty<FreshsalesLead>();
+            var endpoint = $"crm/sales/api/leads/{Uri.EscapeDataString(leadId)}";
+            using var resp = await PutAsync(endpoint, lead).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<FreshsalesLead>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<FreshsalesLead>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<FreshsalesLead>();
+            }
+            catch
+            {
+                return Array.Empty<FreshsalesLead>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesContact")]
+        public async Task<IEnumerable<FreshsalesContact>> CreateContactAsync(FreshsalesContact contact)
+        {
+            if (contact == null) return Array.Empty<FreshsalesContact>();
+            using var resp = await PostAsync("crm/sales/api/contacts", contact).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<FreshsalesContact>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<FreshsalesContact>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<FreshsalesContact>();
+            }
+            catch
+            {
+                return Array.Empty<FreshsalesContact>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesContact")]
+        public async Task<IEnumerable<FreshsalesContact>> UpdateContactAsync(string contactId, FreshsalesContact contact)
+        {
+            if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<FreshsalesContact>();
+            var endpoint = $"crm/sales/api/contacts/{Uri.EscapeDataString(contactId)}";
+            using var resp = await PutAsync(endpoint, contact).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<FreshsalesContact>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<FreshsalesContact>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<FreshsalesContact>();
+            }
+            catch
+            {
+                return Array.Empty<FreshsalesContact>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesAccount")]
+        public async Task<IEnumerable<FreshsalesAccount>> CreateAccountAsync(FreshsalesAccount account)
+        {
+            if (account == null) return Array.Empty<FreshsalesAccount>();
+            using var resp = await PostAsync("crm/sales/api/sales_accounts", account).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<FreshsalesAccount>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<FreshsalesAccount>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<FreshsalesAccount>();
+            }
+            catch
+            {
+                return Array.Empty<FreshsalesAccount>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesAccount")]
+        public async Task<IEnumerable<FreshsalesAccount>> UpdateAccountAsync(string accountId, FreshsalesAccount account)
+        {
+            if (string.IsNullOrWhiteSpace(accountId) || account == null) return Array.Empty<FreshsalesAccount>();
+            var endpoint = $"crm/sales/api/sales_accounts/{Uri.EscapeDataString(accountId)}";
+            using var resp = await PutAsync(endpoint, account).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<FreshsalesAccount>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<FreshsalesAccount>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<FreshsalesAccount>();
+            }
+            catch
+            {
+                return Array.Empty<FreshsalesAccount>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Deal", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesDeal")]
+        public async Task<IEnumerable<FreshsalesDeal>> CreateDealAsync(FreshsalesDeal deal)
+        {
+            if (deal == null) return Array.Empty<FreshsalesDeal>();
+            using var resp = await PostAsync("crm/sales/api/deals", deal).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<FreshsalesDeal>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<FreshsalesDeal>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<FreshsalesDeal>();
+            }
+            catch
+            {
+                return Array.Empty<FreshsalesDeal>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Deal", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesDeal")]
+        public async Task<IEnumerable<FreshsalesDeal>> UpdateDealAsync(string dealId, FreshsalesDeal deal)
+        {
+            if (string.IsNullOrWhiteSpace(dealId) || deal == null) return Array.Empty<FreshsalesDeal>();
+            var endpoint = $"crm/sales/api/deals/{Uri.EscapeDataString(dealId)}";
+            using var resp = await PutAsync(endpoint, deal).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<FreshsalesDeal>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<FreshsalesDeal>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<FreshsalesDeal>();
+            }
+            catch
+            {
+                return Array.Empty<FreshsalesDeal>();
+            }
+        }
+
         #endregion
     }
 }

@@ -295,6 +295,406 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return result.Cast<TaxRule>();
         }
 
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Product", Name = "CreateProduct", Caption = "Create Magento Product", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Product>")]
+        public async Task<IEnumerable<Product>> CreateProductAsync(Product product)
+        {
+            try
+            {
+                var result = await PostAsync("products", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdProduct = JsonSerializer.Deserialize<Product>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Product> { createdProduct }.Select(p => p.Attach<Product>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating product: {ex.Message}");
+            }
+            return new List<Product>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Product", Name = "UpdateProduct", Caption = "Update Magento Product", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Product>")]
+        public async Task<IEnumerable<Product>> UpdateProductAsync(Product product)
+        {
+            try
+            {
+                var result = await PutAsync($"products/{product.Id}", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedProduct = JsonSerializer.Deserialize<Product>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Product> { updatedProduct }.Select(p => p.Attach<Product>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating product: {ex.Message}");
+            }
+            return new List<Product>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Category", Name = "CreateCategory", Caption = "Create Magento Category", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Category>")]
+        public async Task<IEnumerable<Category>> CreateCategoryAsync(Category category)
+        {
+            try
+            {
+                var result = await PostAsync("categories", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCategory = JsonSerializer.Deserialize<Category>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Category> { createdCategory }.Select(c => c.Attach<Category>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating category: {ex.Message}");
+            }
+            return new List<Category>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Category", Name = "UpdateCategory", Caption = "Update Magento Category", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Category>")]
+        public async Task<IEnumerable<Category>> UpdateCategoryAsync(Category category)
+        {
+            try
+            {
+                var result = await PutAsync($"categories/{category.Id}", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCategory = JsonSerializer.Deserialize<Category>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Category> { updatedCategory }.Select(c => c.Attach<Category>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating category: {ex.Message}");
+            }
+            return new List<Category>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Order", Name = "CreateOrder", Caption = "Create Magento Order", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Order>")]
+        public async Task<IEnumerable<Order>> CreateOrderAsync(Order order)
+        {
+            try
+            {
+                var result = await PostAsync("orders", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdOrder = JsonSerializer.Deserialize<Order>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Order> { createdOrder }.Select(o => o.Attach<Order>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating order: {ex.Message}");
+            }
+            return new List<Order>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Order", Name = "UpdateOrder", Caption = "Update Magento Order", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Order>")]
+        public async Task<IEnumerable<Order>> UpdateOrderAsync(Order order)
+        {
+            try
+            {
+                var result = await PutAsync($"orders/{order.Id}", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedOrder = JsonSerializer.Deserialize<Order>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Order> { updatedOrder }.Select(o => o.Attach<Order>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating order: {ex.Message}");
+            }
+            return new List<Order>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Customer", Name = "CreateCustomer", Caption = "Create Magento Customer", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Customer>")]
+        public async Task<IEnumerable<Customer>> CreateCustomerAsync(Customer customer)
+        {
+            try
+            {
+                var result = await PostAsync("customers", customer);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCustomer = JsonSerializer.Deserialize<Customer>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Customer> { createdCustomer }.Select(c => c.Attach<Customer>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating customer: {ex.Message}");
+            }
+            return new List<Customer>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Customer", Name = "UpdateCustomer", Caption = "Update Magento Customer", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Customer>")]
+        public async Task<IEnumerable<Customer>> UpdateCustomerAsync(Customer customer)
+        {
+            try
+            {
+                var result = await PutAsync($"customers/{customer.Id}", customer);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCustomer = JsonSerializer.Deserialize<Customer>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Customer> { updatedCustomer }.Select(c => c.Attach<Customer>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating customer: {ex.Message}");
+            }
+            return new List<Customer>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "InventoryItem", Name = "CreateInventoryItem", Caption = "Create Magento Inventory Item", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "magento.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
+        public async Task<IEnumerable<InventoryItem>> CreateInventoryItemAsync(InventoryItem inventoryItem)
+        {
+            try
+            {
+                var result = await PostAsync("inventory", inventoryItem);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdInventoryItem = JsonSerializer.Deserialize<InventoryItem>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<InventoryItem> { createdInventoryItem }.Select(i => i.Attach<InventoryItem>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating inventory item: {ex.Message}");
+            }
+            return new List<InventoryItem>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "InventoryItem", Name = "UpdateInventoryItem", Caption = "Update Magento Inventory Item", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "magento.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
+        public async Task<IEnumerable<InventoryItem>> UpdateInventoryItemAsync(InventoryItem inventoryItem)
+        {
+            try
+            {
+                var result = await PutAsync($"inventory/{inventoryItem.Id}", inventoryItem);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedInventoryItem = JsonSerializer.Deserialize<InventoryItem>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<InventoryItem> { updatedInventoryItem }.Select(i => i.Attach<InventoryItem>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating inventory item: {ex.Message}");
+            }
+            return new List<InventoryItem>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Cart", Name = "CreateCart", Caption = "Create Magento Cart", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Cart>")]
+        public async Task<IEnumerable<Cart>> CreateCartAsync(Cart cart)
+        {
+            try
+            {
+                var result = await PostAsync("carts", cart);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCart = JsonSerializer.Deserialize<Cart>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Cart> { createdCart }.Select(c => c.Attach<Cart>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating cart: {ex.Message}");
+            }
+            return new List<Cart>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Cart", Name = "UpdateCart", Caption = "Update Magento Cart", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 22, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Cart>")]
+        public async Task<IEnumerable<Cart>> UpdateCartAsync(Cart cart)
+        {
+            try
+            {
+                var result = await PutAsync($"carts/{cart.Id}", cart);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCart = JsonSerializer.Deserialize<Cart>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Cart> { updatedCart }.Select(c => c.Attach<Cart>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating cart: {ex.Message}");
+            }
+            return new List<Cart>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Review", Name = "CreateReview", Caption = "Create Magento Review", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 23, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Review>")]
+        public async Task<IEnumerable<Review>> CreateReviewAsync(Review review)
+        {
+            try
+            {
+                var result = await PostAsync("reviews", review);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdReview = JsonSerializer.Deserialize<Review>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Review> { createdReview }.Select(r => r.Attach<Review>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating review: {ex.Message}");
+            }
+            return new List<Review>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Review", Name = "UpdateReview", Caption = "Update Magento Review", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 24, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Review>")]
+        public async Task<IEnumerable<Review>> UpdateReviewAsync(Review review)
+        {
+            try
+            {
+                var result = await PutAsync($"reviews/{review.Id}", review);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedReview = JsonSerializer.Deserialize<Review>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Review> { updatedReview }.Select(r => r.Attach<Review>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating review: {ex.Message}");
+            }
+            return new List<Review>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "StoreConfig", Name = "CreateStoreConfig", Caption = "Create Magento Store Config", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 25, iconimage = "magento.png", misc = "ReturnType: IEnumerable<StoreConfig>")]
+        public async Task<IEnumerable<StoreConfig>> CreateStoreConfigAsync(StoreConfig storeConfig)
+        {
+            try
+            {
+                var result = await PostAsync("store_configs", storeConfig);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdStoreConfig = JsonSerializer.Deserialize<StoreConfig>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<StoreConfig> { createdStoreConfig }.Select(s => s.Attach<StoreConfig>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating store config: {ex.Message}");
+            }
+            return new List<StoreConfig>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "StoreConfig", Name = "UpdateStoreConfig", Caption = "Update Magento Store Config", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 26, iconimage = "magento.png", misc = "ReturnType: IEnumerable<StoreConfig>")]
+        public async Task<IEnumerable<StoreConfig>> UpdateStoreConfigAsync(StoreConfig storeConfig)
+        {
+            try
+            {
+                var result = await PutAsync($"store_configs/{storeConfig.Id}", storeConfig);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedStoreConfig = JsonSerializer.Deserialize<StoreConfig>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<StoreConfig> { updatedStoreConfig }.Select(s => s.Attach<StoreConfig>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating store config: {ex.Message}");
+            }
+            return new List<StoreConfig>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Attribute", Name = "CreateAttribute", Caption = "Create Magento Attribute", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 27, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Models.Attribute>")]
+        public async Task<IEnumerable<Models.Attribute>> CreateAttributeAsync(Models.Attribute attribute)
+        {
+            try
+            {
+                var result = await PostAsync("attributes", attribute);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdAttribute = JsonSerializer.Deserialize<Models.Attribute>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Models.Attribute> { createdAttribute }.Select(a => a.Attach<Models.Attribute>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating attribute: {ex.Message}");
+            }
+            return new List<Models.Attribute>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Attribute", Name = "UpdateAttribute", Caption = "Update Magento Attribute", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 28, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Models.Attribute>")]
+        public async Task<IEnumerable<Models.Attribute>> UpdateAttributeAsync(Models.Attribute attribute)
+        {
+            try
+            {
+                var result = await PutAsync($"attributes/{attribute.Id}", attribute);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedAttribute = JsonSerializer.Deserialize<Models.Attribute>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Models.Attribute> { updatedAttribute }.Select(a => a.Attach<Models.Attribute>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating attribute: {ex.Message}");
+            }
+            return new List<Models.Attribute>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "TaxRule", Name = "CreateTaxRule", Caption = "Create Magento Tax Rule", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 29, iconimage = "magento.png", misc = "ReturnType: IEnumerable<TaxRule>")]
+        public async Task<IEnumerable<TaxRule>> CreateTaxRuleAsync(TaxRule taxRule)
+        {
+            try
+            {
+                var result = await PostAsync("tax_rules", taxRule);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdTaxRule = JsonSerializer.Deserialize<TaxRule>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<TaxRule> { createdTaxRule }.Select(t => t.Attach<TaxRule>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating tax rule: {ex.Message}");
+            }
+            return new List<TaxRule>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "TaxRule", Name = "UpdateTaxRule", Caption = "Update Magento Tax Rule", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 30, iconimage = "magento.png", misc = "ReturnType: IEnumerable<TaxRule>")]
+        public async Task<IEnumerable<TaxRule>> UpdateTaxRuleAsync(TaxRule taxRule)
+        {
+            try
+            {
+                var result = await PutAsync($"tax_rules/{taxRule.Id}", taxRule);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedTaxRule = JsonSerializer.Deserialize<TaxRule>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<TaxRule> { updatedTaxRule }.Select(t => t.Attach<TaxRule>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating tax rule: {ex.Message}");
+            }
+            return new List<TaxRule>();
+        }
+
         #endregion
 
         public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)

@@ -525,13 +525,29 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
             DatasourceType = DataSourceType.AmazonS3,
             Showin = ShowinType.Both,
             Order = 1,
-            iconimage = "s3.png",
+            iconimage = "createbucket.png",
             misc = "ReturnType: IEnumerable<AmazonS3Bucket>"
         )]
-        public async Task<IEnumerable<AmazonS3Bucket>> CreateBucketAsync(AmazonS3Bucket bucket, List<AppFilter> filters = null)
+        public async Task<IEnumerable<AmazonS3Bucket>> CreateBucketAsync(AmazonS3Bucket bucket)
         {
-            var result = await PutAsync("bucket", bucket, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<AmazonS3Bucket>>(result);
+            try
+            {
+                var result = await PutAsync("bucket", bucket);
+                var buckets = JsonSerializer.Deserialize<IEnumerable<AmazonS3Bucket>>(result);
+                if (buckets != null)
+                {
+                    foreach (var b in buckets)
+                    {
+                        b.Attach<AmazonS3Bucket>(this);
+                    }
+                }
+                return buckets;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating bucket: {ex.Message}");
+            }
+            return new List<AmazonS3Bucket>();
         }
 
         [CommandAttribute(
@@ -544,13 +560,99 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
             DatasourceType = DataSourceType.AmazonS3,
             Showin = ShowinType.Both,
             Order = 2,
-            iconimage = "s3.png",
+            iconimage = "uploadobject.png",
             misc = "ReturnType: IEnumerable<AmazonS3Object>"
         )]
-        public async Task<IEnumerable<AmazonS3Object>> UploadObjectAsync(AmazonS3Object obj, List<AppFilter> filters = null)
+        public async Task<IEnumerable<AmazonS3Object>> UploadObjectAsync(AmazonS3Object obj)
         {
-            var result = await PutAsync("object", obj, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<AmazonS3Object>>(result);
+            try
+            {
+                var result = await PutAsync("object", obj);
+                var objects = JsonSerializer.Deserialize<IEnumerable<AmazonS3Object>>(result);
+                if (objects != null)
+                {
+                    foreach (var o in objects)
+                    {
+                        o.Attach<AmazonS3Object>(this);
+                    }
+                }
+                return objects;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error uploading object: {ex.Message}");
+            }
+            return new List<AmazonS3Object>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3Bucket",
+            PointType = EnumPointType.Function,
+            Name = "UpdateBucketAsync",
+            Caption = "Update Amazon S3 Bucket",
+            ClassName = "AmazonS3DataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AmazonS3,
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "updatebucket.png",
+            misc = "ReturnType: IEnumerable<AmazonS3Bucket>"
+        )]
+        public async Task<IEnumerable<AmazonS3Bucket>> UpdateBucketAsync(AmazonS3Bucket bucket)
+        {
+            try
+            {
+                var result = await PatchAsync("bucket", bucket);
+                var buckets = JsonSerializer.Deserialize<IEnumerable<AmazonS3Bucket>>(result);
+                if (buckets != null)
+                {
+                    foreach (var b in buckets)
+                    {
+                        b.Attach<AmazonS3Bucket>(this);
+                    }
+                }
+                return buckets;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating bucket: {ex.Message}");
+            }
+            return new List<AmazonS3Bucket>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "AmazonS3Object",
+            PointType = EnumPointType.Function,
+            Name = "UpdateObjectAsync",
+            Caption = "Update Amazon S3 Object",
+            ClassName = "AmazonS3DataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AmazonS3,
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "updateobject.png",
+            misc = "ReturnType: IEnumerable<AmazonS3Object>"
+        )]
+        public async Task<IEnumerable<AmazonS3Object>> UpdateObjectAsync(AmazonS3Object obj)
+        {
+            try
+            {
+                var result = await PatchAsync("object", obj);
+                var objects = JsonSerializer.Deserialize<IEnumerable<AmazonS3Object>>(result);
+                if (objects != null)
+                {
+                    foreach (var o in objects)
+                    {
+                        o.Attach<AmazonS3Object>(this);
+                    }
+                }
+                return objects;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating object: {ex.Message}");
+            }
+            return new List<AmazonS3Object>();
         }
     }
 }

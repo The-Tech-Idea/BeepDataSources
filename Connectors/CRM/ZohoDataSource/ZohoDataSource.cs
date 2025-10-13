@@ -824,6 +824,88 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
             return result.Cast<ZohoUser>();
         }
 
+        // -------------------- Create / Update (POST/PUT) methods --------------------
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoLead")]
+        public async Task<IEnumerable<ZohoLead>> CreateLeadAsync(ZohoLead lead)
+        {
+            if (lead == null) return Array.Empty<ZohoLead>();
+            var success = await CreateEntityAsync("Leads", lead).ConfigureAwait(false);
+            return success ? new[] { lead } : Array.Empty<ZohoLead>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoLead")]
+        public async Task<IEnumerable<ZohoLead>> UpdateLeadAsync(string leadId, ZohoLead lead)
+        {
+            if (string.IsNullOrWhiteSpace(leadId) || lead == null) return Array.Empty<ZohoLead>();
+            var success = await UpdateEntityAsync("Leads", lead, leadId).ConfigureAwait(false);
+            return success ? new[] { lead } : Array.Empty<ZohoLead>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoContact")]
+        public async Task<IEnumerable<ZohoContact>> CreateContactAsync(ZohoContact contact)
+        {
+            if (contact == null) return Array.Empty<ZohoContact>();
+            var success = await CreateEntityAsync("Contacts", contact).ConfigureAwait(false);
+            return success ? new[] { contact } : Array.Empty<ZohoContact>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoContact")]
+        public async Task<IEnumerable<ZohoContact>> UpdateContactAsync(string contactId, ZohoContact contact)
+        {
+            if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<ZohoContact>();
+            var success = await UpdateEntityAsync("Contacts", contact, contactId).ConfigureAwait(false);
+            return success ? new[] { contact } : Array.Empty<ZohoContact>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoAccount")]
+        public async Task<IEnumerable<ZohoAccount>> CreateAccountAsync(ZohoAccount account)
+        {
+            if (account == null) return Array.Empty<ZohoAccount>();
+            var success = await CreateEntityAsync("Accounts", account).ConfigureAwait(false);
+            return success ? new[] { account } : Array.Empty<ZohoAccount>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoAccount")]
+        public async Task<IEnumerable<ZohoAccount>> UpdateAccountAsync(string accountId, ZohoAccount account)
+        {
+            if (string.IsNullOrWhiteSpace(accountId) || account == null) return Array.Empty<ZohoAccount>();
+            var success = await UpdateEntityAsync("Accounts", account, accountId).ConfigureAwait(false);
+            return success ? new[] { account } : Array.Empty<ZohoAccount>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Deal", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoDeal")]
+        public async Task<IEnumerable<ZohoDeal>> CreateDealAsync(ZohoDeal deal)
+        {
+            if (deal == null) return Array.Empty<ZohoDeal>();
+            var success = await CreateEntityAsync("Deals", deal).ConfigureAwait(false);
+            return success ? new[] { deal } : Array.Empty<ZohoDeal>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Deal", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoDeal")]
+        public async Task<IEnumerable<ZohoDeal>> UpdateDealAsync(string dealId, ZohoDeal deal)
+        {
+            if (string.IsNullOrWhiteSpace(dealId) || deal == null) return Array.Empty<ZohoDeal>();
+            var success = await UpdateEntityAsync("Deals", deal, dealId).ConfigureAwait(false);
+            return success ? new[] { deal } : Array.Empty<ZohoDeal>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Product", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoProduct")]
+        public async Task<IEnumerable<ZohoProduct>> CreateProductAsync(ZohoProduct product)
+        {
+            if (product == null) return Array.Empty<ZohoProduct>();
+            var success = await CreateEntityAsync("Products", product).ConfigureAwait(false);
+            return success ? new[] { product } : Array.Empty<ZohoProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Product", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoProduct")]
+        public async Task<IEnumerable<ZohoProduct>> UpdateProductAsync(string productId, ZohoProduct product)
+        {
+            if (string.IsNullOrWhiteSpace(productId) || product == null) return Array.Empty<ZohoProduct>();
+            var success = await UpdateEntityAsync("Products", product, productId).ConfigureAwait(false);
+            return success ? new[] { product } : Array.Empty<ZohoProduct>();
+        }
+
         #endregion
 
         #region Configuration Classes

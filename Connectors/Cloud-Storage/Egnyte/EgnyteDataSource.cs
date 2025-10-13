@@ -468,37 +468,214 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
             return GetEntity("file_versions", filters).Cast<EgnyteFileVersion>().ToList();
         }
 
-        [CommandAttribute(Name = "CreateFolderAsync", Caption = "Create Egnyte Folder",
-            ObjectType = "EgnyteFolder", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte,
-            ClassType = "EgnyteDataSource", Showin = ShowinType.Both, Order = 1,
-            iconimage = "egnyte.png", misc = "Create a folder")]
-        public async Task<IEnumerable<EgnyteFolder>> CreateFolderAsync(EgnyteFolder folder, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateFolderAsync",
+            Caption = "Create Egnyte Folder",
+            ObjectType = "EgnyteFolder",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Egnyte,
+            ClassType = "EgnyteDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "createfolder.png",
+            misc = "ReturnType: IEnumerable<EgnyteFolder>"
+        )]
+        public async Task<IEnumerable<EgnyteFolder>> CreateFolderAsync(EgnyteFolder folder)
         {
-            var result = await PostAsync("https://apidemo.egnyte.com/pubapi/v1/fs/{path}", folder, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<EgnyteFolder>>(result);
+            try
+            {
+                var result = await PostAsync("fs", folder);
+                var folders = JsonSerializer.Deserialize<IEnumerable<EgnyteFolder>>(result);
+                if (folders != null)
+                {
+                    foreach (var f in folders)
+                    {
+                        f.Attach<EgnyteFolder>(this);
+                    }
+                }
+                return folders;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating folder: {ex.Message}");
+            }
+            return new List<EgnyteFolder>();
         }
 
-        [CommandAttribute(Name = "UploadFileAsync", Caption = "Upload Egnyte File",
-            ObjectType = "EgnyteFile", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte,
-            ClassType = "EgnyteDataSource", Showin = ShowinType.Both, Order = 2,
-            iconimage = "egnyte.png", misc = "Upload a file")]
-        public async Task<IEnumerable<EgnyteFile>> UploadFileAsync(EgnyteFile file, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "UploadFileAsync",
+            Caption = "Upload Egnyte File",
+            ObjectType = "EgnyteFile",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Egnyte,
+            ClassType = "EgnyteDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "uploadfile.png",
+            misc = "ReturnType: IEnumerable<EgnyteFile>"
+        )]
+        public async Task<IEnumerable<EgnyteFile>> UploadFileAsync(EgnyteFile file)
         {
-            var result = await PostAsync("https://apidemo.egnyte.com/pubapi/v1/fs-content/{path}", file, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<EgnyteFile>>(result);
+            try
+            {
+                var result = await PostAsync("fs_content", file);
+                var files = JsonSerializer.Deserialize<IEnumerable<EgnyteFile>>(result);
+                if (files != null)
+                {
+                    foreach (var f in files)
+                    {
+                        f.Attach<EgnyteFile>(this);
+                    }
+                }
+                return files;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error uploading file: {ex.Message}");
+            }
+            return new List<EgnyteFile>();
         }
 
-        [CommandAttribute(Name = "CreateLinkAsync", Caption = "Create Egnyte Link",
-            ObjectType = "EgnyteLink", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte,
-            ClassType = "EgnyteDataSource", Showin = ShowinType.Both, Order = 3,
-            iconimage = "egnyte.png", misc = "Create a link")]
-        public async Task<IEnumerable<EgnyteLink>> CreateLinkAsync(EgnyteLink link, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateLinkAsync",
+            Caption = "Create Egnyte Link",
+            ObjectType = "EgnyteLink",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Egnyte,
+            ClassType = "EgnyteDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "createlink.png",
+            misc = "ReturnType: IEnumerable<EgnyteLink>"
+        )]
+        public async Task<IEnumerable<EgnyteLink>> CreateLinkAsync(EgnyteLink link)
         {
-            var result = await PostAsync("https://apidemo.egnyte.com/pubapi/v1/links", link, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<EgnyteLink>>(result);
+            try
+            {
+                var result = await PostAsync("links", link);
+                var links = JsonSerializer.Deserialize<IEnumerable<EgnyteLink>>(result);
+                if (links != null)
+                {
+                    foreach (var l in links)
+                    {
+                        l.Attach<EgnyteLink>(this);
+                    }
+                }
+                return links;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating link: {ex.Message}");
+            }
+            return new List<EgnyteLink>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFolderAsync",
+            Caption = "Update Egnyte Folder",
+            ObjectType = "EgnyteFolder",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Egnyte,
+            ClassType = "EgnyteDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "updatefolder.png",
+            misc = "ReturnType: IEnumerable<EgnyteFolder>"
+        )]
+        public async Task<IEnumerable<EgnyteFolder>> UpdateFolderAsync(EgnyteFolder folder)
+        {
+            try
+            {
+                var result = await PatchAsync("fs", folder);
+                var folders = JsonSerializer.Deserialize<IEnumerable<EgnyteFolder>>(result);
+                if (folders != null)
+                {
+                    foreach (var f in folders)
+                    {
+                        f.Attach<EgnyteFolder>(this);
+                    }
+                }
+                return folders;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating folder: {ex.Message}");
+            }
+            return new List<EgnyteFolder>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFileAsync",
+            Caption = "Update Egnyte File",
+            ObjectType = "EgnyteFile",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Egnyte,
+            ClassType = "EgnyteDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "updatefile.png",
+            misc = "ReturnType: IEnumerable<EgnyteFile>"
+        )]
+        public async Task<IEnumerable<EgnyteFile>> UpdateFileAsync(EgnyteFile file)
+        {
+            try
+            {
+                var result = await PatchAsync("fs_content", file);
+                var files = JsonSerializer.Deserialize<IEnumerable<EgnyteFile>>(result);
+                if (files != null)
+                {
+                    foreach (var f in files)
+                    {
+                        f.Attach<EgnyteFile>(this);
+                    }
+                }
+                return files;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating file: {ex.Message}");
+            }
+            return new List<EgnyteFile>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateLinkAsync",
+            Caption = "Update Egnyte Link",
+            ObjectType = "EgnyteLink",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Egnyte,
+            ClassType = "EgnyteDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "updatelink.png",
+            misc = "ReturnType: IEnumerable<EgnyteLink>"
+        )]
+        public async Task<IEnumerable<EgnyteLink>> UpdateLinkAsync(EgnyteLink link)
+        {
+            try
+            {
+                var result = await PatchAsync("links", link);
+                var links = JsonSerializer.Deserialize<IEnumerable<EgnyteLink>>(result);
+                if (links != null)
+                {
+                    foreach (var l in links)
+                    {
+                        l.Attach<EgnyteLink>(this);
+                    }
+                }
+                return links;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating link: {ex.Message}");
+            }
+            return new List<EgnyteLink>();
         }
 
         #endregion

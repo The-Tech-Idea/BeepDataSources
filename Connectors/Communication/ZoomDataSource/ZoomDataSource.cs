@@ -366,48 +366,214 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
             return result.Cast<ZoomUserSettings>().Select(s => s.Attach<ZoomUserSettings>(this));
         }
 
-        [CommandAttribute(Name = "CreateMeetingAsync", Caption = "Create Zoom Meeting",
-            ObjectType = "ZoomMeeting", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 16,
-            iconimage = "zoom.png", misc = "Create a meeting")]
-        public async Task<IEnumerable<ZoomMeeting>> CreateMeetingAsync(ZoomMeeting meeting, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateMeetingAsync",
+            Caption = "Create Zoom Meeting",
+            ObjectType = "ZoomMeeting",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Zoom,
+            ClassType = "ZoomDataSource",
+            Showin = ShowinType.Both,
+            Order = 16,
+            iconimage = "createmeeting.png",
+            misc = "ReturnType: IEnumerable<ZoomMeeting>"
+        )]
+        public async Task<IEnumerable<ZoomMeeting>> CreateMeetingAsync(ZoomMeeting meeting)
         {
-            var result = await PostAsync("users/{user_id}/meetings", meeting, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<ZoomMeeting>>(result);
+            try
+            {
+                var result = await PostAsync("users/{user_id}/meetings", meeting);
+                var meetings = JsonSerializer.Deserialize<IEnumerable<ZoomMeeting>>(result);
+                if (meetings != null)
+                {
+                    foreach (var m in meetings)
+                    {
+                        m.Attach<ZoomMeeting>(this);
+                    }
+                }
+                return meetings;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating meeting: {ex.Message}");
+            }
+            return new List<ZoomMeeting>();
         }
 
-        [CommandAttribute(Name = "CreateWebinarAsync", Caption = "Create Zoom Webinar",
-            ObjectType = "ZoomWebinar", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 17,
-            iconimage = "zoom.png", misc = "Create a webinar")]
-        public async Task<IEnumerable<ZoomWebinar>> CreateWebinarAsync(ZoomWebinar webinar, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateWebinarAsync",
+            Caption = "Create Zoom Webinar",
+            ObjectType = "ZoomWebinar",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Zoom,
+            ClassType = "ZoomDataSource",
+            Showin = ShowinType.Both,
+            Order = 17,
+            iconimage = "createwebinar.png",
+            misc = "ReturnType: IEnumerable<ZoomWebinar>"
+        )]
+        public async Task<IEnumerable<ZoomWebinar>> CreateWebinarAsync(ZoomWebinar webinar)
         {
-            var result = await PostAsync("users/{user_id}/webinars", webinar, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<ZoomWebinar>>(result);
+            try
+            {
+                var result = await PostAsync("users/{user_id}/webinars", webinar);
+                var webinars = JsonSerializer.Deserialize<IEnumerable<ZoomWebinar>>(result);
+                if (webinars != null)
+                {
+                    foreach (var w in webinars)
+                    {
+                        w.Attach<ZoomWebinar>(this);
+                    }
+                }
+                return webinars;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating webinar: {ex.Message}");
+            }
+            return new List<ZoomWebinar>();
         }
 
-        [CommandAttribute(Name = "CreateChannelAsync", Caption = "Create Zoom Channel",
-            ObjectType = "ZoomChannel", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 18,
-            iconimage = "zoom.png", misc = "Create a channel")]
-        public async Task<IEnumerable<ZoomChannel>> CreateChannelAsync(ZoomChannel channel, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateChannelAsync",
+            Caption = "Create Zoom Channel",
+            ObjectType = "ZoomChannel",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Zoom,
+            ClassType = "ZoomDataSource",
+            Showin = ShowinType.Both,
+            Order = 18,
+            iconimage = "createchannel.png",
+            misc = "ReturnType: IEnumerable<ZoomChannel>"
+        )]
+        public async Task<IEnumerable<ZoomChannel>> CreateChannelAsync(ZoomChannel channel)
         {
-            var result = await PostAsync("chat/users/{user_id}/channels", channel, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<ZoomChannel>>(result);
+            try
+            {
+                var result = await PostAsync("chat/users/{user_id}/channels", channel);
+                var channels = JsonSerializer.Deserialize<IEnumerable<ZoomChannel>>(result);
+                if (channels != null)
+                {
+                    foreach (var c in channels)
+                    {
+                        c.Attach<ZoomChannel>(this);
+                    }
+                }
+                return channels;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating channel: {ex.Message}");
+            }
+            return new List<ZoomChannel>();
         }
 
-        [CommandAttribute(Name = "SendChannelMessageAsync", Caption = "Send Zoom Channel Message",
-            ObjectType = "ZoomChannelMessage", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 19,
-            iconimage = "zoom.png", misc = "Send a message to a channel")]
-        public async Task<IEnumerable<ZoomChannelMessage>> SendChannelMessageAsync(ZoomChannelMessage message, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "SendChannelMessageAsync",
+            Caption = "Send Zoom Channel Message",
+            ObjectType = "ZoomChannelMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Zoom,
+            ClassType = "ZoomDataSource",
+            Showin = ShowinType.Both,
+            Order = 19,
+            iconimage = "sendmessage.png",
+            misc = "ReturnType: IEnumerable<ZoomChannelMessage>"
+        )]
+        public async Task<IEnumerable<ZoomChannelMessage>> SendChannelMessageAsync(ZoomChannelMessage message)
         {
-            var result = await PostAsync("chat/channels/{channel_id}/messages", message, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<ZoomChannelMessage>>(result);
+            try
+            {
+                var result = await PostAsync("chat/channels/{channel_id}/messages", message);
+                var messages = JsonSerializer.Deserialize<IEnumerable<ZoomChannelMessage>>(result);
+                if (messages != null)
+                {
+                    foreach (var m in messages)
+                    {
+                        m.Attach<ZoomChannelMessage>(this);
+                    }
+                }
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error sending channel message: {ex.Message}");
+            }
+            return new List<ZoomChannelMessage>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateMeetingAsync",
+            Caption = "Update Zoom Meeting",
+            ObjectType = "ZoomMeeting",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Zoom,
+            ClassType = "ZoomDataSource",
+            Showin = ShowinType.Both,
+            Order = 20,
+            iconimage = "updatemeeting.png",
+            misc = "ReturnType: IEnumerable<ZoomMeeting>"
+        )]
+        public async Task<IEnumerable<ZoomMeeting>> UpdateMeetingAsync(ZoomMeeting meeting)
+        {
+            try
+            {
+                var result = await PutAsync("meetings/{meeting_id}", meeting);
+                var meetings = JsonSerializer.Deserialize<IEnumerable<ZoomMeeting>>(result);
+                if (meetings != null)
+                {
+                    foreach (var m in meetings)
+                    {
+                        m.Attach<ZoomMeeting>(this);
+                    }
+                }
+                return meetings;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating meeting: {ex.Message}");
+            }
+            return new List<ZoomMeeting>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateWebinarAsync",
+            Caption = "Update Zoom Webinar",
+            ObjectType = "ZoomWebinar",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Zoom,
+            ClassType = "ZoomDataSource",
+            Showin = ShowinType.Both,
+            Order = 21,
+            iconimage = "updatewebinar.png",
+            misc = "ReturnType: IEnumerable<ZoomWebinar>"
+        )]
+        public async Task<IEnumerable<ZoomWebinar>> UpdateWebinarAsync(ZoomWebinar webinar)
+        {
+            try
+            {
+                var result = await PutAsync("webinars/{webinar_id}", webinar);
+                var webinars = JsonSerializer.Deserialize<IEnumerable<ZoomWebinar>>(result);
+                if (webinars != null)
+                {
+                    foreach (var w in webinars)
+                    {
+                        w.Attach<ZoomWebinar>(this);
+                    }
+                }
+                return webinars;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating webinar: {ex.Message}");
+            }
+            return new List<ZoomWebinar>();
         }
     }
 }

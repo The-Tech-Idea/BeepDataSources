@@ -349,37 +349,214 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
             return GetEntity("sharefolder", filters).Cast<MediaFireShare>().FirstOrDefault();
         }
 
-        [CommandAttribute(Name = "UploadFileAsync", Caption = "Upload MediaFire File",
-            ObjectType = "MediaFireItem", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire,
-            ClassType = "MediaFireDataSource", Showin = ShowinType.Both, Order = 1,
-            iconimage = "mediafire.png", misc = "Upload a file")]
-        public async Task<IEnumerable<MediaFireItem>> UploadFileAsync(MediaFireItem file, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "UploadFileAsync",
+            Caption = "Upload MediaFire File",
+            ObjectType = "MediaFireItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MediaFire,
+            ClassType = "MediaFireDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "uploadfile.png",
+            misc = "ReturnType: IEnumerable<MediaFireItem>"
+        )]
+        public async Task<IEnumerable<MediaFireItem>> UploadFileAsync(MediaFireItem file)
         {
-            var result = await PostAsync("https://www.mediafire.com/api/2.0/upload/simple.php", file, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+            try
+            {
+                var result = await PostAsync("upload_simple", file);
+                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<MediaFireItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error uploading file: {ex.Message}");
+            }
+            return new List<MediaFireItem>();
         }
 
-        [CommandAttribute(Name = "CreateFolderAsync", Caption = "Create MediaFire Folder",
-            ObjectType = "MediaFireItem", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire,
-            ClassType = "MediaFireDataSource", Showin = ShowinType.Both, Order = 2,
-            iconimage = "mediafire.png", misc = "Create a folder")]
-        public async Task<IEnumerable<MediaFireItem>> CreateFolderAsync(MediaFireItem folder, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateFolderAsync",
+            Caption = "Create MediaFire Folder",
+            ObjectType = "MediaFireItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MediaFire,
+            ClassType = "MediaFireDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "createfolder.png",
+            misc = "ReturnType: IEnumerable<MediaFireItem>"
+        )]
+        public async Task<IEnumerable<MediaFireItem>> CreateFolderAsync(MediaFireItem folder)
         {
-            var result = await PostAsync("https://www.mediafire.com/api/2.0/folder/create.php", folder, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+            try
+            {
+                var result = await PostAsync("folder_create", folder);
+                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<MediaFireItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating folder: {ex.Message}");
+            }
+            return new List<MediaFireItem>();
         }
 
-        [CommandAttribute(Name = "CopyFileAsync", Caption = "Copy MediaFire File",
-            ObjectType = "MediaFireItem", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire,
-            ClassType = "MediaFireDataSource", Showin = ShowinType.Both, Order = 3,
-            iconimage = "mediafire.png", misc = "Copy a file")]
-        public async Task<IEnumerable<MediaFireItem>> CopyFileAsync(MediaFireItem file, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CopyFileAsync",
+            Caption = "Copy MediaFire File",
+            ObjectType = "MediaFireItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MediaFire,
+            ClassType = "MediaFireDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "copyfile.png",
+            misc = "ReturnType: IEnumerable<MediaFireItem>"
+        )]
+        public async Task<IEnumerable<MediaFireItem>> CopyFileAsync(MediaFireItem file)
         {
-            var result = await PostAsync("https://www.mediafire.com/api/2.0/file/copy.php", file, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+            try
+            {
+                var result = await PostAsync("file_copy", file);
+                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<MediaFireItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error copying file: {ex.Message}");
+            }
+            return new List<MediaFireItem>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFileAsync",
+            Caption = "Update MediaFire File",
+            ObjectType = "MediaFireItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MediaFire,
+            ClassType = "MediaFireDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "updatefile.png",
+            misc = "ReturnType: IEnumerable<MediaFireItem>"
+        )]
+        public async Task<IEnumerable<MediaFireItem>> UpdateFileAsync(MediaFireItem file)
+        {
+            try
+            {
+                var result = await PatchAsync("upload_simple", file);
+                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<MediaFireItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating file: {ex.Message}");
+            }
+            return new List<MediaFireItem>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateFolderAsync",
+            Caption = "Update MediaFire Folder",
+            ObjectType = "MediaFireItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MediaFire,
+            ClassType = "MediaFireDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "updatefolder.png",
+            misc = "ReturnType: IEnumerable<MediaFireItem>"
+        )]
+        public async Task<IEnumerable<MediaFireItem>> UpdateFolderAsync(MediaFireItem folder)
+        {
+            try
+            {
+                var result = await PatchAsync("folder_create", folder);
+                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<MediaFireItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating folder: {ex.Message}");
+            }
+            return new List<MediaFireItem>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateCopyAsync",
+            Caption = "Update MediaFire Copy",
+            ObjectType = "MediaFireItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.MediaFire,
+            ClassType = "MediaFireDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "updatecopy.png",
+            misc = "ReturnType: IEnumerable<MediaFireItem>"
+        )]
+        public async Task<IEnumerable<MediaFireItem>> UpdateCopyAsync(MediaFireItem file)
+        {
+            try
+            {
+                var result = await PatchAsync("file_copy", file);
+                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<MediaFireItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating copy: {ex.Message}");
+            }
+            return new List<MediaFireItem>();
         }
 
         #endregion

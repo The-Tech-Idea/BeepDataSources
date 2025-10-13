@@ -255,11 +255,23 @@ namespace TheTechIdea.Beep.Connectors.Communication.Discord
         )]
         public async Task<IEnumerable<DiscordMessage>> CreateMessageAsync(string channelId, DiscordMessage message)
         {
-            var url = $"https://discord.com/api/v10/channels/{channelId}/messages";
-            var response = await PostAsync(url, message);
-            var json = await response.Content.ReadAsStringAsync();
-            var createdMessage = JsonSerializer.Deserialize<DiscordMessage>(json);
-            return createdMessage != null ? new[] { createdMessage } : Array.Empty<DiscordMessage>();
+            try
+            {
+                var url = $"https://discord.com/api/v10/channels/{channelId}/messages";
+                var response = await PostAsync(url, message);
+                var json = await response.Content.ReadAsStringAsync();
+                var createdMessage = JsonSerializer.Deserialize<DiscordMessage>(json);
+                if (createdMessage != null)
+                {
+                    createdMessage.Attach<DiscordMessage>(this);
+                    return new[] { createdMessage };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating message: {ex.Message}");
+            }
+            return Array.Empty<DiscordMessage>();
         }
 
         /// <summary>
@@ -280,11 +292,23 @@ namespace TheTechIdea.Beep.Connectors.Communication.Discord
         )]
         public async Task<IEnumerable<DiscordChannel>> CreateChannelAsync(string guildId, DiscordChannel channel)
         {
-            var url = $"https://discord.com/api/v10/guilds/{guildId}/channels";
-            var response = await PostAsync(url, channel);
-            var json = await response.Content.ReadAsStringAsync();
-            var createdChannel = JsonSerializer.Deserialize<DiscordChannel>(json);
-            return createdChannel != null ? new[] { createdChannel } : Array.Empty<DiscordChannel>();
+            try
+            {
+                var url = $"https://discord.com/api/v10/guilds/{guildId}/channels";
+                var response = await PostAsync(url, channel);
+                var json = await response.Content.ReadAsStringAsync();
+                var createdChannel = JsonSerializer.Deserialize<DiscordChannel>(json);
+                if (createdChannel != null)
+                {
+                    createdChannel.Attach<DiscordChannel>(this);
+                    return new[] { createdChannel };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating channel: {ex.Message}");
+            }
+            return Array.Empty<DiscordChannel>();
         }
 
         /// <summary>
@@ -305,11 +329,23 @@ namespace TheTechIdea.Beep.Connectors.Communication.Discord
         )]
         public async Task<IEnumerable<DiscordRole>> CreateRoleAsync(string guildId, DiscordRole role)
         {
-            var url = $"https://discord.com/api/v10/guilds/{guildId}/roles";
-            var response = await PostAsync(url, role);
-            var json = await response.Content.ReadAsStringAsync();
-            var createdRole = JsonSerializer.Deserialize<DiscordRole>(json);
-            return createdRole != null ? new[] { createdRole } : Array.Empty<DiscordRole>();
+            try
+            {
+                var url = $"https://discord.com/api/v10/guilds/{guildId}/roles";
+                var response = await PostAsync(url, role);
+                var json = await response.Content.ReadAsStringAsync();
+                var createdRole = JsonSerializer.Deserialize<DiscordRole>(json);
+                if (createdRole != null)
+                {
+                    createdRole.Attach<DiscordRole>(this);
+                    return new[] { createdRole };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating role: {ex.Message}");
+            }
+            return Array.Empty<DiscordRole>();
         }
 
         /// <summary>
@@ -330,11 +366,97 @@ namespace TheTechIdea.Beep.Connectors.Communication.Discord
         )]
         public async Task<IEnumerable<DiscordRole>> UpdateRoleAsync(string guildId, string roleId, DiscordRole role)
         {
-            var url = $"https://discord.com/api/v10/guilds/{guildId}/roles/{roleId}";
-            var response = await PatchAsync(url, role);
-            var json = await response.Content.ReadAsStringAsync();
-            var updatedRole = JsonSerializer.Deserialize<DiscordRole>(json);
-            return updatedRole != null ? new[] { updatedRole } : Array.Empty<DiscordRole>();
+            try
+            {
+                var url = $"https://discord.com/api/v10/guilds/{guildId}/roles/{roleId}";
+                var response = await PatchAsync(url, role);
+                var json = await response.Content.ReadAsStringAsync();
+                var updatedRole = JsonSerializer.Deserialize<DiscordRole>(json);
+                if (updatedRole != null)
+                {
+                    updatedRole.Attach<DiscordRole>(this);
+                    return new[] { updatedRole };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating role: {ex.Message}");
+            }
+            return Array.Empty<DiscordRole>();
+        }
+
+        /// <summary>
+        /// Updates a channel in a Discord guild
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateChannel",
+            Caption = "Update Discord Channel",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Discord,
+            PointType = EnumPointType.Function,
+            ObjectType = "DiscordChannel",
+            ClassType = "DiscordDataSource",
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "updatechannel.png",
+            misc = "ReturnType: IEnumerable<DiscordChannel>"
+        )]
+        public async Task<IEnumerable<DiscordChannel>> UpdateChannelAsync(string channelId, DiscordChannel channel)
+        {
+            try
+            {
+                var url = $"https://discord.com/api/v10/channels/{channelId}";
+                var response = await PatchAsync(url, channel);
+                var json = await response.Content.ReadAsStringAsync();
+                var updatedChannel = JsonSerializer.Deserialize<DiscordChannel>(json);
+                if (updatedChannel != null)
+                {
+                    updatedChannel.Attach<DiscordChannel>(this);
+                    return new[] { updatedChannel };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating channel: {ex.Message}");
+            }
+            return Array.Empty<DiscordChannel>();
+        }
+
+        /// <summary>
+        /// Updates a message in a Discord channel
+        /// </summary>
+        [CommandAttribute(
+            Name = "UpdateMessage",
+            Caption = "Update Discord Message",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Discord,
+            PointType = EnumPointType.Function,
+            ObjectType = "DiscordMessage",
+            ClassType = "DiscordDataSource",
+            Showin = ShowinType.Both,
+            Order = 11,
+            iconimage = "updatemessage.png",
+            misc = "ReturnType: IEnumerable<DiscordMessage>"
+        )]
+        public async Task<IEnumerable<DiscordMessage>> UpdateMessageAsync(string channelId, string messageId, DiscordMessage message)
+        {
+            try
+            {
+                var url = $"https://discord.com/api/v10/channels/{channelId}/messages/{messageId}";
+                var response = await PatchAsync(url, message);
+                var json = await response.Content.ReadAsStringAsync();
+                var updatedMessage = JsonSerializer.Deserialize<DiscordMessage>(json);
+                if (updatedMessage != null)
+                {
+                    updatedMessage.Attach<DiscordMessage>(this);
+                    return new[] { updatedMessage };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating message: {ex.Message}");
+            }
+            return Array.Empty<DiscordMessage>();
         }
     }
 }

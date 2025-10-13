@@ -598,28 +598,52 @@ namespace BeepDataSources.Connectors.SocialMedia.Snapchat
             return JsonSerializer.Deserialize<SnapchatResponse<SnapchatCreative>>(json);
         }
 
-        [CommandAttribute(ObjectType = "SnapchatCampaign", PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Snapchat Campaign", ClassName = "SnapchatDataSource", misc = "ReturnType: SnapchatCampaign")]
-        public async Task<SnapchatCampaign> CreateCampaignAsync(SnapchatCampaign campaign)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Snapchat, PointType = EnumPointType.Function, ObjectType = "SnapchatCampaign", Name = "CreateCampaign", Caption = "Create Snapchat Campaign", ClassType = "SnapchatDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "snapchat.png", misc = "ReturnType: IEnumerable<SnapchatCampaign>")]
+        public async Task<IEnumerable<SnapchatCampaign>> CreateCampaignAsync(SnapchatCampaign campaign)
         {
-            string endpoint = $"{ConnectionProperties.BaseUrl}/campaigns";
-            var response = await PostAsync(endpoint, campaign);
-            if (response == null || !response.IsSuccessStatusCode)
-                return null;
-            string json = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<SnapchatResponse<SnapchatCampaign>>(json);
-            return result?.Campaigns?.FirstOrDefault();
+            try
+            {
+                var result = await PostAsync($"{ConnectionProperties.BaseUrl}/campaigns", campaign);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var response = JsonSerializer.Deserialize<SnapchatResponse<SnapchatCampaign>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var createdCampaign = response?.Campaigns?.FirstOrDefault();
+                    if (createdCampaign != null)
+                    {
+                        return new List<SnapchatCampaign> { createdCampaign }.Select(c => c.Attach<SnapchatCampaign>(this));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating campaign: {ex.Message}");
+            }
+            return new List<SnapchatCampaign>();
         }
 
-        [CommandAttribute(ObjectType = "SnapchatCampaign", PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update Snapchat Campaign", ClassName = "SnapchatDataSource", misc = "ReturnType: SnapchatCampaign")]
-        public async Task<SnapchatCampaign> UpdateCampaignAsync(string campaignId, SnapchatCampaign campaign)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Snapchat, PointType = EnumPointType.Function, ObjectType = "SnapchatCampaign", Name = "UpdateCampaign", Caption = "Update Snapchat Campaign", ClassType = "SnapchatDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "snapchat.png", misc = "ReturnType: IEnumerable<SnapchatCampaign>")]
+        public async Task<IEnumerable<SnapchatCampaign>> UpdateCampaignAsync(SnapchatCampaign campaign)
         {
-            string endpoint = $"{ConnectionProperties.BaseUrl}/campaigns/{campaignId}";
-            var response = await PutAsync(endpoint, campaign);
-            if (response == null || !response.IsSuccessStatusCode)
-                return null;
-            string json = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<SnapchatResponse<SnapchatCampaign>>(json);
-            return result?.Campaigns?.FirstOrDefault();
+            try
+            {
+                var result = await PutAsync($"{ConnectionProperties.BaseUrl}/campaigns/{campaign.Id}", campaign);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var response = JsonSerializer.Deserialize<SnapchatResponse<SnapchatCampaign>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var updatedCampaign = response?.Campaigns?.FirstOrDefault();
+                    if (updatedCampaign != null)
+                    {
+                        return new List<SnapchatCampaign> { updatedCampaign }.Select(c => c.Attach<SnapchatCampaign>(this));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating campaign: {ex.Message}");
+            }
+            return new List<SnapchatCampaign>();
         }
     }
 }

@@ -330,6 +330,326 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return result.Cast<BigCommerceInventoryItem>();
         }
 
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Products", Name = "CreateProduct", Caption = "Create BigCommerce Product", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceProduct>")]
+        public async Task<IEnumerable<BigCommerceProduct>> CreateProductAsync(BigCommerceProduct product)
+        {
+            try
+            {
+                var result = await PostAsync("products", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdProduct = JsonSerializer.Deserialize<BigCommerceProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceProduct> { createdProduct }.Select(p => p.Attach<BigCommerceProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating product: {ex.Message}");
+            }
+            return new List<BigCommerceProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Products", Name = "UpdateProduct", Caption = "Update BigCommerce Product", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceProduct>")]
+        public async Task<IEnumerable<BigCommerceProduct>> UpdateProductAsync(BigCommerceProduct product)
+        {
+            try
+            {
+                var result = await PutAsync($"products/{product.Id}", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedProduct = JsonSerializer.Deserialize<BigCommerceProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceProduct> { updatedProduct }.Select(p => p.Attach<BigCommerceProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating product: {ex.Message}");
+            }
+            return new List<BigCommerceProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "CreateCategory", Caption = "Create BigCommerce Category", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCategory>")]
+        public async Task<IEnumerable<BigCommerceCategory>> CreateCategoryAsync(BigCommerceCategory category)
+        {
+            try
+            {
+                var result = await PostAsync("categories", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCategory = JsonSerializer.Deserialize<BigCommerceCategory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceCategory> { createdCategory }.Select(c => c.Attach<BigCommerceCategory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating category: {ex.Message}");
+            }
+            return new List<BigCommerceCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "UpdateCategory", Caption = "Update BigCommerce Category", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCategory>")]
+        public async Task<IEnumerable<BigCommerceCategory>> UpdateCategoryAsync(BigCommerceCategory category)
+        {
+            try
+            {
+                var result = await PutAsync($"categories/{category.Id}", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCategory = JsonSerializer.Deserialize<BigCommerceCategory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceCategory> { updatedCategory }.Select(c => c.Attach<BigCommerceCategory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating category: {ex.Message}");
+            }
+            return new List<BigCommerceCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Brands", Name = "CreateBrand", Caption = "Create BigCommerce Brand", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceBrand>")]
+        public async Task<IEnumerable<BigCommerceBrand>> CreateBrandAsync(BigCommerceBrand brand)
+        {
+            try
+            {
+                var result = await PostAsync("brands", brand);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdBrand = JsonSerializer.Deserialize<BigCommerceBrand>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceBrand> { createdBrand }.Select(b => b.Attach<BigCommerceBrand>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating brand: {ex.Message}");
+            }
+            return new List<BigCommerceBrand>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Brands", Name = "UpdateBrand", Caption = "Update BigCommerce Brand", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceBrand>")]
+        public async Task<IEnumerable<BigCommerceBrand>> UpdateBrandAsync(BigCommerceBrand brand)
+        {
+            try
+            {
+                var result = await PutAsync($"brands/{brand.Id}", brand);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedBrand = JsonSerializer.Deserialize<BigCommerceBrand>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceBrand> { updatedBrand }.Select(b => b.Attach<BigCommerceBrand>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating brand: {ex.Message}");
+            }
+            return new List<BigCommerceBrand>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Customers", Name = "CreateCustomer", Caption = "Create BigCommerce Customer", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCustomer>")]
+        public async Task<IEnumerable<BigCommerceCustomer>> CreateCustomerAsync(BigCommerceCustomer customer)
+        {
+            try
+            {
+                var result = await PostAsync("customers", customer);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCustomer = JsonSerializer.Deserialize<BigCommerceCustomer>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceCustomer> { createdCustomer }.Select(c => c.Attach<BigCommerceCustomer>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating customer: {ex.Message}");
+            }
+            return new List<BigCommerceCustomer>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Customers", Name = "UpdateCustomer", Caption = "Update BigCommerce Customer", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCustomer>")]
+        public async Task<IEnumerable<BigCommerceCustomer>> UpdateCustomerAsync(BigCommerceCustomer customer)
+        {
+            try
+            {
+                var result = await PutAsync($"customers/{customer.Id}", customer);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCustomer = JsonSerializer.Deserialize<BigCommerceCustomer>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceCustomer> { updatedCustomer }.Select(c => c.Attach<BigCommerceCustomer>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating customer: {ex.Message}");
+            }
+            return new List<BigCommerceCustomer>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "CreateOrder", Caption = "Create BigCommerce Order", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceOrder>")]
+        public async Task<IEnumerable<BigCommerceOrder>> CreateOrderAsync(BigCommerceOrder order)
+        {
+            try
+            {
+                var result = await PostAsync("orders", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdOrder = JsonSerializer.Deserialize<BigCommerceOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceOrder> { createdOrder }.Select(o => o.Attach<BigCommerceOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating order: {ex.Message}");
+            }
+            return new List<BigCommerceOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "UpdateOrder", Caption = "Update BigCommerce Order", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceOrder>")]
+        public async Task<IEnumerable<BigCommerceOrder>> UpdateOrderAsync(BigCommerceOrder order)
+        {
+            try
+            {
+                var result = await PutAsync($"orders/{order.Id}", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedOrder = JsonSerializer.Deserialize<BigCommerceOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceOrder> { updatedOrder }.Select(o => o.Attach<BigCommerceOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating order: {ex.Message}");
+            }
+            return new List<BigCommerceOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Carts", Name = "CreateCart", Caption = "Create BigCommerce Cart", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCart>")]
+        public async Task<IEnumerable<BigCommerceCart>> CreateCartAsync(BigCommerceCart cart)
+        {
+            try
+            {
+                var result = await PostAsync("carts", cart);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCart = JsonSerializer.Deserialize<BigCommerceCart>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceCart> { createdCart }.Select(c => c.Attach<BigCommerceCart>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating cart: {ex.Message}");
+            }
+            return new List<BigCommerceCart>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Carts", Name = "UpdateCart", Caption = "Update BigCommerce Cart", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCart>")]
+        public async Task<IEnumerable<BigCommerceCart>> UpdateCartAsync(BigCommerceCart cart)
+        {
+            try
+            {
+                var result = await PutAsync($"carts/{cart.Id}", cart);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCart = JsonSerializer.Deserialize<BigCommerceCart>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceCart> { updatedCart }.Select(c => c.Attach<BigCommerceCart>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating cart: {ex.Message}");
+            }
+            return new List<BigCommerceCart>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Coupons", Name = "CreateCoupon", Caption = "Create BigCommerce Coupon", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCoupon>")]
+        public async Task<IEnumerable<BigCommerceCoupon>> CreateCouponAsync(BigCommerceCoupon coupon)
+        {
+            try
+            {
+                var result = await PostAsync("coupons", coupon);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCoupon = JsonSerializer.Deserialize<BigCommerceCoupon>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceCoupon> { createdCoupon }.Select(c => c.Attach<BigCommerceCoupon>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating coupon: {ex.Message}");
+            }
+            return new List<BigCommerceCoupon>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Coupons", Name = "UpdateCoupon", Caption = "Update BigCommerce Coupon", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 22, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCoupon>")]
+        public async Task<IEnumerable<BigCommerceCoupon>> UpdateCouponAsync(BigCommerceCoupon coupon)
+        {
+            try
+            {
+                var result = await PutAsync($"coupons/{coupon.Id}", coupon);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCoupon = JsonSerializer.Deserialize<BigCommerceCoupon>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceCoupon> { updatedCoupon }.Select(c => c.Attach<BigCommerceCoupon>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating coupon: {ex.Message}");
+            }
+            return new List<BigCommerceCoupon>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Inventory", Name = "CreateInventoryItem", Caption = "Create BigCommerce Inventory Item", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 23, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceInventoryItem>")]
+        public async Task<IEnumerable<BigCommerceInventoryItem>> CreateInventoryItemAsync(BigCommerceInventoryItem inventoryItem)
+        {
+            try
+            {
+                var result = await PostAsync("inventory", inventoryItem);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdInventoryItem = JsonSerializer.Deserialize<BigCommerceInventoryItem>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceInventoryItem> { createdInventoryItem }.Select(i => i.Attach<BigCommerceInventoryItem>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating inventory item: {ex.Message}");
+            }
+            return new List<BigCommerceInventoryItem>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Inventory", Name = "UpdateInventoryItem", Caption = "Update BigCommerce Inventory Item", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 24, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceInventoryItem>")]
+        public async Task<IEnumerable<BigCommerceInventoryItem>> UpdateInventoryItemAsync(BigCommerceInventoryItem inventoryItem)
+        {
+            try
+            {
+                var result = await PutAsync($"inventory/{inventoryItem.Id}", inventoryItem);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedInventoryItem = JsonSerializer.Deserialize<BigCommerceInventoryItem>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<BigCommerceInventoryItem> { updatedInventoryItem }.Select(i => i.Attach<BigCommerceInventoryItem>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating inventory item: {ex.Message}");
+            }
+            return new List<BigCommerceInventoryItem>();
+        }
+
         #endregion
     }
 }

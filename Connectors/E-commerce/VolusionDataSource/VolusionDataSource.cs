@@ -91,6 +91,126 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Volusion
             return result.Cast<Models.VCategory>();
         }
 
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Products", Name = "CreateProduct", Caption = "Create Volusion Product", ClassType = "VolusionDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VProduct>")]
+        public async Task<IEnumerable<Models.VProduct>> CreateProductAsync(Models.VProduct product)
+        {
+            try
+            {
+                var result = await PostAsync("products", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdProduct = JsonSerializer.Deserialize<Models.VProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Models.VProduct> { createdProduct }.Select(p => p.Attach<Models.VProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating product: {ex.Message}");
+            }
+            return new List<Models.VProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Products", Name = "UpdateProduct", Caption = "Update Volusion Product", ClassType = "VolusionDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VProduct>")]
+        public async Task<IEnumerable<Models.VProduct>> UpdateProductAsync(Models.VProduct product)
+        {
+            try
+            {
+                var result = await PutAsync($"products/{product.Id}", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedProduct = JsonSerializer.Deserialize<Models.VProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Models.VProduct> { updatedProduct }.Select(p => p.Attach<Models.VProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating product: {ex.Message}");
+            }
+            return new List<Models.VProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "CreateOrder", Caption = "Create Volusion Order", ClassType = "VolusionDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VOrder>")]
+        public async Task<IEnumerable<Models.VOrder>> CreateOrderAsync(Models.VOrder order)
+        {
+            try
+            {
+                var result = await PostAsync("orders", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdOrder = JsonSerializer.Deserialize<Models.VOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Models.VOrder> { createdOrder }.Select(o => o.Attach<Models.VOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating order: {ex.Message}");
+            }
+            return new List<Models.VOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "UpdateOrder", Caption = "Update Volusion Order", ClassType = "VolusionDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VOrder>")]
+        public async Task<IEnumerable<Models.VOrder>> UpdateOrderAsync(Models.VOrder order)
+        {
+            try
+            {
+                var result = await PutAsync($"orders/{order.Id}", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedOrder = JsonSerializer.Deserialize<Models.VOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Models.VOrder> { updatedOrder }.Select(o => o.Attach<Models.VOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating order: {ex.Message}");
+            }
+            return new List<Models.VOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "CreateCategory", Caption = "Create Volusion Category", ClassType = "VolusionDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VCategory>")]
+        public async Task<IEnumerable<Models.VCategory>> CreateCategoryAsync(Models.VCategory category)
+        {
+            try
+            {
+                var result = await PostAsync("categories", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCategory = JsonSerializer.Deserialize<Models.VCategory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Models.VCategory> { createdCategory }.Select(c => c.Attach<Models.VCategory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating category: {ex.Message}");
+            }
+            return new List<Models.VCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "UpdateCategory", Caption = "Update Volusion Category", ClassType = "VolusionDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VCategory>")]
+        public async Task<IEnumerable<Models.VCategory>> UpdateCategoryAsync(Models.VCategory category)
+        {
+            try
+            {
+                var result = await PutAsync($"categories/{category.Id}", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCategory = JsonSerializer.Deserialize<Models.VCategory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<Models.VCategory> { updatedCategory }.Select(c => c.Attach<Models.VCategory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating category: {ex.Message}");
+            }
+            return new List<Models.VCategory>();
+        }
+
         // -------------------- Overrides (same signatures) --------------------
 
         // Sync

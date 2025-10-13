@@ -22,6 +22,24 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
 
         [JsonPropertyName("source")]
         public string? Source { get; set; }
+
+        /// <summary>
+        /// Reference to the data source (ignored during JSON serialization)
+        /// </summary>
+        [JsonIgnore]
+        public IDataSource? DataSource { get; set; }
+
+        /// <summary>
+        /// Attaches the entity to a data source
+        /// </summary>
+        /// <typeparam name="T">The entity type</typeparam>
+        /// <param name="dataSource">The data source to attach to</param>
+        /// <returns>The entity instance with data source attached</returns>
+        public T Attach<T>(IDataSource dataSource) where T : AzureIoTHubBaseEntity
+        {
+            DataSource = dataSource;
+            return (T)this;
+        }
     }
 
     // Device entity

@@ -244,6 +244,446 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WooCommerce
             return result.Cast<WooAttribute>().Select(a => a.Attach<WooAttribute>(this));
         }
 
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooProduct", Name = "CreateProduct", Caption = "Create WooCommerce Product", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooProduct>")]
+        public async Task<IEnumerable<WooProduct>> CreateProductAsync(WooProduct product)
+        {
+            try
+            {
+                var result = await PostAsync("Products", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdProduct = JsonSerializer.Deserialize<WooProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooProduct> { createdProduct }.Select(p => p.Attach<WooProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating product: {ex.Message}");
+            }
+            return new List<WooProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooProduct", Name = "UpdateProduct", Caption = "Update WooCommerce Product", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooProduct>")]
+        public async Task<IEnumerable<WooProduct>> UpdateProductAsync(WooProduct product)
+        {
+            try
+            {
+                var result = await PutAsync($"Products/{product.Id}", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedProduct = JsonSerializer.Deserialize<WooProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooProduct> { updatedProduct }.Select(p => p.Attach<WooProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating product: {ex.Message}");
+            }
+            return new List<WooProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooOrder", Name = "CreateOrder", Caption = "Create WooCommerce Order", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooOrder>")]
+        public async Task<IEnumerable<WooOrder>> CreateOrderAsync(WooOrder order)
+        {
+            try
+            {
+                var result = await PostAsync("Orders", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdOrder = JsonSerializer.Deserialize<WooOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooOrder> { createdOrder }.Select(o => o.Attach<WooOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating order: {ex.Message}");
+            }
+            return new List<WooOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooOrder", Name = "UpdateOrder", Caption = "Update WooCommerce Order", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooOrder>")]
+        public async Task<IEnumerable<WooOrder>> UpdateOrderAsync(WooOrder order)
+        {
+            try
+            {
+                var result = await PutAsync($"Orders/{order.Id}", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedOrder = JsonSerializer.Deserialize<WooOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooOrder> { updatedOrder }.Select(o => o.Attach<WooOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating order: {ex.Message}");
+            }
+            return new List<WooOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooCustomer", Name = "CreateCustomer", Caption = "Create WooCommerce Customer", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooCustomer>")]
+        public async Task<IEnumerable<WooCustomer>> CreateCustomerAsync(WooCustomer customer)
+        {
+            try
+            {
+                var result = await PostAsync("Customers", customer);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCustomer = JsonSerializer.Deserialize<WooCustomer>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooCustomer> { createdCustomer }.Select(c => c.Attach<WooCustomer>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating customer: {ex.Message}");
+            }
+            return new List<WooCustomer>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooCustomer", Name = "UpdateCustomer", Caption = "Update WooCommerce Customer", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooCustomer>")]
+        public async Task<IEnumerable<WooCustomer>> UpdateCustomerAsync(WooCustomer customer)
+        {
+            try
+            {
+                var result = await PutAsync($"Customers/{customer.Id}", customer);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCustomer = JsonSerializer.Deserialize<WooCustomer>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooCustomer> { updatedCustomer }.Select(c => c.Attach<WooCustomer>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating customer: {ex.Message}");
+            }
+            return new List<WooCustomer>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooCoupon", Name = "CreateCoupon", Caption = "Create WooCommerce Coupon", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooCoupon>")]
+        public async Task<IEnumerable<WooCoupon>> CreateCouponAsync(WooCoupon coupon)
+        {
+            try
+            {
+                var result = await PostAsync("Coupons", coupon);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCoupon = JsonSerializer.Deserialize<WooCoupon>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooCoupon> { createdCoupon }.Select(c => c.Attach<WooCoupon>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating coupon: {ex.Message}");
+            }
+            return new List<WooCoupon>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooCoupon", Name = "UpdateCoupon", Caption = "Update WooCommerce Coupon", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooCoupon>")]
+        public async Task<IEnumerable<WooCoupon>> UpdateCouponAsync(WooCoupon coupon)
+        {
+            try
+            {
+                var result = await PutAsync($"Coupons/{coupon.Id}", coupon);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCoupon = JsonSerializer.Deserialize<WooCoupon>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooCoupon> { updatedCoupon }.Select(c => c.Attach<WooCoupon>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating coupon: {ex.Message}");
+            }
+            return new List<WooCoupon>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooCategory", Name = "CreateCategory", Caption = "Create WooCommerce Category", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooCategory>")]
+        public async Task<IEnumerable<WooCategory>> CreateCategoryAsync(WooCategory category)
+        {
+            try
+            {
+                var result = await PostAsync("Categories", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCategory = JsonSerializer.Deserialize<WooCategory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooCategory> { createdCategory }.Select(c => c.Attach<WooCategory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating category: {ex.Message}");
+            }
+            return new List<WooCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooCategory", Name = "UpdateCategory", Caption = "Update WooCommerce Category", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooCategory>")]
+        public async Task<IEnumerable<WooCategory>> UpdateCategoryAsync(WooCategory category)
+        {
+            try
+            {
+                var result = await PutAsync($"Categories/{category.Id}", category);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCategory = JsonSerializer.Deserialize<WooCategory>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooCategory> { updatedCategory }.Select(c => c.Attach<WooCategory>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating category: {ex.Message}");
+            }
+            return new List<WooCategory>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooReview", Name = "CreateReview", Caption = "Create WooCommerce Review", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 22, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooReview>")]
+        public async Task<IEnumerable<WooReview>> CreateReviewAsync(WooReview review)
+        {
+            try
+            {
+                var result = await PostAsync("Reviews", review);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdReview = JsonSerializer.Deserialize<WooReview>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooReview> { createdReview }.Select(r => r.Attach<WooReview>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating review: {ex.Message}");
+            }
+            return new List<WooReview>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooReview", Name = "UpdateReview", Caption = "Update WooCommerce Review", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 23, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooReview>")]
+        public async Task<IEnumerable<WooReview>> UpdateReviewAsync(WooReview review)
+        {
+            try
+            {
+                var result = await PutAsync($"Reviews/{review.Id}", review);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedReview = JsonSerializer.Deserialize<WooReview>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooReview> { updatedReview }.Select(r => r.Attach<WooReview>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating review: {ex.Message}");
+            }
+            return new List<WooReview>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooTax", Name = "CreateTax", Caption = "Create WooCommerce Tax", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 24, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooTax>")]
+        public async Task<IEnumerable<WooTax>> CreateTaxAsync(WooTax tax)
+        {
+            try
+            {
+                var result = await PostAsync("Taxes", tax);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdTax = JsonSerializer.Deserialize<WooTax>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooTax> { createdTax }.Select(t => t.Attach<WooTax>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating tax: {ex.Message}");
+            }
+            return new List<WooTax>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooTax", Name = "UpdateTax", Caption = "Update WooCommerce Tax", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 25, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooTax>")]
+        public async Task<IEnumerable<WooTax>> UpdateTaxAsync(WooTax tax)
+        {
+            try
+            {
+                var result = await PutAsync($"Taxes/{tax.Id}", tax);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedTax = JsonSerializer.Deserialize<WooTax>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooTax> { updatedTax }.Select(t => t.Attach<WooTax>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating tax: {ex.Message}");
+            }
+            return new List<WooTax>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooTaxClass", Name = "CreateTaxClass", Caption = "Create WooCommerce Tax Class", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 26, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooTaxClass>")]
+        public async Task<IEnumerable<WooTaxClass>> CreateTaxClassAsync(WooTaxClass taxClass)
+        {
+            try
+            {
+                var result = await PostAsync("TaxClasses", taxClass);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdTaxClass = JsonSerializer.Deserialize<WooTaxClass>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooTaxClass> { createdTaxClass }.Select(t => t.Attach<WooTaxClass>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating tax class: {ex.Message}");
+            }
+            return new List<WooTaxClass>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooTaxClass", Name = "UpdateTaxClass", Caption = "Update WooCommerce Tax Class", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 27, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooTaxClass>")]
+        public async Task<IEnumerable<WooTaxClass>> UpdateTaxClassAsync(WooTaxClass taxClass)
+        {
+            try
+            {
+                var result = await PutAsync($"TaxClasses/{taxClass.Id}", taxClass);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedTaxClass = JsonSerializer.Deserialize<WooTaxClass>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooTaxClass> { updatedTaxClass }.Select(t => t.Attach<WooTaxClass>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating tax class: {ex.Message}");
+            }
+            return new List<WooTaxClass>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooShippingZone", Name = "CreateShippingZone", Caption = "Create WooCommerce Shipping Zone", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 28, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooShippingZone>")]
+        public async Task<IEnumerable<WooShippingZone>> CreateShippingZoneAsync(WooShippingZone shippingZone)
+        {
+            try
+            {
+                var result = await PostAsync("ShippingZones", shippingZone);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdShippingZone = JsonSerializer.Deserialize<WooShippingZone>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooShippingZone> { createdShippingZone }.Select(s => s.Attach<WooShippingZone>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating shipping zone: {ex.Message}");
+            }
+            return new List<WooShippingZone>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooShippingZone", Name = "UpdateShippingZone", Caption = "Update WooCommerce Shipping Zone", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 29, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooShippingZone>")]
+        public async Task<IEnumerable<WooShippingZone>> UpdateShippingZoneAsync(WooShippingZone shippingZone)
+        {
+            try
+            {
+                var result = await PutAsync($"ShippingZones/{shippingZone.Id}", shippingZone);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedShippingZone = JsonSerializer.Deserialize<WooShippingZone>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooShippingZone> { updatedShippingZone }.Select(s => s.Attach<WooShippingZone>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating shipping zone: {ex.Message}");
+            }
+            return new List<WooShippingZone>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooShippingMethod", Name = "CreateShippingMethod", Caption = "Create WooCommerce Shipping Method", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 30, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooShippingMethod>")]
+        public async Task<IEnumerable<WooShippingMethod>> CreateShippingMethodAsync(WooShippingMethod shippingMethod)
+        {
+            try
+            {
+                var result = await PostAsync("ShippingMethods", shippingMethod);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdShippingMethod = JsonSerializer.Deserialize<WooShippingMethod>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooShippingMethod> { createdShippingMethod }.Select(s => s.Attach<WooShippingMethod>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating shipping method: {ex.Message}");
+            }
+            return new List<WooShippingMethod>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooShippingMethod", Name = "UpdateShippingMethod", Caption = "Update WooCommerce Shipping Method", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 31, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooShippingMethod>")]
+        public async Task<IEnumerable<WooShippingMethod>> UpdateShippingMethodAsync(WooShippingMethod shippingMethod)
+        {
+            try
+            {
+                var result = await PutAsync($"ShippingMethods/{shippingMethod.Id}", shippingMethod);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedShippingMethod = JsonSerializer.Deserialize<WooShippingMethod>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooShippingMethod> { updatedShippingMethod }.Select(s => s.Attach<WooShippingMethod>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating shipping method: {ex.Message}");
+            }
+            return new List<WooShippingMethod>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooAttribute", Name = "CreateAttribute", Caption = "Create WooCommerce Attribute", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 32, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooAttribute>")]
+        public async Task<IEnumerable<WooAttribute>> CreateAttributeAsync(WooAttribute attribute)
+        {
+            try
+            {
+                var result = await PostAsync("Attributes", attribute);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdAttribute = JsonSerializer.Deserialize<WooAttribute>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooAttribute> { createdAttribute }.Select(a => a.Attach<WooAttribute>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating attribute: {ex.Message}");
+            }
+            return new List<WooAttribute>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WooCommerce, PointType = EnumPointType.Function, ObjectType = "WooAttribute", Name = "UpdateAttribute", Caption = "Update WooCommerce Attribute", ClassType = "WooCommerceDataSource", Showin = ShowinType.Both, Order = 33, iconimage = "woocommerce.png", misc = "ReturnType: IEnumerable<WooAttribute>")]
+        public async Task<IEnumerable<WooAttribute>> UpdateAttributeAsync(WooAttribute attribute)
+        {
+            try
+            {
+                var result = await PutAsync($"Attributes/{attribute.Id}", attribute);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedAttribute = JsonSerializer.Deserialize<WooAttribute>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WooAttribute> { updatedAttribute }.Select(a => a.Attach<WooAttribute>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating attribute: {ex.Message}");
+            }
+            return new List<WooAttribute>();
+        }
+
         private static List<object> ExtractArray(HttpResponseMessage resp, string root)
         {
             var list = new List<object>();

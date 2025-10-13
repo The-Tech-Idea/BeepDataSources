@@ -294,6 +294,246 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return result.Cast<WixCoupon>();
         }
 
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Products", Name = "CreateProduct", Caption = "Create Wix Product", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixProduct>")]
+        public async Task<IEnumerable<WixProduct>> CreateProductAsync(WixProduct product)
+        {
+            try
+            {
+                var result = await PostAsync("stores/v1/products", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdProduct = JsonSerializer.Deserialize<WixProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WixProduct> { createdProduct }.Select(p => p.Attach<WixProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating product: {ex.Message}");
+            }
+            return new List<WixProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Products", Name = "UpdateProduct", Caption = "Update Wix Product", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixProduct>")]
+        public async Task<IEnumerable<WixProduct>> UpdateProductAsync(WixProduct product)
+        {
+            try
+            {
+                var result = await PutAsync($"stores/v1/products/{product.Id}", product);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedProduct = JsonSerializer.Deserialize<WixProduct>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WixProduct> { updatedProduct }.Select(p => p.Attach<WixProduct>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating product: {ex.Message}");
+            }
+            return new List<WixProduct>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "CreateOrder", Caption = "Create Wix Order", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixOrder>")]
+        public async Task<IEnumerable<WixOrder>> CreateOrderAsync(WixOrder order)
+        {
+            try
+            {
+                var result = await PostAsync("stores/v1/orders", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdOrder = JsonSerializer.Deserialize<WixOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WixOrder> { createdOrder }.Select(o => o.Attach<WixOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating order: {ex.Message}");
+            }
+            return new List<WixOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "UpdateOrder", Caption = "Update Wix Order", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixOrder>")]
+        public async Task<IEnumerable<WixOrder>> UpdateOrderAsync(WixOrder order)
+        {
+            try
+            {
+                var result = await PutAsync($"stores/v1/orders/{order.Id}", order);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedOrder = JsonSerializer.Deserialize<WixOrder>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WixOrder> { updatedOrder }.Select(o => o.Attach<WixOrder>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating order: {ex.Message}");
+            }
+            return new List<WixOrder>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Collections", Name = "CreateCollection", Caption = "Create Wix Collection", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixCollection>")]
+        public async Task<IEnumerable<WixCollection>> CreateCollectionAsync(WixCollection collection)
+        {
+            try
+            {
+                var result = await PostAsync("stores/v1/collections", collection);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCollection = JsonSerializer.Deserialize<WixCollection>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WixCollection> { createdCollection }.Select(c => c.Attach<WixCollection>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating collection: {ex.Message}");
+            }
+            return new List<WixCollection>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Collections", Name = "UpdateCollection", Caption = "Update Wix Collection", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixCollection>")]
+        public async Task<IEnumerable<WixCollection>> UpdateCollectionAsync(WixCollection collection)
+        {
+            try
+            {
+                var result = await PutAsync($"stores/v1/collections/{collection.Id}", collection);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCollection = JsonSerializer.Deserialize<WixCollection>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WixCollection> { updatedCollection }.Select(c => c.Attach<WixCollection>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating collection: {ex.Message}");
+            }
+            return new List<WixCollection>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Contacts", Name = "CreateContact", Caption = "Create Wix Contact", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixContact>")]
+        public async Task<IEnumerable<WixContact>> CreateContactAsync(WixContact contact)
+        {
+            try
+            {
+                var result = await PostAsync("contacts/v1/contacts", contact);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdContact = JsonSerializer.Deserialize<WixContact>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WixContact> { createdContact }.Select(c => c.Attach<WixContact>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating contact: {ex.Message}");
+            }
+            return new List<WixContact>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Contacts", Name = "UpdateContact", Caption = "Update Wix Contact", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixContact>")]
+        public async Task<IEnumerable<WixContact>> UpdateContactAsync(WixContact contact)
+        {
+            try
+            {
+                var result = await PutAsync($"contacts/v1/contacts/{contact.Id}", contact);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedContact = JsonSerializer.Deserialize<WixContact>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WixContact> { updatedContact }.Select(c => c.Attach<WixContact>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating contact: {ex.Message}");
+            }
+            return new List<WixContact>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Inventory", Name = "CreateInventory", Caption = "Create Wix Inventory Item", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixInventoryItem>")]
+        public async Task<IEnumerable<WixInventoryItem>> CreateInventoryAsync(WixInventoryItem inventory)
+        {
+            try
+            {
+                var result = await PostAsync("stores/v1/inventoryItems", inventory);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdInventory = JsonSerializer.Deserialize<WixInventoryItem>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WixInventoryItem> { createdInventory }.Select(i => i.Attach<WixInventoryItem>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating inventory: {ex.Message}");
+            }
+            return new List<WixInventoryItem>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Inventory", Name = "UpdateInventory", Caption = "Update Wix Inventory Item", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixInventoryItem>")]
+        public async Task<IEnumerable<WixInventoryItem>> UpdateInventoryAsync(WixInventoryItem inventory)
+        {
+            try
+            {
+                var result = await PutAsync($"stores/v1/inventoryItems/{inventory.Id}", inventory);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedInventory = JsonSerializer.Deserialize<WixInventoryItem>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WixInventoryItem> { updatedInventory }.Select(i => i.Attach<WixInventoryItem>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating inventory: {ex.Message}");
+            }
+            return new List<WixInventoryItem>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Coupons", Name = "CreateCoupon", Caption = "Create Wix Coupon", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixCoupon>")]
+        public async Task<IEnumerable<WixCoupon>> CreateCouponAsync(WixCoupon coupon)
+        {
+            try
+            {
+                var result = await PostAsync("stores/v1/coupons", coupon);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdCoupon = JsonSerializer.Deserialize<WixCoupon>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WixCoupon> { createdCoupon }.Select(c => c.Attach<WixCoupon>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating coupon: {ex.Message}");
+            }
+            return new List<WixCoupon>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Coupons", Name = "UpdateCoupon", Caption = "Update Wix Coupon", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixCoupon>")]
+        public async Task<IEnumerable<WixCoupon>> UpdateCouponAsync(WixCoupon coupon)
+        {
+            try
+            {
+                var result = await PutAsync($"stores/v1/coupons/{coupon.Id}", coupon);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedCoupon = JsonSerializer.Deserialize<WixCoupon>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<WixCoupon> { updatedCoupon }.Select(c => c.Attach<WixCoupon>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating coupon: {ex.Message}");
+            }
+            return new List<WixCoupon>();
+        }
+
         #endregion
     }
 }

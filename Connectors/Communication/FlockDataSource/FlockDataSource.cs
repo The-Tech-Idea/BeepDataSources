@@ -380,10 +380,26 @@ namespace TheTechIdea.Beep.Connectors.Communication.Flock
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock,
             ClassType = "FlockDataSource", Showin = ShowinType.Both, Order = 1,
             iconimage = "flock.png", misc = "Send a message")]
-        public async Task<IEnumerable<FlockMessage>> SendMessageAsync(FlockMessage message, List<AppFilter> filters = null)
+        public async Task<IEnumerable<FlockMessage>> SendMessageAsync(FlockMessage message)
         {
-            var result = await PostAsync("chat.sendMessage", message, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<FlockMessage>>(result);
+            try
+            {
+                var result = await PostAsync("chat.sendMessage", message);
+                var messages = JsonSerializer.Deserialize<IEnumerable<FlockMessage>>(result);
+                if (messages != null)
+                {
+                    foreach (var m in messages)
+                    {
+                        m.Attach<FlockMessage>(this);
+                    }
+                }
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error sending message: {ex.Message}");
+            }
+            return new List<FlockMessage>();
         }
 
         [CommandAttribute(Name = "CreateGroupAsync", Caption = "Create Flock Group",
@@ -391,10 +407,26 @@ namespace TheTechIdea.Beep.Connectors.Communication.Flock
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock,
             ClassType = "FlockDataSource", Showin = ShowinType.Both, Order = 2,
             iconimage = "flock.png", misc = "Create a group")]
-        public async Task<IEnumerable<FlockGroup>> CreateGroupAsync(FlockGroup group, List<AppFilter> filters = null)
+        public async Task<IEnumerable<FlockGroup>> CreateGroupAsync(FlockGroup group)
         {
-            var result = await PostAsync("groups.create", group, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<FlockGroup>>(result);
+            try
+            {
+                var result = await PostAsync("groups.create", group);
+                var groups = JsonSerializer.Deserialize<IEnumerable<FlockGroup>>(result);
+                if (groups != null)
+                {
+                    foreach (var g in groups)
+                    {
+                        g.Attach<FlockGroup>(this);
+                    }
+                }
+                return groups;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating group: {ex.Message}");
+            }
+            return new List<FlockGroup>();
         }
 
         [CommandAttribute(Name = "CreateChannelAsync", Caption = "Create Flock Channel",
@@ -402,10 +434,96 @@ namespace TheTechIdea.Beep.Connectors.Communication.Flock
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Flock,
             ClassType = "FlockDataSource", Showin = ShowinType.Both, Order = 3,
             iconimage = "flock.png", misc = "Create a channel")]
-        public async Task<IEnumerable<FlockChannel>> CreateChannelAsync(FlockChannel channel, List<AppFilter> filters = null)
+        public async Task<IEnumerable<FlockChannel>> CreateChannelAsync(FlockChannel channel)
         {
-            var result = await PostAsync("channels.create", channel, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<FlockChannel>>(result);
+            try
+            {
+                var result = await PostAsync("channels.create", channel);
+                var channels = JsonSerializer.Deserialize<IEnumerable<FlockChannel>>(result);
+                if (channels != null)
+                {
+                    foreach (var c in channels)
+                    {
+                        c.Attach<FlockChannel>(this);
+                    }
+                }
+                return channels;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating channel: {ex.Message}");
+            }
+            return new List<FlockChannel>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateMessageAsync",
+            Caption = "Update Flock Message",
+            ObjectType = "FlockMessage",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Flock,
+            ClassType = "FlockDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "updatemessage.png",
+            misc = "ReturnType: IEnumerable<FlockMessage>"
+        )]
+        public async Task<IEnumerable<FlockMessage>> UpdateMessageAsync(FlockMessage message)
+        {
+            try
+            {
+                var result = await PutAsync("chat.updateMessage", message);
+                var messages = JsonSerializer.Deserialize<IEnumerable<FlockMessage>>(result);
+                if (messages != null)
+                {
+                    foreach (var m in messages)
+                    {
+                        m.Attach<FlockMessage>(this);
+                    }
+                }
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating message: {ex.Message}");
+            }
+            return new List<FlockMessage>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateChannelAsync",
+            Caption = "Update Flock Channel",
+            ObjectType = "FlockChannel",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Flock,
+            ClassType = "FlockDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "updatechannel.png",
+            misc = "ReturnType: IEnumerable<FlockChannel>"
+        )]
+        public async Task<IEnumerable<FlockChannel>> UpdateChannelAsync(FlockChannel channel)
+        {
+            try
+            {
+                var result = await PutAsync("channels.update", channel);
+                var channels = JsonSerializer.Deserialize<IEnumerable<FlockChannel>>(result);
+                if (channels != null)
+                {
+                    foreach (var c in channels)
+                    {
+                        c.Attach<FlockChannel>(this);
+                    }
+                }
+                return channels;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating channel: {ex.Message}");
+            }
+            return new List<FlockChannel>();
         }
 
         #endregion

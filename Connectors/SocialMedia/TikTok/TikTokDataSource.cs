@@ -599,17 +599,29 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
             return JsonSerializer.Deserialize<TikTokResponse<TikTokVideo>>(json);
         }
 
-        [CommandAttribute(ObjectType = "TikTokVideo", PointType = EnumPointType.Function, Name = "CreateVideo", Caption = "Create TikTok Video", ClassName = "TikTokDataSource", misc = "ReturnType: TikTokVideo")]
-        public async Task<TikTokVideo> CreateVideoAsync(TikTokVideo video)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.TikTok, PointType = EnumPointType.Function, ObjectType = "TikTokVideo", Name = "CreateVideo", Caption = "Create TikTok Video", ClassType = "TikTokDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "tiktok.png", misc = "ReturnType: IEnumerable<TikTokVideo>")]
+        public async Task<IEnumerable<TikTokVideo>> CreateVideoAsync(TikTokVideo video)
         {
-            // Note: TikTok video posting requires multipart upload, this is a placeholder
-            string endpoint = $"{ConnectionProperties.BaseUrl}/video/publish/";
-            var response = await PostAsync(endpoint, video);
-            if (response == null || !response.IsSuccessStatusCode)
-                return null;
-            string json = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<TikTokResponse<TikTokVideo>>(json);
-            return result?.Data?.FirstOrDefault();
+            try
+            {
+                // Note: TikTok video posting requires multipart upload, this is a placeholder
+                var result = await PostAsync($"{ConnectionProperties.BaseUrl}/video/publish/", video);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var response = JsonSerializer.Deserialize<TikTokResponse<TikTokVideo>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var createdVideo = response?.Data?.FirstOrDefault();
+                    if (createdVideo != null)
+                    {
+                        return new List<TikTokVideo> { createdVideo }.Select(v => v.Attach<TikTokVideo>(this));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating video: {ex.Message}");
+            }
+            return new List<TikTokVideo>();
         }
     }
 }

@@ -290,26 +290,109 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
             return GetEntity("cameraroll", new List<AppFilter>()).Cast<DriveItem>().FirstOrDefault();
         }
 
-        [CommandAttribute(Name = "CreateItemAsync", Caption = "Create OneDrive Item",
-            ObjectType = "DriveItem", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive,
-            ClassType = "OneDriveDataSource", Showin = ShowinType.Both, Order = 1,
-            iconimage = "onedrive.png", misc = "Create a file or folder")]
-        public async Task<IEnumerable<DriveItem>> CreateItemAsync(DriveItem item, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "CreateItemAsync",
+            Caption = "Create OneDrive Item",
+            ObjectType = "DriveItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.OneDrive,
+            ClassType = "OneDriveDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "createitem.png",
+            misc = "ReturnType: IEnumerable<DriveItem>"
+        )]
+        public async Task<IEnumerable<DriveItem>> CreateItemAsync(DriveItem item)
         {
-            var result = await PostAsync("root_children", item, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<DriveItem>>(result);
+            try
+            {
+                var result = await PostAsync("root_children", item);
+                var items = JsonSerializer.Deserialize<IEnumerable<DriveItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<DriveItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating item: {ex.Message}");
+            }
+            return new List<DriveItem>();
         }
 
-        [CommandAttribute(Name = "UpdateItemContentAsync", Caption = "Update OneDrive Item Content",
-            ObjectType = "DriveItem", PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OneDrive,
-            ClassType = "OneDriveDataSource", Showin = ShowinType.Both, Order = 2,
-            iconimage = "onedrive.png", misc = "Update the content of an item")]
-        public async Task<IEnumerable<DriveItem>> UpdateItemContentAsync(DriveItem item, List<AppFilter> filters = null)
+        [CommandAttribute(
+            Name = "UpdateItemContentAsync",
+            Caption = "Update OneDrive Item Content",
+            ObjectType = "DriveItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.OneDrive,
+            ClassType = "OneDriveDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "updateitem.png",
+            misc = "ReturnType: IEnumerable<DriveItem>"
+        )]
+        public async Task<IEnumerable<DriveItem>> UpdateItemContentAsync(DriveItem item)
         {
-            var result = await PutAsync("item_content", item, filters ?? new List<AppFilter>());
-            return JsonSerializer.Deserialize<IEnumerable<DriveItem>>(result);
+            try
+            {
+                var result = await PutAsync("item_content", item);
+                var items = JsonSerializer.Deserialize<IEnumerable<DriveItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<DriveItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating item content: {ex.Message}");
+            }
+            return new List<DriveItem>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateItemAsync",
+            Caption = "Update OneDrive Item",
+            ObjectType = "DriveItem",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.OneDrive,
+            ClassType = "OneDriveDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "updateitem.png",
+            misc = "ReturnType: IEnumerable<DriveItem>"
+        )]
+        public async Task<IEnumerable<DriveItem>> UpdateItemAsync(DriveItem item)
+        {
+            try
+            {
+                var result = await PatchAsync("item", item);
+                var items = JsonSerializer.Deserialize<IEnumerable<DriveItem>>(result);
+                if (items != null)
+                {
+                    foreach (var i in items)
+                    {
+                        i.Attach<DriveItem>(this);
+                    }
+                }
+                return items;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating item: {ex.Message}");
+            }
+            return new List<DriveItem>();
         }
 
         #endregion

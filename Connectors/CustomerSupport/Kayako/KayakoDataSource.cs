@@ -168,5 +168,46 @@ namespace TheTechIdea.Beep.DataSources
 
         [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Kayako, PointType = EnumPointType.Function, ObjectType = "KayakoConversation", ClassName = "KayakoDataSource", Showin = ShowinType.Both, misc = "List<KayakoConversation>")]
         public IEnumerable<object> GetConversations(List<AppFilter> filter = null) => GetEntity("conversations", filter ?? new List<AppFilter>());
+
+        // POST methods for creating entities
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Kayako, PointType = EnumPointType.Function, ObjectType = "KayakoTicket", Name = "CreateTicket", Caption = "Create Kayako Ticket", ClassType = "KayakoDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "kayako.png", misc = "ReturnType: IEnumerable<KayakoTicket>")]
+        public async Task<IEnumerable<KayakoTicket>> CreateTicketAsync(KayakoTicket ticket)
+        {
+            try
+            {
+                var result = await PostAsync("api/v1/tickets.json", ticket);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdTicket = JsonSerializer.Deserialize<KayakoTicket>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<KayakoTicket> { createdTicket }.Select(t => t.Attach<KayakoTicket>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating ticket: {ex.Message}");
+            }
+            return new List<KayakoTicket>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Kayako, PointType = EnumPointType.Function, ObjectType = "KayakoTicket", Name = "UpdateTicket", Caption = "Update Kayako Ticket", ClassType = "KayakoDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "kayako.png", misc = "ReturnType: IEnumerable<KayakoTicket>")]
+        public async Task<IEnumerable<KayakoTicket>> UpdateTicketAsync(KayakoTicket ticket)
+        {
+            try
+            {
+                var result = await PutAsync($"api/v1/tickets/{ticket.Id}.json", ticket);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedTicket = JsonSerializer.Deserialize<KayakoTicket>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<KayakoTicket> { updatedTicket }.Select(t => t.Attach<KayakoTicket>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating ticket: {ex.Message}");
+            }
+            return new List<KayakoTicket>();
+        }
     }
 }

@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
@@ -255,50 +256,557 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
         }
 
         // CommandAttribute methods for framework integration
-        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "GetDevices", Caption = "Get Devices", ClassName = "AzureIoTHubDataSource", misc = "GetDevices")]
+        [CommandAttribute(
+            ObjectType = "Device",
+            PointType = EnumPointType.Function,
+            Name = "GetDevices",
+            Caption = "Get Azure IoT Hub Devices",
+            ClassName = "AzureIoTHubDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "getdevices.png",
+            misc = "ReturnType: IEnumerable<Device>"
+        )]
         public IEnumerable<Device> GetDevices()
         {
             return GetEntity("devices", null).Cast<Device>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "GetDevice", Caption = "Get Device", ClassName = "AzureIoTHubDataSource", misc = "GetDevice")]
+        [CommandAttribute(
+            ObjectType = "Device",
+            PointType = EnumPointType.Function,
+            Name = "GetDevice",
+            Caption = "Get Azure IoT Hub Device",
+            ClassName = "AzureIoTHubDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "getdevice.png",
+            misc = "ReturnType: Device"
+        )]
         public Device GetDevice(string deviceId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "device_id", FilterValue = deviceId } };
             return GetEntity("devices", filters).Cast<Device>().FirstOrDefault();
         }
 
-        [CommandAttribute(ObjectType = typeof(DeviceTwin), PointType = PointType.Function, Name = "GetDeviceTwins", Caption = "Get Device Twins", ClassName = "AzureIoTHubDataSource", misc = "GetDeviceTwins")]
+        [CommandAttribute(
+            ObjectType = "DeviceTwin",
+            PointType = EnumPointType.Function,
+            Name = "GetDeviceTwins",
+            Caption = "Get Azure IoT Hub Device Twins",
+            ClassName = "AzureIoTHubDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "getdevicetwins.png",
+            misc = "ReturnType: IEnumerable<DeviceTwin>"
+        )]
         public IEnumerable<DeviceTwin> GetDeviceTwins(string deviceId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "device_id", FilterValue = deviceId } };
             return GetEntity("device_twins", filters).Cast<DeviceTwin>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Job), PointType = PointType.Function, Name = "GetJobs", Caption = "Get Jobs", ClassName = "AzureIoTHubDataSource", misc = "GetJobs")]
+        [CommandAttribute(
+            ObjectType = "Job",
+            PointType = EnumPointType.Function,
+            Name = "GetJobs",
+            Caption = "Get Azure IoT Hub Jobs",
+            ClassName = "AzureIoTHubDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "getjobs.png",
+            misc = "ReturnType: IEnumerable<Job>"
+        )]
         public IEnumerable<Job> GetJobs()
         {
             return GetEntity("jobs", null).Cast<Job>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Configuration), PointType = PointType.Function, Name = "GetConfigurations", Caption = "Get Configurations", ClassName = "AzureIoTHubDataSource", misc = "GetConfigurations")]
+        [CommandAttribute(
+            ObjectType = "Configuration",
+            PointType = EnumPointType.Function,
+            Name = "GetConfigurations",
+            Caption = "Get Azure IoT Hub Configurations",
+            ClassName = "AzureIoTHubDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "getconfigurations.png",
+            misc = "ReturnType: IEnumerable<Configuration>"
+        )]
         public IEnumerable<Configuration> GetConfigurations()
         {
             return GetEntity("configurations", null).Cast<Configuration>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Telemetry), PointType = PointType.Function, Name = "GetTelemetry", Caption = "Get Telemetry", ClassName = "AzureIoTHubDataSource", misc = "GetTelemetry")]
+        [CommandAttribute(
+            ObjectType = "Telemetry",
+            PointType = EnumPointType.Function,
+            Name = "GetTelemetry",
+            Caption = "Get Azure IoT Hub Telemetry",
+            ClassName = "AzureIoTHubDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "gettelemetry.png",
+            misc = "ReturnType: IEnumerable<Telemetry>"
+        )]
         public IEnumerable<Telemetry> GetTelemetry(string deviceId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "device_id", FilterValue = deviceId } };
             return GetEntity("telemetry", filters).Cast<Telemetry>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Module), PointType = PointType.Function, Name = "GetModules", Caption = "Get Modules", ClassName = "AzureIoTHubDataSource", misc = "GetModules")]
+        [CommandAttribute(
+            ObjectType = "Module",
+            PointType = EnumPointType.Function,
+            Name = "GetModules",
+            Caption = "Get Azure IoT Hub Modules",
+            ClassName = "AzureIoTHubDataSource",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "getmodules.png",
+            misc = "ReturnType: IEnumerable<Module>"
+        )]
         public IEnumerable<Module> GetModules(string deviceId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "device_id", FilterValue = deviceId } };
             return GetEntity("modules", filters).Cast<Module>();
+        }
+
+        // -------------------- Create / Update (POST/PUT) methods --------------------
+
+        [CommandAttribute(
+            Name = "CreateDeviceAsync",
+            Caption = "Create Azure IoT Hub Device",
+            ObjectType = "Device",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "createdevice.png",
+            misc = "ReturnType: IEnumerable<Device>"
+        )]
+        public async Task<IEnumerable<Device>> CreateDeviceAsync(Device device)
+        {
+            try
+            {
+                var result = await PostAsync("devices", device);
+                var createdDevice = JsonSerializer.Deserialize<Device>(result);
+                if (createdDevice != null)
+                {
+                    createdDevice.Attach<Device>(this);
+                    return new List<Device> { createdDevice };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating device: {ex.Message}");
+            }
+            return new List<Device>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateDeviceAsync",
+            Caption = "Update Azure IoT Hub Device",
+            ObjectType = "Device",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "updatedevice.png",
+            misc = "ReturnType: IEnumerable<Device>"
+        )]
+        public async Task<IEnumerable<Device>> UpdateDeviceAsync(string deviceId, Device device)
+        {
+            try
+            {
+                var result = await PutAsync($"devices/{deviceId}", device);
+                var updatedDevice = JsonSerializer.Deserialize<Device>(result);
+                if (updatedDevice != null)
+                {
+                    updatedDevice.Attach<Device>(this);
+                    return new List<Device> { updatedDevice };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating device: {ex.Message}");
+            }
+            return new List<Device>();
+        }
+
+        [CommandAttribute(
+            Name = "CreateDeviceTwinAsync",
+            Caption = "Create Azure IoT Hub Device Twin",
+            ObjectType = "DeviceTwin",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "createdevicetwin.png",
+            misc = "ReturnType: IEnumerable<DeviceTwin>"
+        )]
+        public async Task<IEnumerable<DeviceTwin>> CreateDeviceTwinAsync(string deviceId, DeviceTwin twin)
+        {
+            try
+            {
+                var result = await PutAsync($"twins/{deviceId}", twin);
+                var createdTwin = JsonSerializer.Deserialize<DeviceTwin>(result);
+                if (createdTwin != null)
+                {
+                    createdTwin.Attach<DeviceTwin>(this);
+                    return new List<DeviceTwin> { createdTwin };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating device twin: {ex.Message}");
+            }
+            return new List<DeviceTwin>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateDeviceTwinAsync",
+            Caption = "Update Azure IoT Hub Device Twin",
+            ObjectType = "DeviceTwin",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "updatedevicetwin.png",
+            misc = "ReturnType: IEnumerable<DeviceTwin>"
+        )]
+        public async Task<IEnumerable<DeviceTwin>> UpdateDeviceTwinAsync(string deviceId, DeviceTwin twin)
+        {
+            try
+            {
+                var result = await PatchAsync($"twins/{deviceId}", twin);
+                var updatedTwin = JsonSerializer.Deserialize<DeviceTwin>(result);
+                if (updatedTwin != null)
+                {
+                    updatedTwin.Attach<DeviceTwin>(this);
+                    return new List<DeviceTwin> { updatedTwin };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating device twin: {ex.Message}");
+            }
+            return new List<DeviceTwin>();
+        }
+
+        [CommandAttribute(
+            Name = "CreateJobAsync",
+            Caption = "Create Azure IoT Hub Job",
+            ObjectType = "Job",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "createjob.png",
+            misc = "ReturnType: IEnumerable<Job>"
+        )]
+        public async Task<IEnumerable<Job>> CreateJobAsync(Job job)
+        {
+            try
+            {
+                var result = await PostAsync("jobs", job);
+                var createdJob = JsonSerializer.Deserialize<Job>(result);
+                if (createdJob != null)
+                {
+                    createdJob.Attach<Job>(this);
+                    return new List<Job> { createdJob };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating job: {ex.Message}");
+            }
+            return new List<Job>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateJobAsync",
+            Caption = "Update Azure IoT Hub Job",
+            ObjectType = "Job",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "updatejob.png",
+            misc = "ReturnType: IEnumerable<Job>"
+        )]
+        public async Task<IEnumerable<Job>> UpdateJobAsync(string jobId, Job job)
+        {
+            try
+            {
+                var endpoint = $"jobs/{Uri.EscapeDataString(jobId)}";
+                var result = await PutAsync(endpoint, job);
+                var updatedJob = JsonSerializer.Deserialize<Job>(result);
+                if (updatedJob != null)
+                {
+                    updatedJob.Attach<Job>(this);
+                    return new List<Job> { updatedJob };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating job: {ex.Message}");
+            }
+            return new List<Job>();
+        }
+
+        [CommandAttribute(
+            Name = "CreateConfigurationAsync",
+            Caption = "Create Azure IoT Hub Configuration",
+            ObjectType = "Configuration",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "createconfiguration.png",
+            misc = "ReturnType: IEnumerable<Configuration>"
+        )]
+        public async Task<IEnumerable<Configuration>> CreateConfigurationAsync(Configuration configuration)
+        {
+            try
+            {
+                var result = await PostAsync("configurations", configuration);
+                var createdConfiguration = JsonSerializer.Deserialize<Configuration>(result);
+                if (createdConfiguration != null)
+                {
+                    createdConfiguration.Attach<Configuration>(this);
+                    return new List<Configuration> { createdConfiguration };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating configuration: {ex.Message}");
+            }
+            return new List<Configuration>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateConfigurationAsync",
+            Caption = "Update Azure IoT Hub Configuration",
+            ObjectType = "Configuration",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "updateconfiguration.png",
+            misc = "ReturnType: IEnumerable<Configuration>"
+        )]
+        public async Task<IEnumerable<Configuration>> UpdateConfigurationAsync(string configurationId, Configuration configuration)
+        {
+            try
+            {
+                var endpoint = $"configurations/{Uri.EscapeDataString(configurationId)}";
+                var result = await PutAsync(endpoint, configuration);
+                var updatedConfiguration = JsonSerializer.Deserialize<Configuration>(result);
+                if (updatedConfiguration != null)
+                {
+                    updatedConfiguration.Attach<Configuration>(this);
+                    return new List<Configuration> { updatedConfiguration };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating configuration: {ex.Message}");
+            }
+            return new List<Configuration>();
+        }
+
+        [CommandAttribute(
+            Name = "CreateModuleAsync",
+            Caption = "Create Azure IoT Hub Module",
+            ObjectType = "Module",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "createmodule.png",
+            misc = "ReturnType: IEnumerable<Module>"
+        )]
+        public async Task<IEnumerable<Module>> CreateModuleAsync(string deviceId, Module module)
+        {
+            try
+            {
+                var endpoint = $"devices/{Uri.EscapeDataString(deviceId)}/modules";
+                var result = await PostAsync(endpoint, module);
+                var createdModule = JsonSerializer.Deserialize<Module>(result);
+                if (createdModule != null)
+                {
+                    createdModule.Attach<Module>(this);
+                    return new List<Module> { createdModule };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating module: {ex.Message}");
+            }
+            return new List<Module>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateModuleAsync",
+            Caption = "Update Azure IoT Hub Module",
+            ObjectType = "Module",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "updatemodule.png",
+            misc = "ReturnType: IEnumerable<Module>"
+        )]
+        public async Task<IEnumerable<Module>> UpdateModuleAsync(string deviceId, string moduleId, Module module)
+        {
+            try
+            {
+                var endpoint = $"devices/{Uri.EscapeDataString(deviceId)}/modules/{Uri.EscapeDataString(moduleId)}";
+                var result = await PutAsync(endpoint, module);
+                var updatedModule = JsonSerializer.Deserialize<Module>(result);
+                if (updatedModule != null)
+                {
+                    updatedModule.Attach<Module>(this);
+                    return new List<Module> { updatedModule };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating module: {ex.Message}");
+            }
+            return new List<Module>();
+        }
+
+        [CommandAttribute(
+            Name = "CreateModuleTwinAsync",
+            Caption = "Create Azure IoT Hub Module Twin",
+            ObjectType = "ModuleTwin",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "createmoduletwin.png",
+            misc = "ReturnType: IEnumerable<ModuleTwin>"
+        )]
+        public async Task<IEnumerable<ModuleTwin>> CreateModuleTwinAsync(string deviceId, string moduleId, ModuleTwin twin)
+        {
+            try
+            {
+                var endpoint = $"twins/{Uri.EscapeDataString(deviceId)}/modules/{Uri.EscapeDataString(moduleId)}";
+                var result = await PutAsync(endpoint, twin);
+                var createdTwin = JsonSerializer.Deserialize<ModuleTwin>(result);
+                if (createdTwin != null)
+                {
+                    createdTwin.Attach<ModuleTwin>(this);
+                    return new List<ModuleTwin> { createdTwin };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating module twin: {ex.Message}");
+            }
+            return new List<ModuleTwin>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateModuleTwinAsync",
+            Caption = "Update Azure IoT Hub Module Twin",
+            ObjectType = "ModuleTwin",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "updatemoduletwin.png",
+            misc = "ReturnType: IEnumerable<ModuleTwin>"
+        )]
+        public async Task<IEnumerable<ModuleTwin>> UpdateModuleTwinAsync(string deviceId, string moduleId, ModuleTwin twin)
+        {
+            try
+            {
+                var endpoint = $"twins/{Uri.EscapeDataString(deviceId)}/modules/{Uri.EscapeDataString(moduleId)}";
+                var result = await PatchAsync(endpoint, twin);
+                var updatedTwin = JsonSerializer.Deserialize<ModuleTwin>(result);
+                if (updatedTwin != null)
+                {
+                    updatedTwin.Attach<ModuleTwin>(this);
+                    return new List<ModuleTwin> { updatedTwin };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating module twin: {ex.Message}");
+            }
+            return new List<ModuleTwin>();
+        }
+
+        [CommandAttribute(
+            Name = "SendTelemetryAsync",
+            Caption = "Send Azure IoT Hub Telemetry",
+            ObjectType = "Telemetry",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.AzureIoTHub,
+            ClassType = "AzureIoTHubDataSource",
+            Showin = ShowinType.Both,
+            Order = 11,
+            iconimage = "sendtelemetry.png",
+            misc = "ReturnType: IEnumerable<Telemetry>"
+        )]
+        public async Task<IEnumerable<Telemetry>> SendTelemetryAsync(string deviceId, Telemetry telemetry)
+        {
+            try
+            {
+                var endpoint = $"devices/{Uri.EscapeDataString(deviceId)}/messages/events";
+                var result = await PostAsync(endpoint, telemetry);
+                // Telemetry sending typically returns success/failure, not the telemetry data
+                // Return the sent telemetry for consistency with the pattern
+                telemetry.Attach<Telemetry>(this);
+                return new List<Telemetry> { telemetry };
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error sending telemetry: {ex.Message}");
+            }
+            return new List<Telemetry>();
         }
     }
 }

@@ -331,5 +331,368 @@ namespace TheTechIdea.Beep.Connectors.Particle
             var filters = new List<AppFilter> { new AppFilter { FieldName = "access_token", FilterValue = accessToken } };
             return GetEntity("tokens", filters).Cast<AccessToken>();
         }
+
+        // -------------------- Create / Update (POST/PUT) methods --------------------
+
+        [CommandAttribute(
+            Name = "CreateDeviceAsync",
+            Caption = "Create Particle Device",
+            ObjectType = "Device",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Particle,
+            ClassType = "ParticleDataSource",
+            Showin = ShowinType.Both,
+            Order = 1,
+            iconimage = "createdevice.png",
+            misc = "ReturnType: IEnumerable<Device>"
+        )]
+        public async Task<IEnumerable<Device>> CreateDeviceAsync(string accessToken, Device device)
+        {
+            try
+            {
+                var endpoint = $"devices?access_token={Uri.EscapeDataString(accessToken)}";
+                var result = await PostAsync(endpoint, device);
+                var createdDevice = JsonSerializer.Deserialize<Device>(result);
+                if (createdDevice != null)
+                {
+                    createdDevice.Attach<Device>(this);
+                    return new List<Device> { createdDevice };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating device: {ex.Message}");
+            }
+            return new List<Device>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateDeviceAsync",
+            Caption = "Update Particle Device",
+            ObjectType = "Device",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Particle,
+            ClassType = "ParticleDataSource",
+            Showin = ShowinType.Both,
+            Order = 2,
+            iconimage = "updatedevice.png",
+            misc = "ReturnType: IEnumerable<Device>"
+        )]
+        public async Task<IEnumerable<Device>> UpdateDeviceAsync(string deviceId, string accessToken, Device device)
+        {
+            try
+            {
+                var endpoint = $"devices/{Uri.EscapeDataString(deviceId)}?access_token={Uri.EscapeDataString(accessToken)}";
+                var result = await PutAsync(endpoint, device);
+                var updatedDevice = JsonSerializer.Deserialize<Device>(result);
+                if (updatedDevice != null)
+                {
+                    updatedDevice.Attach<Device>(this);
+                    return new List<Device> { updatedDevice };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating device: {ex.Message}");
+            }
+            return new List<Device>();
+        }
+
+        [CommandAttribute(
+            Name = "PublishEventAsync",
+            Caption = "Publish Particle Event",
+            ObjectType = "Event",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Particle,
+            ClassType = "ParticleDataSource",
+            Showin = ShowinType.Both,
+            Order = 3,
+            iconimage = "publishevent.png",
+            misc = "ReturnType: IEnumerable<Event>"
+        )]
+        public async Task<IEnumerable<Event>> PublishEventAsync(string deviceId, string accessToken, Event eventData)
+        {
+            try
+            {
+                var endpoint = $"devices/{Uri.EscapeDataString(deviceId)}/events?access_token={Uri.EscapeDataString(accessToken)}";
+                var result = await PostAsync(endpoint, eventData);
+                // Event publishing typically returns success/failure, not the event data
+                // Return the published event for consistency with the pattern
+                eventData.Attach<Event>(this);
+                return new List<Event> { eventData };
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error publishing event: {ex.Message}");
+            }
+            return new List<Event>();
+        }
+
+        [CommandAttribute(
+            Name = "CreateProductAsync",
+            Caption = "Create Particle Product",
+            ObjectType = "Product",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Particle,
+            ClassType = "ParticleDataSource",
+            Showin = ShowinType.Both,
+            Order = 4,
+            iconimage = "createproduct.png",
+            misc = "ReturnType: IEnumerable<Product>"
+        )]
+        public async Task<IEnumerable<Product>> CreateProductAsync(string accessToken, Product product)
+        {
+            try
+            {
+                var endpoint = $"products?access_token={Uri.EscapeDataString(accessToken)}";
+                var result = await PostAsync(endpoint, product);
+                var createdProduct = JsonSerializer.Deserialize<Product>(result);
+                if (createdProduct != null)
+                {
+                    createdProduct.Attach<Product>(this);
+                    return new List<Product> { createdProduct };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating product: {ex.Message}");
+            }
+            return new List<Product>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateProductAsync",
+            Caption = "Update Particle Product",
+            ObjectType = "Product",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Particle,
+            ClassType = "ParticleDataSource",
+            Showin = ShowinType.Both,
+            Order = 5,
+            iconimage = "updateproduct.png",
+            misc = "ReturnType: IEnumerable<Product>"
+        )]
+        public async Task<IEnumerable<Product>> UpdateProductAsync(string productId, string accessToken, Product product)
+        {
+            try
+            {
+                var endpoint = $"products/{Uri.EscapeDataString(productId)}?access_token={Uri.EscapeDataString(accessToken)}";
+                var result = await PutAsync(endpoint, product);
+                var updatedProduct = JsonSerializer.Deserialize<Product>(result);
+                if (updatedProduct != null)
+                {
+                    updatedProduct.Attach<Product>(this);
+                    return new List<Product> { updatedProduct };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating product: {ex.Message}");
+            }
+            return new List<Product>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateSimAsync",
+            Caption = "Update Particle SIM",
+            ObjectType = "Sim",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Particle,
+            ClassType = "ParticleDataSource",
+            Showin = ShowinType.Both,
+            Order = 6,
+            iconimage = "updatesim.png",
+            misc = "ReturnType: IEnumerable<Sim>"
+        )]
+        public async Task<IEnumerable<Sim>> UpdateSimAsync(string simId, string accessToken, Sim sim)
+        {
+            try
+            {
+                var endpoint = $"sims/{Uri.EscapeDataString(simId)}?access_token={Uri.EscapeDataString(accessToken)}";
+                var result = await PutAsync(endpoint, sim);
+                var updatedSim = JsonSerializer.Deserialize<Sim>(result);
+                if (updatedSim != null)
+                {
+                    updatedSim.Attach<Sim>(this);
+                    return new List<Sim> { updatedSim };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating SIM: {ex.Message}");
+            }
+            return new List<Sim>();
+        }
+
+        [CommandAttribute(
+            Name = "CreateAccessTokenAsync",
+            Caption = "Create Particle Access Token",
+            ObjectType = "AccessToken",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Particle,
+            ClassType = "ParticleDataSource",
+            Showin = ShowinType.Both,
+            Order = 7,
+            iconimage = "createaccesstoken.png",
+            misc = "ReturnType: IEnumerable<AccessToken>"
+        )]
+        public async Task<IEnumerable<AccessToken>> CreateAccessTokenAsync(string accessToken, AccessToken token)
+        {
+            try
+            {
+                var endpoint = $"access_tokens?access_token={Uri.EscapeDataString(accessToken)}";
+                var result = await PostAsync(endpoint, token);
+                var createdToken = JsonSerializer.Deserialize<AccessToken>(result);
+                if (createdToken != null)
+                {
+                    createdToken.Attach<AccessToken>(this);
+                    return new List<AccessToken> { createdToken };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating access token: {ex.Message}");
+            }
+            return new List<AccessToken>();
+        }
+
+        [CommandAttribute(
+            Name = "CreateVariableAsync",
+            Caption = "Create Particle Device Variable",
+            ObjectType = "DeviceVariable",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Particle,
+            ClassType = "ParticleDataSource",
+            Showin = ShowinType.Both,
+            Order = 8,
+            iconimage = "createvariable.png",
+            misc = "ReturnType: IEnumerable<DeviceVariable>"
+        )]
+        public async Task<IEnumerable<DeviceVariable>> CreateVariableAsync(string deviceId, string accessToken, DeviceVariable variable)
+        {
+            try
+            {
+                var endpoint = $"devices/{Uri.EscapeDataString(deviceId)}/variables?access_token={Uri.EscapeDataString(accessToken)}";
+                var result = await PostAsync(endpoint, variable);
+                var createdVariable = JsonSerializer.Deserialize<DeviceVariable>(result);
+                if (createdVariable != null)
+                {
+                    createdVariable.Attach<DeviceVariable>(this);
+                    return new List<DeviceVariable> { createdVariable };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating device variable: {ex.Message}");
+            }
+            return new List<DeviceVariable>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateVariableAsync",
+            Caption = "Update Particle Device Variable",
+            ObjectType = "DeviceVariable",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Particle,
+            ClassType = "ParticleDataSource",
+            Showin = ShowinType.Both,
+            Order = 9,
+            iconimage = "updatevariable.png",
+            misc = "ReturnType: IEnumerable<DeviceVariable>"
+        )]
+        public async Task<IEnumerable<DeviceVariable>> UpdateVariableAsync(string deviceId, string variableName, string accessToken, DeviceVariable variable)
+        {
+            try
+            {
+                var endpoint = $"devices/{Uri.EscapeDataString(deviceId)}/variables/{Uri.EscapeDataString(variableName)}?access_token={Uri.EscapeDataString(accessToken)}";
+                var result = await PatchAsync(endpoint, variable);
+                var updatedVariable = JsonSerializer.Deserialize<DeviceVariable>(result);
+                if (updatedVariable != null)
+                {
+                    updatedVariable.Attach<DeviceVariable>(this);
+                    return new List<DeviceVariable> { updatedVariable };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating device variable: {ex.Message}");
+            }
+            return new List<DeviceVariable>();
+        }
+
+        [CommandAttribute(
+            Name = "CreateWebhookAsync",
+            Caption = "Create Particle Webhook",
+            ObjectType = "Webhook",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Particle,
+            ClassType = "ParticleDataSource",
+            Showin = ShowinType.Both,
+            Order = 10,
+            iconimage = "createwebhook.png",
+            misc = "ReturnType: IEnumerable<Webhook>"
+        )]
+        public async Task<IEnumerable<Webhook>> CreateWebhookAsync(string accessToken, Webhook webhook)
+        {
+            try
+            {
+                var endpoint = $"webhooks?access_token={Uri.EscapeDataString(accessToken)}";
+                var result = await PostAsync(endpoint, webhook);
+                var createdWebhook = JsonSerializer.Deserialize<Webhook>(result);
+                if (createdWebhook != null)
+                {
+                    createdWebhook.Attach<Webhook>(this);
+                    return new List<Webhook> { createdWebhook };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating webhook: {ex.Message}");
+            }
+            return new List<Webhook>();
+        }
+
+        [CommandAttribute(
+            Name = "UpdateWebhookAsync",
+            Caption = "Update Particle Webhook",
+            ObjectType = "Webhook",
+            PointType = EnumPointType.Function,
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Particle,
+            ClassType = "ParticleDataSource",
+            Showin = ShowinType.Both,
+            Order = 11,
+            iconimage = "updatewebhook.png",
+            misc = "ReturnType: IEnumerable<Webhook>"
+        )]
+        public async Task<IEnumerable<Webhook>> UpdateWebhookAsync(string webhookId, string accessToken, Webhook webhook)
+        {
+            try
+            {
+                var endpoint = $"webhooks/{Uri.EscapeDataString(webhookId)}?access_token={Uri.EscapeDataString(accessToken)}";
+                var result = await PatchAsync(endpoint, webhook);
+                var updatedWebhook = JsonSerializer.Deserialize<Webhook>(result);
+                if (updatedWebhook != null)
+                {
+                    updatedWebhook.Attach<Webhook>(this);
+                    return new List<Webhook> { updatedWebhook };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating webhook: {ex.Message}");
+            }
+            return new List<Webhook>();
+        }
     }
 }

@@ -150,45 +150,85 @@ namespace TheTechIdea.Beep.FacebookDataSource
         }
 
         // POST methods for creating entities
-        [CommandAttribute(ObjectType = "FacebookPost", PointType = EnumPointType.Function, Name = "CreatePost", Caption = "Create Facebook Post", ClassName = "FacebookDataSource", misc = "ReturnType: FacebookPost")]
-        public async Task<FacebookPost> CreatePostAsync(string pageId, FacebookPost post)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookPost", Name = "CreatePost", Caption = "Create Facebook Post", ClassType = "FacebookDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "facebook.png", misc = "ReturnType: IEnumerable<FacebookPost>")]
+        public async Task<IEnumerable<FacebookPost>> CreatePostAsync(FacebookPost post)
         {
-            string endpoint = $"{pageId}/feed";
-            var response = await PostAsync(endpoint, post);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<FacebookPost>(json);
+            try
+            {
+                var result = await PostAsync("me/feed", post);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdPost = JsonSerializer.Deserialize<FacebookPost>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<FacebookPost> { createdPost }.Select(p => p.Attach<FacebookPost>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating post: {ex.Message}");
+            }
+            return new List<FacebookPost>();
         }
 
-        [CommandAttribute(ObjectType = "FacebookEvent", PointType = EnumPointType.Function, Name = "CreateEvent", Caption = "Create Facebook Event", ClassName = "FacebookDataSource", misc = "ReturnType: FacebookEvent")]
-        public async Task<FacebookEvent> CreateEventAsync(string pageId, FacebookEvent fbEvent)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookEvent", Name = "CreateEvent", Caption = "Create Facebook Event", ClassType = "FacebookDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "facebook.png", misc = "ReturnType: IEnumerable<FacebookEvent>")]
+        public async Task<IEnumerable<FacebookEvent>> CreateEventAsync(FacebookEvent fbEvent)
         {
-            string endpoint = $"{pageId}/events";
-            var response = await PostAsync(endpoint, fbEvent);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<FacebookEvent>(json);
+            try
+            {
+                var result = await PostAsync("me/events", fbEvent);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdEvent = JsonSerializer.Deserialize<FacebookEvent>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<FacebookEvent> { createdEvent }.Select(e => e.Attach<FacebookEvent>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating event: {ex.Message}");
+            }
+            return new List<FacebookEvent>();
         }
 
         // PUT methods for updating entities
-        [CommandAttribute(ObjectType = "FacebookPost", PointType = EnumPointType.Function, Name = "UpdatePost", Caption = "Update Facebook Post", ClassName = "FacebookDataSource", misc = "ReturnType: FacebookPost")]
-        public async Task<FacebookPost> UpdatePostAsync(string postId, FacebookPost post)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookPost", Name = "UpdatePost", Caption = "Update Facebook Post", ClassType = "FacebookDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "facebook.png", misc = "ReturnType: IEnumerable<FacebookPost>")]
+        public async Task<IEnumerable<FacebookPost>> UpdatePostAsync(FacebookPost post)
         {
-            string endpoint = $"{postId}";
-            var response = await PutAsync(endpoint, post);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<FacebookPost>(json);
+            try
+            {
+                var result = await PutAsync($"{post.Id}", post);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedPost = JsonSerializer.Deserialize<FacebookPost>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<FacebookPost> { updatedPost }.Select(p => p.Attach<FacebookPost>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating post: {ex.Message}");
+            }
+            return new List<FacebookPost>();
         }
 
-        [CommandAttribute(ObjectType = "FacebookEvent", PointType = EnumPointType.Function, Name = "UpdateEvent", Caption = "Update Facebook Event", ClassName = "FacebookDataSource", misc = "ReturnType: FacebookEvent")]
-        public async Task<FacebookEvent> UpdateEventAsync(string eventId, FacebookEvent fbEvent)
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookEvent", Name = "UpdateEvent", Caption = "Update Facebook Event", ClassType = "FacebookDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "facebook.png", misc = "ReturnType: IEnumerable<FacebookEvent>")]
+        public async Task<IEnumerable<FacebookEvent>> UpdateEventAsync(FacebookEvent fbEvent)
         {
-            string endpoint = $"{eventId}";
-            var response = await PutAsync(endpoint, fbEvent);
-            if (response == null) return null;
-            string json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<FacebookEvent>(json);
+            try
+            {
+                var result = await PutAsync($"{fbEvent.Id}", fbEvent);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedEvent = JsonSerializer.Deserialize<FacebookEvent>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<FacebookEvent> { updatedEvent }.Select(e => e.Attach<FacebookEvent>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating event: {ex.Message}");
+            }
+            return new List<FacebookEvent>();
         }
 
         /// <summary>

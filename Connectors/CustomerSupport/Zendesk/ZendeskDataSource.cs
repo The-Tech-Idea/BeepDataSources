@@ -304,5 +304,46 @@ namespace TheTechIdea.Beep.Connectors.Zendesk
             var filters = new List<AppFilter> { new AppFilter { FieldName = "query", FilterValue = query, Operator = "=" } };
             return GetEntity("tickets.search", filters).Cast<ZendeskTicket>().ToList();
         }
+
+        // POST methods for creating entities
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskTicket", Name = "CreateTicket", Caption = "Create Zendesk Ticket", ClassType = "ZendeskDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "zendesk.png", misc = "ReturnType: IEnumerable<ZendeskTicket>")]
+        public async Task<IEnumerable<ZendeskTicket>> CreateTicketAsync(ZendeskTicket ticket)
+        {
+            try
+            {
+                var result = await PostAsync("api/v2/tickets.json", ticket);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var createdTicket = JsonSerializer.Deserialize<ZendeskTicket>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<ZendeskTicket> { createdTicket }.Select(t => t.Attach<ZendeskTicket>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating ticket: {ex.Message}");
+            }
+            return new List<ZendeskTicket>();
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskTicket", Name = "UpdateTicket", Caption = "Update Zendesk Ticket", ClassType = "ZendeskDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "zendesk.png", misc = "ReturnType: IEnumerable<ZendeskTicket>")]
+        public async Task<IEnumerable<ZendeskTicket>> UpdateTicketAsync(ZendeskTicket ticket)
+        {
+            try
+            {
+                var result = await PutAsync($"api/v2/tickets/{ticket.Id}.json", ticket);
+                if (result.IsSuccessStatusCode)
+                {
+                    var content = await result.Content.ReadAsStringAsync();
+                    var updatedTicket = JsonSerializer.Deserialize<ZendeskTicket>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new List<ZendeskTicket> { updatedTicket }.Select(t => t.Attach<ZendeskTicket>(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error updating ticket: {ex.Message}");
+            }
+            return new List<ZendeskTicket>();
+        }
     }
 }
