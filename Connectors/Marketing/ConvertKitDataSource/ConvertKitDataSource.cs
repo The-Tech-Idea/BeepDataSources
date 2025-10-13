@@ -181,35 +181,35 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
         }
 
         // CommandAttribute methods for framework integration
-        [CommandAttribute(ObjectType = nameof(ConvertKitSubscriber), PointType = PointType.Function, Name = "GetSubscribers", Caption = "Get Subscribers", ClassName = "ConvertKitDataSource", misc = "GetSubscribers")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitSubscriber), PointType = EnumPointType.Function, Name = "GetSubscribers", Caption = "Get Subscribers", ClassName = "ConvertKitDataSource", misc = "GetSubscribers")]
         public IEnumerable<ConvertKitSubscriber> GetSubscribers(string apiSecret)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
             return GetEntity("subscribers", filters).Cast<ConvertKitSubscriber>();
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitTag), PointType = PointType.Function, Name = "GetTags", Caption = "Get Tags", ClassName = "ConvertKitDataSource", misc = "GetTags")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitTag), PointType = EnumPointType.Function, Name = "GetTags", Caption = "Get Tags", ClassName = "ConvertKitDataSource", misc = "GetTags")]
         public IEnumerable<ConvertKitTag> GetTags(string apiSecret)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
             return GetEntity("tags", filters).Cast<ConvertKitTag>();
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitSequence), PointType = PointType.Function, Name = "GetSequences", Caption = "Get Sequences", ClassName = "ConvertKitDataSource", misc = "GetSequences")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitSequence), PointType = EnumPointType.Function, Name = "GetSequences", Caption = "Get Sequences", ClassName = "ConvertKitDataSource", misc = "GetSequences")]
         public IEnumerable<ConvertKitSequence> GetSequences(string apiSecret)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
             return GetEntity("sequences", filters).Cast<ConvertKitSequence>();
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitForm), PointType = PointType.Function, Name = "GetForms", Caption = "Get Forms", ClassName = "ConvertKitDataSource", misc = "GetForms")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitForm), PointType = EnumPointType.Function, Name = "GetForms", Caption = "Get Forms", ClassName = "ConvertKitDataSource", misc = "GetForms")]
         public IEnumerable<ConvertKitForm> GetForms(string apiSecret)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
             return GetEntity("forms", filters).Cast<ConvertKitForm>();
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitBroadcast), PointType = PointType.Function, Name = "GetBroadcasts", Caption = "Get Broadcasts", ClassName = "ConvertKitDataSource", misc = "GetBroadcasts")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitBroadcast), PointType = EnumPointType.Function, Name = "GetBroadcasts", Caption = "Get Broadcasts", ClassName = "ConvertKitDataSource", misc = "GetBroadcasts")]
         public IEnumerable<ConvertKitBroadcast> GetBroadcasts(string apiSecret)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
@@ -217,7 +217,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
         }
 
         // POST/PUT methods for creating and updating entities
-        [CommandAttribute(ObjectType = nameof(ConvertKitSubscriber), PointType = PointType.Function, Name = "CreateSubscriber", Caption = "Create Subscriber", ClassName = "ConvertKitDataSource", misc = "CreateSubscriber")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitSubscriber), PointType = EnumPointType.Function, Name = "CreateSubscriber", Caption = "Create Subscriber", ClassName = "ConvertKitDataSource", misc = "CreateSubscriber")]
         public async Task<ConvertKitSubscriber> CreateSubscriber(string apiSecret, ConvertKitSubscriber subscriber)
         {
             var endpoint = "subscribers";
@@ -226,7 +226,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitSubscriber), PointType = PointType.Function, Name = "UpdateSubscriber", Caption = "Update Subscriber", ClassName = "ConvertKitDataSource", misc = "UpdateSubscriber")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitSubscriber), PointType = EnumPointType.Function, Name = "UpdateSubscriber", Caption = "Update Subscriber", ClassName = "ConvertKitDataSource", misc = "UpdateSubscriber")]
         public async Task<ConvertKitSubscriber> UpdateSubscriber(string apiSecret, string subscriberId, ConvertKitSubscriber subscriber)
         {
             var endpoint = $"subscribers/{subscriberId}";
@@ -235,7 +235,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitTag), PointType = PointType.Function, Name = "CreateTag", Caption = "Create Tag", ClassName = "ConvertKitDataSource", misc = "CreateTag")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitTag), PointType = EnumPointType.Function, Name = "CreateTag", Caption = "Create Tag", ClassName = "ConvertKitDataSource", misc = "CreateTag")]
         public async Task<ConvertKitTag> CreateTag(string apiSecret, ConvertKitTag tag)
         {
             var endpoint = "tags";
@@ -244,7 +244,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitTag), PointType = PointType.Function, Name = "UpdateTag", Caption = "Update Tag", ClassName = "ConvertKitDataSource", misc = "UpdateTag")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitTag), PointType = EnumPointType.Function, Name = "UpdateTag", Caption = "Update Tag", ClassName = "ConvertKitDataSource", misc = "UpdateTag")]
         public async Task<ConvertKitTag> UpdateTag(string apiSecret, string tagId, ConvertKitTag tag)
         {
             var endpoint = $"tags/{tagId}";
@@ -253,7 +253,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitSequence), PointType = PointType.Function, Name = "CreateSequence", Caption = "Create Sequence", ClassName = "ConvertKitDataSource", misc = "CreateSequence")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitSequence), PointType = EnumPointType.Function, Name = "CreateSequence", Caption = "Create Sequence", ClassName = "ConvertKitDataSource", misc = "CreateSequence")]
         public async Task<ConvertKitSequence> CreateSequence(string apiSecret, ConvertKitSequence sequence)
         {
             var endpoint = "sequences";
@@ -262,7 +262,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitSequence), PointType = PointType.Function, Name = "UpdateSequence", Caption = "Update Sequence", ClassName = "ConvertKitDataSource", misc = "UpdateSequence")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitSequence), PointType = EnumPointType.Function, Name = "UpdateSequence", Caption = "Update Sequence", ClassName = "ConvertKitDataSource", misc = "UpdateSequence")]
         public async Task<ConvertKitSequence> UpdateSequence(string apiSecret, string sequenceId, ConvertKitSequence sequence)
         {
             var endpoint = $"sequences/{sequenceId}";
@@ -271,7 +271,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitForm), PointType = PointType.Function, Name = "CreateForm", Caption = "Create Form", ClassName = "ConvertKitDataSource", misc = "CreateForm")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitForm), PointType = EnumPointType.Function, Name = "CreateForm", Caption = "Create Form", ClassName = "ConvertKitDataSource", misc = "CreateForm")]
         public async Task<ConvertKitForm> CreateForm(string apiSecret, ConvertKitForm form)
         {
             var endpoint = "forms";
@@ -280,7 +280,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitForm), PointType = PointType.Function, Name = "UpdateForm", Caption = "Update Form", ClassName = "ConvertKitDataSource", misc = "UpdateForm")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitForm), PointType = EnumPointType.Function, Name = "UpdateForm", Caption = "Update Form", ClassName = "ConvertKitDataSource", misc = "UpdateForm")]
         public async Task<ConvertKitForm> UpdateForm(string apiSecret, string formId, ConvertKitForm form)
         {
             var endpoint = $"forms/{formId}";
@@ -289,7 +289,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitBroadcast), PointType = PointType.Function, Name = "CreateBroadcast", Caption = "Create Broadcast", ClassName = "ConvertKitDataSource", misc = "CreateBroadcast")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitBroadcast), PointType = EnumPointType.Function, Name = "CreateBroadcast", Caption = "Create Broadcast", ClassName = "ConvertKitDataSource", misc = "CreateBroadcast")]
         public async Task<ConvertKitBroadcast> CreateBroadcast(string apiSecret, ConvertKitBroadcast broadcast)
         {
             var endpoint = "broadcasts";
@@ -298,7 +298,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConvertKitBroadcast), PointType = PointType.Function, Name = "UpdateBroadcast", Caption = "Update Broadcast", ClassName = "ConvertKitDataSource", misc = "UpdateBroadcast")]
+        [CommandAttribute(ObjectType = nameof(ConvertKitBroadcast), PointType = EnumPointType.Function, Name = "UpdateBroadcast", Caption = "Update Broadcast", ClassName = "ConvertKitDataSource", misc = "UpdateBroadcast")]
         public async Task<ConvertKitBroadcast> UpdateBroadcast(string apiSecret, string broadcastId, ConvertKitBroadcast broadcast)
         {
             var endpoint = $"broadcasts/{broadcastId}";

@@ -169,31 +169,31 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Drip
         }
 
         // CommandAttribute methods for framework integration
-        [CommandAttribute(ObjectType = nameof(DripSubscriber), PointType = PointType.Function, Name = "GetSubscribers", Caption = "Get Subscribers", ClassName = "DripDataSource", misc = "GetSubscribers")]
+        [CommandAttribute(ObjectType = nameof(DripSubscriber), PointType = EnumPointType.Function, Name = "GetSubscribers", Caption = "Get Subscribers", ClassName = "DripDataSource", misc = "GetSubscribers")]
         public IEnumerable<DripSubscriber> GetSubscribers()
         {
             return GetEntity("subscribers", null).Cast<DripSubscriber>();
         }
 
-        [CommandAttribute(ObjectType = nameof(DripCampaign), PointType = PointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "DripDataSource", misc = "GetCampaigns")]
+        [CommandAttribute(ObjectType = nameof(DripCampaign), PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "DripDataSource", misc = "GetCampaigns")]
         public IEnumerable<DripCampaign> GetCampaigns()
         {
             return GetEntity("campaigns", null).Cast<DripCampaign>();
         }
 
-        [CommandAttribute(ObjectType = nameof(DripTag), PointType = PointType.Function, Name = "GetTags", Caption = "Get Tags", ClassName = "DripDataSource", misc = "GetTags")]
+        [CommandAttribute(ObjectType = nameof(DripTag), PointType = EnumPointType.Function, Name = "GetTags", Caption = "Get Tags", ClassName = "DripDataSource", misc = "GetTags")]
         public IEnumerable<DripTag> GetTags()
         {
             return GetEntity("tags", null).Cast<DripTag>();
         }
 
-        [CommandAttribute(ObjectType = nameof(DripWorkflow), PointType = PointType.Function, Name = "GetWorkflows", Caption = "Get Workflows", ClassName = "DripDataSource", misc = "GetWorkflows")]
+        [CommandAttribute(ObjectType = nameof(DripWorkflow), PointType = EnumPointType.Function, Name = "GetWorkflows", Caption = "Get Workflows", ClassName = "DripDataSource", misc = "GetWorkflows")]
         public IEnumerable<DripWorkflow> GetWorkflows()
         {
             return GetEntity("workflows", null).Cast<DripWorkflow>();
         }
 
-        [CommandAttribute(ObjectType = nameof(DripForm), PointType = PointType.Function, Name = "GetForms", Caption = "Get Forms", ClassName = "DripDataSource", misc = "GetForms")]
+        [CommandAttribute(ObjectType = nameof(DripForm), PointType = EnumPointType.Function, Name = "GetForms", Caption = "Get Forms", ClassName = "DripDataSource", misc = "GetForms")]
         public IEnumerable<DripForm> GetForms()
         {
             return GetEntity("forms", null).Cast<DripForm>();

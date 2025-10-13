@@ -220,14 +220,14 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConstantContact
             return GetEntity("email_campaigns", null).Cast<ConstantContactEmailCampaign>();
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactActivity), PointType = PointType.Function, Name = "GetActivities", Caption = "Get Activities", ClassName = "ConstantContactDataSource", misc = "GetActivities")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactActivity), PointType = EnumPointType.Function, Name = "GetActivities", Caption = "Get Activities", ClassName = "ConstantContactDataSource", misc = "GetActivities")]
         public IEnumerable<ConstantContactActivity> GetActivities()
         {
             return GetEntity("activities", null).Cast<ConstantContactActivity>();
         }
 
         // POST/PUT methods for creating and updating entities
-        [CommandAttribute(ObjectType = nameof(ConstantContactContact), PointType = PointType.Function, Name = "CreateContact", Caption = "Create Contact", ClassName = "ConstantContactDataSource", misc = "CreateContact")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactContact), PointType = EnumPointType.Function, Name = "CreateContact", Caption = "Create Contact", ClassName = "ConstantContactDataSource", misc = "CreateContact")]
         public async Task<ConstantContactContact> CreateContact(ConstantContactContact contact)
         {
             var endpoint = "v2/contacts";
@@ -235,7 +235,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConstantContact
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactContact), PointType = PointType.Function, Name = "UpdateContact", Caption = "Update Contact", ClassName = "ConstantContactDataSource", misc = "UpdateContact")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactContact), PointType = EnumPointType.Function, Name = "UpdateContact", Caption = "Update Contact", ClassName = "ConstantContactDataSource", misc = "UpdateContact")]
         public async Task<ConstantContactContact> UpdateContact(string contactId, ConstantContactContact contact)
         {
             var endpoint = $"v2/contacts/{contactId}";
@@ -243,7 +243,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConstantContact
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactList), PointType = PointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "ConstantContactDataSource", misc = "CreateList")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactList), PointType = EnumPointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "ConstantContactDataSource", misc = "CreateList")]
         public async Task<ConstantContactList> CreateList(ConstantContactList list)
         {
             var endpoint = "v2/lists";
@@ -251,7 +251,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConstantContact
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactList), PointType = PointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "ConstantContactDataSource", misc = "UpdateList")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactList), PointType = EnumPointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "ConstantContactDataSource", misc = "UpdateList")]
         public async Task<ConstantContactList> UpdateList(string listId, ConstantContactList list)
         {
             var endpoint = $"v2/lists/{listId}";
@@ -259,7 +259,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConstantContact
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactCampaign), PointType = PointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "ConstantContactDataSource", misc = "CreateCampaign")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactCampaign), PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "ConstantContactDataSource", misc = "CreateCampaign")]
         public async Task<ConstantContactCampaign> CreateCampaign(ConstantContactCampaign campaign)
         {
             var endpoint = "v2/emailmarketing/campaigns";
@@ -267,7 +267,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConstantContact
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactCampaign), PointType = PointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "ConstantContactDataSource", misc = "UpdateCampaign")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactCampaign), PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "ConstantContactDataSource", misc = "UpdateCampaign")]
         public async Task<ConstantContactCampaign> UpdateCampaign(string campaignId, ConstantContactCampaign campaign)
         {
             var endpoint = $"v2/emailmarketing/campaigns/{campaignId}";
@@ -275,7 +275,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConstantContact
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactEmailCampaign), PointType = PointType.Function, Name = "CreateEmailCampaign", Caption = "Create Email Campaign", ClassName = "ConstantContactDataSource", misc = "CreateEmailCampaign")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactEmailCampaign), PointType = EnumPointType.Function, Name = "CreateEmailCampaign", Caption = "Create Email Campaign", ClassName = "ConstantContactDataSource", misc = "CreateEmailCampaign")]
         public async Task<ConstantContactEmailCampaign> CreateEmailCampaign(ConstantContactEmailCampaign emailCampaign)
         {
             var endpoint = "v3/emailcampaigns";
@@ -283,7 +283,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConstantContact
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactEmailCampaign), PointType = PointType.Function, Name = "UpdateEmailCampaign", Caption = "Update Email Campaign", ClassName = "ConstantContactDataSource", misc = "UpdateEmailCampaign")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactEmailCampaign), PointType = EnumPointType.Function, Name = "UpdateEmailCampaign", Caption = "Update Email Campaign", ClassName = "ConstantContactDataSource", misc = "UpdateEmailCampaign")]
         public async Task<ConstantContactEmailCampaign> UpdateEmailCampaign(string campaignId, ConstantContactEmailCampaign emailCampaign)
         {
             var endpoint = $"v3/emailcampaigns/{campaignId}";
@@ -291,7 +291,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConstantContact
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactActivity), PointType = PointType.Function, Name = "CreateActivity", Caption = "Create Activity", ClassName = "ConstantContactDataSource", misc = "CreateActivity")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactActivity), PointType = EnumPointType.Function, Name = "CreateActivity", Caption = "Create Activity", ClassName = "ConstantContactDataSource", misc = "CreateActivity")]
         public async Task<ConstantContactActivity> CreateActivity(ConstantContactActivity activity)
         {
             var endpoint = "v3/activities";
@@ -299,7 +299,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConstantContact
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(ConstantContactActivity), PointType = PointType.Function, Name = "UpdateActivity", Caption = "Update Activity", ClassName = "ConstantContactDataSource", misc = "UpdateActivity")]
+        [CommandAttribute(ObjectType = nameof(ConstantContactActivity), PointType = EnumPointType.Function, Name = "UpdateActivity", Caption = "Update Activity", ClassName = "ConstantContactDataSource", misc = "UpdateActivity")]
         public async Task<ConstantContactActivity> UpdateActivity(string activityId, ConstantContactActivity activity)
         {
             var endpoint = $"v3/activities/{activityId}";
