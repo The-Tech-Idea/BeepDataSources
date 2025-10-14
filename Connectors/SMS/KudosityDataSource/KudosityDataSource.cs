@@ -176,5 +176,92 @@ namespace TheTechIdea.Beep.Connectors.Kudosity
             var result = await GetEntityAsync("templates", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<KudosityTemplate>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<KudosityTemplate>().ToList();
         }
+
+        [CommandAttribute(ObjectType = "KudositySMS", PointType = EnumPointType.Function, Name = "SendSMS", Caption = "Send SMS Message", ClassName = "KudosityDataSource", misc = "ReturnType: IEnumerable<KudositySMSResponse>")]
+        public async Task<IEnumerable<KudositySMSResponse>> SendSMSAsync(KudositySMS sms)
+        {
+            try
+            {
+                var url = "https://api.kudosity.com/api/v1/sms";
+                var response = await PostAsync(url, sms);
+                var json = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var smsResponse = JsonSerializer.Deserialize<KudositySMSResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (smsResponse != null)
+                    {
+                        return new[] { smsResponse };
+                    }
+                }
+                else
+                {
+                    Logger?.LogError($"Failed to send SMS: {json}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error sending SMS: {ex.Message}");
+            }
+            return Array.Empty<KudositySMSResponse>();
+        }
+
+        [CommandAttribute(ObjectType = "KudosityContact", PointType = EnumPointType.Function, Name = "CreateContact", Caption = "Create Contact", ClassName = "KudosityDataSource", misc = "ReturnType: IEnumerable<KudosityContact>")]
+        public async Task<IEnumerable<KudosityContact>> CreateContactAsync(KudosityContact contact)
+        {
+            try
+            {
+                var url = "https://api.kudosity.com/api/v1/contacts";
+                var response = await PostAsync(url, contact);
+                var json = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var createdContact = JsonSerializer.Deserialize<KudosityContact>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (createdContact != null)
+                    {
+                        return new[] { createdContact };
+                    }
+                }
+                else
+                {
+                    Logger?.LogError($"Failed to create contact: {json}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating contact: {ex.Message}");
+            }
+            return Array.Empty<KudosityContact>();
+        }
+
+        [CommandAttribute(ObjectType = "KudosityCampaign", PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "KudosityDataSource", misc = "ReturnType: IEnumerable<KudosityCampaign>")]
+        public async Task<IEnumerable<KudosityCampaign>> CreateCampaignAsync(KudosityCampaign campaign)
+        {
+            try
+            {
+                var url = "https://api.kudosity.com/api/v1/campaigns";
+                var response = await PostAsync(url, campaign);
+                var json = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var createdCampaign = JsonSerializer.Deserialize<KudosityCampaign>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (createdCampaign != null)
+                    {
+                        return new[] { createdCampaign };
+                    }
+                }
+                else
+                {
+                    Logger?.LogError($"Failed to create campaign: {json}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating campaign: {ex.Message}");
+            }
+            return Array.Empty<KudosityCampaign>();
+        }
     }
 }

@@ -61,6 +61,11 @@ namespace TheTechIdea.Beep.Connectors.Loomly.Models
 
         [JsonPropertyName("performance")]
         public LoomlyPerformance Performance { get; set; }
+
+        [JsonIgnore]
+        public IDataSource DataSource { get; set; }
+
+        public T Attach<T>(IDataSource ds) where T : LoomlyPost { DataSource = ds; return (T)this; }
     }
 
     public class LoomlySocialAccount
@@ -163,6 +168,11 @@ namespace TheTechIdea.Beep.Connectors.Loomly.Models
 
         [JsonPropertyName("updated_at")]
         public DateTime UpdatedAt { get; set; }
+
+        [JsonIgnore]
+        public IDataSource DataSource { get; set; }
+
+        public T Attach<T>(IDataSource ds) where T : LoomlyCampaign { DataSource = ds; return (T)this; }
     }
 
     public class LoomlyCalendar

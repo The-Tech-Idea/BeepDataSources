@@ -423,61 +423,61 @@ namespace TheTechIdea.Beep.Connectors.Gmail
         private IEnumerable<object> ParseMessages(string json)
         {
             var response = JsonSerializer.Deserialize<GmailMessagesListResponse>(json);
-            return response?.Messages ?? Array.Empty<GmailMessage>();
+            return response?.Messages ?? new List<GmailMessage>();
         }
 
         private IEnumerable<object> ParseMessage(string json)
         {
             var message = JsonSerializer.Deserialize<GmailMessage>(json);
-            return message != null ? new[] { message } : Array.Empty<GmailMessage>();
+            return message != null ? new[] { message } : new List<GmailMessage>();
         }
 
         private IEnumerable<object> ParseThreads(string json)
         {
             var response = JsonSerializer.Deserialize<GmailThreadsListResponse>(json);
-            return response?.Threads ?? Array.Empty<GmailThread>();
+            return response?.Threads ?? new List<GmailThread>();
         }
 
         private IEnumerable<object> ParseThread(string json)
         {
             var thread = JsonSerializer.Deserialize<GmailThread>(json);
-            return thread != null ? new[] { thread } : Array.Empty<GmailThread>();
+            return thread != null ? new[] { thread } : new List<GmailThread>();
         }
 
         private IEnumerable<object> ParseLabels(string json)
         {
             var response = JsonSerializer.Deserialize<GmailLabelsListResponse>(json);
-            return response?.Labels ?? Array.Empty<GmailLabel>();
+            return response?.Labels ?? new List<GmailLabel>();
         }
 
         private IEnumerable<object> ParseLabel(string json)
         {
             var label = JsonSerializer.Deserialize<GmailLabel>(json);
-            return label != null ? new[] { label } : Array.Empty<GmailLabel>();
+            return label != null ? new[] { label } : new List<GmailLabel>();
         }
 
         private IEnumerable<object> ParseDrafts(string json)
         {
             var response = JsonSerializer.Deserialize<GmailDraftsListResponse>(json);
-            return response?.Drafts ?? Array.Empty<GmailDraft>();
+            return response?.Drafts ?? new List<GmailDraft>();
         }
 
         private IEnumerable<object> ParseDraft(string json)
         {
             var draft = JsonSerializer.Deserialize<GmailDraft>(json);
-            return draft != null ? new[] { draft } : Array.Empty<GmailDraft>();
+            return draft != null ? new[] { draft } : new List<GmailDraft>();
         }
 
         private IEnumerable<object> ParseHistory(string json)
         {
             var response = JsonSerializer.Deserialize<GmailHistoryListResponse>(json);
-            return response?.History ?? Array.Empty<GmailHistory>();
+            return response?.History ?? new List<GmailHistory>();
         }
 
         private IEnumerable<object> ParseProfile(string json)
         {
             var profile = JsonSerializer.Deserialize<GmailProfile>(json);
-            return profile != null ? new[] { profile } : Array.Empty<GmailProfile>();
+            return profile != null ? new[] { profile } : new List<GmailProfile>();
         }
 
         // Helper methods

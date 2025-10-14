@@ -207,34 +207,34 @@ namespace TheTechIdea.Beep.Connectors.Marketing.CampaignMonitor
         }
 
         // CommandAttribute methods for framework integration
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorClient), PointType = PointType.Function, Name = "GetClients", Caption = "Get Clients", ClassName = "CampaignMonitorDataSource", misc = "GetClients")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorClient), PointType = EnumPointType.Function, Name = "GetClients", Caption = "Get Clients", ClassName = "CampaignMonitorDataSource", misc = "GetClients")]
         public IEnumerable<CampaignMonitorClient> GetClients()
         {
             return GetEntity("clients", null).Cast<CampaignMonitorClient>();
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorList), PointType = PointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "CampaignMonitorDataSource", misc = "GetLists")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorList), PointType = EnumPointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "CampaignMonitorDataSource", misc = "GetLists")]
         public IEnumerable<CampaignMonitorList> GetLists(string clientId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "client_id", FilterValue = clientId } };
             return GetEntity("lists", filters).Cast<CampaignMonitorList>();
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorSubscriber), PointType = PointType.Function, Name = "GetSubscribers", Caption = "Get Subscribers", ClassName = "CampaignMonitorDataSource", misc = "GetSubscribers")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorSubscriber), PointType = EnumPointType.Function, Name = "GetSubscribers", Caption = "Get Subscribers", ClassName = "CampaignMonitorDataSource", misc = "GetSubscribers")]
         public IEnumerable<CampaignMonitorSubscriber> GetSubscribers(string listId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "list_id", FilterValue = listId } };
             return GetEntity("subscribers", filters).Cast<CampaignMonitorSubscriber>();
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorCampaign), PointType = PointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "CampaignMonitorDataSource", misc = "GetCampaigns")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorCampaign), PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "CampaignMonitorDataSource", misc = "GetCampaigns")]
         public IEnumerable<CampaignMonitorCampaign> GetCampaigns(string clientId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "client_id", FilterValue = clientId } };
             return GetEntity("campaigns", filters).Cast<CampaignMonitorCampaign>();
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorTemplate), PointType = PointType.Function, Name = "GetTemplates", Caption = "Get Templates", ClassName = "CampaignMonitorDataSource", misc = "GetTemplates")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorTemplate), PointType = EnumPointType.Function, Name = "GetTemplates", Caption = "Get Templates", ClassName = "CampaignMonitorDataSource", misc = "GetTemplates")]
         public IEnumerable<CampaignMonitorTemplate> GetTemplates(string clientId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "client_id", FilterValue = clientId } };
@@ -242,7 +242,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.CampaignMonitor
         }
 
         // POST/PUT methods for creating and updating entities
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorClient), PointType = PointType.Function, Name = "CreateClient", Caption = "Create Client", ClassName = "CampaignMonitorDataSource", misc = "CreateClient")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorClient), PointType = EnumPointType.Function, Name = "CreateClient", Caption = "Create Client", ClassName = "CampaignMonitorDataSource", misc = "CreateClient")]
         public async Task<CampaignMonitorClient> CreateClient(CampaignMonitorClient client)
         {
             var endpoint = "clients.json";
@@ -250,7 +250,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.CampaignMonitor
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorClient), PointType = PointType.Function, Name = "UpdateClient", Caption = "Update Client", ClassName = "CampaignMonitorDataSource", misc = "UpdateClient")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorClient), PointType = EnumPointType.Function, Name = "UpdateClient", Caption = "Update Client", ClassName = "CampaignMonitorDataSource", misc = "UpdateClient")]
         public async Task<CampaignMonitorClient> UpdateClient(string clientId, CampaignMonitorClient client)
         {
             var endpoint = $"clients/{clientId}.json";
@@ -258,7 +258,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.CampaignMonitor
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorList), PointType = PointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "CampaignMonitorDataSource", misc = "CreateList")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorList), PointType = EnumPointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "CampaignMonitorDataSource", misc = "CreateList")]
         public async Task<CampaignMonitorList> CreateList(string clientId, CampaignMonitorList list)
         {
             var endpoint = $"clients/{clientId}/lists.json";
@@ -266,7 +266,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.CampaignMonitor
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorList), PointType = PointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "CampaignMonitorDataSource", misc = "UpdateList")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorList), PointType = EnumPointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "CampaignMonitorDataSource", misc = "UpdateList")]
         public async Task<CampaignMonitorList> UpdateList(string listId, CampaignMonitorList list)
         {
             var endpoint = $"lists/{listId}.json";
@@ -274,7 +274,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.CampaignMonitor
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorSubscriber), PointType = PointType.Function, Name = "CreateSubscriber", Caption = "Create Subscriber", ClassName = "CampaignMonitorDataSource", misc = "CreateSubscriber")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorSubscriber), PointType = EnumPointType.Function, Name = "CreateSubscriber", Caption = "Create Subscriber", ClassName = "CampaignMonitorDataSource", misc = "CreateSubscriber")]
         public async Task<CampaignMonitorSubscriber> CreateSubscriber(string listId, CampaignMonitorSubscriber subscriber)
         {
             var endpoint = $"subscribers/{listId}.json";
@@ -282,7 +282,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.CampaignMonitor
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorSubscriber), PointType = PointType.Function, Name = "UpdateSubscriber", Caption = "Update Subscriber", ClassName = "CampaignMonitorDataSource", misc = "UpdateSubscriber")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorSubscriber), PointType = EnumPointType.Function, Name = "UpdateSubscriber", Caption = "Update Subscriber", ClassName = "CampaignMonitorDataSource", misc = "UpdateSubscriber")]
         public async Task<CampaignMonitorSubscriber> UpdateSubscriber(string listId, CampaignMonitorSubscriber subscriber)
         {
             var endpoint = $"subscribers/{listId}.json";
@@ -290,7 +290,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.CampaignMonitor
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorCampaign), PointType = PointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "CampaignMonitorDataSource", misc = "CreateCampaign")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorCampaign), PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "CampaignMonitorDataSource", misc = "CreateCampaign")]
         public async Task<CampaignMonitorCampaign> CreateCampaign(string clientId, CampaignMonitorCampaign campaign)
         {
             var endpoint = $"clients/{clientId}/campaigns.json";
@@ -298,7 +298,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.CampaignMonitor
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorCampaign), PointType = PointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "CampaignMonitorDataSource", misc = "UpdateCampaign")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorCampaign), PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "CampaignMonitorDataSource", misc = "UpdateCampaign")]
         public async Task<CampaignMonitorCampaign> UpdateCampaign(string campaignId, CampaignMonitorCampaign campaign)
         {
             var endpoint = $"campaigns/{campaignId}.json";
@@ -306,7 +306,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.CampaignMonitor
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorTemplate), PointType = PointType.Function, Name = "CreateTemplate", Caption = "Create Template", ClassName = "CampaignMonitorDataSource", misc = "CreateTemplate")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorTemplate), PointType = EnumPointType.Function, Name = "CreateTemplate", Caption = "Create Template", ClassName = "CampaignMonitorDataSource", misc = "CreateTemplate")]
         public async Task<CampaignMonitorTemplate> CreateTemplate(string clientId, CampaignMonitorTemplate template)
         {
             var endpoint = $"clients/{clientId}/templates.json";
@@ -314,7 +314,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.CampaignMonitor
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(CampaignMonitorTemplate), PointType = PointType.Function, Name = "UpdateTemplate", Caption = "Update Template", ClassName = "CampaignMonitorDataSource", misc = "UpdateTemplate")]
+    [CommandAttribute(ObjectType = nameof(CampaignMonitorTemplate), PointType = EnumPointType.Function, Name = "UpdateTemplate", Caption = "Update Template", ClassName = "CampaignMonitorDataSource", misc = "UpdateTemplate")]
         public async Task<CampaignMonitorTemplate> UpdateTemplate(string templateId, CampaignMonitorTemplate template)
         {
             var endpoint = $"templates/{templateId}.json";

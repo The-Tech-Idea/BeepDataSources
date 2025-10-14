@@ -299,42 +299,42 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         }
 
         // CommandAttribute methods for Outlook API
-        [CommandAttribute(Name = "GetMessages", Caption = "Get Outlook Messages", ObjectType = "OutlookMessage", PointType = EnumPointType.Function, Category = "Outlook", DatasourceType = DataSourceType.Outlook, ClassType = "OutlookMessage", Showin = ShowinType.Grid, Order = 1, iconimage = "mail.png")]
+        [CommandAttribute(Name = "GetMessages", Caption = "Get Outlook Messages", ObjectType = "OutlookMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType = "OutlookMessage", Showin = ShowinType.Grid, Order = 1, iconimage = "mail.png")]
         public async Task<IEnumerable<OutlookMessage>> GetMessages(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("messages", filters);
             return result.Cast<OutlookMessage>();
         }
 
-        [CommandAttribute(Name = "GetMessage", Caption = "Get Outlook Message", ObjectType = "OutlookMessage", PointType = EnumPointType.Function, Category = "Outlook", DatasourceType = DataSourceType.Outlook, ClassType = "OutlookMessage", Showin = ShowinType.Grid, Order = 2, iconimage = "mail.png")]
+        [CommandAttribute(Name = "GetMessage", Caption = "Get Outlook Message", ObjectType = "OutlookMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType = "OutlookMessage", Showin = ShowinType.Grid, Order = 2, iconimage = "mail.png")]
         public async Task<IEnumerable<OutlookMessage>> GetMessage(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("messages.get", filters);
             return result.Cast<OutlookMessage>();
         }
 
-        [CommandAttribute(Name = "GetMailFolders", Caption = "Get Outlook Mail Folders", ObjectType = "OutlookMailFolder", PointType = EnumPointType.Function, Category = "Outlook", DatasourceType = DataSourceType.Outlook, ClassType = "OutlookMailFolder", Showin = ShowinType.Grid, Order = 3, iconimage = "folder.png")]
+        [CommandAttribute(Name = "GetMailFolders", Caption = "Get Outlook Mail Folders", ObjectType = "OutlookMailFolder", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType = "OutlookMailFolder", Showin = ShowinType.Grid, Order = 3, iconimage = "folder.png")]
         public async Task<IEnumerable<OutlookMailFolder>> GetMailFolders(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("mailFolders", filters);
             return result.Cast<OutlookMailFolder>();
         }
 
-        [CommandAttribute(Name = "GetContacts", Caption = "Get Outlook Contacts", ObjectType = "OutlookContact", PointType = EnumPointType.Function, Category = "Outlook", DatasourceType = DataSourceType.Outlook, ClassType = "OutlookContact", Showin = ShowinType.Grid, Order = 4, iconimage = "contact.png")]
+        [CommandAttribute(Name = "GetContacts", Caption = "Get Outlook Contacts", ObjectType = "OutlookContact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType = "OutlookContact", Showin = ShowinType.Grid, Order = 4, iconimage = "contact.png")]
         public async Task<IEnumerable<OutlookContact>> GetContacts(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("contacts", filters);
             return result.Cast<OutlookContact>();
         }
 
-        [CommandAttribute(Name = "GetEvents", Caption = "Get Outlook Events", ObjectType = "OutlookEvent", PointType = EnumPointType.Function, Category = "Outlook", DatasourceType = DataSourceType.Outlook, ClassType = "OutlookEvent", Showin = ShowinType.Grid, Order = 5, iconimage = "calendar.png")]
+        [CommandAttribute(Name = "GetEvents", Caption = "Get Outlook Events", ObjectType = "OutlookEvent", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType = "OutlookEvent", Showin = ShowinType.Grid, Order = 5, iconimage = "calendar.png")]
         public async Task<IEnumerable<OutlookEvent>> GetEvents(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("events", filters);
             return result.Cast<OutlookEvent>();
         }
 
-        [CommandAttribute(Name = "GetCalendars", Caption = "Get Outlook Calendars", ObjectType = "OutlookCalendar", PointType = EnumPointType.Function, Category = "Outlook", DatasourceType = DataSourceType.Outlook, ClassType = "OutlookCalendar", Showin = ShowinType.Grid, Order = 6, iconimage = "calendar.png")]
+        [CommandAttribute(Name = "GetCalendars", Caption = "Get Outlook Calendars", ObjectType = "OutlookCalendar", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType = "OutlookCalendar", Showin = ShowinType.Grid, Order = 6, iconimage = "calendar.png")]
         public async Task<IEnumerable<OutlookCalendar>> GetCalendars(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("calendars", filters);

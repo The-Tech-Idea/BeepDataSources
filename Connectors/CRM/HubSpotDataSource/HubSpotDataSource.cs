@@ -221,56 +221,56 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
         public async Task<IEnumerable<Contact>> GetContacts(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("contacts", filters ?? new List<AppFilter>());
-            return result.Cast<Contact>().Select(c => c.Attach<Contact>(this));
+            return result.Select(item => JsonSerializer.Deserialize<Contact>(JsonSerializer.Serialize(item))).Where(contact => contact != null).Cast<Contact>();
         }
 
         [CommandAttribute(Name = "GetCompanies", Caption = "Get HubSpot Companies", ObjectType = "Company", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Company", Showin = ShowinType.Both, Order = 2, iconimage = "company.png")]
         public async Task<IEnumerable<Company>> GetCompanies(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("companies", filters ?? new List<AppFilter>());
-            return result.Cast<Company>().Select(c => c.Attach<Company>(this));
+            return result.Select(item => JsonSerializer.Deserialize<Company>(JsonSerializer.Serialize(item))).Where(company => company != null).Cast<Company>();
         }
 
         [CommandAttribute(Name = "GetDeals", Caption = "Get HubSpot Deals", ObjectType = "Deal", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Deal", Showin = ShowinType.Both, Order = 3, iconimage = "deal.png")]
         public async Task<IEnumerable<Deal>> GetDeals(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("deals", filters ?? new List<AppFilter>());
-            return result.Cast<Deal>().Select(d => d.Attach<Deal>(this));
+            return result.Select(item => JsonSerializer.Deserialize<Deal>(JsonSerializer.Serialize(item))).Where(deal => deal != null).Cast<Deal>();
         }
 
         [CommandAttribute(Name = "GetTickets", Caption = "Get HubSpot Tickets", ObjectType = "Ticket", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Ticket", Showin = ShowinType.Both, Order = 4, iconimage = "ticket.png")]
         public async Task<IEnumerable<Ticket>> GetTickets(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("tickets", filters ?? new List<AppFilter>());
-            return result.Cast<Ticket>().Select(t => t.Attach<Ticket>(this));
+            return result.Select(item => JsonSerializer.Deserialize<Ticket>(JsonSerializer.Serialize(item))).Where(ticket => ticket != null).Cast<Ticket>();
         }
 
         [CommandAttribute(Name = "GetProducts", Caption = "Get HubSpot Products", ObjectType = "Product", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Product", Showin = ShowinType.Both, Order = 5, iconimage = "product.png")]
         public async Task<IEnumerable<Product>> GetProducts(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("products", filters ?? new List<AppFilter>());
-            return result.Cast<Product>().Select(p => p.Attach<Product>(this));
+            return result.Select(item => JsonSerializer.Deserialize<Product>(JsonSerializer.Serialize(item))).Where(product => product != null).Cast<Product>();
         }
 
         [CommandAttribute(Name = "GetLineItems", Caption = "Get HubSpot Line Items", ObjectType = "LineItem", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "LineItem", Showin = ShowinType.Both, Order = 6, iconimage = "lineitem.png")]
         public async Task<IEnumerable<LineItem>> GetLineItems(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("line_items", filters ?? new List<AppFilter>());
-            return result.Cast<LineItem>().Select(l => l.Attach<LineItem>(this));
+            return result.Select(item => JsonSerializer.Deserialize<LineItem>(JsonSerializer.Serialize(item))).Where(lineItem => lineItem != null).Cast<LineItem>();
         }
 
         [CommandAttribute(Name = "GetQuotes", Caption = "Get HubSpot Quotes", ObjectType = "Quote", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Quote", Showin = ShowinType.Both, Order = 7, iconimage = "quote.png")]
         public async Task<IEnumerable<Quote>> GetQuotes(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("quotes", filters ?? new List<AppFilter>());
-            return result.Cast<Quote>().Select(q => q.Attach<Quote>(this));
+            return result.Select(item => JsonSerializer.Deserialize<Quote>(JsonSerializer.Serialize(item))).Where(quote => quote != null).Cast<Quote>();
         }
 
         [CommandAttribute(Name = "GetOwners", Caption = "Get HubSpot Owners", ObjectType = "Owner", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Owner", Showin = ShowinType.Both, Order = 8, iconimage = "owner.png")]
         public async Task<IEnumerable<Owner>> GetOwners(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("owners", filters ?? new List<AppFilter>());
-            return result.Cast<Owner>().Select(o => o.Attach(this));
+            return result.Select(item => JsonSerializer.Deserialize<Owner>(JsonSerializer.Serialize(item))).Where(owner => owner != null).Cast<Owner>();
         }
 
         // -------------------- Create / Update (POST/PATCH) methods --------------------

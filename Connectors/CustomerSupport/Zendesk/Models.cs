@@ -95,6 +95,11 @@ namespace TheTechIdea.Beep.ZendeskDataSource
 
         [JsonPropertyName("updated_at")]
         public DateTime UpdatedAt { get; set; }
+
+        [JsonIgnore]
+        public IDataSource DataSource { get; set; }
+
+        public T Attach<T>(IDataSource ds) where T : ZendeskTicket { DataSource = ds; return (T)this; }
     }
 
     /// <summary>

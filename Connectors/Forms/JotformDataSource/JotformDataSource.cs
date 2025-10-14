@@ -196,9 +196,10 @@ namespace TheTechIdea.Beep.Connectors.Jotform
             ClassName = "JotformDataSource",
             misc = "ReturnType: IEnumerable<JotformForm>"
         )]
-        public IEnumerable<JotformForm> GetForms()
+        public async Task<IEnumerable<JotformForm>> GetForms()
         {
-            return GetEntity<JotformForm>("forms");
+            var result = await GetEntityAsync("forms", new List<AppFilter>());
+            return result.Cast<JotformForm>();
         }
 
         [CommandAttribute(
@@ -209,9 +210,10 @@ namespace TheTechIdea.Beep.Connectors.Jotform
             ClassName = "JotformDataSource",
             misc = "ReturnType: IEnumerable<JotformForm>"
         )]
-        public IEnumerable<JotformForm> GetForm(string id)
+        public async Task<IEnumerable<JotformForm>> GetForm(string id)
         {
-            return GetEntity<JotformForm>("forms.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+            var result = await GetEntityAsync("forms.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+            return result.Cast<JotformForm>();
         }
 
         [CommandAttribute(
@@ -222,9 +224,10 @@ namespace TheTechIdea.Beep.Connectors.Jotform
             ClassName = "JotformDataSource",
             misc = "ReturnType: IEnumerable<JotformSubmission>"
         )]
-        public IEnumerable<JotformSubmission> GetSubmissions()
+        public async Task<IEnumerable<JotformSubmission>> GetSubmissions()
         {
-            return GetEntity<JotformSubmission>("submissions");
+            var result = await GetEntityAsync("submissions", new List<AppFilter>());
+            return result.Cast<JotformSubmission>();
         }
 
         [CommandAttribute(
@@ -237,7 +240,7 @@ namespace TheTechIdea.Beep.Connectors.Jotform
         )]
         public IEnumerable<JotformSubmission> GetSubmission(string id)
         {
-            return GetEntity<JotformSubmission>("submissions.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+            return GetEntity("submissions.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } }).Cast<JotformSubmission>();
         }
 
         [CommandAttribute(
@@ -250,7 +253,94 @@ namespace TheTechIdea.Beep.Connectors.Jotform
         )]
         public IEnumerable<JotformSubmission> GetFormSubmissions(string formId)
         {
-            return GetEntity<JotformSubmission>("forms.submissions", new List<AppFilter> { new AppFilter { FieldName = "form_id", FilterValue = formId } });
+            return GetEntity("forms.submissions", new List<AppFilter> { new AppFilter { FieldName = "form_id", FilterValue = formId } }).Cast<JotformSubmission>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "JotformSubmission",
+            PointType = EnumPointType.Function,
+            Name = "CreateSubmission",
+            Caption = "Create Jotform Submission",
+            ClassName = "JotformDataSource",
+            misc = "ReturnType: IEnumerable<JotformSubmission>"
+        )]
+        public async Task<IEnumerable<JotformSubmission>> CreateSubmissionAsync(string formId, JotformSubmission submission)
+        {
+            try
+            {
+                var url = $"https://api.jotform.com/v1/form/{formId}/submissions";
+                var response = await PostAsync(url, submission);
+                var json = await response.Content.ReadAsStringAsync();
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonSerializer.Deserialize<JotformSubmissionResponse>(json);
+                    if (result?.Content != null)
+                    {
+                        return new[] { result.Content };
+                    }
+                }
+                else
+                {
+                    Logger?.LogError($"Failed to create submission: {json}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating submission: {ex.Message}");
+            }
+            return Array.Empty<JotformSubmission>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "JotformForm",
+            PointType = EnumPointType.Function,
+            Name = "CreateForm",
+            Caption = "Create Jotform Form",
+            ClassName = "JotformDataSource",
+            misc = "ReturnType: IEnumerable<JotformForm>"
+        )]
+        public async Task<IEnumerable<JotformForm>> CreateFormAsync(JotformForm form)
+        {
+            try
+            {
+                var url = "https://api.jotform.com/v1/user/forms";
+                var response = await PostAsync(url, form);
+                var json = await response.Content.ReadAsStringAsync();
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonSerializer.Deserialize<JotformFormResponse>(json);
+                    if (result?.Content != null)
+                    {
+                        // Convert JotformFormDetail to JotformForm if needed
+                        var createdForm = new JotformForm
+                        {
+                            Id = result.Content.Id,
+                            Username = result.Content.Username,
+                            Title = result.Content.Title,
+                            Height = result.Content.Height,
+                            Url = result.Content.Url,
+                            Status = result.Content.Status,
+                            CreatedAt = result.Content.CreatedAt,
+                            UpdatedAt = result.Content.UpdatedAt,
+                            New = result.Content.New,
+                            Count = result.Content.Count,
+                            Type = result.Content.Type
+                        };
+                        return new[] { createdForm };
+                    }
+                }
+                else
+                {
+                    Logger?.LogError($"Failed to create form: {json}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating form: {ex.Message}");
+            }
+            return Array.Empty<JotformForm>();
         }
     }
 }

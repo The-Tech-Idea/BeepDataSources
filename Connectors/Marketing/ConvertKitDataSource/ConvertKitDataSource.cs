@@ -222,7 +222,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
         {
             var endpoint = "subscribers";
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
-            var response = await PostAsync<ConvertKitSubscriber>(endpoint, subscriber, filters);
+            var response = await PostAsync<ConvertKitSubscriber>(endpoint, subscriber, FiltersToDictionary(filters));
             return response;
         }
 
@@ -231,7 +231,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
         {
             var endpoint = $"subscribers/{subscriberId}";
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
-            var response = await PutAsync<ConvertKitSubscriber>(endpoint, subscriber, filters);
+            var response = await PutAsync<ConvertKitSubscriber>(endpoint, subscriber, FiltersToDictionary(filters));
             return response;
         }
 
@@ -240,7 +240,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
         {
             var endpoint = "tags";
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
-            var response = await PostAsync<ConvertKitTag>(endpoint, tag, filters);
+            var response = await PostAsync<ConvertKitTag>(endpoint, tag, FiltersToDictionary(filters));
             return response;
         }
 
@@ -249,7 +249,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
         {
             var endpoint = $"tags/{tagId}";
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
-            var response = await PutAsync<ConvertKitTag>(endpoint, tag, filters);
+            var response = await PutAsync<ConvertKitTag>(endpoint, tag, FiltersToDictionary(filters));
             return response;
         }
 
@@ -258,7 +258,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
         {
             var endpoint = "sequences";
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
-            var response = await PostAsync<ConvertKitSequence>(endpoint, sequence, filters);
+            var response = await PostAsync<ConvertKitSequence>(endpoint, sequence, FiltersToDictionary(filters));
             return response;
         }
 
@@ -267,7 +267,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
         {
             var endpoint = $"sequences/{sequenceId}";
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
-            var response = await PutAsync<ConvertKitSequence>(endpoint, sequence, filters);
+            var response = await PutAsync<ConvertKitSequence>(endpoint, sequence, FiltersToDictionary(filters));
             return response;
         }
 
@@ -276,7 +276,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
         {
             var endpoint = "forms";
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
-            var response = await PostAsync<ConvertKitForm>(endpoint, form, filters);
+            var response = await PostAsync<ConvertKitForm>(endpoint, form, FiltersToDictionary(filters));
             return response;
         }
 
@@ -285,7 +285,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
         {
             var endpoint = $"forms/{formId}";
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
-            var response = await PutAsync<ConvertKitForm>(endpoint, form, filters);
+            var response = await PutAsync<ConvertKitForm>(endpoint, form, FiltersToDictionary(filters));
             return response;
         }
 
@@ -294,7 +294,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
         {
             var endpoint = "broadcasts";
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
-            var response = await PostAsync<ConvertKitBroadcast>(endpoint, broadcast, filters);
+            var response = await PostAsync<ConvertKitBroadcast>(endpoint, broadcast, FiltersToDictionary(filters));
             return response;
         }
 
@@ -303,8 +303,21 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ConvertKitDataSource
         {
             var endpoint = $"broadcasts/{broadcastId}";
             var filters = new List<AppFilter> { new AppFilter { FieldName = "api_secret", FilterValue = apiSecret } };
-            var response = await PutAsync<ConvertKitBroadcast>(endpoint, broadcast, filters);
+            var response = await PutAsync<ConvertKitBroadcast>(endpoint, broadcast, FiltersToDictionary(filters));
             return response;
+        }
+
+        // Helper method to convert filters to dictionary
+        private static Dictionary<string, string> FiltersToDictionary(List<AppFilter> filters)
+        {
+            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (filters == null) return dict;
+            foreach (var f in filters)
+            {
+                if (f == null || string.IsNullOrWhiteSpace(f.FieldName)) continue;
+                dict[f.FieldName.Trim()] = f.FilterValue?.ToString() ?? string.Empty;
+            }
+            return dict;
         }
     }
 }

@@ -770,7 +770,8 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         public async Task<IEnumerable<Deal>> CreateDealAsync(Deal deal)
         {
             if (deal == null) return Array.Empty<Deal>();
-            var success = await CreateEntityAsync("deals", deal).ConfigureAwait(false);
+            using var resp = await PostAsync($"deals", deal).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { deal } : Array.Empty<Deal>();
         }
 
@@ -778,7 +779,8 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         public async Task<IEnumerable<Deal>> UpdateDealAsync(string dealId, Deal deal)
         {
             if (string.IsNullOrWhiteSpace(dealId) || deal == null) return Array.Empty<Deal>();
-            var success = await UpdateEntityAsync("deals", deal, dealId).ConfigureAwait(false);
+            using var resp = await PutAsync($"deals/{dealId}", deal).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { deal } : Array.Empty<Deal>();
         }
 
@@ -786,7 +788,8 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         public async Task<IEnumerable<Person>> CreatePersonAsync(Person person)
         {
             if (person == null) return Array.Empty<Person>();
-            var success = await CreateEntityAsync("persons", person).ConfigureAwait(false);
+            using var resp = await PostAsync($"persons", person).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { person } : Array.Empty<Person>();
         }
 
@@ -794,7 +797,8 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         public async Task<IEnumerable<Person>> UpdatePersonAsync(string personId, Person person)
         {
             if (string.IsNullOrWhiteSpace(personId) || person == null) return Array.Empty<Person>();
-            var success = await UpdateEntityAsync("persons", person, personId).ConfigureAwait(false);
+            using var resp = await PutAsync($"persons/{personId}", person).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { person } : Array.Empty<Person>();
         }
 
@@ -802,7 +806,8 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         public async Task<IEnumerable<Organization>> CreateOrganizationAsync(Organization organization)
         {
             if (organization == null) return Array.Empty<Organization>();
-            var success = await CreateEntityAsync("organizations", organization).ConfigureAwait(false);
+            using var resp = await PostAsync($"organizations", organization).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { organization } : Array.Empty<Organization>();
         }
 
@@ -810,7 +815,8 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         public async Task<IEnumerable<Organization>> UpdateOrganizationAsync(string organizationId, Organization organization)
         {
             if (string.IsNullOrWhiteSpace(organizationId) || organization == null) return Array.Empty<Organization>();
-            var success = await UpdateEntityAsync("organizations", organization, organizationId).ConfigureAwait(false);
+            using var resp = await PutAsync($"organizations/{organizationId}", organization).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { organization } : Array.Empty<Organization>();
         }
 
@@ -818,7 +824,8 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         public async Task<IEnumerable<Activity>> CreateActivityAsync(Activity activity)
         {
             if (activity == null) return Array.Empty<Activity>();
-            var success = await CreateEntityAsync("activities", activity).ConfigureAwait(false);
+            using var resp = await PostAsync($"activities", activity).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { activity } : Array.Empty<Activity>();
         }
 
@@ -826,7 +833,8 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         public async Task<IEnumerable<Activity>> UpdateActivityAsync(string activityId, Activity activity)
         {
             if (string.IsNullOrWhiteSpace(activityId) || activity == null) return Array.Empty<Activity>();
-            var success = await UpdateEntityAsync("activities", activity, activityId).ConfigureAwait(false);
+            using var resp = await PutAsync($"activities/{activityId}", activity).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { activity } : Array.Empty<Activity>();
         }
 
@@ -834,7 +842,8 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         public async Task<IEnumerable<Product>> CreateProductAsync(Product product)
         {
             if (product == null) return Array.Empty<Product>();
-            var success = await CreateEntityAsync("products", product).ConfigureAwait(false);
+            using var resp = await PostAsync($"products", product).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { product } : Array.Empty<Product>();
         }
 
@@ -842,7 +851,8 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         public async Task<IEnumerable<Product>> UpdateProductAsync(string productId, Product product)
         {
             if (string.IsNullOrWhiteSpace(productId) || product == null) return Array.Empty<Product>();
-            var success = await UpdateEntityAsync("products", product, productId).ConfigureAwait(false);
+            using var resp = await PutAsync($"products/{productId}", product).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { product } : Array.Empty<Product>();
         }
 

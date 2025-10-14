@@ -200,7 +200,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Drip
         }
 
         // POST/PUT methods for creating and updating entities
-        [CommandAttribute(ObjectType = nameof(DripSubscriber), PointType = PointType.Function, Name = "CreateSubscriber", Caption = "Create Subscriber", ClassName = "DripDataSource", misc = "CreateSubscriber")]
+        [CommandAttribute(ObjectType = nameof(DripSubscriber), PointType = EnumPointType.Function, Name = "CreateSubscriber", Caption = "Create Subscriber", ClassName = "DripDataSource", misc = "CreateSubscriber")]
         public async Task<DripSubscriber> CreateSubscriber(DripSubscriber subscriber)
         {
             var endpoint = "v2/subscribers";
@@ -208,7 +208,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Drip
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(DripSubscriber), PointType = PointType.Function, Name = "UpdateSubscriber", Caption = "Update Subscriber", ClassName = "DripDataSource", misc = "UpdateSubscriber")]
+        [CommandAttribute(ObjectType = nameof(DripSubscriber), PointType = EnumPointType.Function, Name = "UpdateSubscriber", Caption = "Update Subscriber", ClassName = "DripDataSource", misc = "UpdateSubscriber")]
         public async Task<DripSubscriber> UpdateSubscriber(string subscriberId, DripSubscriber subscriber)
         {
             var endpoint = $"v2/subscribers/{subscriberId}";
@@ -216,7 +216,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Drip
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(DripCampaign), PointType = PointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "DripDataSource", misc = "CreateCampaign")]
+        [CommandAttribute(ObjectType = nameof(DripCampaign), PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "DripDataSource", misc = "CreateCampaign")]
         public async Task<DripCampaign> CreateCampaign(DripCampaign campaign)
         {
             var endpoint = "v2/campaigns";
@@ -224,7 +224,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Drip
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(DripCampaign), PointType = PointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "DripDataSource", misc = "UpdateCampaign")]
+        [CommandAttribute(ObjectType = nameof(DripCampaign), PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "DripDataSource", misc = "UpdateCampaign")]
         public async Task<DripCampaign> UpdateCampaign(string campaignId, DripCampaign campaign)
         {
             var endpoint = $"v2/campaigns/{campaignId}";
@@ -232,7 +232,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Drip
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(DripTag), PointType = PointType.Function, Name = "CreateTag", Caption = "Create Tag", ClassName = "DripDataSource", misc = "CreateTag")]
+        [CommandAttribute(ObjectType = nameof(DripTag), PointType = EnumPointType.Function, Name = "CreateTag", Caption = "Create Tag", ClassName = "DripDataSource", misc = "CreateTag")]
         public async Task<DripTag> CreateTag(DripTag tag)
         {
             var endpoint = "v2/tags";
@@ -240,7 +240,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Drip
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(DripTag), PointType = PointType.Function, Name = "UpdateTag", Caption = "Update Tag", ClassName = "DripDataSource", misc = "UpdateTag")]
+        [CommandAttribute(ObjectType = nameof(DripTag), PointType = EnumPointType.Function, Name = "UpdateTag", Caption = "Update Tag", ClassName = "DripDataSource", misc = "UpdateTag")]
         public async Task<DripTag> UpdateTag(string tagId, DripTag tag)
         {
             var endpoint = $"v2/tags/{tagId}";
@@ -248,7 +248,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Drip
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(DripWorkflow), PointType = PointType.Function, Name = "CreateWorkflow", Caption = "Create Workflow", ClassName = "DripDataSource", misc = "CreateWorkflow")]
+        [CommandAttribute(ObjectType = nameof(DripWorkflow), PointType = EnumPointType.Function, Name = "CreateWorkflow", Caption = "Create Workflow", ClassName = "DripDataSource", misc = "CreateWorkflow")]
         public async Task<DripWorkflow> CreateWorkflow(DripWorkflow workflow)
         {
             var endpoint = "v2/workflows";
@@ -256,7 +256,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Drip
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(DripWorkflow), PointType = PointType.Function, Name = "UpdateWorkflow", Caption = "Update Workflow", ClassName = "DripDataSource", misc = "UpdateWorkflow")]
+        [CommandAttribute(ObjectType = nameof(DripWorkflow), PointType = EnumPointType.Function, Name = "UpdateWorkflow", Caption = "Update Workflow", ClassName = "DripDataSource", misc = "UpdateWorkflow")]
         public async Task<DripWorkflow> UpdateWorkflow(string workflowId, DripWorkflow workflow)
         {
             var endpoint = $"v2/workflows/{workflowId}";
@@ -264,7 +264,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Drip
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(DripForm), PointType = PointType.Function, Name = "CreateForm", Caption = "Create Form", ClassName = "DripDataSource", misc = "CreateForm")]
+        [CommandAttribute(ObjectType = nameof(DripForm), PointType = EnumPointType.Function, Name = "CreateForm", Caption = "Create Form", ClassName = "DripDataSource", misc = "CreateForm")]
         public async Task<DripForm> CreateForm(DripForm form)
         {
             var endpoint = "v2/forms";
@@ -272,7 +272,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Drip
             return response;
         }
 
-        [CommandAttribute(ObjectType = nameof(DripForm), PointType = PointType.Function, Name = "UpdateForm", Caption = "Update Form", ClassName = "DripDataSource", misc = "UpdateForm")]
+        [CommandAttribute(ObjectType = nameof(DripForm), PointType = EnumPointType.Function, Name = "UpdateForm", Caption = "Update Form", ClassName = "DripDataSource", misc = "UpdateForm")]
         public async Task<DripForm> UpdateForm(string formId, DripForm form)
         {
             var endpoint = $"v2/forms/{formId}";

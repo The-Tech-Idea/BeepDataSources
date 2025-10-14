@@ -514,10 +514,10 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         )]
         public async Task<TwitterTweet> CreateTweet(string text, string replyToTweetId = null, bool isReply = false)
         {
-            var tweetData = new { text = text };
+            var tweetData = new Dictionary<string, object> { ["text"] = text };
             if (isReply && !string.IsNullOrEmpty(replyToTweetId))
             {
-                tweetData = new { text = text, reply = new { in_reply_to_tweet_id = replyToTweetId } };
+                tweetData["reply"] = new Dictionary<string, object> { ["in_reply_to_tweet_id"] = replyToTweetId };
             }
 
             var response = await PostAsync<TwitterTweet>("tweets", tweetData);

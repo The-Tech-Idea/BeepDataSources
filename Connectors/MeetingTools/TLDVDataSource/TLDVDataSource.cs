@@ -235,5 +235,63 @@ namespace TheTechIdea.Beep.Connectors.TLDV
             var result = await GetEntityAsync("highlights", filters);
             return result.Select(item => JsonSerializer.Deserialize<TLDVHighlight>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<TLDVHighlight>().ToList();
         }
+
+        [CommandAttribute(ObjectType = "TLDVMeeting", PointType = EnumPointType.Function, Name = "CreateMeeting", Caption = "Create Meeting", ClassName = "TLDVDataSource", misc = "ReturnType: IEnumerable<TLDVMeeting>")]
+        public async Task<IEnumerable<TLDVMeeting>> CreateMeetingAsync(TLDVMeeting meeting)
+        {
+            try
+            {
+                var url = "https://api.tldv.io/v1/meetings";
+                var response = await PostAsync(url, meeting);
+                var json = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var createdMeeting = JsonSerializer.Deserialize<TLDVMeeting>(json);
+                    if (createdMeeting != null)
+                    {
+                        return new[] { createdMeeting };
+                    }
+                }
+                else
+                {
+                    Logger?.LogError($"Failed to create meeting: {json}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating meeting: {ex.Message}");
+            }
+            return Array.Empty<TLDVMeeting>();
+        }
+
+        [CommandAttribute(ObjectType = "TLDVHighlight", PointType = EnumPointType.Function, Name = "CreateHighlight", Caption = "Create Highlight", ClassName = "TLDVDataSource", misc = "ReturnType: IEnumerable<TLDVHighlight>")]
+        public async Task<IEnumerable<TLDVHighlight>> CreateHighlightAsync(string meetingId, TLDVHighlight highlight)
+        {
+            try
+            {
+                var url = $"https://api.tldv.io/v1/meetings/{meetingId}/highlights";
+                var response = await PostAsync(url, highlight);
+                var json = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var createdHighlight = JsonSerializer.Deserialize<TLDVHighlight>(json);
+                    if (createdHighlight != null)
+                    {
+                        return new[] { createdHighlight };
+                    }
+                }
+                else
+                {
+                    Logger?.LogError($"Failed to create highlight: {json}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating highlight: {ex.Message}");
+            }
+            return Array.Empty<TLDVHighlight>();
+        }
     }
 }

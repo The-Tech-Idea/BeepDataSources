@@ -830,7 +830,8 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
         public async Task<IEnumerable<ZohoLead>> CreateLeadAsync(ZohoLead lead)
         {
             if (lead == null) return Array.Empty<ZohoLead>();
-            var success = await CreateEntityAsync("Leads", lead).ConfigureAwait(false);
+            using var resp = await PostAsync($"crm/v2/Leads", lead).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { lead } : Array.Empty<ZohoLead>();
         }
 
@@ -838,7 +839,8 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
         public async Task<IEnumerable<ZohoLead>> UpdateLeadAsync(string leadId, ZohoLead lead)
         {
             if (string.IsNullOrWhiteSpace(leadId) || lead == null) return Array.Empty<ZohoLead>();
-            var success = await UpdateEntityAsync("Leads", lead, leadId).ConfigureAwait(false);
+            using var resp = await PutAsync($"crm/v2/Leads/{leadId}", lead).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { lead } : Array.Empty<ZohoLead>();
         }
 
@@ -846,7 +848,8 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
         public async Task<IEnumerable<ZohoContact>> CreateContactAsync(ZohoContact contact)
         {
             if (contact == null) return Array.Empty<ZohoContact>();
-            var success = await CreateEntityAsync("Contacts", contact).ConfigureAwait(false);
+            using var resp = await PostAsync($"crm/v2/Contacts", contact).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { contact } : Array.Empty<ZohoContact>();
         }
 
@@ -854,7 +857,8 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
         public async Task<IEnumerable<ZohoContact>> UpdateContactAsync(string contactId, ZohoContact contact)
         {
             if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<ZohoContact>();
-            var success = await UpdateEntityAsync("Contacts", contact, contactId).ConfigureAwait(false);
+            using var resp = await PutAsync($"crm/v2/Contacts/{contactId}", contact).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { contact } : Array.Empty<ZohoContact>();
         }
 
@@ -862,7 +866,8 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
         public async Task<IEnumerable<ZohoAccount>> CreateAccountAsync(ZohoAccount account)
         {
             if (account == null) return Array.Empty<ZohoAccount>();
-            var success = await CreateEntityAsync("Accounts", account).ConfigureAwait(false);
+            using var resp = await PostAsync($"crm/v2/Accounts", account).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { account } : Array.Empty<ZohoAccount>();
         }
 
@@ -870,7 +875,8 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
         public async Task<IEnumerable<ZohoAccount>> UpdateAccountAsync(string accountId, ZohoAccount account)
         {
             if (string.IsNullOrWhiteSpace(accountId) || account == null) return Array.Empty<ZohoAccount>();
-            var success = await UpdateEntityAsync("Accounts", account, accountId).ConfigureAwait(false);
+            using var resp = await PutAsync($"crm/v2/Accounts/{accountId}", account).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { account } : Array.Empty<ZohoAccount>();
         }
 
@@ -878,7 +884,8 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
         public async Task<IEnumerable<ZohoDeal>> CreateDealAsync(ZohoDeal deal)
         {
             if (deal == null) return Array.Empty<ZohoDeal>();
-            var success = await CreateEntityAsync("Deals", deal).ConfigureAwait(false);
+            using var resp = await PostAsync($"crm/v2/Deals", deal).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { deal } : Array.Empty<ZohoDeal>();
         }
 
@@ -886,7 +893,8 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
         public async Task<IEnumerable<ZohoDeal>> UpdateDealAsync(string dealId, ZohoDeal deal)
         {
             if (string.IsNullOrWhiteSpace(dealId) || deal == null) return Array.Empty<ZohoDeal>();
-            var success = await UpdateEntityAsync("Deals", deal, dealId).ConfigureAwait(false);
+            using var resp = await PutAsync($"crm/v2/Deals/{dealId}", deal).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { deal } : Array.Empty<ZohoDeal>();
         }
 
@@ -894,7 +902,8 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
         public async Task<IEnumerable<ZohoProduct>> CreateProductAsync(ZohoProduct product)
         {
             if (product == null) return Array.Empty<ZohoProduct>();
-            var success = await CreateEntityAsync("Products", product).ConfigureAwait(false);
+            using var resp = await PostAsync($"crm/v2/Products", product).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { product } : Array.Empty<ZohoProduct>();
         }
 
@@ -902,7 +911,8 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
         public async Task<IEnumerable<ZohoProduct>> UpdateProductAsync(string productId, ZohoProduct product)
         {
             if (string.IsNullOrWhiteSpace(productId) || product == null) return Array.Empty<ZohoProduct>();
-            var success = await UpdateEntityAsync("Products", product, productId).ConfigureAwait(false);
+            using var resp = await PutAsync($"crm/v2/Products/{productId}", product).ConfigureAwait(false);
+            var success = resp != null && resp.IsSuccessStatusCode;
             return success ? new[] { product } : Array.Empty<ZohoProduct>();
         }
 

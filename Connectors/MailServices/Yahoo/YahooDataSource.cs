@@ -218,28 +218,28 @@ namespace TheTechIdea.Beep.Connectors.Yahoo
         }
 
         // CommandAttribute methods for Yahoo API
-        [CommandAttribute(Name = "GetMessages", Caption = "Get Yahoo Messages", ObjectType = "YahooMessage", PointType = EnumPointType.Function, Category = "Yahoo", DatasourceType = DataSourceType.Yahoo, ClassType = "YahooMessage", Showin = ShowinType.Grid, Order = 1, iconimage = "mail.png")]
+        [CommandAttribute(Name = "GetMessages", Caption = "Get Yahoo Messages", ObjectType = "YahooMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Yahoo, ClassType = "YahooMessage", Showin = ShowinType.Grid, Order = 1, iconimage = "mail.png")]
         public async Task<IEnumerable<YahooMessage>> GetMessages(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("messages", filters);
             return result.Cast<YahooMessage>();
         }
 
-        [CommandAttribute(Name = "GetMessage", Caption = "Get Yahoo Message", ObjectType = "YahooMessage", PointType = EnumPointType.Function, Category = "Yahoo", DatasourceType = DataSourceType.Yahoo, ClassType = "YahooMessage", Showin = ShowinType.Grid, Order = 2, iconimage = "mail.png")]
+        [CommandAttribute(Name = "GetMessage", Caption = "Get Yahoo Message", ObjectType = "YahooMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Yahoo, ClassType = "YahooMessage", Showin = ShowinType.Grid, Order = 2, iconimage = "mail.png")]
         public async Task<IEnumerable<YahooMessage>> GetMessage(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("messages.get", filters);
             return result.Cast<YahooMessage>();
         }
 
-        [CommandAttribute(Name = "GetContacts", Caption = "Get Yahoo Contacts", ObjectType = "YahooContact", PointType = EnumPointType.Function, Category = "Yahoo", DatasourceType = DataSourceType.Yahoo, ClassType = "YahooContact", Showin = ShowinType.Grid, Order = 3, iconimage = "contact.png")]
+        [CommandAttribute(Name = "GetContacts", Caption = "Get Yahoo Contacts", ObjectType = "YahooContact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Yahoo, ClassType = "YahooContact", Showin = ShowinType.Grid, Order = 3, iconimage = "contact.png")]
         public async Task<IEnumerable<YahooContact>> GetContacts(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("contacts", filters);
             return result.Cast<YahooContact>();
         }
 
-        [CommandAttribute(Name = "GetFolders", Caption = "Get Yahoo Folders", ObjectType = "YahooFolder", PointType = EnumPointType.Function, Category = "Yahoo", DatasourceType = DataSourceType.Yahoo, ClassType = "YahooFolder", Showin = ShowinType.Grid, Order = 4, iconimage = "folder.png")]
+        [CommandAttribute(Name = "GetFolders", Caption = "Get Yahoo Folders", ObjectType = "YahooFolder", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Yahoo, ClassType = "YahooFolder", Showin = ShowinType.Grid, Order = 4, iconimage = "folder.png")]
         public async Task<IEnumerable<YahooFolder>> GetFolders(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("folders", filters);

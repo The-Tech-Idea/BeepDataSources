@@ -340,7 +340,7 @@ namespace TheTechIdea.Beep.BufferDataSource
                 {
                     var content = await result.Content.ReadAsStringAsync();
                     var createdPost = JsonSerializer.Deserialize<BufferPost>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    return new List<BufferPost> { createdPost }.Select(p => p.Attach<BufferPost>(this));
+                    return new List<BufferPost> { createdPost };
                 }
             }
             catch (Exception ex)

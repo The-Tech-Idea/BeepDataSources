@@ -81,7 +81,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Snapchat
     /// Snapchat data source implementation for Beep framework
     /// Supports Snapchat Marketing API
     /// </summary>
-    [AddinAttribute(Category = "SocialMedia", Name = "SnapchatDataSource")]
+    [AddinAttribute(Category = DatasourceCategory.Connector, Name = "SnapchatDataSource")]
     public class SnapchatDataSource : WebAPIDataSource
     {
 

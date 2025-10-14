@@ -283,40 +283,40 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Marketo
             return JsonSerializer.Deserialize<MarketoLead>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
 
-        [CommandAttribute(ObjectType = nameof(MarketoList), PointType = EnumPointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "MarketoDataSource", misc = "UpdateList")]
-        public async Task<MarketoList> UpdateListAsync(MarketoList list)
-        {
-            var response = await PutAsync($"rest/v1/lists/{list.id}.json", list);
-            if (response == null) return null;
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<MarketoList>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
+        // [CommandAttribute(ObjectType = nameof(MarketoList), PointType = EnumPointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "MarketoDataSource", misc = "UpdateList")]
+        // public async Task<MarketoList> UpdateListAsync(MarketoList list)
+        // {
+        //     var response = await PutAsync($"rest/v1/lists/{list.id}.json", list);
+        //     if (response == null) return null;
+        //     var json = await response.Content.ReadAsStringAsync();
+        //     return JsonSerializer.Deserialize<MarketoList>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        // }
 
-        [CommandAttribute(ObjectType = nameof(MarketoCampaign), PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "MarketoDataSource", misc = "UpdateCampaign")]
-        public async Task<MarketoCampaign> UpdateCampaignAsync(MarketoCampaign campaign)
-        {
-            var response = await PutAsync($"rest/v1/campaigns/{campaign.id}.json", campaign);
-            if (response == null) return null;
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<MarketoCampaign>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
+        // [CommandAttribute(ObjectType = nameof(MarketoCampaign), PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "MarketoDataSource", misc = "UpdateCampaign")]
+        // public async Task<MarketoCampaign> UpdateCampaignAsync(MarketoCampaign campaign)
+        // {
+        //     var response = await PutAsync($"rest/v1/campaigns/{campaign.id}.json", campaign);
+        //     if (response == null) return null;
+        //     var json = await response.Content.ReadAsStringAsync();
+        //     return JsonSerializer.Deserialize<MarketoCampaign>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        // }
 
-        [CommandAttribute(ObjectType = nameof(MarketoProgram), PointType = EnumPointType.Function, Name = "UpdateProgram", Caption = "Update Program", ClassName = "MarketoDataSource", misc = "UpdateProgram")]
-        public async Task<MarketoProgram> UpdateProgramAsync(MarketoProgram program)
-        {
-            var response = await PutAsync($"rest/v1/programs/{program.id}.json", program);
-            if (response == null) return null;
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<MarketoProgram>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
+        // [CommandAttribute(ObjectType = nameof(MarketoProgram), PointType = EnumPointType.Function, Name = "UpdateProgram", Caption = "Update Program", ClassName = "MarketoDataSource", misc = "UpdateProgram")]
+        // public async Task<MarketoProgram> UpdateProgramAsync(MarketoProgram program)
+        // {
+        //     var response = await PutAsync($"rest/v1/programs/{program.id}.json", program);
+        //     if (response == null) return null;
+        //     var json = await response.Content.ReadAsStringAsync();
+        //     return JsonSerializer.Deserialize<MarketoProgram>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        // }
 
-        [CommandAttribute(ObjectType = nameof(MarketoEmail), PointType = EnumPointType.Function, Name = "UpdateEmail", Caption = "Update Email", ClassName = "MarketoDataSource", misc = "UpdateEmail")]
-        public async Task<MarketoEmail> UpdateEmailAsync(MarketoEmail email)
-        {
-            var response = await PutAsync($"rest/v1/emails/{email.id}.json", email);
-            if (response == null) return null;
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<MarketoEmail>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
+        // [CommandAttribute(ObjectType = nameof(MarketoEmail), PointType = EnumPointType.Function, Name = "UpdateEmail", Caption = "Update Email", ClassName = "MarketoDataSource", misc = "UpdateEmail")]
+        // public async Task<MarketoEmail> UpdateEmailAsync(MarketoEmail email)
+        // {
+        //     var response = await PutAsync($"rest/v1/emails/{email.id}.json", email);
+        //     if (response == null) return null;
+        //     var json = await response.Content.ReadAsStringAsync();
+        //     return JsonSerializer.Deserialize<MarketoEmail>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        // }
     }
 }

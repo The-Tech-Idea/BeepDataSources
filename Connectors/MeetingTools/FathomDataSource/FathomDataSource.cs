@@ -287,5 +287,63 @@ namespace TheTechIdea.Beep.Connectors.Fathom
             var result = await GetEntityAsync("teams", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<FathomTeam>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<FathomTeam>().ToList();
         }
+
+        [CommandAttribute(ObjectType = "FathomComment", PointType = EnumPointType.Function, Name = "CreateComment", Caption = "Create Comment", ClassName = "FathomDataSource", misc = "ReturnType: IEnumerable<FathomComment>")]
+        public async Task<IEnumerable<FathomComment>> CreateCommentAsync(string videoId, FathomComment comment)
+        {
+            try
+            {
+                var url = $"https://api.fathom.video/v1/videos/{videoId}/comments";
+                var response = await PostAsync(url, comment);
+                var json = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonSerializer.Deserialize<FathomApiResponse<FathomComment>>(json);
+                    if (apiResponse?.Data != null)
+                    {
+                        return new[] { apiResponse.Data };
+                    }
+                }
+                else
+                {
+                    Logger?.LogError($"Failed to create comment: {json}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating comment: {ex.Message}");
+            }
+            return Array.Empty<FathomComment>();
+        }
+
+        [CommandAttribute(ObjectType = "FathomShare", PointType = EnumPointType.Function, Name = "CreateShare", Caption = "Create Share", ClassName = "FathomDataSource", misc = "ReturnType: IEnumerable<FathomShare>")]
+        public async Task<IEnumerable<FathomShare>> CreateShareAsync(string videoId, FathomShare share)
+        {
+            try
+            {
+                var url = $"https://api.fathom.video/v1/videos/{videoId}/shares";
+                var response = await PostAsync(url, share);
+                var json = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = JsonSerializer.Deserialize<FathomApiResponse<FathomShare>>(json);
+                    if (apiResponse?.Data != null)
+                    {
+                        return new[] { apiResponse.Data };
+                    }
+                }
+                else
+                {
+                    Logger?.LogError($"Failed to create share: {json}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating share: {ex.Message}");
+            }
+            return Array.Empty<FathomShare>();
+        }
     }
 }

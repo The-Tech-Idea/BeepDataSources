@@ -198,7 +198,7 @@ namespace TheTechIdea.Beep.Connectors.Loomly
         )]
         public IEnumerable<LoomlyPost> GetPosts()
         {
-            return GetEntity<LoomlyPost>("posts");
+            return GetEntity("posts", null).Cast<LoomlyPost>();
         }
 
         [CommandAttribute(
@@ -211,7 +211,7 @@ namespace TheTechIdea.Beep.Connectors.Loomly
         )]
         public IEnumerable<LoomlyPost> GetPost(string id)
         {
-            return GetEntity<LoomlyPost>("posts.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+            return GetEntity("posts.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } }).Cast<LoomlyPost>();
         }
 
         [CommandAttribute(
@@ -224,7 +224,7 @@ namespace TheTechIdea.Beep.Connectors.Loomly
         )]
         public IEnumerable<LoomlyCampaign> GetCampaigns()
         {
-            return GetEntity<LoomlyCampaign>("campaigns");
+            return GetEntity("campaigns", null).Cast<LoomlyCampaign>();
         }
 
         [CommandAttribute(
@@ -237,7 +237,7 @@ namespace TheTechIdea.Beep.Connectors.Loomly
         )]
         public IEnumerable<LoomlyCampaign> GetCampaign(string id)
         {
-            return GetEntity<LoomlyCampaign>("campaigns.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+            return GetEntity("campaigns.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } }).Cast<LoomlyCampaign>();
         }
 
         // POST methods for creating entities

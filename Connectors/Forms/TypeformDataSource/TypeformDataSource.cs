@@ -196,7 +196,7 @@ namespace TheTechIdea.Beep.Connectors.Typeform
         )]
         public IEnumerable<TypeformForm> GetForms()
         {
-            return GetEntity<TypeformForm>("forms");
+            return GetEntity("forms", null).Cast<TypeformForm>();
         }
 
         [CommandAttribute(
@@ -209,7 +209,7 @@ namespace TheTechIdea.Beep.Connectors.Typeform
         )]
         public IEnumerable<TypeformForm> GetForm(string id)
         {
-            return GetEntity<TypeformForm>("forms.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+            return GetEntity("forms.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } }).Cast<TypeformForm>();
         }
 
         [CommandAttribute(
@@ -222,7 +222,7 @@ namespace TheTechIdea.Beep.Connectors.Typeform
         )]
         public IEnumerable<TypeformResponse> GetResponses(string formId)
         {
-            return GetEntity<TypeformResponse>("responses", new List<AppFilter> { new AppFilter { FieldName = "form_id", FilterValue = formId } });
+            return GetEntity("responses", new List<AppFilter> { new AppFilter { FieldName = "form_id", FilterValue = formId } }).Cast<TypeformResponse>();
         }
 
         [CommandAttribute(
@@ -235,7 +235,81 @@ namespace TheTechIdea.Beep.Connectors.Typeform
         )]
         public IEnumerable<TypeformResponse> GetResponse(string id)
         {
-            return GetEntity<TypeformResponse>("responses.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } });
+            return GetEntity("responses.get", new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id } }).Cast<TypeformResponse>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "TypeformForm",
+            PointType = EnumPointType.Function,
+            Name = "CreateForm",
+            Caption = "Create Typeform Form",
+            ClassName = "TypeformDataSource",
+            misc = "ReturnType: IEnumerable<TypeformForm>"
+        )]
+        public async Task<IEnumerable<TypeformForm>> CreateFormAsync(TypeformForm form)
+        {
+            try
+            {
+                var url = "https://api.typeform.com/v2/forms";
+                var response = await PostAsync(url, form);
+                var json = await response.Content.ReadAsStringAsync();
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var createdForm = JsonSerializer.Deserialize<TypeformForm>(json);
+                    if (createdForm != null)
+                    {
+                        createdForm.Attach<TypeformForm>(this);
+                        return new[] { createdForm };
+                    }
+                }
+                else
+                {
+                    Logger?.LogError($"Failed to create form: {json}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating form: {ex.Message}");
+            }
+            return Array.Empty<TypeformForm>();
+        }
+
+        [CommandAttribute(
+            ObjectType = "TypeformResponse",
+            PointType = EnumPointType.Function,
+            Name = "CreateResponse",
+            Caption = "Create Typeform Response",
+            ClassName = "TypeformDataSource",
+            misc = "ReturnType: IEnumerable<TypeformResponse>"
+        )]
+        public async Task<IEnumerable<TypeformResponse>> CreateResponseAsync(string formId, TypeformResponse response)
+        {
+            try
+            {
+                var url = $"https://api.typeform.com/v2/forms/{formId}/responses";
+                var responseResult = await PostAsync(url, response);
+                var json = await responseResult.Content.ReadAsStringAsync();
+                
+                if (responseResult.IsSuccessStatusCode)
+                {
+                    var createdResponse = JsonSerializer.Deserialize<TypeformResponse>(json);
+                    if (createdResponse != null)
+                    {
+                        createdResponse.Attach<TypeformResponse>(this);
+                        return new[] { createdResponse };
+                    }
+                }
+                else
+                {
+                    Logger?.LogError($"Failed to create response: {json}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError($"Error creating response: {ex.Message}");
+            }
+            return Array.Empty<TypeformResponse>();
         }
     }
 }
