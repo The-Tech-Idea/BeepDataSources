@@ -308,7 +308,9 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
             try
             {
                 var result = await PostAsync("root_children", item);
-                var items = JsonSerializer.Deserialize<IEnumerable<DriveItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<DriveItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -343,7 +345,9 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
             try
             {
                 var result = await PutAsync("item_content", item);
-                var items = JsonSerializer.Deserialize<IEnumerable<DriveItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<DriveItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -378,7 +382,9 @@ namespace TheTechIdea.Beep.Connectors.OneDrive
             try
             {
                 var result = await PatchAsync("item", item);
-                var items = JsonSerializer.Deserialize<IEnumerable<DriveItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<DriveItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)

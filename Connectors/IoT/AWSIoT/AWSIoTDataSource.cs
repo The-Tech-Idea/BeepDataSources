@@ -222,51 +222,51 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         }
 
         // CommandAttribute methods for framework integration
-        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "GetThings", Caption = "Get Things", ClassName = "AWSIoTDataSource", misc = "GetThings")]
+        [CommandAttribute(ObjectType = "Device", PointType = EnumPointType.Function, Name = "GetThings", Caption = "Get Things", ClassName = "AWSIoTDataSource", misc = "GetThings")]
         public IEnumerable<Device> GetThings()
         {
             return GetEntity("things", null).Cast<Device>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "GetThing", Caption = "Get Thing", ClassName = "AWSIoTDataSource", misc = "GetThing")]
+        [CommandAttribute(ObjectType = "Device", PointType = EnumPointType.Function, Name = "GetThing", Caption = "Get Thing", ClassName = "AWSIoTDataSource", misc = "GetThing")]
         public Device GetThing(string thingName)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "thing_name", FilterValue = thingName } };
             return GetEntity("things", filters).Cast<Device>().FirstOrDefault();
         }
 
-        [CommandAttribute(ObjectType = typeof(Shadow), PointType = PointType.Function, Name = "GetThingShadows", Caption = "Get Thing Shadows", ClassName = "AWSIoTDataSource", misc = "GetThingShadows")]
+        [CommandAttribute(ObjectType = "Shadow", PointType = EnumPointType.Function, Name = "GetThingShadows", Caption = "Get Thing Shadows", ClassName = "AWSIoTDataSource", misc = "GetThingShadows")]
         public IEnumerable<Shadow> GetThingShadows(string thingName)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "thing_name", FilterValue = thingName } };
             return GetEntity("shadows", filters).Cast<Shadow>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Job), PointType = PointType.Function, Name = "GetJobs", Caption = "Get Jobs", ClassName = "AWSIoTDataSource", misc = "GetJobs")]
+        [CommandAttribute(ObjectType = "Job", PointType = EnumPointType.Function, Name = "GetJobs", Caption = "Get Jobs", ClassName = "AWSIoTDataSource", misc = "GetJobs")]
         public IEnumerable<Job> GetJobs()
         {
             return GetEntity("jobs", null).Cast<Job>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Rule), PointType = PointType.Function, Name = "GetRules", Caption = "Get Rules", ClassName = "AWSIoTDataSource", misc = "GetRules")]
+        [CommandAttribute(ObjectType = "Rule", PointType = EnumPointType.Function, Name = "GetRules", Caption = "Get Rules", ClassName = "AWSIoTDataSource", misc = "GetRules")]
         public IEnumerable<Rule> GetRules()
         {
             return GetEntity("rules", null).Cast<Rule>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Certificate), PointType = PointType.Function, Name = "GetCertificates", Caption = "Get Certificates", ClassName = "AWSIoTDataSource", misc = "GetCertificates")]
+        [CommandAttribute(ObjectType = "Certificate", PointType = EnumPointType.Function, Name = "GetCertificates", Caption = "Get Certificates", ClassName = "AWSIoTDataSource", misc = "GetCertificates")]
         public IEnumerable<Certificate> GetCertificates()
         {
             return GetEntity("certificates", null).Cast<Certificate>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Policy), PointType = PointType.Function, Name = "GetPolicies", Caption = "Get Policies", ClassName = "AWSIoTDataSource", misc = "GetPolicies")]
+        [CommandAttribute(ObjectType = "Policy", PointType = EnumPointType.Function, Name = "GetPolicies", Caption = "Get Policies", ClassName = "AWSIoTDataSource", misc = "GetPolicies")]
         public IEnumerable<Policy> GetPolicies()
         {
             return GetEntity("policies", null).Cast<Policy>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Telemetry), PointType = PointType.Function, Name = "GetTelemetry", Caption = "Get Telemetry", ClassName = "AWSIoTDataSource", misc = "GetTelemetry")]
+        [CommandAttribute(ObjectType = "Telemetry", PointType = EnumPointType.Function, Name = "GetTelemetry", Caption = "Get Telemetry", ClassName = "AWSIoTDataSource", misc = "GetTelemetry")]
         public IEnumerable<Telemetry> GetTelemetry(string topic)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "topic", FilterValue = topic } };
@@ -292,8 +292,11 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         {
             try
             {
-                var result = await PostAsync("things", thing);
-                var devices = JsonSerializer.Deserialize<IEnumerable<Device>>(result);
+                using var resp = await PostAsync("things", thing);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Device>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var devices = JsonSerializer.Deserialize<IEnumerable<Device>>(json, opts);
                 if (devices != null)
                 {
                     foreach (var d in devices)
@@ -301,7 +304,7 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
                         d.Attach<Device>(this);
                     }
                 }
-                return devices;
+                return devices ?? new List<Device>();
             }
             catch (Exception ex)
             {
@@ -310,7 +313,7 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
             return new List<Device>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "UpdateThing", Caption = "Update Thing", ClassName = "AWSIoTDataSource", misc = "UpdateThing")]
+        [CommandAttribute(ObjectType = "Device", PointType = EnumPointType.Function, Name = "UpdateThing", Caption = "Update Thing", ClassName = "AWSIoTDataSource", misc = "UpdateThing")]
         public async Task<IEnumerable<Device>> UpdateThingAsync(string thingName, Device thing)
         {
             if (string.IsNullOrWhiteSpace(thingName) || thing == null) return Array.Empty<Device>();
@@ -329,7 +332,7 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
             }
         }
 
-        [CommandAttribute(ObjectType = typeof(Shadow), PointType = PointType.Function, Name = "UpdateThingShadow", Caption = "Update Thing Shadow", ClassName = "AWSIoTDataSource", misc = "UpdateThingShadow")]
+        [CommandAttribute(ObjectType = "Shadow", PointType = EnumPointType.Function, Name = "UpdateThingShadow", Caption = "Update Thing Shadow", ClassName = "AWSIoTDataSource", misc = "UpdateThingShadow")]
         public async Task<IEnumerable<Shadow>> UpdateShadowAsync(string thingName, Shadow shadow)
         {
             if (string.IsNullOrWhiteSpace(thingName) || shadow == null) return Array.Empty<Shadow>();
@@ -365,8 +368,11 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         {
             try
             {
-                var result = await PostAsync("jobs", job);
-                var jobs = JsonSerializer.Deserialize<IEnumerable<Job>>(result);
+                using var resp = await PostAsync("jobs", job);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Job>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var jobs = JsonSerializer.Deserialize<IEnumerable<Job>>(json, opts);
                 if (jobs != null)
                 {
                     foreach (var j in jobs)
@@ -374,7 +380,7 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
                         j.Attach<Job>(this);
                     }
                 }
-                return jobs;
+                return jobs ?? new List<Job>();
             }
             catch (Exception ex)
             {
@@ -400,8 +406,11 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         {
             try
             {
-                var result = await PostAsync("rules", rule);
-                var rules = JsonSerializer.Deserialize<IEnumerable<Rule>>(result);
+                using var resp = await PostAsync("rules", rule);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Rule>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var rules = JsonSerializer.Deserialize<IEnumerable<Rule>>(json, opts);
                 if (rules != null)
                 {
                     foreach (var r in rules)
@@ -409,7 +418,7 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
                         r.Attach<Rule>(this);
                     }
                 }
-                return rules;
+                return rules ?? new List<Rule>();
             }
             catch (Exception ex)
             {
@@ -435,8 +444,11 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         {
             try
             {
-                var result = await PostAsync("certificates", certificate);
-                var certificates = JsonSerializer.Deserialize<IEnumerable<Certificate>>(result);
+                using var resp = await PostAsync("certificates", certificate);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Certificate>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var certificates = JsonSerializer.Deserialize<IEnumerable<Certificate>>(json, opts);
                 if (certificates != null)
                 {
                     foreach (var c in certificates)
@@ -444,7 +456,7 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
                         c.Attach<Certificate>(this);
                     }
                 }
-                return certificates;
+                return certificates ?? new List<Certificate>();
             }
             catch (Exception ex)
             {
@@ -470,8 +482,11 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         {
             try
             {
-                var result = await PostAsync("policies", policy);
-                var policies = JsonSerializer.Deserialize<IEnumerable<Policy>>(result);
+                using var resp = await PostAsync("policies", policy);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Policy>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var policies = JsonSerializer.Deserialize<IEnumerable<Policy>>(json, opts);
                 if (policies != null)
                 {
                     foreach (var p in policies)
@@ -479,7 +494,7 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
                         p.Attach<Policy>(this);
                     }
                 }
-                return policies;
+                return policies ?? new List<Policy>();
             }
             catch (Exception ex)
             {
@@ -505,8 +520,11 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         {
             try
             {
-                var result = await PostAsync("telemetry", telemetry);
-                var telemetries = JsonSerializer.Deserialize<IEnumerable<Telemetry>>(result);
+                using var resp = await PostAsync("telemetry", telemetry);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Telemetry>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var telemetries = JsonSerializer.Deserialize<IEnumerable<Telemetry>>(json, opts);
                 if (telemetries != null)
                 {
                     foreach (var t in telemetries)
@@ -540,8 +558,11 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         {
             try
             {
-                var result = await PatchAsync("things", thing);
-                var devices = JsonSerializer.Deserialize<IEnumerable<Device>>(result);
+                using var resp = await PatchAsync("things", thing);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Device>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var devices = JsonSerializer.Deserialize<IEnumerable<Device>>(json, opts);
                 if (devices != null)
                 {
                     foreach (var d in devices)
@@ -575,8 +596,11 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         {
             try
             {
-                var result = await PatchAsync("jobs", job);
-                var jobs = JsonSerializer.Deserialize<IEnumerable<Job>>(result);
+                using var resp = await PatchAsync("jobs", job);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Job>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var jobs = JsonSerializer.Deserialize<IEnumerable<Job>>(json, opts);
                 if (jobs != null)
                 {
                     foreach (var j in jobs)
@@ -610,8 +634,11 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         {
             try
             {
-                var result = await PatchAsync("rules", rule);
-                var rules = JsonSerializer.Deserialize<IEnumerable<Rule>>(result);
+                using var resp = await PatchAsync("rules", rule);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Rule>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var rules = JsonSerializer.Deserialize<IEnumerable<Rule>>(json, opts);
                 if (rules != null)
                 {
                     foreach (var r in rules)
@@ -619,7 +646,7 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
                         r.Attach<Rule>(this);
                     }
                 }
-                return rules;
+                return rules ?? new List<Rule>();
             }
             catch (Exception ex)
             {
@@ -645,8 +672,11 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         {
             try
             {
-                var result = await PatchAsync("certificates", certificate);
-                var certificates = JsonSerializer.Deserialize<IEnumerable<Certificate>>(result);
+                using var resp = await PatchAsync("certificates", certificate);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Certificate>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var certificates = JsonSerializer.Deserialize<IEnumerable<Certificate>>(json, opts);
                 if (certificates != null)
                 {
                     foreach (var c in certificates)
@@ -654,7 +684,7 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
                         c.Attach<Certificate>(this);
                     }
                 }
-                return certificates;
+                return certificates ?? new List<Certificate>();
             }
             catch (Exception ex)
             {
@@ -680,8 +710,11 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         {
             try
             {
-                var result = await PatchAsync("policies", policy);
-                var policies = JsonSerializer.Deserialize<IEnumerable<Policy>>(result);
+                using var resp = await PatchAsync("policies", policy);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Policy>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var policies = JsonSerializer.Deserialize<IEnumerable<Policy>>(json, opts);
                 if (policies != null)
                 {
                     foreach (var p in policies)
@@ -715,8 +748,11 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
         {
             try
             {
-                var result = await PatchAsync("telemetry", telemetry);
-                var telemetries = JsonSerializer.Deserialize<IEnumerable<Telemetry>>(result);
+                using var resp = await PatchAsync("telemetry", telemetry);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Telemetry>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var telemetries = JsonSerializer.Deserialize<IEnumerable<Telemetry>>(json, opts);
                 if (telemetries != null)
                 {
                     foreach (var t in telemetries)

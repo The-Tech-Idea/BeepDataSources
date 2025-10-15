@@ -353,7 +353,7 @@ namespace TheTechIdea.Beep.Connectors.Box
             try
             {
                 var result = await PostAsync("folders", folder);
-                var folders = JsonSerializer.Deserialize<IEnumerable<BoxFolder>>(result);
+                var folders = JsonSerializer.Deserialize<IEnumerable<BoxFolder>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (folders != null)
                 {
                     foreach (var f in folders)
@@ -388,7 +388,7 @@ namespace TheTechIdea.Beep.Connectors.Box
             try
             {
                 var result = await PostAsync("files_content", file);
-                var files = JsonSerializer.Deserialize<IEnumerable<BoxFile>>(result);
+                var files = JsonSerializer.Deserialize<IEnumerable<BoxFile>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (files != null)
                 {
                     foreach (var f in files)
@@ -423,7 +423,7 @@ namespace TheTechIdea.Beep.Connectors.Box
             try
             {
                 var result = await PostAsync("webhooks", webhook);
-                var webhooks = JsonSerializer.Deserialize<IEnumerable<BoxWebhook>>(result);
+                var webhooks = JsonSerializer.Deserialize<IEnumerable<BoxWebhook>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (webhooks != null)
                 {
                     foreach (var w in webhooks)
@@ -458,7 +458,7 @@ namespace TheTechIdea.Beep.Connectors.Box
             try
             {
                 var result = await PutAsync("folders", folder);
-                var folders = JsonSerializer.Deserialize<IEnumerable<BoxFolder>>(result);
+                var folders = JsonSerializer.Deserialize<IEnumerable<BoxFolder>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (folders != null)
                 {
                     foreach (var f in folders)
@@ -493,7 +493,7 @@ namespace TheTechIdea.Beep.Connectors.Box
             try
             {
                 var result = await PutAsync("files", file);
-                var files = JsonSerializer.Deserialize<IEnumerable<BoxFile>>(result);
+                var files = JsonSerializer.Deserialize<IEnumerable<BoxFile>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (files != null)
                 {
                     foreach (var f in files)
@@ -528,7 +528,7 @@ namespace TheTechIdea.Beep.Connectors.Box
             try
             {
                 var result = await PutAsync("webhooks", webhook);
-                var webhooks = JsonSerializer.Deserialize<IEnumerable<BoxWebhook>>(result);
+                var webhooks = JsonSerializer.Deserialize<IEnumerable<BoxWebhook>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (webhooks != null)
                 {
                     foreach (var w in webhooks)

@@ -486,7 +486,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
             try
             {
                 var result = await PostAsync("fs", folder);
-                var folders = JsonSerializer.Deserialize<IEnumerable<EgnyteFolder>>(result);
+                var folders = JsonSerializer.Deserialize<IEnumerable<EgnyteFolder>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (folders != null)
                 {
                     foreach (var f in folders)
@@ -521,7 +521,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
             try
             {
                 var result = await PostAsync("fs_content", file);
-                var files = JsonSerializer.Deserialize<IEnumerable<EgnyteFile>>(result);
+                var files = JsonSerializer.Deserialize<IEnumerable<EgnyteFile>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (files != null)
                 {
                     foreach (var f in files)
@@ -556,7 +556,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
             try
             {
                 var result = await PostAsync("links", link);
-                var links = JsonSerializer.Deserialize<IEnumerable<EgnyteLink>>(result);
+                var links = JsonSerializer.Deserialize<IEnumerable<EgnyteLink>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (links != null)
                 {
                     foreach (var l in links)
@@ -591,7 +591,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
             try
             {
                 var result = await PatchAsync("fs", folder);
-                var folders = JsonSerializer.Deserialize<IEnumerable<EgnyteFolder>>(result);
+                var folders = JsonSerializer.Deserialize<IEnumerable<EgnyteFolder>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (folders != null)
                 {
                     foreach (var f in folders)
@@ -626,7 +626,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
             try
             {
                 var result = await PatchAsync("fs_content", file);
-                var files = JsonSerializer.Deserialize<IEnumerable<EgnyteFile>>(result);
+                var files = JsonSerializer.Deserialize<IEnumerable<EgnyteFile>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (files != null)
                 {
                     foreach (var f in files)
@@ -661,7 +661,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
             try
             {
                 var result = await PatchAsync("links", link);
-                var links = JsonSerializer.Deserialize<IEnumerable<EgnyteLink>>(result);
+                var links = JsonSerializer.Deserialize<IEnumerable<EgnyteLink>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (links != null)
                 {
                     foreach (var l in links)

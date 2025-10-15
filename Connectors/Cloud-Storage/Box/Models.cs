@@ -240,6 +240,354 @@ namespace TheTechIdea.Beep.Connectors.Box.Models
     }
 
     /// <summary>
+    /// Represents a Box folder
+    /// </summary>
+    public sealed class BoxFolder : BoxEntityBase
+    {
+        /// <summary>
+        /// The unique identifier for this folder
+        /// </summary>
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
+
+        /// <summary>
+        /// The type of the item (should be "folder")
+        /// </summary>
+        [JsonPropertyName("type")]
+        public string? Type { get; set; } = "folder";
+
+        /// <summary>
+        /// The name of the folder
+        /// </summary>
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        /// <summary>
+        /// The description of the folder
+        /// </summary>
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        /// <summary>
+        /// The size of the folder in bytes
+        /// </summary>
+        [JsonPropertyName("size")]
+        public long? Size { get; set; }
+
+        /// <summary>
+        /// The time the folder was created
+        /// </summary>
+        [JsonPropertyName("created_at")]
+        public DateTimeOffset? CreatedAt { get; set; }
+
+        /// <summary>
+        /// The time the folder was last modified
+        /// </summary>
+        [JsonPropertyName("modified_at")]
+        public DateTimeOffset? ModifiedAt { get; set; }
+
+        /// <summary>
+        /// The time the folder was trashed
+        /// </summary>
+        [JsonPropertyName("trashed_at")]
+        public DateTimeOffset? TrashedAt { get; set; }
+
+        /// <summary>
+        /// The time the folder was purged
+        /// </summary>
+        [JsonPropertyName("purged_at")]
+        public DateTimeOffset? PurgedAt { get; set; }
+
+        /// <summary>
+        /// The user who created this folder
+        /// </summary>
+        [JsonPropertyName("created_by")]
+        public BoxUser? CreatedBy { get; set; }
+
+        /// <summary>
+        /// The user who last modified this folder
+        /// </summary>
+        [JsonPropertyName("modified_by")]
+        public BoxUser? ModifiedBy { get; set; }
+
+        /// <summary>
+        /// The user who owns this folder
+        /// </summary>
+        [JsonPropertyName("owned_by")]
+        public BoxUser? OwnedBy { get; set; }
+
+        /// <summary>
+        /// The shared link for this folder
+        /// </summary>
+        [JsonPropertyName("shared_link")]
+        public BoxSharedLink? SharedLink { get; set; }
+
+        /// <summary>
+        /// The parent folder of this folder
+        /// </summary>
+        [JsonPropertyName("parent")]
+        public BoxItem? Parent { get; set; }
+
+        /// <summary>
+        /// The folder status
+        /// </summary>
+        [JsonPropertyName("item_status")]
+        public string? ItemStatus { get; set; }
+
+        /// <summary>
+        /// The sequence ID of the folder
+        /// </summary>
+        [JsonPropertyName("sequence_id")]
+        public string? SequenceId { get; set; }
+
+        /// <summary>
+        /// The etag of the folder
+        /// </summary>
+        [JsonPropertyName("etag")]
+        public string? Etag { get; set; }
+
+        /// <summary>
+        /// The collection of items in this folder
+        /// </summary>
+        [JsonPropertyName("item_collection")]
+        public BoxItemCollection? ItemCollection { get; set; }
+
+        /// <summary>
+        /// The path collection for this folder
+        /// </summary>
+        [JsonPropertyName("path_collection")]
+        public BoxPathCollection? PathCollection { get; set; }
+
+        /// <summary>
+        /// The permissions for this folder
+        /// </summary>
+        [JsonPropertyName("permissions")]
+        public BoxPermissions? Permissions { get; set; }
+
+        /// <summary>
+        /// The tags for this folder
+        /// </summary>
+        [JsonPropertyName("tags")]
+        public List<string>? Tags { get; set; }
+
+        /// <summary>
+        /// Whether this folder is externally owned
+        /// </summary>
+        [JsonPropertyName("is_externally_owned")]
+        public bool? IsExternallyOwned { get; set; }
+
+        /// <summary>
+        /// The allowed invitee roles for this folder
+        /// </summary>
+        [JsonPropertyName("allowed_invitee_roles")]
+        public List<string>? AllowedInviteeRoles { get; set; }
+    }
+
+    /// <summary>
+    /// Represents a Box file
+    /// </summary>
+    public sealed class BoxFile : BoxEntityBase
+    {
+        /// <summary>
+        /// The unique identifier for this file
+        /// </summary>
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
+
+        /// <summary>
+        /// The type of the item (should be "file")
+        /// </summary>
+        [JsonPropertyName("type")]
+        public string? Type { get; set; } = "file";
+
+        /// <summary>
+        /// The name of the file
+        /// </summary>
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        /// <summary>
+        /// The description of the file
+        /// </summary>
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        /// <summary>
+        /// The size of the file in bytes
+        /// </summary>
+        [JsonPropertyName("size")]
+        public long? Size { get; set; }
+
+        /// <summary>
+        /// The time the file was created
+        /// </summary>
+        [JsonPropertyName("created_at")]
+        public DateTimeOffset? CreatedAt { get; set; }
+
+        /// <summary>
+        /// The time the file was last modified
+        /// </summary>
+        [JsonPropertyName("modified_at")]
+        public DateTimeOffset? ModifiedAt { get; set; }
+
+        /// <summary>
+        /// The time the file was trashed
+        /// </summary>
+        [JsonPropertyName("trashed_at")]
+        public DateTimeOffset? TrashedAt { get; set; }
+
+        /// <summary>
+        /// The time the file was purged
+        /// </summary>
+        [JsonPropertyName("purged_at")]
+        public DateTimeOffset? PurgedAt { get; set; }
+
+        /// <summary>
+        /// The time the file was last accessed
+        /// </summary>
+        [JsonPropertyName("content_created_at")]
+        public DateTimeOffset? ContentCreatedAt { get; set; }
+
+        /// <summary>
+        /// The time the file content was last modified
+        /// </summary>
+        [JsonPropertyName("content_modified_at")]
+        public DateTimeOffset? ContentModifiedAt { get; set; }
+
+        /// <summary>
+        /// The user who created this file
+        /// </summary>
+        [JsonPropertyName("created_by")]
+        public BoxUser? CreatedBy { get; set; }
+
+        /// <summary>
+        /// The user who last modified this file
+        /// </summary>
+        [JsonPropertyName("modified_by")]
+        public BoxUser? ModifiedBy { get; set; }
+
+        /// <summary>
+        /// The user who owns this file
+        /// </summary>
+        [JsonPropertyName("owned_by")]
+        public BoxUser? OwnedBy { get; set; }
+
+        /// <summary>
+        /// The shared link for this file
+        /// </summary>
+        [JsonPropertyName("shared_link")]
+        public BoxSharedLink? SharedLink { get; set; }
+
+        /// <summary>
+        /// The parent folder of this file
+        /// </summary>
+        [JsonPropertyName("parent")]
+        public BoxItem? Parent { get; set; }
+
+        /// <summary>
+        /// The file status
+        /// </summary>
+        [JsonPropertyName("item_status")]
+        public string? ItemStatus { get; set; }
+
+        /// <summary>
+        /// The sequence ID of the file
+        /// </summary>
+        [JsonPropertyName("sequence_id")]
+        public string? SequenceId { get; set; }
+
+        /// <summary>
+        /// The etag of the file
+        /// </summary>
+        [JsonPropertyName("etag")]
+        public string? Etag { get; set; }
+
+        /// <summary>
+        /// The SHA1 hash of the file
+        /// </summary>
+        [JsonPropertyName("sha1")]
+        public string? Sha1 { get; set; }
+
+        /// <summary>
+        /// The file version of the file
+        /// </summary>
+        [JsonPropertyName("file_version")]
+        public BoxFileVersion? FileVersion { get; set; }
+
+        /// <summary>
+        /// The path collection for this file
+        /// </summary>
+        [JsonPropertyName("path_collection")]
+        public BoxPathCollection? PathCollection { get; set; }
+
+        /// <summary>
+        /// The permissions for this file
+        /// </summary>
+        [JsonPropertyName("permissions")]
+        public BoxPermissions? Permissions { get; set; }
+
+        /// <summary>
+        /// The tags for this file
+        /// </summary>
+        [JsonPropertyName("tags")]
+        public List<string>? Tags { get; set; }
+
+        /// <summary>
+        /// The lock information for this file
+        /// </summary>
+        [JsonPropertyName("lock")]
+        public BoxLock? Lock { get; set; }
+
+        /// <summary>
+        /// The extension of the file
+        /// </summary>
+        [JsonPropertyName("extension")]
+        public string? Extension { get; set; }
+
+        /// <summary>
+        /// The watermark info for this file
+        /// </summary>
+        [JsonPropertyName("watermark_info")]
+        public BoxWatermarkInfo? WatermarkInfo { get; set; }
+
+        /// <summary>
+        /// The metadata for this file
+        /// </summary>
+        [JsonPropertyName("metadata")]
+        public Dictionary<string, object>? Metadata { get; set; }
+
+        /// <summary>
+        /// The representations for this file
+        /// </summary>
+        [JsonPropertyName("representations")]
+        public BoxRepresentationCollection? Representations { get; set; }
+
+        /// <summary>
+        /// The classification for this file
+        /// </summary>
+        [JsonPropertyName("classification")]
+        public BoxClassification? Classification { get; set; }
+
+        /// <summary>
+        /// Whether this file is externally owned
+        /// </summary>
+        [JsonPropertyName("is_externally_owned")]
+        public bool? IsExternallyOwned { get; set; }
+
+        /// <summary>
+        /// The expiration timestamp for this file
+        /// </summary>
+        [JsonPropertyName("expires_at")]
+        public DateTimeOffset? ExpiresAt { get; set; }
+
+        /// <summary>
+        /// Whether this file is package
+        /// </summary>
+        [JsonPropertyName("is_package")]
+        public bool? IsPackage { get; set; }
+    }
+
+    /// <summary>
     /// Represents a Box user
     /// </summary>
     public sealed class BoxUser : BoxEntityBase

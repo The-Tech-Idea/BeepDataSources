@@ -612,7 +612,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             try
             {
                 var result = await PutAsync("teams/{team_id}", team);
-                var teams = JsonSerializer.Deserialize<IEnumerable<TeamsTeam>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var teams = JsonSerializer.Deserialize<IEnumerable<TeamsTeam>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (teams != null)
                 {
                     foreach (var t in teams)
@@ -647,7 +648,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             try
             {
                 var result = await PostAsync("chats", chat);
-                var chats = JsonSerializer.Deserialize<IEnumerable<TeamsChat>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var chats = JsonSerializer.Deserialize<IEnumerable<TeamsChat>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (chats != null)
                 {
                     foreach (var c in chats)
@@ -664,19 +666,6 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             return new List<TeamsChat>();
         }
 
-        [CommandAttribute(
-            Name = "UpdateChatAsync",
-            Caption = "Update Microsoft Teams Chat",
-            ObjectType = "TeamsChat",
-            PointType = EnumPointType.Function,
-            Category = DatasourceCategory.Connector,
-            DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
-            Showin = ShowinType.Both,
-            Order = 11,
-            iconimage = "updatechat.png",
-            misc = "ReturnType: IEnumerable<TeamsChat>"
-        )]
         [CommandAttribute(
             Name = "UpdateChannelAsync",
             Caption = "Update Microsoft Teams Channel",
@@ -695,7 +684,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             try
             {
                 var result = await PutAsync("teams/{team_id}/channels/{channel_id}", channel);
-                var channels = JsonSerializer.Deserialize<IEnumerable<TeamsChannel>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var channels = JsonSerializer.Deserialize<IEnumerable<TeamsChannel>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (channels != null)
                 {
                     foreach (var c in channels)
@@ -730,7 +720,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             try
             {
                 var result = await PutAsync("teams/{team_id}/channels/{channel_id}/messages/{message_id}", message);
-                var messages = JsonSerializer.Deserialize<IEnumerable<TeamsMessage>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var messages = JsonSerializer.Deserialize<IEnumerable<TeamsMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (messages != null)
                 {
                     foreach (var m in messages)
@@ -765,7 +756,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
             try
             {
                 var result = await PutAsync("chats/{chat_id}", chat);
-                var chats = JsonSerializer.Deserialize<IEnumerable<TeamsChat>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var chats = JsonSerializer.Deserialize<IEnumerable<TeamsChat>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (chats != null)
                 {
                     foreach (var c in chats)

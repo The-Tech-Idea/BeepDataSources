@@ -356,6 +356,162 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             return result as List<Lead> ?? new List<Lead>();
         }
 
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Contact")]
+        public async Task<List<Contact>> CreateContactAsync(Contact contact)
+        {
+            if (contact == null) return new List<Contact>();
+            using var resp = await PostAsync("Contacts", contact).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return new List<Contact>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Contact>(json, opts);
+                return result != null ? new List<Contact> { result } : new List<Contact>();
+            }
+            catch
+            {
+                return new List<Contact>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Contact")]
+        public async Task<List<Contact>> UpdateContactAsync(int contactId, Contact contact)
+        {
+            if (contactId <= 0 || contact == null) return new List<Contact>();
+            var endpoint = $"Contacts/{contactId}";
+            using var resp = await PutAsync(endpoint, contact).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return new List<Contact>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Contact>(json, opts);
+                return result != null ? new List<Contact> { result } : new List<Contact>();
+            }
+            catch
+            {
+                return new List<Contact>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Organisation", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Organisation")]
+        public async Task<List<Organisation>> CreateOrganisationAsync(Organisation organisation)
+        {
+            if (organisation == null) return new List<Organisation>();
+            using var resp = await PostAsync("Organisations", organisation).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return new List<Organisation>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Organisation>(json, opts);
+                return result != null ? new List<Organisation> { result } : new List<Organisation>();
+            }
+            catch
+            {
+                return new List<Organisation>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Organisation", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Organisation")]
+        public async Task<List<Organisation>> UpdateOrganisationAsync(int organisationId, Organisation organisation)
+        {
+            if (organisationId <= 0 || organisation == null) return new List<Organisation>();
+            var endpoint = $"Organisations/{organisationId}";
+            using var resp = await PutAsync(endpoint, organisation).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return new List<Organisation>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Organisation>(json, opts);
+                return result != null ? new List<Organisation> { result } : new List<Organisation>();
+            }
+            catch
+            {
+                return new List<Organisation>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
+        public async Task<List<Opportunity>> CreateOpportunityAsync(Opportunity opportunity)
+        {
+            if (opportunity == null) return new List<Opportunity>();
+            using var resp = await PostAsync("Opportunities", opportunity).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return new List<Opportunity>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Opportunity>(json, opts);
+                return result != null ? new List<Opportunity> { result } : new List<Opportunity>();
+            }
+            catch
+            {
+                return new List<Opportunity>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
+        public async Task<List<Opportunity>> UpdateOpportunityAsync(int opportunityId, Opportunity opportunity)
+        {
+            if (opportunityId <= 0 || opportunity == null) return new List<Opportunity>();
+            var endpoint = $"Opportunities/{opportunityId}";
+            using var resp = await PutAsync(endpoint, opportunity).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return new List<Opportunity>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Opportunity>(json, opts);
+                return result != null ? new List<Opportunity> { result } : new List<Opportunity>();
+            }
+            catch
+            {
+                return new List<Opportunity>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Lead")]
+        public async Task<List<Lead>> CreateLeadAsync(Lead lead)
+        {
+            if (lead == null) return new List<Lead>();
+            using var resp = await PostAsync("Leads", lead).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return new List<Lead>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Lead>(json, opts);
+                return result != null ? new List<Lead> { result } : new List<Lead>();
+            }
+            catch
+            {
+                return new List<Lead>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Lead")]
+        public async Task<List<Lead>> UpdateLeadAsync(int leadId, Lead lead)
+        {
+            if (leadId <= 0 || lead == null) return new List<Lead>();
+            var endpoint = $"Leads/{leadId}";
+            using var resp = await PutAsync(endpoint, lead).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return new List<Lead>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Lead>(json, opts);
+                return result != null ? new List<Lead> { result } : new List<Lead>();
+            }
+            catch
+            {
+                return new List<Lead>();
+            }
+        }
+
         #endregion
 
         #region Private Methods

@@ -467,7 +467,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Discord
     /// <summary>
     /// Discord Role entity
     /// </summary>
-    public class DiscordRole
+    public class DiscordRole : DiscordEntityBase
     {
         [JsonPropertyName("id")]
         public string Id { get; set; }

@@ -284,14 +284,14 @@ namespace TheTechIdea.Beep.Connectors.Particle
         }
 
         // CommandAttribute methods for framework integration
-        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "GetDevices", Caption = "Get Devices", ClassName = "ParticleDataSource", misc = "GetDevices")]
+        [CommandAttribute(ObjectType = "Device", PointType = EnumPointType.Function, Name = "GetDevices", Caption = "Get Devices", ClassName = "ParticleDataSource", misc = "GetDevices")]
         public IEnumerable<Device> GetDevices(string accessToken)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "access_token", FilterValue = accessToken } };
             return GetEntity("devices", filters).Cast<Device>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Device), PointType = PointType.Function, Name = "GetDevice", Caption = "Get Device", ClassName = "ParticleDataSource", misc = "GetDevice")]
+        [CommandAttribute(ObjectType = "Device", PointType = EnumPointType.Function, Name = "GetDevice", Caption = "Get Device", ClassName = "ParticleDataSource", misc = "GetDevice")]
         public Device GetDevice(string deviceId, string accessToken)
         {
             var filters = new List<AppFilter> {
@@ -301,7 +301,7 @@ namespace TheTechIdea.Beep.Connectors.Particle
             return GetEntity("device_details", filters).Cast<Device>().FirstOrDefault();
         }
 
-        [CommandAttribute(ObjectType = typeof(Event), PointType = PointType.Function, Name = "GetDeviceEvents", Caption = "Get Device Events", ClassName = "ParticleDataSource", misc = "GetDeviceEvents")]
+        [CommandAttribute(ObjectType = "Event", PointType = EnumPointType.Function, Name = "GetDeviceEvents", Caption = "Get Device Events", ClassName = "ParticleDataSource", misc = "GetDeviceEvents")]
         public IEnumerable<Event> GetDeviceEvents(string deviceId, string accessToken)
         {
             var filters = new List<AppFilter> {
@@ -311,21 +311,21 @@ namespace TheTechIdea.Beep.Connectors.Particle
             return GetEntity("device_events", filters).Cast<Event>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Product), PointType = PointType.Function, Name = "GetProducts", Caption = "Get Products", ClassName = "ParticleDataSource", misc = "GetProducts")]
+        [CommandAttribute(ObjectType = "Product", PointType = EnumPointType.Function, Name = "GetProducts", Caption = "Get Products", ClassName = "ParticleDataSource", misc = "GetProducts")]
         public IEnumerable<Product> GetProducts(string accessToken)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "access_token", FilterValue = accessToken } };
             return GetEntity("products", filters).Cast<Product>();
         }
 
-        [CommandAttribute(ObjectType = typeof(Sim), PointType = PointType.Function, Name = "GetSims", Caption = "Get SIMs", ClassName = "ParticleDataSource", misc = "GetSims")]
+        [CommandAttribute(ObjectType = "Sim", PointType = EnumPointType.Function, Name = "GetSims", Caption = "Get SIMs", ClassName = "ParticleDataSource", misc = "GetSims")]
         public IEnumerable<Sim> GetSims(string accessToken)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "access_token", FilterValue = accessToken } };
             return GetEntity("sims", filters).Cast<Sim>();
         }
 
-        [CommandAttribute(ObjectType = typeof(AccessToken), PointType = PointType.Function, Name = "GetAccessTokens", Caption = "Get Access Tokens", ClassName = "ParticleDataSource", misc = "GetAccessTokens")]
+        [CommandAttribute(ObjectType = "AccessToken", PointType = EnumPointType.Function, Name = "GetAccessTokens", Caption = "Get Access Tokens", ClassName = "ParticleDataSource", misc = "GetAccessTokens")]
         public IEnumerable<AccessToken> GetAccessTokens(string accessToken)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "access_token", FilterValue = accessToken } };
@@ -352,8 +352,11 @@ namespace TheTechIdea.Beep.Connectors.Particle
             try
             {
                 var endpoint = $"devices?access_token={Uri.EscapeDataString(accessToken)}";
-                var result = await PostAsync(endpoint, device);
-                var createdDevice = JsonSerializer.Deserialize<Device>(result);
+                using var resp = await PostAsync(endpoint, device);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Device>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var createdDevice = JsonSerializer.Deserialize<Device>(json, opts);
                 if (createdDevice != null)
                 {
                     createdDevice.Attach<Device>(this);
@@ -385,8 +388,11 @@ namespace TheTechIdea.Beep.Connectors.Particle
             try
             {
                 var endpoint = $"devices/{Uri.EscapeDataString(deviceId)}?access_token={Uri.EscapeDataString(accessToken)}";
-                var result = await PutAsync(endpoint, device);
-                var updatedDevice = JsonSerializer.Deserialize<Device>(result);
+                using var resp = await PutAsync(endpoint, device);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Device>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var updatedDevice = JsonSerializer.Deserialize<Device>(json, opts);
                 if (updatedDevice != null)
                 {
                     updatedDevice.Attach<Device>(this);
@@ -449,8 +455,11 @@ namespace TheTechIdea.Beep.Connectors.Particle
             try
             {
                 var endpoint = $"products?access_token={Uri.EscapeDataString(accessToken)}";
-                var result = await PostAsync(endpoint, product);
-                var createdProduct = JsonSerializer.Deserialize<Product>(result);
+                using var resp = await PostAsync(endpoint, product);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Product>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var createdProduct = JsonSerializer.Deserialize<Product>(json, opts);
                 if (createdProduct != null)
                 {
                     createdProduct.Attach<Product>(this);
@@ -482,8 +491,11 @@ namespace TheTechIdea.Beep.Connectors.Particle
             try
             {
                 var endpoint = $"products/{Uri.EscapeDataString(productId)}?access_token={Uri.EscapeDataString(accessToken)}";
-                var result = await PutAsync(endpoint, product);
-                var updatedProduct = JsonSerializer.Deserialize<Product>(result);
+                using var resp = await PutAsync(endpoint, product);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Product>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var updatedProduct = JsonSerializer.Deserialize<Product>(json, opts);
                 if (updatedProduct != null)
                 {
                     updatedProduct.Attach<Product>(this);
@@ -515,8 +527,11 @@ namespace TheTechIdea.Beep.Connectors.Particle
             try
             {
                 var endpoint = $"sims/{Uri.EscapeDataString(simId)}?access_token={Uri.EscapeDataString(accessToken)}";
-                var result = await PutAsync(endpoint, sim);
-                var updatedSim = JsonSerializer.Deserialize<Sim>(result);
+                using var resp = await PutAsync(endpoint, sim);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Sim>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var updatedSim = JsonSerializer.Deserialize<Sim>(json, opts);
                 if (updatedSim != null)
                 {
                     updatedSim.Attach<Sim>(this);
@@ -548,8 +563,11 @@ namespace TheTechIdea.Beep.Connectors.Particle
             try
             {
                 var endpoint = $"access_tokens?access_token={Uri.EscapeDataString(accessToken)}";
-                var result = await PostAsync(endpoint, token);
-                var createdToken = JsonSerializer.Deserialize<AccessToken>(result);
+                using var resp = await PostAsync(endpoint, token);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<AccessToken>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var createdToken = JsonSerializer.Deserialize<AccessToken>(json, opts);
                 if (createdToken != null)
                 {
                     createdToken.Attach<AccessToken>(this);
@@ -581,8 +599,11 @@ namespace TheTechIdea.Beep.Connectors.Particle
             try
             {
                 var endpoint = $"devices/{Uri.EscapeDataString(deviceId)}/variables?access_token={Uri.EscapeDataString(accessToken)}";
-                var result = await PostAsync(endpoint, variable);
-                var createdVariable = JsonSerializer.Deserialize<DeviceVariable>(result);
+                using var resp = await PostAsync(endpoint, variable);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<DeviceVariable>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var createdVariable = JsonSerializer.Deserialize<DeviceVariable>(json, opts);
                 if (createdVariable != null)
                 {
                     createdVariable.Attach<DeviceVariable>(this);
@@ -614,8 +635,11 @@ namespace TheTechIdea.Beep.Connectors.Particle
             try
             {
                 var endpoint = $"devices/{Uri.EscapeDataString(deviceId)}/variables/{Uri.EscapeDataString(variableName)}?access_token={Uri.EscapeDataString(accessToken)}";
-                var result = await PatchAsync(endpoint, variable);
-                var updatedVariable = JsonSerializer.Deserialize<DeviceVariable>(result);
+                using var resp = await PatchAsync(endpoint, variable);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<DeviceVariable>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var updatedVariable = JsonSerializer.Deserialize<DeviceVariable>(json, opts);
                 if (updatedVariable != null)
                 {
                     updatedVariable.Attach<DeviceVariable>(this);
@@ -647,8 +671,11 @@ namespace TheTechIdea.Beep.Connectors.Particle
             try
             {
                 var endpoint = $"webhooks?access_token={Uri.EscapeDataString(accessToken)}";
-                var result = await PostAsync(endpoint, webhook);
-                var createdWebhook = JsonSerializer.Deserialize<Webhook>(result);
+                using var resp = await PostAsync(endpoint, webhook);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Webhook>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var createdWebhook = JsonSerializer.Deserialize<Webhook>(json, opts);
                 if (createdWebhook != null)
                 {
                     createdWebhook.Attach<Webhook>(this);
@@ -680,8 +707,11 @@ namespace TheTechIdea.Beep.Connectors.Particle
             try
             {
                 var endpoint = $"webhooks/{Uri.EscapeDataString(webhookId)}?access_token={Uri.EscapeDataString(accessToken)}";
-                var result = await PatchAsync(endpoint, webhook);
-                var updatedWebhook = JsonSerializer.Deserialize<Webhook>(result);
+                using var resp = await PatchAsync(endpoint, webhook);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Webhook>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var updatedWebhook = JsonSerializer.Deserialize<Webhook>(json, opts);
                 if (updatedWebhook != null)
                 {
                     updatedWebhook.Attach<Webhook>(this);

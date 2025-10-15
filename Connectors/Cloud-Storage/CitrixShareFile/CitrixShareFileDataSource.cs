@@ -462,7 +462,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
             try
             {
                 var result = await PostAsync("Items", item);
-                var items = JsonSerializer.Deserialize<IEnumerable<ShareFileItem>>(result);
+                var items = JsonSerializer.Deserialize<IEnumerable<ShareFileItem>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -497,7 +497,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
             try
             {
                 var result = await PostAsync("Shares", share);
-                var shares = JsonSerializer.Deserialize<IEnumerable<ShareFileShare>>(result);
+                var shares = JsonSerializer.Deserialize<IEnumerable<ShareFileShare>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (shares != null)
                 {
                     foreach (var s in shares)
@@ -532,7 +532,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
             try
             {
                 var result = await PostAsync("Groups", group);
-                var groups = JsonSerializer.Deserialize<IEnumerable<ShareFileGroup>>(result);
+                var groups = JsonSerializer.Deserialize<IEnumerable<ShareFileGroup>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (groups != null)
                 {
                     foreach (var g in groups)
@@ -567,7 +567,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
             try
             {
                 var result = await PatchAsync("Items", item);
-                var items = JsonSerializer.Deserialize<IEnumerable<ShareFileItem>>(result);
+                var items = JsonSerializer.Deserialize<IEnumerable<ShareFileItem>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -602,7 +602,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
             try
             {
                 var result = await PatchAsync("Shares", share);
-                var shares = JsonSerializer.Deserialize<IEnumerable<ShareFileShare>>(result);
+                var shares = JsonSerializer.Deserialize<IEnumerable<ShareFileShare>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (shares != null)
                 {
                     foreach (var s in shares)
@@ -637,7 +637,7 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
             try
             {
                 var result = await PatchAsync("Groups", group);
-                var groups = JsonSerializer.Deserialize<IEnumerable<ShareFileGroup>>(result);
+                var groups = JsonSerializer.Deserialize<IEnumerable<ShareFileGroup>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (groups != null)
                 {
                     foreach (var g in groups)

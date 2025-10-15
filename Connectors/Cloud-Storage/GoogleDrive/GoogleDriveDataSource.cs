@@ -356,7 +356,9 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
             try
             {
                 var result = await PostAsync("files", file);
-                var files = JsonSerializer.Deserialize<IEnumerable<GoogleDriveFile>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var files = JsonSerializer.Deserialize<IEnumerable<GoogleDriveFile>>(content, options);
                 if (files != null)
                 {
                     foreach (var f in files)
@@ -391,7 +393,9 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
             try
             {
                 var result = await PostAsync("permissions", permission);
-                var permissions = JsonSerializer.Deserialize<IEnumerable<GoogleDrivePermission>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var permissions = JsonSerializer.Deserialize<IEnumerable<GoogleDrivePermission>>(content, options);
                 if (permissions != null)
                 {
                     foreach (var p in permissions)
@@ -426,7 +430,9 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
             try
             {
                 var result = await PostAsync("comments", comment);
-                var comments = JsonSerializer.Deserialize<IEnumerable<GoogleDriveComment>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var comments = JsonSerializer.Deserialize<IEnumerable<GoogleDriveComment>>(content, options);
                 if (comments != null)
                 {
                     foreach (var c in comments)
@@ -461,7 +467,9 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
             try
             {
                 var result = await PatchAsync("files/{file_id}", file);
-                var files = JsonSerializer.Deserialize<IEnumerable<GoogleDriveFile>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var files = JsonSerializer.Deserialize<IEnumerable<GoogleDriveFile>>(content, options);
                 if (files != null)
                 {
                     foreach (var f in files)
@@ -496,7 +504,9 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
             try
             {
                 var result = await PatchAsync("permissions/{permission_id}", permission);
-                var permissions = JsonSerializer.Deserialize<IEnumerable<GoogleDrivePermission>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var permissions = JsonSerializer.Deserialize<IEnumerable<GoogleDrivePermission>>(content, options);
                 if (permissions != null)
                 {
                     foreach (var p in permissions)
@@ -531,7 +541,9 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
             try
             {
                 var result = await PatchAsync("comments/{comment_id}", comment);
-                var comments = JsonSerializer.Deserialize<IEnumerable<GoogleDriveComment>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var comments = JsonSerializer.Deserialize<IEnumerable<GoogleDriveComment>>(content, options);
                 if (comments != null)
                 {
                     foreach (var c in comments)

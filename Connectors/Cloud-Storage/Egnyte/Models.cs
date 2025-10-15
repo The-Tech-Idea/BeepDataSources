@@ -159,6 +159,228 @@ namespace TheTechIdea.Beep.Connectors.Egnyte.Models
     }
 
     /// <summary>
+    /// Represents an Egnyte folder
+    /// </summary>
+    public sealed class EgnyteFolder : EgnyteEntityBase
+    {
+        /// <summary>
+        /// The checksum of the folder
+        /// </summary>
+        [JsonPropertyName("checksum")]
+        public string? Checksum { get; set; }
+
+        /// <summary>
+        /// The size of the folder in bytes
+        /// </summary>
+        [JsonPropertyName("size")]
+        public string? Size { get; set; }
+
+        /// <summary>
+        /// The path of the folder
+        /// </summary>
+        [JsonPropertyName("path")]
+        public string? Path { get; set; }
+
+        /// <summary>
+        /// The name of the folder
+        /// </summary>
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        /// <summary>
+        /// Whether the item is a folder (should be true)
+        /// </summary>
+        [JsonPropertyName("is_folder")]
+        public bool? IsFolder { get; set; } = true;
+
+        /// <summary>
+        /// The last modified date of the folder
+        /// </summary>
+        [JsonPropertyName("last_modified")]
+        public string? LastModified { get; set; }
+
+        /// <summary>
+        /// The uploaded date of the folder
+        /// </summary>
+        [JsonPropertyName("uploaded")]
+        public string? Uploaded { get; set; }
+
+        /// <summary>
+        /// The entry ID of the folder
+        /// </summary>
+        [JsonPropertyName("entry_id")]
+        public string? EntryId { get; set; }
+
+        /// <summary>
+        /// The group ID of the folder
+        /// </summary>
+        [JsonPropertyName("group_id")]
+        public string? GroupId { get; set; }
+
+        /// <summary>
+        /// The custom metadata of the folder
+        /// </summary>
+        [JsonPropertyName("custom_metadata")]
+        public Dictionary<string, object>? CustomMetadata { get; set; }
+
+        /// <summary>
+        /// The locked status of the folder
+        /// </summary>
+        [JsonPropertyName("locked")]
+        public bool? Locked { get; set; }
+
+        /// <summary>
+        /// The parent folder of the folder
+        /// </summary>
+        [JsonPropertyName("parent_id")]
+        public string? ParentId { get; set; }
+
+        /// <summary>
+        /// The folder ID of the folder
+        /// </summary>
+        [JsonPropertyName("folder_id")]
+        public string? FolderId { get; set; }
+
+        /// <summary>
+        /// The count of items in the folder
+        /// </summary>
+        [JsonPropertyName("count")]
+        public int? Count { get; set; }
+
+        /// <summary>
+        /// The offset for pagination
+        /// </summary>
+        [JsonPropertyName("offset")]
+        public int? Offset { get; set; }
+
+        /// <summary>
+        /// The path ID of the folder
+        /// </summary>
+        [JsonPropertyName("path_id")]
+        public string? PathId { get; set; }
+
+        /// <summary>
+        /// The total count of items
+        /// </summary>
+        [JsonPropertyName("total_count")]
+        public int? TotalCount { get; set; }
+
+        /// <summary>
+        /// The folders in the response
+        /// </summary>
+        [JsonPropertyName("folders")]
+        public List<EgnyteItem>? Folders { get; set; }
+
+        /// <summary>
+        /// The files in the response
+        /// </summary>
+        [JsonPropertyName("files")]
+        public List<EgnyteItem>? Files { get; set; }
+    }
+
+    /// <summary>
+    /// Represents an Egnyte file
+    /// </summary>
+    public sealed class EgnyteFile : EgnyteEntityBase
+    {
+        /// <summary>
+        /// The checksum of the file
+        /// </summary>
+        [JsonPropertyName("checksum")]
+        public string? Checksum { get; set; }
+
+        /// <summary>
+        /// The size of the file in bytes
+        /// </summary>
+        [JsonPropertyName("size")]
+        public string? Size { get; set; }
+
+        /// <summary>
+        /// The path of the file
+        /// </summary>
+        [JsonPropertyName("path")]
+        public string? Path { get; set; }
+
+        /// <summary>
+        /// The name of the file
+        /// </summary>
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        /// <summary>
+        /// Whether the item is a folder (should be false)
+        /// </summary>
+        [JsonPropertyName("is_folder")]
+        public bool? IsFolder { get; set; } = false;
+
+        /// <summary>
+        /// The last modified date of the file
+        /// </summary>
+        [JsonPropertyName("last_modified")]
+        public string? LastModified { get; set; }
+
+        /// <summary>
+        /// The uploaded date of the file
+        /// </summary>
+        [JsonPropertyName("uploaded")]
+        public string? Uploaded { get; set; }
+
+        /// <summary>
+        /// The number of versions of the file
+        /// </summary>
+        [JsonPropertyName("num_versions")]
+        public int? NumVersions { get; set; }
+
+        /// <summary>
+        /// The entry ID of the file
+        /// </summary>
+        [JsonPropertyName("entry_id")]
+        public string? EntryId { get; set; }
+
+        /// <summary>
+        /// The group ID of the file
+        /// </summary>
+        [JsonPropertyName("group_id")]
+        public string? GroupId { get; set; }
+
+        /// <summary>
+        /// The custom metadata of the file
+        /// </summary>
+        [JsonPropertyName("custom_metadata")]
+        public Dictionary<string, object>? CustomMetadata { get; set; }
+
+        /// <summary>
+        /// The locked status of the file
+        /// </summary>
+        [JsonPropertyName("locked")]
+        public bool? Locked { get; set; }
+
+        /// <summary>
+        /// The upload ID of the file
+        /// </summary>
+        [JsonPropertyName("upload_id")]
+        public string? UploadId { get; set; }
+
+        /// <summary>
+        /// The parent folder of the file
+        /// </summary>
+        [JsonPropertyName("parent_id")]
+        public string? ParentId { get; set; }
+
+        /// <summary>
+        /// The folder ID of the file
+        /// </summary>
+        [JsonPropertyName("folder_id")]
+        public string? FolderId { get; set; }
+
+        /// <summary>
+        /// The path ID of the file
+        /// </summary>
+        [JsonPropertyName("path_id")]
+        public string? PathId { get; set; }
+    }
+
+    /// <summary>
     /// Represents an Egnyte user
     /// </summary>
     public sealed class EgnyteUser : EgnyteEntityBase

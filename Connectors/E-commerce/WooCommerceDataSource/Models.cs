@@ -372,6 +372,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WooCommerce.Models
 
     public sealed class WooTaxClass : WooEntityBase
     {
+        [JsonPropertyName("id")] public long? Id { get; set; }
         [JsonPropertyName("slug")] public string Slug { get; set; }
         [JsonPropertyName("name")] public string Name { get; set; }
     }

@@ -331,7 +331,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
         try
         {
             var result = await PostAsync("{waba_id}/message_templates", template);
-            var templates = JsonSerializer.Deserialize<IEnumerable<WabaMessageTemplate>>(result);
+            var content = await result.Content.ReadAsStringAsync();
+            var templates = JsonSerializer.Deserialize<IEnumerable<WabaMessageTemplate>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (templates != null)
             {
                 foreach (var t in templates)
@@ -366,7 +367,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
         try
         {
             var result = await PostAsync("{phone_number_id}/media", media);
-            var medias = JsonSerializer.Deserialize<IEnumerable<WabaMedia>>(result);
+            var content = await result.Content.ReadAsStringAsync();
+            var medias = JsonSerializer.Deserialize<IEnumerable<WabaMedia>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (medias != null)
             {
                 foreach (var m in medias)
@@ -401,7 +403,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
         try
         {
             var result = await PostAsync("{phone_number_id}/whatsapp_business_profile", profile);
-            var profiles = JsonSerializer.Deserialize<IEnumerable<WabaBusinessProfile>>(result);
+            var content = await result.Content.ReadAsStringAsync();
+            var profiles = JsonSerializer.Deserialize<IEnumerable<WabaBusinessProfile>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (profiles != null)
             {
                 foreach (var p in profiles)
@@ -436,7 +439,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
         try
         {
             var result = await PostAsync("{phone_number_id}/messages", message);
-            var messages = JsonSerializer.Deserialize<IEnumerable<WabaMessage>>(result);
+            var content = await result.Content.ReadAsStringAsync();
+            var messages = JsonSerializer.Deserialize<IEnumerable<WabaMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (messages != null)
             {
                 foreach (var m in messages)

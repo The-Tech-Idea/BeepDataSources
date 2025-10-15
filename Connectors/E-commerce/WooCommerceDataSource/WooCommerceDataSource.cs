@@ -549,7 +549,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WooCommerce
         {
             try
             {
-                var result = await PutAsync($"TaxClasses/{taxClass.Id}", taxClass);
+                var result = await PutAsync($"TaxClasses/{taxClass.Slug}", taxClass);
                 if (result.IsSuccessStatusCode)
                 {
                     var content = await result.Content.ReadAsStringAsync();

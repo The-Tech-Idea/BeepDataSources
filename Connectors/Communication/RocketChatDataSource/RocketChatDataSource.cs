@@ -368,7 +368,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.RocketChat
             try
             {
                 var result = await PostAsync("chat.postMessage", message);
-                var messages = JsonSerializer.Deserialize<IEnumerable<RocketChatMessage>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var messages = JsonSerializer.Deserialize<IEnumerable<RocketChatMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (messages != null)
                 {
                     foreach (var m in messages)
@@ -403,7 +404,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.RocketChat
             try
             {
                 var result = await PostAsync("channels.create", channel);
-                var channels = JsonSerializer.Deserialize<IEnumerable<RocketChatChannel>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var channels = JsonSerializer.Deserialize<IEnumerable<RocketChatChannel>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (channels != null)
                 {
                     foreach (var c in channels)
@@ -438,7 +440,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.RocketChat
             try
             {
                 var result = await PutAsync("chat.update", message);
-                var messages = JsonSerializer.Deserialize<IEnumerable<RocketChatMessage>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var messages = JsonSerializer.Deserialize<IEnumerable<RocketChatMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (messages != null)
                 {
                     foreach (var m in messages)
@@ -473,7 +476,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.RocketChat
             try
             {
                 var result = await PutAsync("channels.setDescription", channel);
-                var channels = JsonSerializer.Deserialize<IEnumerable<RocketChatChannel>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var channels = JsonSerializer.Deserialize<IEnumerable<RocketChatChannel>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (channels != null)
                 {
                     foreach (var c in channels)

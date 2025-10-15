@@ -432,7 +432,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
             try
             {
                 var result = await PostAsync("thread_messages/add", message);
-                var messages = JsonSerializer.Deserialize<IEnumerable<TwistMessage>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var messages = JsonSerializer.Deserialize<IEnumerable<TwistMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (messages != null)
                 {
                     foreach (var m in messages)
@@ -470,7 +471,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
             try
             {
                 var result = await PostAsync("channels/add", channel);
-                var channels = JsonSerializer.Deserialize<IEnumerable<TwistChannel>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var channels = JsonSerializer.Deserialize<IEnumerable<TwistChannel>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (channels != null)
                 {
                     foreach (var c in channels)
@@ -508,7 +510,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
             try
             {
                 var result = await PutAsync("thread_messages/update", message);
-                var messages = JsonSerializer.Deserialize<IEnumerable<TwistMessage>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var messages = JsonSerializer.Deserialize<IEnumerable<TwistMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (messages != null)
                 {
                     foreach (var m in messages)
@@ -546,7 +549,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
             try
             {
                 var result = await PutAsync("channels/update", channel);
-                var channels = JsonSerializer.Deserialize<IEnumerable<TwistChannel>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var channels = JsonSerializer.Deserialize<IEnumerable<TwistChannel>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (channels != null)
                 {
                     foreach (var c in channels)

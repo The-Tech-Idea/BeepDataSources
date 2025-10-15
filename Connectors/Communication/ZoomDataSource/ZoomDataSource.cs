@@ -384,7 +384,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
             try
             {
                 var result = await PostAsync("users/{user_id}/meetings", meeting);
-                var meetings = JsonSerializer.Deserialize<IEnumerable<ZoomMeeting>>(result);
+                var meetings = JsonSerializer.Deserialize<IEnumerable<ZoomMeeting>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (meetings != null)
                 {
                     foreach (var m in meetings)
@@ -419,7 +419,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
             try
             {
                 var result = await PostAsync("users/{user_id}/webinars", webinar);
-                var webinars = JsonSerializer.Deserialize<IEnumerable<ZoomWebinar>>(result);
+                var webinars = JsonSerializer.Deserialize<IEnumerable<ZoomWebinar>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (webinars != null)
                 {
                     foreach (var w in webinars)
@@ -454,7 +454,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
             try
             {
                 var result = await PostAsync("chat/users/{user_id}/channels", channel);
-                var channels = JsonSerializer.Deserialize<IEnumerable<ZoomChannel>>(result);
+                var channels = JsonSerializer.Deserialize<IEnumerable<ZoomChannel>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (channels != null)
                 {
                     foreach (var c in channels)
@@ -489,7 +489,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
             try
             {
                 var result = await PostAsync("chat/channels/{channel_id}/messages", message);
-                var messages = JsonSerializer.Deserialize<IEnumerable<ZoomChannelMessage>>(result);
+                var messages = JsonSerializer.Deserialize<IEnumerable<ZoomChannelMessage>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (messages != null)
                 {
                     foreach (var m in messages)
@@ -524,7 +524,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
             try
             {
                 var result = await PutAsync("meetings/{meeting_id}", meeting);
-                var meetings = JsonSerializer.Deserialize<IEnumerable<ZoomMeeting>>(result);
+                var meetings = JsonSerializer.Deserialize<IEnumerable<ZoomMeeting>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (meetings != null)
                 {
                     foreach (var m in meetings)
@@ -559,7 +559,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
             try
             {
                 var result = await PutAsync("webinars/{webinar_id}", webinar);
-                var webinars = JsonSerializer.Deserialize<IEnumerable<ZoomWebinar>>(result);
+                var webinars = JsonSerializer.Deserialize<IEnumerable<ZoomWebinar>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (webinars != null)
                 {
                     foreach (var w in webinars)

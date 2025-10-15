@@ -367,7 +367,9 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
             try
             {
                 var result = await PostAsync("upload_simple", file);
-                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -402,7 +404,9 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
             try
             {
                 var result = await PostAsync("folder_create", folder);
-                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -437,7 +441,9 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
             try
             {
                 var result = await PostAsync("file_copy", file);
-                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -472,7 +478,9 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
             try
             {
                 var result = await PatchAsync("upload_simple", file);
-                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -507,7 +515,9 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
             try
             {
                 var result = await PatchAsync("folder_create", folder);
-                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -542,7 +552,9 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
             try
             {
                 var result = await PatchAsync("file_copy", file);
-                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<MediaFireItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)

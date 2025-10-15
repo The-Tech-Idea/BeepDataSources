@@ -533,7 +533,7 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
             try
             {
                 var result = await PutAsync("bucket", bucket);
-                var buckets = JsonSerializer.Deserialize<IEnumerable<AmazonS3Bucket>>(result);
+                var buckets = JsonSerializer.Deserialize<IEnumerable<AmazonS3Bucket>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (buckets != null)
                 {
                     foreach (var b in buckets)
@@ -568,7 +568,7 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
             try
             {
                 var result = await PutAsync("object", obj);
-                var objects = JsonSerializer.Deserialize<IEnumerable<AmazonS3Object>>(result);
+                var objects = JsonSerializer.Deserialize<IEnumerable<AmazonS3Object>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (objects != null)
                 {
                     foreach (var o in objects)
@@ -603,7 +603,7 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
             try
             {
                 var result = await PatchAsync("bucket", bucket);
-                var buckets = JsonSerializer.Deserialize<IEnumerable<AmazonS3Bucket>>(result);
+                var buckets = JsonSerializer.Deserialize<IEnumerable<AmazonS3Bucket>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (buckets != null)
                 {
                     foreach (var b in buckets)
@@ -638,7 +638,7 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
             try
             {
                 var result = await PatchAsync("object", obj);
-                var objects = JsonSerializer.Deserialize<IEnumerable<AmazonS3Object>>(result);
+                var objects = JsonSerializer.Deserialize<IEnumerable<AmazonS3Object>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (objects != null)
                 {
                     foreach (var o in objects)

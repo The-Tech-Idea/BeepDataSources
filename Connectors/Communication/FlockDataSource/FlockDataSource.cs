@@ -385,7 +385,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Flock
             try
             {
                 var result = await PostAsync("chat.sendMessage", message);
-                var messages = JsonSerializer.Deserialize<IEnumerable<FlockMessage>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var messages = JsonSerializer.Deserialize<IEnumerable<FlockMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (messages != null)
                 {
                     foreach (var m in messages)
@@ -412,7 +413,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Flock
             try
             {
                 var result = await PostAsync("groups.create", group);
-                var groups = JsonSerializer.Deserialize<IEnumerable<FlockGroup>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var groups = JsonSerializer.Deserialize<IEnumerable<FlockGroup>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (groups != null)
                 {
                     foreach (var g in groups)
@@ -439,7 +441,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Flock
             try
             {
                 var result = await PostAsync("channels.create", channel);
-                var channels = JsonSerializer.Deserialize<IEnumerable<FlockChannel>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var channels = JsonSerializer.Deserialize<IEnumerable<FlockChannel>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (channels != null)
                 {
                     foreach (var c in channels)
@@ -474,7 +477,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Flock
             try
             {
                 var result = await PutAsync("chat.updateMessage", message);
-                var messages = JsonSerializer.Deserialize<IEnumerable<FlockMessage>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var messages = JsonSerializer.Deserialize<IEnumerable<FlockMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (messages != null)
                 {
                     foreach (var m in messages)
@@ -509,7 +513,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Flock
             try
             {
                 var result = await PutAsync("channels.update", channel);
-                var channels = JsonSerializer.Deserialize<IEnumerable<FlockChannel>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var channels = JsonSerializer.Deserialize<IEnumerable<FlockChannel>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (channels != null)
                 {
                     foreach (var c in channels)

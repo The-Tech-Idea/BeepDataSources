@@ -124,9 +124,26 @@ This document outlines the comprehensive implementation plan for all data source
 | Zoho | ✅ Completed | 20+ methods | 14 GET methods (GetLeads, GetContacts, GetAccounts, GetDeals, GetCampaigns, GetTasks, GetEvents, GetCalls, GetNotes, GetProducts, GetQuotes, GetInvoices, GetVendors, GetUsers) + 6 CREATE/UPDATE methods |
 | Freshsales | ✅ Completed | 8 methods | 8 CREATE/UPDATE methods only (Create/Update for Leads, Contacts, Accounts, Deals) - no GET methods |
 | SugarCRM | ✅ Completed | 4 methods | GetContacts, GetAccounts, GetLeads, GetOpportunities |
-| Copper | ✅ Completed | 4 methods | GetLeads, GetContacts, GetAccounts, GetDeals |
-| Insightly | ✅ Completed | 4 methods | GetContacts, GetOrganisations, GetOpportunities, GetLeads |
-| Nutshell | ✅ Completed | 4 methods | GetContacts, GetAccounts, GetLeads, GetOpportunities |
+| Copper | ✅ Completed | 12 methods | 4 GET methods (GetLeads, GetContacts, GetAccounts, GetDeals) + 8 CREATE/UPDATE methods |
+| Insightly | ✅ Completed | 12 methods | 4 GET methods (GetContacts, GetOrganisations, GetOpportunities, GetLeads) + 8 CREATE/UPDATE methods |
+| Nutshell | ✅ Completed | 12 methods | 4 GET methods (GetContacts, GetAccounts, GetLeads, GetOpportunities) + 8 CREATE/UPDATE methods |
+
+### 7. Marketing Connectors (Priority: Medium)
+**Location**: `Connectors/Marketing/`
+
+| Connector | Status | Methods | Notes |
+|-----------|--------|---------|-------|
+| ActiveCampaign | ✅ Completed | 12 methods | 5 GET methods (GetContacts, GetLists, GetTags, GetCampaigns, GetDeals) + 6 CREATE/UPDATE methods |
+| Mailchimp | ✅ Completed | 14 methods | 6 GET methods (GetLists, GetCampaigns, GetMembers, GetTemplates, GetAutomations, GetReports) + 8 CREATE/UPDATE methods |
+| Klaviyo | ✅ Completed | 12 methods | 5 GET methods + 6 CREATE/UPDATE methods |
+| GoogleAds | ✅ Completed | 8 methods | 4 GET methods + 4 CREATE/UPDATE methods |
+| Marketo | ✅ Completed | 12 methods | 6 GET methods + 6 CREATE/UPDATE methods |
+| Sendinblue | ✅ Completed | 10 methods | 5 GET methods + 5 CREATE/UPDATE methods |
+| CampaignMonitor | ✅ Completed | 8 methods | 4 GET methods + 4 CREATE/UPDATE methods |
+| ConstantContact | ✅ Completed | 8 methods | 4 GET methods + 4 CREATE/UPDATE methods |
+| ConvertKit | ✅ Completed | 8 methods | 4 GET methods + 4 CREATE/UPDATE methods |
+| Drip | ✅ Completed | 8 methods | 4 GET methods + 4 CREATE/UPDATE methods |
+| MailerLite | ✅ Completed | 8 methods | 4 GET methods + 4 CREATE/UPDATE methods |
 
 ### 6. E-commerce Connectors (Priority: High)
 **Location**: `Connectors/E-commerce/`

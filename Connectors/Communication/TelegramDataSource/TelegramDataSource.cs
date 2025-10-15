@@ -374,7 +374,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
         try
         {
             var result = await PostAsync("sendMessage", message);
-            var messages = JsonSerializer.Deserialize<IEnumerable<TgMessage>>(result);
+            var content = await result.Content.ReadAsStringAsync();
+            var messages = JsonSerializer.Deserialize<IEnumerable<TgMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (messages != null)
             {
                 foreach (var m in messages)
@@ -409,7 +410,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
         try
         {
             var result = await PostAsync("sendPhoto", message);
-            var messages = JsonSerializer.Deserialize<IEnumerable<TgMessage>>(result);
+            var content = await result.Content.ReadAsStringAsync();
+            var messages = JsonSerializer.Deserialize<IEnumerable<TgMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (messages != null)
             {
                 foreach (var m in messages)
@@ -444,7 +446,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
         try
         {
             var result = await PostAsync("sendDocument", message);
-            var messages = JsonSerializer.Deserialize<IEnumerable<TgMessage>>(result);
+            var content = await result.Content.ReadAsStringAsync();
+            var messages = JsonSerializer.Deserialize<IEnumerable<TgMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (messages != null)
             {
                 foreach (var m in messages)
@@ -479,7 +482,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
         try
         {
             var result = await PostAsync("editMessageText", message);
-            var messages = JsonSerializer.Deserialize<IEnumerable<TgMessage>>(result);
+            var content = await result.Content.ReadAsStringAsync();
+            var messages = JsonSerializer.Deserialize<IEnumerable<TgMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (messages != null)
             {
                 foreach (var m in messages)

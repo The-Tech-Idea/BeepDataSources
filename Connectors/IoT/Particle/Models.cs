@@ -17,10 +17,8 @@ namespace TheTechIdea.Beep.Connectors.Particle
         [JsonPropertyName("updated_at")]
         public DateTime? UpdatedAt { get; set; }
 
-        public T Attach<T>(T entity) where T : ParticleBaseEntity
-        {
-            return entity;
-        }
+        [JsonIgnore] public IDataSource DataSource { get; private set; }
+        public T Attach<T>(IDataSource ds) where T : ParticleBaseEntity { DataSource = ds; return (T)this; }
     }
 
     // Device entity
@@ -94,7 +92,7 @@ namespace TheTechIdea.Beep.Connectors.Particle
     }
 
     // Device Variable
-    public class DeviceVariable
+    public class DeviceVariable : ParticleBaseEntity
     {
         [JsonPropertyName("name")]
         public string? Name { get; set; }

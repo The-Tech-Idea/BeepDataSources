@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using TheTechIdea.Beep.Addin;
@@ -217,6 +218,162 @@ namespace TheTechIdea.Beep.Connectors.Copper
 
         [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "Deals", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<CopperDeal>")]
         public IEnumerable<CopperDeal> GetDeals(List<AppFilter> filter) => GetEntity("deals", filter).Cast<CopperDeal>();
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperLead", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperLead")]
+        public async Task<IEnumerable<CopperLead>> CreateLeadAsync(CopperLead lead)
+        {
+            if (lead == null) return Array.Empty<CopperLead>();
+            using var resp = await PostAsync("leads", lead).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<CopperLead>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<CopperLead>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<CopperLead>();
+            }
+            catch
+            {
+                return Array.Empty<CopperLead>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperLead", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperLead")]
+        public async Task<IEnumerable<CopperLead>> UpdateLeadAsync(string leadId, CopperLead lead)
+        {
+            if (string.IsNullOrWhiteSpace(leadId) || lead == null) return Array.Empty<CopperLead>();
+            var endpoint = $"leads/{Uri.EscapeDataString(leadId)}";
+            using var resp = await PutAsync(endpoint, lead).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<CopperLead>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<CopperLead>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<CopperLead>();
+            }
+            catch
+            {
+                return Array.Empty<CopperLead>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperContact", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperContact")]
+        public async Task<IEnumerable<CopperContact>> CreateContactAsync(CopperContact contact)
+        {
+            if (contact == null) return Array.Empty<CopperContact>();
+            using var resp = await PostAsync("people", contact).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<CopperContact>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<CopperContact>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<CopperContact>();
+            }
+            catch
+            {
+                return Array.Empty<CopperContact>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperContact", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperContact")]
+        public async Task<IEnumerable<CopperContact>> UpdateContactAsync(string contactId, CopperContact contact)
+        {
+            if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<CopperContact>();
+            var endpoint = $"people/{Uri.EscapeDataString(contactId)}";
+            using var resp = await PutAsync(endpoint, contact).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<CopperContact>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<CopperContact>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<CopperContact>();
+            }
+            catch
+            {
+                return Array.Empty<CopperContact>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperAccount", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperAccount")]
+        public async Task<IEnumerable<CopperAccount>> CreateAccountAsync(CopperAccount account)
+        {
+            if (account == null) return Array.Empty<CopperAccount>();
+            using var resp = await PostAsync("companies", account).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<CopperAccount>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<CopperAccount>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<CopperAccount>();
+            }
+            catch
+            {
+                return Array.Empty<CopperAccount>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperAccount", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperAccount")]
+        public async Task<IEnumerable<CopperAccount>> UpdateAccountAsync(string accountId, CopperAccount account)
+        {
+            if (string.IsNullOrWhiteSpace(accountId) || account == null) return Array.Empty<CopperAccount>();
+            var endpoint = $"companies/{Uri.EscapeDataString(accountId)}";
+            using var resp = await PutAsync(endpoint, account).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<CopperAccount>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<CopperAccount>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<CopperAccount>();
+            }
+            catch
+            {
+                return Array.Empty<CopperAccount>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperDeal", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperDeal")]
+        public async Task<IEnumerable<CopperDeal>> CreateDealAsync(CopperDeal deal)
+        {
+            if (deal == null) return Array.Empty<CopperDeal>();
+            using var resp = await PostAsync("opportunities", deal).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<CopperDeal>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<CopperDeal>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<CopperDeal>();
+            }
+            catch
+            {
+                return Array.Empty<CopperDeal>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperDeal", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperDeal")]
+        public async Task<IEnumerable<CopperDeal>> UpdateDealAsync(string dealId, CopperDeal deal)
+        {
+            if (string.IsNullOrWhiteSpace(dealId) || deal == null) return Array.Empty<CopperDeal>();
+            var endpoint = $"opportunities/{Uri.EscapeDataString(dealId)}";
+            using var resp = await PutAsync(endpoint, deal).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<CopperDeal>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<CopperDeal>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<CopperDeal>();
+            }
+            catch
+            {
+                return Array.Empty<CopperDeal>();
+            }
+        }
 
         #endregion
     }

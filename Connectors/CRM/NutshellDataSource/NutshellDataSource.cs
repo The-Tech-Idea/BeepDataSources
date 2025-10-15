@@ -627,6 +627,162 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             return result.Cast<Opportunity>();
         }
 
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Contact")]
+        public async Task<IEnumerable<Contact>> CreateContactAsync(Contact contact)
+        {
+            if (contact == null) return Array.Empty<Contact>();
+            using var resp = await PostAsync("Contacts", contact).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Contact>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Contact>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Contact>();
+            }
+            catch
+            {
+                return Array.Empty<Contact>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Contact")]
+        public async Task<IEnumerable<Contact>> UpdateContactAsync(string contactId, Contact contact)
+        {
+            if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<Contact>();
+            var endpoint = $"Contacts/{Uri.EscapeDataString(contactId)}";
+            using var resp = await PutAsync(endpoint, contact).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Contact>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Contact>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Contact>();
+            }
+            catch
+            {
+                return Array.Empty<Contact>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Account")]
+        public async Task<IEnumerable<Account>> CreateAccountAsync(Account account)
+        {
+            if (account == null) return Array.Empty<Account>();
+            using var resp = await PostAsync("Accounts", account).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Account>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Account>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Account>();
+            }
+            catch
+            {
+                return Array.Empty<Account>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Account")]
+        public async Task<IEnumerable<Account>> UpdateAccountAsync(string accountId, Account account)
+        {
+            if (string.IsNullOrWhiteSpace(accountId) || account == null) return Array.Empty<Account>();
+            var endpoint = $"Accounts/{Uri.EscapeDataString(accountId)}";
+            using var resp = await PutAsync(endpoint, account).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Account>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Account>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Account>();
+            }
+            catch
+            {
+                return Array.Empty<Account>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Lead")]
+        public async Task<IEnumerable<Lead>> CreateLeadAsync(Lead lead)
+        {
+            if (lead == null) return Array.Empty<Lead>();
+            using var resp = await PostAsync("Leads", lead).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Lead>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Lead>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Lead>();
+            }
+            catch
+            {
+                return Array.Empty<Lead>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Lead")]
+        public async Task<IEnumerable<Lead>> UpdateLeadAsync(string leadId, Lead lead)
+        {
+            if (string.IsNullOrWhiteSpace(leadId) || lead == null) return Array.Empty<Lead>();
+            var endpoint = $"Leads/{Uri.EscapeDataString(leadId)}";
+            using var resp = await PutAsync(endpoint, lead).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Lead>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Lead>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Lead>();
+            }
+            catch
+            {
+                return Array.Empty<Lead>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
+        public async Task<IEnumerable<Opportunity>> CreateOpportunityAsync(Opportunity opportunity)
+        {
+            if (opportunity == null) return Array.Empty<Opportunity>();
+            using var resp = await PostAsync("Opportunities", opportunity).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Opportunity>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Opportunity>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Opportunity>();
+            }
+            catch
+            {
+                return Array.Empty<Opportunity>();
+            }
+        }
+
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
+        public async Task<IEnumerable<Opportunity>> UpdateOpportunityAsync(string opportunityId, Opportunity opportunity)
+        {
+            if (string.IsNullOrWhiteSpace(opportunityId) || opportunity == null) return Array.Empty<Opportunity>();
+            var endpoint = $"Opportunities/{Uri.EscapeDataString(opportunityId)}";
+            using var resp = await PutAsync(endpoint, opportunity).ConfigureAwait(false);
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<Opportunity>();
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            try
+            {
+                var result = JsonSerializer.Deserialize<Opportunity>(json, opts);
+                return result != null ? new[] { result } : Array.Empty<Opportunity>();
+            }
+            catch
+            {
+                return Array.Empty<Opportunity>();
+            }
+        }
+
         #endregion
 
         public bool CreateEntityAsAsync(string entityname, object entitydata)

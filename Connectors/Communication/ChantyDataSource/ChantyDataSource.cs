@@ -447,7 +447,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
             try
             {
                 var result = await PostAsync("channels/{channel_id}/messages", message);
-                var messages = JsonSerializer.Deserialize<IEnumerable<ChantyMessage>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var messages = JsonSerializer.Deserialize<IEnumerable<ChantyMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (messages != null)
                 {
                     foreach (var m in messages)
@@ -482,7 +483,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
             try
             {
                 var result = await PostAsync("teams/{team_id}/channels", channel);
-                var channels = JsonSerializer.Deserialize<IEnumerable<ChantyChannel>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var channels = JsonSerializer.Deserialize<IEnumerable<ChantyChannel>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (channels != null)
                 {
                     foreach (var c in channels)
@@ -517,7 +519,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
             try
             {
                 var result = await PutAsync("messages/{message_id}", message);
-                var messages = JsonSerializer.Deserialize<IEnumerable<ChantyMessage>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var messages = JsonSerializer.Deserialize<IEnumerable<ChantyMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (messages != null)
                 {
                     foreach (var m in messages)
@@ -552,7 +555,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
             try
             {
                 var result = await PutAsync("channels/{channel_id}", channel);
-                var channels = JsonSerializer.Deserialize<IEnumerable<ChantyChannel>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var channels = JsonSerializer.Deserialize<IEnumerable<ChantyChannel>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (channels != null)
                 {
                     foreach (var c in channels)

@@ -279,7 +279,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
             try
             {
                 var result = await PostAsync("https://api.dropboxapi.com/2/files/create_folder", folder);
-                var folders = JsonSerializer.Deserialize<IEnumerable<DropboxFolderMetadata>>(result);
+                var folders = JsonSerializer.Deserialize<IEnumerable<DropboxFolderMetadata>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (folders != null)
                 {
                     foreach (var f in folders)
@@ -314,7 +314,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
             try
             {
                 var result = await PostAsync("https://content.dropboxapi.com/2/files/upload", file);
-                var files = JsonSerializer.Deserialize<IEnumerable<DropboxFileMetadata>>(result);
+                var files = JsonSerializer.Deserialize<IEnumerable<DropboxFileMetadata>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (files != null)
                 {
                     foreach (var f in files)
@@ -349,7 +349,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
             try
             {
                 var result = await PostAsync("https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings", link);
-                var links = JsonSerializer.Deserialize<IEnumerable<DropboxSharedLink>>(result);
+                var links = JsonSerializer.Deserialize<IEnumerable<DropboxSharedLink>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (links != null)
                 {
                     foreach (var l in links)
@@ -384,7 +384,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
             try
             {
                 var result = await PostAsync("https://api.dropboxapi.com/2/files/move_v2", folder);
-                var folders = JsonSerializer.Deserialize<IEnumerable<DropboxFolderMetadata>>(result);
+                var folders = JsonSerializer.Deserialize<IEnumerable<DropboxFolderMetadata>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (folders != null)
                 {
                     foreach (var f in folders)
@@ -419,7 +419,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
             try
             {
                 var result = await PostAsync("https://api.dropboxapi.com/2/files/move_v2", file);
-                var files = JsonSerializer.Deserialize<IEnumerable<DropboxFileMetadata>>(result);
+                var files = JsonSerializer.Deserialize<IEnumerable<DropboxFileMetadata>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (files != null)
                 {
                     foreach (var f in files)
@@ -454,7 +454,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
             try
             {
                 var result = await PostAsync("https://api.dropboxapi.com/2/sharing/modify_shared_link_settings", link);
-                var links = JsonSerializer.Deserialize<IEnumerable<DropboxSharedLink>>(result);
+                var links = JsonSerializer.Deserialize<IEnumerable<DropboxSharedLink>>(await result.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (links != null)
                 {
                     foreach (var l in links)

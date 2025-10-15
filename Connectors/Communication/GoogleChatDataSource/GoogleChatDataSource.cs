@@ -425,7 +425,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
             try
             {
                 var result = await PostAsync("v1/spaces/{space_name}/messages", message);
-                var messages = JsonSerializer.Deserialize<IEnumerable<GoogleChatMessage>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var messages = JsonSerializer.Deserialize<IEnumerable<GoogleChatMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (messages != null)
                 {
                     foreach (var m in messages)
@@ -463,7 +464,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
             try
             {
                 var result = await PostAsync("v1/spaces", space);
-                var spaces = JsonSerializer.Deserialize<IEnumerable<GoogleChatSpace>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var spaces = JsonSerializer.Deserialize<IEnumerable<GoogleChatSpace>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (spaces != null)
                 {
                     foreach (var s in spaces)
@@ -501,7 +503,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
             try
             {
                 var result = await PutAsync("v1/spaces/{space_name}/messages/{message_name}", message);
-                var messages = JsonSerializer.Deserialize<IEnumerable<GoogleChatMessage>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var messages = JsonSerializer.Deserialize<IEnumerable<GoogleChatMessage>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (messages != null)
                 {
                     foreach (var m in messages)
@@ -539,7 +542,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
             try
             {
                 var result = await PatchAsync("v1/spaces/{space_name}", space);
-                var spaces = JsonSerializer.Deserialize<IEnumerable<GoogleChatSpace>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var spaces = JsonSerializer.Deserialize<IEnumerable<GoogleChatSpace>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (spaces != null)
                 {
                     foreach (var s in spaces)

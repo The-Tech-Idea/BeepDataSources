@@ -12,7 +12,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource.Models
     // Base
     public abstract class BigCommerceEntityBase
     {
-        [JsonPropertyName("id")] public int? Id { get; set; }
+        [JsonPropertyName("id")] public object? Id { get; set; }
         [JsonPropertyName("date_created")] public DateTimeOffset? DateCreated { get; set; }
         [JsonPropertyName("date_modified")] public DateTimeOffset? DateModified { get; set; }
 
@@ -264,9 +264,8 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource.Models
         [JsonPropertyName("value")] public string? Value { get; set; }
     }
 
-    public sealed class BigCommerceOrder
+    public sealed class BigCommerceOrder : BigCommerceEntityBase
     {
-        [JsonPropertyName("id")] public int? Id { get; set; }
         [JsonPropertyName("customer_id")] public int? CustomerId { get; set; }
         [JsonPropertyName("date_created")] public DateTimeOffset? DateCreated { get; set; }
         [JsonPropertyName("date_modified")] public DateTimeOffset? DateModified { get; set; }
@@ -463,9 +462,8 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource.Models
     }
 
     // Additional model classes for other entities
-    public sealed class BigCommerceCart
+    public sealed class BigCommerceCart : BigCommerceEntityBase
     {
-        [JsonPropertyName("id")] public string? Id { get; set; }
         [JsonPropertyName("customer_id")] public int? CustomerId { get; set; }
         [JsonPropertyName("email")] public string? Email { get; set; }
         [JsonPropertyName("currency")] public BigCommerceCurrencyRef? Currency { get; set; }
@@ -754,9 +752,8 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource.Models
         [JsonPropertyName("thumbnail_path")] public string? ThumbnailPath { get; set; }
     }
 
-    public sealed class BigCommerceCoupon
+    public sealed class BigCommerceCoupon : BigCommerceEntityBase
     {
-        [JsonPropertyName("id")] public int? Id { get; set; }
         [JsonPropertyName("name")] public string? Name { get; set; }
         [JsonPropertyName("type")] public string? Type { get; set; }
         [JsonPropertyName("amount")] public decimal? Amount { get; set; }
@@ -932,9 +929,8 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource.Models
         [JsonPropertyName("supported_cards")] public List<string>? SupportedCards { get; set; } = new();
     }
 
-    public sealed class BigCommerceInventoryItem
+    public sealed class BigCommerceInventoryItem : BigCommerceEntityBase
     {
-        [JsonPropertyName("id")] public int? Id { get; set; }
         [JsonPropertyName("product_id")] public int? ProductId { get; set; }
         [JsonPropertyName("variant_id")] public int? VariantId { get; set; }
         [JsonPropertyName("inventory_level")] public int? InventoryLevel { get; set; }

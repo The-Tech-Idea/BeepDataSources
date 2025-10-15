@@ -203,7 +203,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.SquarespaceDataSource.Models
         [JsonPropertyName("value")] public SquarespacePrice? Value { get; set; }
     }
 
-    public sealed class SquarespaceInventory
+    public sealed class SquarespaceInventory : SquarespaceEntityBase
     {
         [JsonPropertyName("productId")] public string? ProductId { get; set; }
         [JsonPropertyName("variantId")] public string? VariantId { get; set; }
@@ -211,9 +211,8 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.SquarespaceDataSource.Models
         [JsonPropertyName("isUnlimited")] public bool? IsUnlimited { get; set; }
     }
 
-    public sealed class SquarespaceProfile
+    public sealed class SquarespaceProfile : SquarespaceEntityBase
     {
-        [JsonPropertyName("id")] public string? Id { get; set; }
         [JsonPropertyName("firstName")] public string? FirstName { get; set; }
         [JsonPropertyName("lastName")] public string? LastName { get; set; }
         [JsonPropertyName("email")] public string? Email { get; set; }

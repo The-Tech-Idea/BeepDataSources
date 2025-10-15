@@ -479,7 +479,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
             try
             {
                 var result = await PostAsync("files", file);
-                var files = JsonSerializer.Deserialize<IEnumerable<iCloudFile>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var files = JsonSerializer.Deserialize<IEnumerable<iCloudFile>>(content, options);
                 if (files != null)
                 {
                     foreach (var f in files)
@@ -514,7 +516,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
             try
             {
                 var result = await PostAsync("folders", folder);
-                var folders = JsonSerializer.Deserialize<IEnumerable<iCloudFolder>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var folders = JsonSerializer.Deserialize<IEnumerable<iCloudFolder>>(content, options);
                 if (folders != null)
                 {
                     foreach (var f in folders)
@@ -549,7 +553,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
             try
             {
                 var result = await PostAsync("shares", share);
-                var shares = JsonSerializer.Deserialize<IEnumerable<iCloudShare>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var shares = JsonSerializer.Deserialize<IEnumerable<iCloudShare>>(content, options);
                 if (shares != null)
                 {
                     foreach (var s in shares)
@@ -584,7 +590,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
             try
             {
                 var result = await PatchAsync("files", file);
-                var files = JsonSerializer.Deserialize<IEnumerable<iCloudFile>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var files = JsonSerializer.Deserialize<IEnumerable<iCloudFile>>(content, options);
                 if (files != null)
                 {
                     foreach (var f in files)
@@ -619,7 +627,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
             try
             {
                 var result = await PatchAsync("folders", folder);
-                var folders = JsonSerializer.Deserialize<IEnumerable<iCloudFolder>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var folders = JsonSerializer.Deserialize<IEnumerable<iCloudFolder>>(content, options);
                 if (folders != null)
                 {
                     foreach (var f in folders)
@@ -654,7 +664,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
             try
             {
                 var result = await PatchAsync("shares", share);
-                var shares = JsonSerializer.Deserialize<IEnumerable<iCloudShare>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var shares = JsonSerializer.Deserialize<IEnumerable<iCloudShare>>(content, options);
                 if (shares != null)
                 {
                     foreach (var s in shares)

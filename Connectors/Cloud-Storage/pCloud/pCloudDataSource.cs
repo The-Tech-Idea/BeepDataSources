@@ -402,7 +402,9 @@ namespace TheTechIdea.Beep.Connectors.pCloud
             try
             {
                 var result = await PostAsync("uploadfile", file);
-                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -437,7 +439,9 @@ namespace TheTechIdea.Beep.Connectors.pCloud
             try
             {
                 var result = await PostAsync("createfolder", folder);
-                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -472,7 +476,9 @@ namespace TheTechIdea.Beep.Connectors.pCloud
             try
             {
                 var result = await PostAsync("copyfile", file);
-                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -507,7 +513,9 @@ namespace TheTechIdea.Beep.Connectors.pCloud
             try
             {
                 var result = await PatchAsync("uploadfile", file);
-                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -542,7 +550,9 @@ namespace TheTechIdea.Beep.Connectors.pCloud
             try
             {
                 var result = await PatchAsync("createfolder", folder);
-                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)
@@ -577,7 +587,9 @@ namespace TheTechIdea.Beep.Connectors.pCloud
             try
             {
                 var result = await PatchAsync("copyfile", file);
-                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(result);
+                var content = await result.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var items = JsonSerializer.Deserialize<IEnumerable<pCloudItem>>(content, options);
                 if (items != null)
                 {
                     foreach (var i in items)

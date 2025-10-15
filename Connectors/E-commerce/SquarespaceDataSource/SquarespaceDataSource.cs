@@ -595,7 +595,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
         {
             try
             {
-                var result = await PutAsync($"inventory/{inventory.Id}", inventory);
+                var result = await PutAsync($"inventory/{inventory.ProductId}/{inventory.VariantId}", inventory);
                 if (result.IsSuccessStatusCode)
                 {
                     var content = await result.Content.ReadAsStringAsync();

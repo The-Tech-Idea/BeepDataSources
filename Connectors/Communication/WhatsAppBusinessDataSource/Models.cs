@@ -80,6 +80,34 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness.Models
         [JsonPropertyName("url")] public string? Url { get; set; } // only when requested with proper permissions
     }
 
+    // Message
+    public sealed class WabaMessage : WhatsAppBusinessEntityBase
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("messaging_product")] public string? MessagingProduct { get; set; }
+        [JsonPropertyName("to")] public string? To { get; set; }
+        [JsonPropertyName("type")] public string? Type { get; set; } // text, image, document, etc.
+        [JsonPropertyName("text")] public WabaTextMessage? Text { get; set; }
+        [JsonPropertyName("image")] public WabaMediaMessage? Image { get; set; }
+        [JsonPropertyName("document")] public WabaMediaMessage? Document { get; set; }
+        [JsonPropertyName("timestamp")] public string? Timestamp { get; set; }
+        [JsonPropertyName("status")] public string? Status { get; set; }
+    }
+
+    public sealed class WabaTextMessage
+    {
+        [JsonPropertyName("body")] public string? Body { get; set; }
+        [JsonPropertyName("preview_url")] public bool? PreviewUrl { get; set; }
+    }
+
+    public sealed class WabaMediaMessage
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("link")] public string? Link { get; set; }
+        [JsonPropertyName("caption")] public string? Caption { get; set; }
+        [JsonPropertyName("filename")] public string? Filename { get; set; }
+    }
+
     // Registry
     public static class WabaEntityRegistry
     {

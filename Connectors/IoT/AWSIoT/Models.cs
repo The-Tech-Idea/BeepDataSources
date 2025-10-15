@@ -19,6 +19,9 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
 
         [JsonPropertyName("source")]
         public string? Source { get; set; }
+
+        [JsonIgnore] public IDataSource DataSource { get; private set; }
+        public T Attach<T>(IDataSource ds) where T : AWSIoTBaseEntity { DataSource = ds; return (T)this; }
     }
 
     // Device/Thing entity

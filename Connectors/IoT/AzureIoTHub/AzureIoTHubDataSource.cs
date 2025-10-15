@@ -405,8 +405,11 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
         {
             try
             {
-                var result = await PostAsync("devices", device);
-                var createdDevice = JsonSerializer.Deserialize<Device>(result);
+                using var resp = await PostAsync("devices", device);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Device>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var createdDevice = JsonSerializer.Deserialize<Device>(json, opts);
                 if (createdDevice != null)
                 {
                     createdDevice.Attach<Device>(this);
@@ -437,8 +440,11 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
         {
             try
             {
-                var result = await PutAsync($"devices/{deviceId}", device);
-                var updatedDevice = JsonSerializer.Deserialize<Device>(result);
+                using var resp = await PutAsync($"devices/{deviceId}", device);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Device>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var updatedDevice = JsonSerializer.Deserialize<Device>(json, opts);
                 if (updatedDevice != null)
                 {
                     updatedDevice.Attach<Device>(this);
@@ -469,8 +475,11 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
         {
             try
             {
-                var result = await PutAsync($"twins/{deviceId}", twin);
-                var createdTwin = JsonSerializer.Deserialize<DeviceTwin>(result);
+                using var resp = await PutAsync($"twins/{deviceId}", twin);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<DeviceTwin>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var createdTwin = JsonSerializer.Deserialize<DeviceTwin>(json, opts);
                 if (createdTwin != null)
                 {
                     createdTwin.Attach<DeviceTwin>(this);
@@ -501,8 +510,11 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
         {
             try
             {
-                var result = await PatchAsync($"twins/{deviceId}", twin);
-                var updatedTwin = JsonSerializer.Deserialize<DeviceTwin>(result);
+                using var resp = await PatchAsync($"twins/{deviceId}", twin);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<DeviceTwin>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var updatedTwin = JsonSerializer.Deserialize<DeviceTwin>(json, opts);
                 if (updatedTwin != null)
                 {
                     updatedTwin.Attach<DeviceTwin>(this);
@@ -533,8 +545,11 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
         {
             try
             {
-                var result = await PostAsync("jobs", job);
-                var createdJob = JsonSerializer.Deserialize<Job>(result);
+                using var resp = await PostAsync("jobs", job);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Job>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var createdJob = JsonSerializer.Deserialize<Job>(json, opts);
                 if (createdJob != null)
                 {
                     createdJob.Attach<Job>(this);
@@ -566,8 +581,11 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
             try
             {
                 var endpoint = $"jobs/{Uri.EscapeDataString(jobId)}";
-                var result = await PutAsync(endpoint, job);
-                var updatedJob = JsonSerializer.Deserialize<Job>(result);
+                using var resp = await PutAsync(endpoint, job);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Job>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var updatedJob = JsonSerializer.Deserialize<Job>(json, opts);
                 if (updatedJob != null)
                 {
                     updatedJob.Attach<Job>(this);
@@ -598,8 +616,11 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
         {
             try
             {
-                var result = await PostAsync("configurations", configuration);
-                var createdConfiguration = JsonSerializer.Deserialize<Configuration>(result);
+                using var resp = await PostAsync("configurations", configuration);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Configuration>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var createdConfiguration = JsonSerializer.Deserialize<Configuration>(json, opts);
                 if (createdConfiguration != null)
                 {
                     createdConfiguration.Attach<Configuration>(this);
@@ -631,8 +652,11 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
             try
             {
                 var endpoint = $"configurations/{Uri.EscapeDataString(configurationId)}";
-                var result = await PutAsync(endpoint, configuration);
-                var updatedConfiguration = JsonSerializer.Deserialize<Configuration>(result);
+                using var resp = await PutAsync(endpoint, configuration);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Configuration>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var updatedConfiguration = JsonSerializer.Deserialize<Configuration>(json, opts);
                 if (updatedConfiguration != null)
                 {
                     updatedConfiguration.Attach<Configuration>(this);
@@ -664,8 +688,11 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
             try
             {
                 var endpoint = $"devices/{Uri.EscapeDataString(deviceId)}/modules";
-                var result = await PostAsync(endpoint, module);
-                var createdModule = JsonSerializer.Deserialize<Module>(result);
+                using var resp = await PostAsync(endpoint, module);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Module>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var createdModule = JsonSerializer.Deserialize<Module>(json, opts);
                 if (createdModule != null)
                 {
                     createdModule.Attach<Module>(this);
@@ -697,8 +724,11 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
             try
             {
                 var endpoint = $"devices/{Uri.EscapeDataString(deviceId)}/modules/{Uri.EscapeDataString(moduleId)}";
-                var result = await PutAsync(endpoint, module);
-                var updatedModule = JsonSerializer.Deserialize<Module>(result);
+                using var resp = await PutAsync(endpoint, module);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<Module>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var updatedModule = JsonSerializer.Deserialize<Module>(json, opts);
                 if (updatedModule != null)
                 {
                     updatedModule.Attach<Module>(this);
@@ -730,8 +760,11 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
             try
             {
                 var endpoint = $"twins/{Uri.EscapeDataString(deviceId)}/modules/{Uri.EscapeDataString(moduleId)}";
-                var result = await PutAsync(endpoint, twin);
-                var createdTwin = JsonSerializer.Deserialize<ModuleTwin>(result);
+                using var resp = await PutAsync(endpoint, twin);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<ModuleTwin>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var createdTwin = JsonSerializer.Deserialize<ModuleTwin>(json, opts);
                 if (createdTwin != null)
                 {
                     createdTwin.Attach<ModuleTwin>(this);
@@ -763,8 +796,11 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
             try
             {
                 var endpoint = $"twins/{Uri.EscapeDataString(deviceId)}/modules/{Uri.EscapeDataString(moduleId)}";
-                var result = await PatchAsync(endpoint, twin);
-                var updatedTwin = JsonSerializer.Deserialize<ModuleTwin>(result);
+                using var resp = await PatchAsync(endpoint, twin);
+                if (resp == null || !resp.IsSuccessStatusCode) return new List<ModuleTwin>();
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var updatedTwin = JsonSerializer.Deserialize<ModuleTwin>(json, opts);
                 if (updatedTwin != null)
                 {
                     updatedTwin.Attach<ModuleTwin>(this);
