@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-	<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+	<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
 	<ImplicitUsings>enable</ImplicitUsings>
 	<LangVersion>Latest</LangVersion>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -40,9 +40,9 @@
     <Compile Remove="..\..\DataSourcesPlugins\FireBirdDataSource\FireBirdEmbeddedDataSource.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="10.3.3" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.35" />
-    <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.5" />
+    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="10.3.4" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.55" />
+    <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.9" />
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
 	  <copy SourceFiles="$(ProjectDir)$(OutputPath)$(TargetName).dll" DestinationFolder="$(ProjectDir)..\OutputDLL\$(TargetFramework)\" />

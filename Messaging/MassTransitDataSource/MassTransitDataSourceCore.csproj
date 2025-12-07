@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+		<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>Latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -30,20 +30,20 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="MassTransit" Version="8.5.2" />
-		<PackageReference Include="MassTransit.Abstractions" Version="8.5.2" />
-		<PackageReference Include="MassTransit.ActiveMQ" Version="8.5.2" />
-		<PackageReference Include="MassTransit.AmazonSQS" Version="8.5.2" />
-		<PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.5.2" />
-		<PackageReference Include="MassTransit.Kafka" Version="8.5.2" />
-		<PackageReference Include="MassTransit.MongoDb" Version="8.5.2" />
-		<PackageReference Include="MassTransit.Newtonsoft" Version="8.5.2" />
-		<PackageReference Include="MassTransit.RabbitMQ" Version="8.5.2" />
-		<PackageReference Include="MassTransit.Redis" Version="8.5.2" />
+		<PackageReference Include="MassTransit" Version="8.5.7" />
+		<PackageReference Include="MassTransit.Abstractions" Version="8.5.7" />
+		<PackageReference Include="MassTransit.ActiveMQ" Version="8.5.7" />
+		<PackageReference Include="MassTransit.AmazonSQS" Version="8.5.7" />
+		<PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.5.7" />
+		<PackageReference Include="MassTransit.Kafka" Version="8.5.7" />
+		<PackageReference Include="MassTransit.MongoDb" Version="8.5.7" />
+		<PackageReference Include="MassTransit.Newtonsoft" Version="8.5.7" />
+		<PackageReference Include="MassTransit.RabbitMQ" Version="8.5.7" />
+		<PackageReference Include="MassTransit.Redis" Version="8.5.7" />
 		<PackageReference Include="Microsoft.Azure.ServiceBus" Version="5.2.0" />
-		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.13.1" />
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.15.0" />
 		<PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
-		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.35" />
-		<PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.69" />
+		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.55" />
+		<PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.108" />
 	</ItemGroup>
 </Project>

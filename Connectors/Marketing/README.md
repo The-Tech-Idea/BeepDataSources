@@ -1,286 +1,260 @@
-# Marketing Data Sources
+# Marketing Connectors
 
-A comprehensive collection of marketing automation and email marketing data source connectors for the Beep Data Connectors framework. This module provides seamless integration with leading marketing platforms through individual .NET projects with embedded driver logic.
+## Overview
 
-## 🚀 Overview
+The Marketing connectors category provides integration with email marketing, marketing automation, and advertising platforms, enabling campaign management, subscriber operations, analytics, and automation workflows. All connectors inherit from `WebAPIDataSource` and use `CommandAttribute` to expose platform-specific functionality to the Beep framework.
 
-The Marketing Data Sources module enables you to connect, read, and manage data from various marketing automation and email marketing platforms. Each platform is implemented as a separate data source following consistent patterns established by the Beep framework.
+## Architecture
 
-## 📦 Available Data Sources
+- **Base Class**: All connectors inherit from `WebAPIDataSource`
+- **Authentication**: Primarily API Keys or OAuth 2.0
+- **Models**: Strongly-typed POCO classes for campaigns, subscribers, lists, analytics, etc.
+- **CommandAttribute**: Public methods decorated with `CommandAttribute` for framework discovery
 
-### ✅ Completed Data Sources
+## Connectors
 
-| Platform | Status | Description | Authentication |
-|----------|--------|-------------|----------------|
-| **Mailchimp** | ✅ Complete | Leading email marketing platform with advanced automation | API Key + Data Center |
+### Mailchimp (`MailchimpDataSource`)
 
-### 🔄 In Development
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://{dc}.api.mailchimp.com/3.0`  
+**Authentication**: API Key
 
-| Platform | Status | Description | Authentication |
-|----------|--------|-------------|----------------|
-| **ActiveCampaign** | ⏳ Pending | CRM and email marketing automation | API Key |
-| **Klaviyo** | ⏳ Pending | E-commerce email marketing | Private API Key |
-| **GoogleAds** | ⏳ Pending | Google advertising platform | OAuth 2.0 |
-| **Marketo** | ⏳ Pending | Marketing automation platform | OAuth 2.0 |
-| **ConstantContact** | ⏳ Pending | Email marketing and SMS | API Key |
-| **Sendinblue** | ⏳ Pending | Email marketing and SMS (now Brevo) | API Key |
-| **CampaignMonitor** | ⏳ Pending | Email marketing platform | API Key |
-| **ConvertKit** | ⏳ Pending | Creator economy email marketing | API Key |
-| **Drip** | ⏳ Pending | E-commerce marketing automation | API Token |
-| **MailerLite** | ⏳ Pending | Email marketing and automation | API Key |
+#### CommandAttribute Methods
+- List management
+- Subscriber operations
+- Campaign management
+- Automation workflows
+- Analytics and reporting
 
-## 🛠️ Technical Specifications
-
-- **Framework**: .NET 9.0
-- **Architecture**: Individual projects with embedded drivers
-- **Interface**: Implements `IDataSource` from Beep framework
-- **Dependencies**: Microsoft.Extensions.Http, System.Text.Json
-
-## 📁 Project Structure
-
-```
-Marketing/
-├── README.md (this file)
-├── progress.md
-├── plan.md
-├── MailchimpDataSource/
-│   ├── MailchimpDataSource.csproj
-│   └── MailchimpDataSource.cs
-├── ActiveCampaignDataSource/
-│   └── ActiveCampaignDataSource.csproj
-├── [Other Platform]DataSource/
-│   └── [Platform]DataSource.csproj
-└── ...
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-1. **Beep Framework**: Ensure you have the Beep Data Connectors framework installed
-2. **Platform Account**: You need an active account with the marketing platform
-3. **API Credentials**: Obtain the required API keys/tokens from your platform account
-
-### Installation
-
-1. Clone or download the Marketing data sources
-2. Reference the desired data source project in your solution
-3. Ensure all NuGet dependencies are restored
-
-## 📖 Usage Examples
-
-### Mailchimp Data Source
-
-#### Basic Connection
-
+#### Configuration
 ```csharp
-using BeepDM.Connectors.Marketing.Mailchimp;
-using Microsoft.Extensions.Logging;
-
-// Create logger (you can use any logging framework)
-var logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<MailchimpDataSource>();
-
-// Initialize the data source
-var mailchimpDS = new MailchimpDataSource(logger);
-
-// Connection parameters
-var parameters = new Dictionary<string, object>
+var props = new WebAPIConnectionProperties
 {
-    ["ApiKey"] = "your-mailchimp-api-key",
-    ["DataCenter"] = "us1"  // Replace with your data center (e.g., us1, us2, eu1)
+    Url = "https://us1.api.mailchimp.com/3.0",
+    AuthType = AuthTypeEnum.Basic,
+    UserID = "apikey",
+    Password = "your_api_key"
 };
-
-// Connect to Mailchimp
-bool connected = await mailchimpDS.ConnectAsync(parameters);
-if (connected)
-{
-    Console.WriteLine("Successfully connected to Mailchimp!");
-}
 ```
-
-#### Get Available Entities
-
-```csharp
-// Get list of available entities
-List<string> entities = await mailchimpDS.GetEntitiesAsync();
-foreach (var entity in entities)
-{
-    Console.WriteLine($"Available entity: {entity}");
-}
-// Output: lists, campaigns, templates, automations, reports, segments, members, etc.
-```
-
-#### Retrieve Data
-
-```csharp
-// Get all lists
-DataTable lists = await mailchimpDS.GetEntityAsync("lists");
-
-// Get campaigns with parameters
-var campaignParams = new Dictionary<string, object>
-{
-    ["count"] = 10,
-    ["status"] = "sent"
-};
-DataTable campaigns = await mailchimpDS.GetEntityAsync("campaigns", campaignParams);
-
-// Get entity metadata
-DataTable metadata = await mailchimpDS.GetEntityMetadataAsync("lists");
-```
-
-#### Update Data
-
-```csharp
-// Create a new list
-DataTable newList = new DataTable("lists");
-newList.Columns.Add("name", typeof(string));
-newList.Columns.Add("contact", typeof(object));
-newList.Columns.Add("permission_reminder", typeof(string));
-
-DataRow listRow = newList.NewRow();
-listRow["name"] = "My New List";
-listRow["contact"] = new { company = "My Company", address1 = "123 Main St", city = "Anytown", state = "CA", zip = "12345", country = "US" };
-listRow["permission_reminder"] = "You signed up for updates from our company.";
-newList.Rows.Add(listRow);
-
-// Insert the new list
-bool success = await mailchimpDS.UpdateEntityAsync("lists", newList);
-```
-
-#### Disconnect
-
-```csharp
-// Always disconnect when done
-await mailchimpDS.DisconnectAsync();
-```
-
-### Connection String Format
-
-Alternatively, you can use connection strings:
-
-```csharp
-// For Mailchimp
-string connectionString = "ApiKey=your-api-key;DataCenter=us1";
-
-// For other platforms (when implemented)
-string connectionString = "ApiKey=your-api-key;ApiUrl=https://api.platform.com";
-```
-
-## 🔧 Configuration
-
-### Mailchimp Configuration
-
-To use Mailchimp data source, you need:
-
-1. **API Key**: Generate from Mailchimp Account → Account → Extras → API Keys
-2. **Data Center**: Found in your API key (e.g., `us1`, `us2`, `eu1`)
-
-Example API Key format: `1234567890abcdef-us1`
-
-### Authentication Methods by Platform
-
-| Platform | Method | Parameters |
-|----------|--------|------------|
-| Mailchimp | API Key + Data Center | `ApiKey`, `DataCenter` |
-| ActiveCampaign | API Key + URL | `ApiKey`, `ApiUrl` |
-| Klaviyo | Private API Key | `ApiKey` |
-| GoogleAds | OAuth 2.0 | `ClientId`, `ClientSecret`, `RefreshToken` |
-| Marketo | OAuth 2.0 | `ClientId`, `ClientSecret`, `Endpoint` |
-
-## 📊 Supported Entities
-
-### Mailchimp Entities
-
-- **lists**: Subscriber lists and their configuration
-- **campaigns**: Email campaigns and performance data
-- **templates**: Email templates
-- **automations**: Marketing automation workflows
-- **reports**: Campaign performance and analytics
-- **segments**: List segments for targeted campaigns
-- **members**: Individual subscribers
-- **merge-fields**: Custom fields for lists
-- **interest-categories**: Interest groups
-- **interests**: Specific interests within categories
-
-## 🐛 Error Handling
-
-All data sources include comprehensive error handling:
-
-```csharp
-try
-{
-    bool connected = await mailchimpDS.ConnectAsync(parameters);
-    if (!connected)
-    {
-        Console.WriteLine("Connection failed. Check your credentials.");
-        return;
-    }
-
-    DataTable data = await mailchimpDS.GetEntityAsync("lists");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Error: {ex.Message}");
-    // Log error details for debugging
-}
-finally
-{
-    await mailchimpDS.DisconnectAsync();
-}
-```
-
-## 🔍 Testing Connection
-
-```csharp
-// Test connection without performing operations
-bool isConnected = await mailchimpDS.TestConnectionAsync();
-
-// Get connection information
-Dictionary<string, object> info = await mailchimpDS.GetConnectionInfoAsync();
-Console.WriteLine($"Data Source: {info["DataSourceName"]}");
-Console.WriteLine($"Connected: {info["IsConnected"]}");
-```
-
-## 📈 Best Practices
-
-1. **Connection Management**: Always disconnect when finished
-2. **Error Handling**: Implement proper try-catch blocks
-3. **Rate Limiting**: Be aware of API rate limits for each platform
-4. **Data Types**: Check entity metadata for proper data types
-5. **Authentication**: Keep API keys secure and rotate regularly
-
-## 🛣️ Roadmap
-
-### Phase 2: Core Implementation (In Progress)
-- [x] MailchimpDataSource - Complete
-- [ ] ActiveCampaignDataSource - In Development
-- [ ] KlaviyoDataSource - In Development
-- [ ] GoogleAdsDataSource - In Development
-- [ ] MarketoDataSource - In Development
-- [ ] Remaining platforms - Planned
-
-### Phase 3: Advanced Features
-- Platform-specific optimizations
-- Bulk operations support
-- Webhook integrations
-- Advanced filtering and segmentation
-
-## 📚 Additional Resources
-
-- [Beep Framework Documentation](https://github.com/The-Tech-Idea/BeepDM)
-- [Mailchimp API Documentation](https://mailchimp.com/developer/)
-- [CRM Data Sources](../CRM/README.md) - Reference implementation pattern
-
-## 🤝 Contributing
-
-Contributions are welcome! Please see the main Beep Data Connectors repository for contribution guidelines.
-
-## 📄 License
-
-This project follows the same license as the Beep Data Connectors framework.
 
 ---
 
-**Last Updated**: August 27, 2025
-**Version**: 1.0.0</content>
-<parameter name="filePath">c:\Users\f_ald\source\repos\The-Tech-Idea\BeepDataSources\Connectors\Marketing\plan.md
+### ActiveCampaign (`ActiveCampaignDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://{account}.api-us1.com/api/3`  
+**Authentication**: API Key
+
+#### CommandAttribute Methods
+- Contact management
+- Campaign operations
+- Automation workflows
+- List management
+- Deal tracking
+
+---
+
+### Campaign Monitor (`CampaignMonitorDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.createsend.com/api/v3.3`  
+**Authentication**: API Key
+
+#### CommandAttribute Methods
+- List management
+- Subscriber operations
+- Campaign management
+- Template operations
+- Analytics
+
+---
+
+### Constant Contact (`ConstantContactDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.cc.email/v3`  
+**Authentication**: OAuth 2.0
+
+#### CommandAttribute Methods
+- Contact management
+- Campaign operations
+- List management
+- Email tracking
+
+---
+
+### ConvertKit (`ConvertKitDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.convertkit.com/v3`  
+**Authentication**: API Key + API Secret
+
+#### CommandAttribute Methods
+- Subscriber management
+- Form operations
+- Sequence management
+- Tag operations
+- Webhook configuration
+
+---
+
+### Drip (`DripDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.getdrip.com/v2`  
+**Authentication**: API Token
+
+#### CommandAttribute Methods
+- Subscriber management
+- Campaign operations
+- Workflow automation
+- Event tracking
+
+---
+
+### Google Ads (`GoogleAdsDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://googleads.googleapis.com/v14`  
+**Authentication**: OAuth 2.0
+
+#### CommandAttribute Methods
+- Campaign management
+- Ad group operations
+- Keyword management
+- Performance reporting
+- Budget management
+
+---
+
+### Klaviyo (`KlaviyoDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://a.klaviyo.com/api`  
+**Authentication**: API Key
+
+#### CommandAttribute Methods
+- List management
+- Profile operations
+- Event tracking
+- Flow management
+- Analytics
+
+---
+
+### MailerLite (`MailerLiteDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.mailerlite.com/api/v2`  
+**Authentication**: API Key
+
+#### CommandAttribute Methods
+- Subscriber management
+- Campaign operations
+- Group management
+- Automation workflows
+
+---
+
+### Marketo (`MarketoDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://{instance}.mktorest.com/rest`  
+**Authentication**: OAuth 2.0
+
+#### CommandAttribute Methods
+- Lead management
+- Campaign operations
+- Program management
+- Activity tracking
+- Analytics
+
+---
+
+### Sendinblue (`SendinblueDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.sendinblue.com/v3`  
+**Authentication**: API Key
+
+#### CommandAttribute Methods
+- Contact management
+- Campaign operations
+- List management
+- Transactional emails
+- Analytics
+
+---
+
+## Common Patterns
+
+### CommandAttribute Structure
+
+All marketing connectors use the `CommandAttribute` pattern:
+
+```csharp
+[CommandAttribute(
+    Category = DatasourceCategory.Connector,
+    DatasourceType = DataSourceType.MarketingPlatform,
+    PointType = EnumPointType.Function,
+    ObjectType = "EntityName",
+    ClassName = "PlatformDataSource",
+    Showin = ShowinType.Both,
+    misc = "IEnumerable<EntityType>"
+)]
+public async Task<IEnumerable<EntityType>> GetEntities(AppFilter filter)
+{
+    // Implementation
+}
+```
+
+### Entity Mapping
+
+Marketing connectors typically support:
+- **Lists** - Email lists and segments
+- **Subscribers/Contacts** - Subscriber management and segmentation
+- **Campaigns** - Email campaign creation and management
+- **Automations** - Automated workflows and sequences
+- **Analytics** - Campaign performance and subscriber analytics
+- **Templates** - Email templates and designs
+- **Tags** - Subscriber tagging and segmentation
+
+## Authentication Patterns
+
+### API Key Platforms
+- Mailchimp, ActiveCampaign, Campaign Monitor, ConvertKit, Drip, Klaviyo, MailerLite, Sendinblue
+- Uses API keys for authentication
+- Direct key-based access
+
+### OAuth 2.0 Platforms
+- Constant Contact, Google Ads, Marketo
+- Requires client registration and user consent
+- Supports refresh tokens for long-term access
+
+## Best Practices
+
+1. **Rate Limiting**: Respect platform rate limits (Mailchimp: varies, Google Ads: 15,000 req/day)
+2. **List Hygiene**: Maintain clean subscriber lists and handle unsubscribes
+3. **Segmentation**: Use tags and segments for targeted campaigns
+4. **Automation**: Leverage automation workflows for efficiency
+5. **Analytics**: Track campaign performance and subscriber engagement
+6. **Compliance**: Follow email marketing regulations (CAN-SPAM, GDPR)
+
+## Configuration Requirements
+
+### Mailchimp
+- API Key
+- Data Center (us1, us2, etc.)
+
+### ActiveCampaign
+- API Key
+- Account URL
+
+### Google Ads
+- Client ID, Client Secret
+- Developer Token
+- OAuth 2.0 tokens
+
+## Status
+
+All Marketing connectors are **✅ Completed** and ready for use. See `progress.md` for detailed implementation status.

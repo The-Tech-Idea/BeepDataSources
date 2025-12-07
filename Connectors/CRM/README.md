@@ -1,8 +1,278 @@
-# CRM Data Sources Implementation Instructions
+# CRM Connectors
 
 ## Overview
 
-This document provides detailed instructions for implementing and using the individual CRM data source projects in the Beep Data Connectors framework.
+The CRM connectors category provides integration with Customer Relationship Management platforms, enabling contact management, lead tracking, opportunity management, and sales pipeline operations. All connectors inherit from `WebAPIDataSource` and use `CommandAttribute` to expose platform-specific functionality to the Beep framework.
+
+## Architecture
+
+- **Base Class**: All connectors inherit from `WebAPIDataSource`
+- **Authentication**: Primarily OAuth 2.0, API Keys, or API Tokens
+- **Models**: Strongly-typed POCO classes for contacts, leads, opportunities, accounts, etc.
+- **CommandAttribute**: Public methods decorated with `CommandAttribute` for framework discovery
+
+## Connectors
+
+### Salesforce (`SalesforceDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://{instance}.salesforce.com/services/data/v{version}`  
+**Authentication**: OAuth 2.0
+
+#### CommandAttribute Methods
+
+**Read Operations:**
+- `GetAccounts(AppFilter filter)` - Get Salesforce accounts
+- `GetContacts(AppFilter filter)` - Get contacts
+- `GetLeads(AppFilter filter)` - Get leads
+- `GetOpportunities(AppFilter filter)` - Get opportunities
+- `GetUsers(AppFilter filter)` - Get users
+
+#### Configuration
+```csharp
+var props = new WebAPIConnectionProperties
+{
+    Url = "https://yourinstance.salesforce.com/services/data/v58.0",
+    AuthType = AuthTypeEnum.OAuth2,
+    ClientId = "your_consumer_key",
+    ClientSecret = "your_consumer_secret",
+    TokenUrl = "https://login.salesforce.com/services/oauth2/token"
+};
+```
+
+---
+
+### HubSpot (`HubSpotDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.hubapi.com`  
+**Authentication**: API Key or OAuth 2.0
+
+#### CommandAttribute Methods
+- Contact management
+- Company operations
+- Deal management
+- Pipeline operations
+
+---
+
+### Dynamics 365 (`Dynamics365DataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://{org}.api.crm.dynamics.com/api/data/v9.2`  
+**Authentication**: OAuth 2.0
+
+#### CommandAttribute Methods
+- Entity operations
+- Contact management
+- Account operations
+- Opportunity tracking
+
+---
+
+### Zoho (`ZohoDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://www.zohoapis.com/crm/v6`  
+**Authentication**: OAuth 2.0
+
+#### CommandAttribute Methods
+- Module operations (Contacts, Leads, Accounts, Deals)
+- Record management
+- Custom module support
+
+---
+
+### Pipedrive (`PipedriveDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.pipedrive.com/v1`  
+**Authentication**: API Token
+
+#### CommandAttribute Methods
+- Deal management
+- Person operations
+- Organization management
+- Activity tracking
+
+---
+
+### Freshsales (`FreshsalesDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://{domain}.myfreshworks.com/crm/sales/api`  
+**Authentication**: API Key
+
+#### CommandAttribute Methods
+- Contact management
+- Deal operations
+- Account management
+- Sales activity tracking
+
+---
+
+### Copper (`CopperDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.copper.com/developer_api/v1`  
+**Authentication**: API Key
+
+#### CommandAttribute Methods
+- Person management
+- Company operations
+- Opportunity tracking
+- Project management
+
+---
+
+### Insightly (`InsightlyDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.insightly.com/v3.1`  
+**Authentication**: API Key
+
+#### CommandAttribute Methods
+- Contact management
+- Organization operations
+- Opportunity tracking
+- Project management
+
+---
+
+### Nutshell (`NutshellDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://app.nutshell.com/api/v1/json`  
+**Authentication**: Username/API Key
+
+#### CommandAttribute Methods
+- Contact operations
+- Lead management
+- Account operations
+- Activity tracking
+
+---
+
+### SugarCRM (`SugarCRMDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://{instance}.sugarcrm.com/rest/v11`  
+**Authentication**: OAuth 2.0
+
+#### CommandAttribute Methods
+- Module operations
+- Record management
+- Relationship operations
+- Custom field support
+
+---
+
+## Common Patterns
+
+### CommandAttribute Structure
+
+All CRM connectors use the `CommandAttribute` pattern:
+
+```csharp
+[CommandAttribute(
+    Category = DatasourceCategory.Connector,
+    DatasourceType = DataSourceType.CRMName,
+    PointType = EnumPointType.Function,
+    ObjectType = "EntityName",
+    ClassName = "CRMDataSource",
+    Showin = ShowinType.Both,
+    misc = "IEnumerable<EntityType>"
+)]
+public async Task<IEnumerable<EntityType>> GetEntities(AppFilter filter)
+{
+    // Implementation
+}
+```
+
+### Entity Mapping
+
+CRM connectors typically map to standard entities:
+- **Contacts** - Individual contacts/persons
+- **Accounts/Companies** - Business accounts
+- **Leads** - Potential customers
+- **Opportunities/Deals** - Sales opportunities
+- **Activities** - Tasks, calls, meetings
+- **Users** - CRM users
+
+### Filter Pattern
+
+Most CRM connectors use `AppFilter` for querying:
+
+```csharp
+var filter = new AppFilter
+{
+    FieldName = "email",
+    FilterValue = "example@email.com",
+    Operator = "="
+};
+var contacts = await crm.GetContacts(filter);
+```
+
+## Authentication Patterns
+
+### OAuth 2.0 Platforms
+- Salesforce, Dynamics 365, Zoho, SugarCRM
+- Requires client registration and user consent
+- Supports refresh tokens for long-term access
+
+### API Key Platforms
+- HubSpot, Freshsales, Copper, Insightly
+- Uses API keys for authentication
+- Direct key-based access
+
+### API Token Platforms
+- Pipedrive
+- Uses API tokens for authentication
+
+### Username/API Key Platforms
+- Nutshell
+- Uses username and API key combination
+
+## Best Practices
+
+1. **Rate Limiting**: Respect platform rate limits (Salesforce: varies by edition, HubSpot: 100 req/10sec)
+2. **Bulk Operations**: Use bulk APIs when available for better performance
+3. **Field Selection**: Request only needed fields to reduce payload size
+4. **Pagination**: Handle large result sets with pagination
+5. **Error Handling**: Handle authentication failures, rate limits, and API errors gracefully
+6. **Data Sync**: Implement incremental sync for large datasets
+
+## Configuration Requirements
+
+### Salesforce
+- Consumer Key (Client ID)
+- Consumer Secret (Client Secret)
+- Instance URL
+- API Version
+
+### HubSpot
+- API Key or OAuth credentials
+- Base URL: `https://api.hubapi.com`
+
+### Dynamics 365
+- Client ID, Client Secret
+- Tenant ID
+- Organization URL
+
+### Zoho
+- Client ID, Client Secret
+- Refresh Token
+- Data Center (US, EU, IN, etc.)
+
+## Status
+
+All CRM connectors are **✅ Completed** and ready for use. See `progress.md` for detailed implementation status.
+
+---
+
+## Implementation Instructions
+
+This section provides detailed instructions for implementing and using the individual CRM data source projects in the Beep Data Connectors framework.
 
 ## Project Structure
 

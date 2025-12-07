@@ -813,6 +813,18 @@ namespace RabbitMQDataSourceCore
         {
             try
             {
+                // Ensure message follows standards
+                message = MessageStandardsHelper.EnsureMessageStandards(message, DatasourceName ?? "RabbitMQDataSource");
+                
+                // Validate message
+                var validation = MessageStandardsHelper.ValidateMessage(message);
+                if (!validation.IsValid)
+                {
+                    var errorMsg = $"Message validation failed: {string.Join("; ", validation.Errors)}";
+                    Logger?.WriteLog($"[SendMessageAsync] {errorMsg}");
+                    throw new InvalidOperationException(errorMsg);
+                }
+
                 if (Dataconnection is RabbitMQDataConnection rabbitConn)
                 {
                     // Ensure queue existence
@@ -820,31 +832,39 @@ namespace RabbitMQDataSourceCore
                     if (result.Flag == Errors.Failed)
                         throw new Exception(result.Message);
 
+                    // Use routing key from metadata if available, otherwise use streamName
+                    var routingKey = message.RoutingKey ?? streamName;
+
                     // Prepare the message properties (use Amqp091.BasicProperties instead of IBasicProperties)
                     var properties = new BasicProperties
                     {
-                        ContentType = "application/json",
-                        DeliveryMode =(message.Priority.HasValue ? DeliveryModes.Persistent : DeliveryModes.Transient),
+                        ContentType = message.ContentType ?? "application/json",
+                        DeliveryMode = (message.Priority.HasValue ? DeliveryModes.Persistent : DeliveryModes.Transient),
                         MessageId = message.MessageId,
                         Timestamp = new AmqpTimestamp(new DateTimeOffset(message.Timestamp).ToUnixTimeSeconds()),
-                        Headers = ToRabbitMqHeaders(message)
+                        Priority = (byte?)(message.Priority ?? 0),
+                        Headers = ToRabbitMqHeaders(message),
+                        CorrelationId = message.CorrelationId,
+                        Type = message.MessageType
                     };
 
-                    var body = Encoding.UTF8.GetBytes(message.SerializePayload());
+                    // Use standard serialization
+                    var payload = MessageStandardsHelper.SerializePayload(message.Payload);
+                    var body = Encoding.UTF8.GetBytes(payload);
 
                     if (Channels.TryGetValue(streamName, out var channel))
                     {
                         // Publish the message using the correct type for properties
                         await channel.BasicPublishAsync(
                             exchange: "",
-                            routingKey: streamName,
+                            routingKey: routingKey,
                             mandatory: false,
                             basicProperties: properties,
                             body: body.AsMemory(),
                             cancellationToken: cancellationToken
                         );
 
-                        Logger?.WriteLog($"[SendMessageAsync] Sent to stream '{streamName}': {message.SerializePayload()}");
+                        Logger?.WriteLog($"[SendMessageAsync] Sent to stream '{streamName}' with MessageId: {message.MessageId}");
                     }
                     else
                     {
@@ -859,6 +879,7 @@ namespace RabbitMQDataSourceCore
             catch (Exception ex)
             {
                 Logger?.WriteLog($"[SendMessageAsync] Error while sending message to stream '{streamName}': {ex.Message}");
+                MessageStandardsHelper.SetErrorMessage(message, ex);
                 throw;
             }
         }
@@ -887,10 +908,24 @@ namespace RabbitMQDataSourceCore
                             EntityName = streamName,
                             Payload = messageBody,
                             Metadata = FromRabbitMqHeaders(ea.BasicProperties.Headers),
-                            Timestamp = DateTime.UtcNow,
-                            MessageId = ea.BasicProperties.MessageId,
-                            DeliveryTag = ea.DeliveryTag
+                            Timestamp = ea.BasicProperties.Timestamp.UnixTime > 0 
+                                ? DateTimeOffset.FromUnixTimeSeconds(ea.BasicProperties.Timestamp.UnixTime).UtcDateTime 
+                                : DateTime.UtcNow,
+                            MessageId = ea.BasicProperties.MessageId ?? Guid.NewGuid().ToString(),
+                            DeliveryTag = ea.DeliveryTag,
+                            Priority = ea.BasicProperties.Priority
                         };
+
+                        // Set metadata from properties
+                        if (!string.IsNullOrEmpty(ea.BasicProperties.CorrelationId))
+                            genericMessage.CorrelationId = ea.BasicProperties.CorrelationId;
+                        if (!string.IsNullOrEmpty(ea.BasicProperties.Type))
+                            genericMessage.MessageType = ea.BasicProperties.Type;
+                        if (!string.IsNullOrEmpty(ea.BasicProperties.ContentType))
+                            genericMessage.ContentType = ea.BasicProperties.ContentType;
+
+                        // Ensure standards compliance
+                        genericMessage = MessageStandardsHelper.EnsureMessageStandards(genericMessage, DatasourceName ?? "RabbitMQDataSource");
 
                         await onMessageReceived(genericMessage);
 

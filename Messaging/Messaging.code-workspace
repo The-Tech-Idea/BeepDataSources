@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../Connectors"
+		},
+		{
+			"path": "../../BeepDM/DataManagementEngineStandard/WebAPI"
+		},
+		{
+			"path": "../../BeepDM/DataManagementModelsStandard"
+		}
+	],
+	"settings": {}
+}

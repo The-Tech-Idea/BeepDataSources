@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beep Data Connectors - Products & Features</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .search-bar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+        
+        .search-bar input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .category-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .filter-btn:hover, .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .category-section {
+            margin-bottom: 3rem;
+        }
+        
+        .category-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .category-title {
+            font-size: 1.8rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .category-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .connector-count {
+            background: #667eea;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .connectors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .connector-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        
+        .connector-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .connector-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+        
+        .connector-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .auth-badge {
+            padding: 0.3rem 0.8rem;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .connector-description {
+            color: #666;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+        
+        .features-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+        
+        .features-list li {
+            padding: 0.5rem 0;
+            color: #555;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .features-list li:before {
+            content: "✓";
+            color: #4caf50;
+            font-weight: bold;
+        }
+        
+        .methods-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .methods-title {
+            font-size: 0.85rem;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .method-tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin: 0.2rem 0.2rem 0.2rem 0;
+            color: #666;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+        
+        @media (max-width: 768px) {
+            .connectors-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats {
+                gap: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Beep Data Connectors</h1>
+        <p>Unified Integration Framework for 100+ Platforms</p>
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-number">100+</span>
+                <span class="stat-label">Connectors</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">16</span>
+                <span class="stat-label">Categories</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">WebAPI</span>
+                <span class="stat-label">Base Framework</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search connectors by name, category, or feature...">
+            <div class="category-filter" id="categoryFilter"></div>
+        </div>
+        
+        <div id="connectorsContainer">
+            <!-- Categories will be inserted here by JavaScript -->
+        </div>
+    </div>
+    
+    <script>
+        const connectors = {
+            "Social Media": [
+                {name: "Twitter", auth: "OAuth 2.0", desc: "Twitter API v2 integration for tweets, users, spaces, and analytics", methods: ["GetTweets", "GetUserTimeline", "CreateTweet", "DeleteTweet", "LikeTweet", "Retweet"]},
+                {name: "Facebook", auth: "OAuth 2.0", desc: "Facebook Graph API for posts, pages, events, and insights", methods: ["GetPosts", "GetPageInfo", "CreatePost", "UpdatePost"]},
+                {name: "Instagram", auth: "OAuth 2.0", desc: "Instagram Graph API for media, stories, and analytics", methods: ["GetMedia", "GetStories", "GetInsights"]},
+                {name: "LinkedIn", auth: "OAuth 2.0", desc: "LinkedIn Marketing API for posts, organizations, and campaigns", methods: ["GetPosts", "GetOrganizations", "CreatePost"]},
+                {name: "Pinterest", auth: "OAuth 2.0", desc: "Pinterest API for boards, pins, and analytics", methods: ["GetBoards", "GetPins", "CreatePin"]},
+                {name: "YouTube", auth: "OAuth 2.0", desc: "YouTube Data API for channels, videos, and playlists", methods: ["GetChannels", "GetVideos", "GetPlaylists"]},
+                {name: "TikTok", auth: "OAuth 2.0", desc: "TikTok API for videos, users, and analytics", methods: ["GetVideos", "GetUserInfo", "GetAnalytics"]},
+                {name: "Snapchat", auth: "OAuth 2.0", desc: "Snapchat Marketing API for campaigns and ads", methods: ["GetCampaigns", "GetAds", "CreateCampaign"]},
+                {name: "Reddit", auth: "API Token", desc: "Reddit API for posts, comments, and subreddits", methods: ["GetPosts", "GetComments", "CreatePost"]},
+                {name: "Buffer", auth: "API Key", desc: "Buffer API for social media scheduling and analytics", methods: ["GetPosts", "CreatePost", "GetAnalytics"]},
+                {name: "Hootsuite", auth: "API Key", desc: "Hootsuite API for social media management", methods: ["GetPosts", "CreatePost", "GetProfiles"]},
+                {name: "TikTokAds", auth: "Access Token", desc: "TikTok Ads API for campaign management", methods: ["GetCampaigns", "GetAds", "CreateCampaign"]},
+                {name: "Loomly", auth: "API Key", desc: "Loomly API for content scheduling", methods: ["GetPosts", "CreatePost", "GetCalendar"]}
+            ],
+            "SMS": [
+                {name: "ClickSend", auth: "API Key", desc: "ClickSend SMS API for messaging and contact management", methods: ["SendSMS", "GetSMSHistory", "GetContacts", "CreateContact"]},
+                {name: "Kudosity", auth: "API Key", desc: "Kudosity SMS API for messaging and campaigns", methods: ["SendSMS", "GetMessageHistory", "GetCampaigns", "CreateCampaign"]}
+            ],
+            "Communication": [
+                {name: "Slack", auth: "OAuth 2.0", desc: "Slack API for channels, messages, and team collaboration", methods: ["GetChannels", "GetMessages", "GetUsers"]},
+                {name: "Microsoft Teams", auth: "OAuth 2.0", desc: "Microsoft Teams API for channels and messages", methods: ["GetTeams", "GetChannels", "GetMessages"]},
+                {name: "Discord", auth: "Bot Token", desc: "Discord API for channels, messages, and guilds", methods: ["GetChannels", "GetMessages", "GetGuilds"]},
+                {name: "Telegram", auth: "Bot Token", desc: "Telegram Bot API for messaging and chats", methods: ["SendMessage", "GetUpdates", "GetChat"]},
+                {name: "WhatsApp Business", auth: "OAuth 2.0", desc: "WhatsApp Business API for messaging", methods: ["SendMessage", "GetMessages", "GetContacts"]},
+                {name: "Zoom", auth: "OAuth 2.0", desc: "Zoom API for meetings and webinars", methods: ["GetMeetings", "CreateMeeting", "GetRecordings"]},
+                {name: "Google Chat", auth: "OAuth 2.0", desc: "Google Chat API for spaces and messages", methods: ["GetSpaces", "GetMessages", "CreateMessage"]},
+                {name: "Rocket.Chat", auth: "API Key", desc: "Rocket.Chat API for channels and messages", methods: ["GetChannels", "GetMessages", "GetUsers"]},
+                {name: "Twist", auth: "API Token", desc: "Twist API for threads and comments", methods: ["GetThreads", "GetComments", "CreateThread"]},
+                {name: "Chanty", auth: "API Key", desc: "Chanty API for team communication", methods: ["GetMessages", "GetChannels", "GetUsers"]},
+                {name: "Flock", auth: "Bot Token", desc: "Flock API for messaging and collaboration", methods: ["GetChannels", "GetMessages", "GetUsers"]}
+            ],
+            "CRM": [
+                {name: "Salesforce", auth: "OAuth 2.0", desc: "Salesforce API for accounts, contacts, leads, and opportunities", methods: ["GetAccounts", "GetContacts", "GetLeads", "GetOpportunities"]},
+                {name: "HubSpot", auth: "API Key", desc: "HubSpot API for contacts, companies, and deals", methods: ["GetContacts", "GetCompanies", "GetDeals"]},
+                {name: "Dynamics 365", auth: "OAuth 2.0", desc: "Dynamics 365 API for entities and records", methods: ["GetEntities", "GetRecords", "CreateRecord"]},
+                {name: "Zoho", auth: "OAuth 2.0", desc: "Zoho CRM API for modules and records", methods: ["GetModules", "GetRecords", "CreateRecord"]},
+                {name: "Pipedrive", auth: "API Token", desc: "Pipedrive API for deals, persons, and organizations", methods: ["GetDeals", "GetPersons", "GetOrganizations"]},
+                {name: "Freshsales", auth: "API Key", desc: "Freshsales API for contacts and deals", methods: ["GetContacts", "GetDeals", "CreateContact"]},
+                {name: "Copper", auth: "API Key", desc: "Copper API for people and companies", methods: ["GetPeople", "GetCompanies", "GetOpportunities"]},
+                {name: "Insightly", auth: "API Key", desc: "Insightly API for contacts and opportunities", methods: ["GetContacts", "GetOpportunities", "GetProjects"]},
+                {name: "Nutshell", auth: "API Key", desc: "Nutshell API for contacts and leads", methods: ["GetContacts", "GetLeads", "GetAccounts"]},
+                {name: "SugarCRM", auth: "OAuth 2.0", desc: "SugarCRM API for modules and records", methods: ["GetModules", "GetRecords", "CreateRecord"]}
+            ],
+            "E-commerce": [
+                {name: "Shopify", auth: "API Key", desc: "Shopify API for products, orders, and customers", methods: ["GetProducts", "GetOrders", "GetCustomers"]},
+                {name: "Squarespace", auth: "API Key", desc: "Squarespace API for products, orders, and pages", methods: ["GetProducts", "GetOrders", "GetPages", "GetBlogs"]},
+                {name: "WooCommerce", auth: "Consumer Key", desc: "WooCommerce API for products and orders", methods: ["GetProducts", "GetOrders", "GetCustomers"]},
+                {name: "Magento", auth: "Admin Token", desc: "Magento API for catalog and orders", methods: ["GetProducts", "GetOrders", "GetCustomers"]},
+                {name: "BigCommerce", auth: "Client ID/Secret", desc: "BigCommerce API for products and orders", methods: ["GetProducts", "GetOrders", "GetCustomers"]},
+                {name: "Wix", auth: "API Key", desc: "Wix API for products and orders", methods: ["GetProducts", "GetOrders", "GetInventory"]},
+                {name: "Etsy", auth: "OAuth 2.0", desc: "Etsy API for shops and listings", methods: ["GetShops", "GetListings", "GetOrders"]},
+                {name: "OpenCart", auth: "API Key", desc: "OpenCart API for products and orders", methods: ["GetProducts", "GetOrders", "GetCustomers"]},
+                {name: "Ecwid", auth: "API Token", desc: "Ecwid API for products and orders", methods: ["GetProducts", "GetOrders", "GetCustomers"]},
+                {name: "Volusion", auth: "API Key", desc: "Volusion API for products and orders", methods: ["GetProducts", "GetOrders", "GetCustomers"]}
+            ],
+            "Accounting": [
+                {name: "QuickBooks Online", auth: "OAuth 2.0", desc: "QuickBooks API for invoices, expenses, and financial data", methods: ["GetInvoices", "GetExpenses", "GetContacts"]},
+                {name: "Xero", auth: "OAuth 2.0", desc: "Xero API for invoices, contacts, and transactions", methods: ["GetInvoices", "GetContacts", "GetTransactions"]},
+                {name: "FreshBooks", auth: "OAuth 2.0", desc: "FreshBooks API for invoices and expenses", methods: ["GetInvoices", "GetExpenses", "GetClients"]},
+                {name: "Sage Intacct", auth: "API Key", desc: "Sage Intacct API for financial data", methods: ["GetFinancialData", "GetInvoices", "GetAccounts"]},
+                {name: "MYOB", auth: "OAuth 2.0", desc: "MYOB API for invoices and contacts", methods: ["GetInvoices", "GetContacts", "GetAccounts"]},
+                {name: "Zoho Books", auth: "OAuth 2.0", desc: "Zoho Books API for invoices and expenses", methods: ["GetInvoices", "GetExpenses", "GetContacts"]},
+                {name: "Wave", auth: "OAuth 2.0", desc: "Wave API for invoices and expenses", methods: ["GetInvoices", "GetExpenses", "GetContacts"]}
+            ],
+            "Marketing": [
+                {name: "Mailchimp", auth: "API Key", desc: "Mailchimp API for lists, campaigns, and subscribers", methods: ["GetLists", "GetSubscribers", "CreateCampaign"]},
+                {name: "ActiveCampaign", auth: "API Key", desc: "ActiveCampaign API for contacts and automations", methods: ["GetContacts", "GetCampaigns", "GetAutomations"]},
+                {name: "Campaign Monitor", auth: "API Key", desc: "Campaign Monitor API for lists and campaigns", methods: ["GetLists", "GetSubscribers", "GetCampaigns"]},
+                {name: "Constant Contact", auth: "OAuth 2.0", desc: "Constant Contact API for contacts and campaigns", methods: ["GetContacts", "GetCampaigns", "CreateCampaign"]},
+                {name: "ConvertKit", auth: "API Key", desc: "ConvertKit API for subscribers and sequences", methods: ["GetSubscribers", "GetForms", "GetSequences"]},
+                {name: "Drip", auth: "API Token", desc: "Drip API for subscribers and campaigns", methods: ["GetSubscribers", "GetCampaigns", "GetWorkflows"]},
+                {name: "Google Ads", auth: "OAuth 2.0", desc: "Google Ads API for campaigns and reporting", methods: ["GetCampaigns", "GetAds", "GetReports"]},
+                {name: "Klaviyo", auth: "API Key", desc: "Klaviyo API for lists and profiles", methods: ["GetLists", "GetProfiles", "GetEvents"]},
+                {name: "MailerLite", auth: "API Key", desc: "MailerLite API for subscribers and campaigns", methods: ["GetSubscribers", "GetCampaigns", "GetGroups"]},
+                {name: "Marketo", auth: "OAuth 2.0", desc: "Marketo API for leads and campaigns", methods: ["GetLeads", "GetCampaigns", "GetPrograms"]},
+                {name: "Sendinblue", auth: "API Key", desc: "Sendinblue API for contacts and campaigns", methods: ["GetContacts", "GetCampaigns", "SendEmail"]}
+            ],
+            "Cloud Storage": [
+                {name: "Google Drive", auth: "OAuth 2.0", desc: "Google Drive API for files and folders", methods: ["GetFiles", "UploadFile", "GetFolders", "ShareFile"]},
+                {name: "Dropbox", auth: "OAuth 2.0", desc: "Dropbox API for files and sharing", methods: ["GetFiles", "UploadFile", "GetFolders", "ShareFile"]},
+                {name: "OneDrive", auth: "OAuth 2.0", desc: "OneDrive API for files and folders", methods: ["GetFiles", "UploadFile", "GetFolders", "ShareFile"]},
+                {name: "Box", auth: "OAuth 2.0", desc: "Box API for files and collaboration", methods: ["GetFiles", "UploadFile", "GetFolders", "ShareFile"]},
+                {name: "Amazon S3", auth: "AWS Credentials", desc: "Amazon S3 API for object storage", methods: ["GetObjects", "UploadObject", "GetBuckets", "GeneratePresignedUrl"]},
+                {name: "Egnyte", auth: "OAuth 2.0", desc: "Egnyte API for files and folders", methods: ["GetFiles", "UploadFile", "GetFolders"]},
+                {name: "Citrix ShareFile", auth: "OAuth 2.0", desc: "ShareFile API for files and sharing", methods: ["GetFiles", "UploadFile", "GetFolders", "ShareFile"]},
+                {name: "pCloud", auth: "OAuth 2.0", desc: "pCloud API for files and folders", methods: ["GetFiles", "UploadFile", "GetFolders"]},
+                {name: "MediaFire", auth: "API Key", desc: "MediaFire API for files and folders", methods: ["GetFiles", "UploadFile", "GetFolders"]},
+                {name: "iCloud", auth: "OAuth 2.0", desc: "iCloud API for files and folders", methods: ["GetFiles", "UploadFile", "GetFolders"]}
+            ],
+            "Customer Support": [
+                {name: "Zendesk", auth: "API Token", desc: "Zendesk API for tickets and users", methods: ["GetTickets", "GetUsers", "CreateTicket", "UpdateTicket"]},
+                {name: "Freshdesk", auth: "API Key", desc: "Freshdesk API for tickets and contacts", methods: ["GetTickets", "GetContacts", "CreateTicket"]},
+                {name: "HelpScout", auth: "API Key", desc: "HelpScout API for conversations and customers", methods: ["GetConversations", "GetCustomers", "CreateConversation"]},
+                {name: "Zoho Desk", auth: "OAuth 2.0", desc: "Zoho Desk API for tickets and contacts", methods: ["GetTickets", "GetContacts", "CreateTicket"]},
+                {name: "Front", auth: "API Token", desc: "Front API for conversations and contacts", methods: ["GetConversations", "GetContacts", "CreateConversation"]},
+                {name: "LiveAgent", auth: "API Key", desc: "LiveAgent API for tickets and contacts", methods: ["GetTickets", "GetContacts", "CreateTicket"]},
+                {name: "Kayako", auth: "API Key", desc: "Kayako API for tickets and users", methods: ["GetTickets", "GetUsers", "CreateTicket"]}
+            ],
+            "Forms": [
+                {name: "Typeform", auth: "API Token", desc: "Typeform API for forms and responses", methods: ["GetForms", "GetResponses", "CreateForm"]},
+                {name: "Jotform", auth: "API Key", desc: "Jotform API for forms and submissions", methods: ["GetForms", "GetSubmissions", "CreateForm"]}
+            ],
+            "IoT": [
+                {name: "AWS IoT", auth: "AWS Credentials", desc: "AWS IoT API for device management", methods: ["GetDevices", "GetShadows", "PublishEvent"]},
+                {name: "Azure IoT Hub", auth: "SAS Token", desc: "Azure IoT Hub API for devices and twins", methods: ["GetDevices", "GetTwins", "SendMessage"]},
+                {name: "Particle", auth: "Access Token", desc: "Particle API for device management", methods: ["GetDevices", "PublishEvent", "ReadVariable"]}
+            ],
+            "Mail Services": [
+                {name: "Gmail", auth: "OAuth 2.0", desc: "Gmail API for messages and labels", methods: ["GetMessages", "SendMessage", "GetLabels"]},
+                {name: "Outlook", auth: "OAuth 2.0", desc: "Outlook API for messages and folders", methods: ["GetMessages", "SendMessage", "GetFolders"]},
+                {name: "Yahoo", auth: "OAuth 2.0", desc: "Yahoo Mail API for messages and folders", methods: ["GetMessages", "SendMessage", "GetFolders"]}
+            ],
+            "Meeting Tools": [
+                {name: "Fathom", auth: "API Key", desc: "Fathom API for meeting recordings and transcriptions", methods: ["GetMeetings", "GetRecordings", "GetTranscriptions"]},
+                {name: "TLDV", auth: "API Key", desc: "TLDV API for meeting recordings", methods: ["GetMeetings", "GetRecordings", "GetTranscriptions"]}
+            ],
+            "Task Management": [
+                {name: "Asana", auth: "API Token", desc: "Asana API for tasks and projects", methods: ["GetTasks", "GetProjects", "CreateTask"]},
+                {name: "AnyDo", auth: "API Key", desc: "AnyDo API for tasks and lists", methods: ["GetTasks", "GetLists", "CreateTask"]}
+            ],
+            "Business Intelligence": [
+                {name: "Power BI", auth: "OAuth 2.0", desc: "Power BI API for dashboards and reports", methods: ["GetDashboards", "GetReports", "GetDatasets"]},
+                {name: "Tableau", auth: "Personal Token", desc: "Tableau API for workbooks and views", methods: ["GetWorkbooks", "GetViews", "GetSites"]}
+            ],
+            "Content Management": [
+                {name: "WordPress", auth: "Application Password", desc: "WordPress REST API for posts and pages", methods: ["GetPosts", "GetPages", "CreatePost"]},
+                {name: "Contentful", auth: "Access Token", desc: "Contentful API for content and entries", methods: ["GetEntries", "GetAssets", "CreateEntry"]},
+                {name: "Drupal", auth: "API Key", desc: "Drupal JSON:API for nodes and content", methods: ["GetNodes", "GetContentTypes", "CreateNode"]},
+                {name: "Joomla", auth: "API Token", desc: "Joomla API for articles and categories", methods: ["GetArticles", "GetCategories", "CreateArticle"]}
+            ]
+        };
+        
+        const categoryIcons = {
+            "Social Media": "📱",
+            "SMS": "💬",
+            "Communication": "💬",
+            "CRM": "👥",
+            "E-commerce": "🛒",
+            "Accounting": "💰",
+            "Marketing": "📢",
+            "Cloud Storage": "☁️",
+            "Customer Support": "🎧",
+            "Forms": "📝",
+            "IoT": "🌐",
+            "Mail Services": "📧",
+            "Meeting Tools": "🎥",
+            "Task Management": "✅",
+            "Business Intelligence": "📊",
+            "Content Management": "📄"
+        };
+        
+        function renderConnectors() {
+            const container = document.getElementById('connectorsContainer');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const activeCategory = document.querySelector('.filter-btn.active')?.textContent || 'All';
+            
+            container.innerHTML = '';
+            
+            let hasResults = false;
+            
+            Object.keys(connectors).forEach(category => {
+                if (activeCategory !== 'All' && activeCategory !== category) return;
+                
+                const categoryConnectors = connectors[category].filter(connector => {
+                    return connector.name.toLowerCase().includes(searchTerm) ||
+                           connector.desc.toLowerCase().includes(searchTerm) ||
+                           connector.methods.some(m => m.toLowerCase().includes(searchTerm));
+                });
+                
+                if (categoryConnectors.length === 0) return;
+                
+                hasResults = true;
+                
+                const categorySection = document.createElement('div');
+                categorySection.className = 'category-section';
+                
+                const categoryHeader = document.createElement('div');
+                categoryHeader.className = 'category-header';
+                categoryHeader.innerHTML = `
+                    <div class="category-title">
+                        <div class="category-icon">${categoryIcons[category] || '📦'}</div>
+                        <span>${category}</span>
+                    </div>
+                    <div class="connector-count">${categoryConnectors.length} connectors</div>
+                `;
+                
+                const grid = document.createElement('div');
+                grid.className = 'connectors-grid';
+                
+                categoryConnectors.forEach(connector => {
+                    const card = document.createElement('div');
+                    card.className = 'connector-card';
+                    card.innerHTML = `
+                        <div class="connector-header">
+                            <div class="connector-name">${connector.name}</div>
+                            <div class="auth-badge">${connector.auth}</div>
+                        </div>
+                        <div class="connector-description">${connector.desc}</div>
+                        <div class="methods-section">
+                            <div class="methods-title">Available Methods</div>
+                            ${connector.methods.map(m => `<span class="method-tag">${m}</span>`).join('')}
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+                
+                categorySection.appendChild(categoryHeader);
+                categorySection.appendChild(grid);
+                container.appendChild(categorySection);
+            });
+            
+            if (!hasResults) {
+                container.innerHTML = '<div class="no-results">No connectors found matching your search.</div>';
+            }
+        }
+        
+        function setupFilters() {
+            const filterContainer = document.getElementById('categoryFilter');
+            const allBtn = document.createElement('button');
+            allBtn.className = 'filter-btn active';
+            allBtn.textContent = 'All';
+            allBtn.onclick = () => {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                allBtn.classList.add('active');
+                renderConnectors();
+            };
+            filterContainer.appendChild(allBtn);
+            
+            Object.keys(connectors).forEach(category => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.textContent = category;
+                btn.onclick = () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderConnectors();
+                };
+                filterContainer.appendChild(btn);
+            });
+        }
+        
+        document.getElementById('searchInput').addEventListener('input', renderConnectors);
+        
+        setupFilters();
+        renderConnectors();
+    </script>
+</body>
+</html>
+

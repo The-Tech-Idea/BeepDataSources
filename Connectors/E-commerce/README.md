@@ -4,15 +4,218 @@ A comprehensive collection of e-commerce platform data source connectors for the
 
 ## 🚀 Overview
 
-The E-commerce Data Sources module enables you to connect, read, and manage data from various e-commerce platforms. Each platform is implemented as a separate data source following consistent patterns established by the Beep framework.
+The E-commerce connectors category provides integration with e-commerce platforms, enabling product management, order processing, customer management, and inventory operations. All connectors inherit from `WebAPIDataSource` and use `CommandAttribute` to expose platform-specific functionality to the Beep framework.
+
+## Architecture
+
+- **Base Class**: All connectors inherit from `WebAPIDataSource`
+- **Authentication**: Primarily API Keys, OAuth 2.0, or Consumer Key/Secret
+- **Models**: Strongly-typed POCO classes for products, orders, customers, inventory, etc.
+- **CommandAttribute**: Public methods decorated with `CommandAttribute` for framework discovery
 
 ## 📦 Available Data Sources
+
+## Connectors
+
+### Shopify (`ShopifyDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://{store}.myshopify.com/admin/api/{version}`  
+**Authentication**: API Key + Store URL
+
+#### CommandAttribute Methods
+- Product management
+- Order operations
+- Customer management
+- Inventory tracking
+
+#### Configuration
+```csharp
+var props = new WebAPIConnectionProperties
+{
+    Url = "https://yourstore.myshopify.com/admin/api/2024-01",
+    AuthType = AuthTypeEnum.ApiKey,
+    ApiKey = "your_api_key"
+};
+```
+
+---
+
+### Squarespace (`SquarespaceDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.squarespace.com/1.0`  
+**Authentication**: API Key
+
+#### CommandAttribute Methods
+
+**Read Operations:**
+- `GetProducts(AppFilter filter)` - Get Squarespace products
+- `GetOrders(AppFilter filter)` - Get orders
+- `GetProfiles(AppFilter filter)` - Get customer profiles
+- `GetPages(AppFilter filter)` - Get pages
+- `GetBlogs(AppFilter filter)` - Get blog posts
+- `GetEvents(AppFilter filter)` - Get events
+- `GetGalleries(AppFilter filter)` - Get galleries
+
+#### Configuration
+```csharp
+var props = new WebAPIConnectionProperties
+{
+    Url = "https://api.squarespace.com/1.0",
+    AuthType = AuthTypeEnum.Bearer,
+    BearerToken = "your_api_key"
+};
+```
+
+---
+
+### WooCommerce (`WooCommerceDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `{store_url}/wp-json/wc/v3`  
+**Authentication**: Consumer Key/Secret
+
+#### CommandAttribute Methods
+- Product operations
+- Order management
+- Customer operations
+- Coupon management
+
+---
+
+### Magento (`MagentoDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `{store_url}/rest/default/V1`  
+**Authentication**: Admin Token or OAuth 2.0
+
+#### CommandAttribute Methods
+- Product catalog management
+- Order processing
+- Customer management
+- Inventory operations
+
+---
+
+### BigCommerce (`BigCommerceDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.bigcommerce.com/stores/{store_hash}/v3`  
+**Authentication**: Client ID/Secret
+
+#### CommandAttribute Methods
+- Product management
+- Order operations
+- Customer operations
+- Catalog management
+
+---
+
+### Wix (`WixDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://www.wixapis.com/stores/v1`  
+**Authentication**: API Key or OAuth 2.0
+
+#### CommandAttribute Methods
+- Product operations
+- Order management
+- Inventory tracking
+
+---
+
+### Etsy (`EtsyDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://openapi.etsy.com/v3`  
+**Authentication**: OAuth 2.0
+
+#### CommandAttribute Methods
+- Shop management
+- Listing operations
+- Order processing
+- Transaction management
+
+---
+
+### OpenCart (`OpenCartDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `{store_url}/index.php?route=api`  
+**Authentication**: API Key
+
+#### CommandAttribute Methods
+- Product management
+- Order operations
+- Customer management
+
+---
+
+### Ecwid (`EcwidDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://app.ecwid.com/api/v3/{store_id}`  
+**Authentication**: API Token
+
+#### CommandAttribute Methods
+- Product operations
+- Order management
+- Customer operations
+
+---
+
+### Volusion (`VolusionDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://{store}.volusion.com/api/v1`  
+**Authentication**: API Key
+
+#### CommandAttribute Methods
+- Product management
+- Order operations
+- Customer operations
+
+---
+
+## Common Patterns
+
+### CommandAttribute Structure
+
+All e-commerce connectors use the `CommandAttribute` pattern:
+
+```csharp
+[CommandAttribute(
+    Category = DatasourceCategory.Connector,
+    DatasourceType = DataSourceType.Platform,
+    PointType = EnumPointType.Function,
+    ObjectType = "EntityName",
+    ClassName = "PlatformDataSource",
+    Showin = ShowinType.Both,
+    misc = "IEnumerable<EntityType>"
+)]
+public async Task<IEnumerable<EntityType>> GetEntities(AppFilter filter)
+{
+    // Implementation
+}
+```
+
+### Entity Mapping
+
+E-commerce connectors typically support:
+- **Products** - Product catalog with variants, images, pricing
+- **Orders** - Customer orders, payments, shipping, fulfillment
+- **Customers** - Customer profiles, addresses, purchase history
+- **Inventory** - Stock levels, locations, reservations
+- **Categories/Collections** - Product organization
+- **Analytics** - Sales reports, performance metrics
 
 ### ✅ Completed Data Sources
 
 | Platform | Status | Description | Authentication |
 |----------|--------|-------------|----------------|
 | **Shopify** | ✅ Complete | Leading cloud-based e-commerce platform | API Key + Store URL |
+| **Squarespace** | ✅ Complete | Website builder with e-commerce | API Key |
 
 ### 🔄 In Development
 

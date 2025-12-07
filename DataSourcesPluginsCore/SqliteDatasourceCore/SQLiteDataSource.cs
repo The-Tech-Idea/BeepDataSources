@@ -218,7 +218,7 @@ namespace TheTechIdea.Beep.DataBase
                 else
                 {
                     SQLiteConnection.CreateFile(filepathandname);
-                    enablefk();
+                  //  enablefk();
                     DMEEditor.AddLogMessage("Success", "Create Sqlite Database", DateTime.Now, 0, null, Errors.Ok);
                 }
                 base.Dataconnection.ConnectionProp.ConnectionString = $"Data Source={filepathandname};Version=3;New=True;";
@@ -227,7 +227,7 @@ namespace TheTechIdea.Beep.DataBase
                 if (!System.IO.File.Exists(filepathandname))
                 {
                     SQLiteConnection.CreateFile(filepathandname);
-                    enablefk();
+                  //  enablefk();
                     DMEEditor.AddLogMessage("Success", "Create Sqlite Database", DateTime.Now, 0, null, Errors.Ok);
                 }
                 else

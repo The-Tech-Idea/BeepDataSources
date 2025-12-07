@@ -676,24 +676,53 @@ namespace TheTechIdea.Beep.EventStream
         {
             try
             {
+                // Ensure message follows standards
+                message = MessageStandardsHelper.EnsureMessageStandards(message, DatasourceName ?? "KafkaDataSource");
+                
+                // Validate message
+                var validation = MessageStandardsHelper.ValidateMessage(message);
+                if (!validation.IsValid)
+                {
+                    var errorMsg = $"Message validation failed: {string.Join("; ", validation.Errors)}";
+                    Logger?.WriteLog($"[SendMessageAsync] {errorMsg}");
+                    throw new InvalidOperationException(errorMsg);
+                }
+
                 if (!Producers.TryGetValue(streamName, out var producer))
                 {
                     producer = new ProducerBuilder<Null, string>(kdataconnection.ProdConfig).Build();
                     Producers[streamName] = producer;
                 }
 
-                var payload = message.SerializePayload();
+                // Use standard serialization
+                var payload = MessageStandardsHelper.SerializePayload(message.Payload);
+                
+                // Get partition key if available
+                var partitionKey = MessageStandardsHelper.GetPartitionKey(message);
+                
                 var deliveryResult = await producer.ProduceAsync(
                     streamName,
-                    new Message<Null, string> { Value = payload },
+                    new Message<Null, string> 
+                    { 
+                        Value = payload,
+                        Headers = new Headers
+                        {
+                            { "MessageId", System.Text.Encoding.UTF8.GetBytes(message.MessageId) },
+                            { "MessageType", System.Text.Encoding.UTF8.GetBytes(message.MessageType ?? "") },
+                            { "MessageVersion", System.Text.Encoding.UTF8.GetBytes(message.MessageVersion ?? "1.0.0") },
+                            { "Source", System.Text.Encoding.UTF8.GetBytes(message.Source ?? "") },
+                            { "CorrelationId", System.Text.Encoding.UTF8.GetBytes(message.CorrelationId ?? "") }
+                        }
+                    },
                     cancellationToken
                 );
 
-                Logger?.WriteLog($"[SendMessageAsync] Message sent to topic '{streamName}': {payload}");
+                Logger?.WriteLog($"[SendMessageAsync] Message sent to topic '{streamName}' with MessageId: {message.MessageId}");
             }
             catch (Exception ex)
             {
                 Logger?.WriteLog($"[SendMessageAsync] Error sending message to topic '{streamName}': {ex.Message}");
+                MessageStandardsHelper.SetErrorMessage(message, ex);
                 throw;
             }
         }
@@ -715,12 +744,28 @@ namespace TheTechIdea.Beep.EventStream
                     while (!cancellationToken.IsCancellationRequested)
                     {
                         var consumeResult = consumer.Consume(cancellationToken);
+                        // Create message from consumed result
                         var genericMessage = new GenericMessage
                         {
+                            MessageId = Guid.NewGuid().ToString(), // Generate if not in headers
                             EntityName = streamName,
                             Payload = consumeResult.Message.Value,
                             Timestamp = consumeResult.Message.Timestamp.UtcDateTime
                         };
+
+                        // Extract metadata from headers if available
+                        if (consumeResult.Message.Headers != null)
+                        {
+                            foreach (var header in consumeResult.Message.Headers)
+                            {
+                                var key = header.Key;
+                                var value = System.Text.Encoding.UTF8.GetString(header.GetValueBytes());
+                                genericMessage.Metadata[key] = value;
+                            }
+                        }
+
+                        // Ensure standards compliance
+                        genericMessage = MessageStandardsHelper.EnsureMessageStandards(genericMessage, DatasourceName ?? "KafkaDataSource");
 
                         onMessageReceived?.Invoke(genericMessage).Wait(cancellationToken);
 
@@ -756,12 +801,29 @@ namespace TheTechIdea.Beep.EventStream
                     return null;
                 }
 
-                return new GenericMessage
+                var genericMessage = new GenericMessage
                 {
+                    MessageId = Guid.NewGuid().ToString(), // Generate if not in headers
                     EntityName = streamName,
                     Payload = consumeResult.Message.Value,
                     Timestamp = consumeResult.Message.Timestamp.UtcDateTime
                 };
+
+                // Extract metadata from headers if available
+                if (consumeResult.Message.Headers != null)
+                {
+                    foreach (var header in consumeResult.Message.Headers)
+                    {
+                        var key = header.Key;
+                        var value = System.Text.Encoding.UTF8.GetString(header.GetValueBytes());
+                        genericMessage.Metadata[key] = value;
+                    }
+                }
+
+                // Ensure standards compliance
+                genericMessage = MessageStandardsHelper.EnsureMessageStandards(genericMessage, DatasourceName ?? "KafkaDataSource");
+
+                return genericMessage;
             }
             catch (Exception ex)
             {

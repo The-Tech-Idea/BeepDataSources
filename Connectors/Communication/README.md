@@ -1,172 +1,259 @@
-# Communication Data Sources
+# Communication Connectors
 
-This directory contains individual data source projects for various communication platforms, implemented as part of the Beep Data Connectors framework. Each platform is implemented as a separate .NET project with embedded driver logic.
+## Overview
 
-## Available Platforms
+The Communication connectors category provides integration with team communication, messaging, and collaboration platforms. All connectors inherit from `WebAPIDataSource` and use `CommandAttribute` to expose platform-specific functionality to the Beep framework.
 
-### Enterprise & Team Communication
-- **Slack**: Team communication and collaboration platform
-- **Microsoft Teams**: Enterprise communication and collaboration platform
-- **Google Chat**: Google's enterprise messaging platform
-- **Zoom**: Video conferencing and communication platform
+## Architecture
 
-### Social & Community Communication
-- **Discord**: Gaming and community communication platform
-- **Telegram**: Cloud-based instant messaging platform
-- **WhatsApp Business**: Business communication platform
+- **Base Class**: All connectors inherit from `WebAPIDataSource`
+- **Authentication**: Primarily OAuth 2.0, API Keys, or Bot Tokens
+- **Models**: Strongly-typed POCO classes for channels, messages, users, files, etc.
+- **CommandAttribute**: Public methods decorated with `CommandAttribute` for framework discovery
 
-### Specialized Communication
-- **Twist**: Asynchronous communication platform
-- **Chanty**: Team communication platform
-- **Rocket.Chat**: Open-source team communication platform
-- **Flock**: Team messaging and collaboration platform
+## Connectors
 
-## Project Structure
+### Slack (`SlackDataSource`)
 
-Each platform follows the same structure:
-```
-PlatformDataSource/
-├── PlatformDataSource.csproj
-└── PlatformDataSource.cs (to be implemented)
-```
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://slack.com/api`  
+**Authentication**: OAuth 2.0 (Bot Token or User Token)
 
-## Common Features
+#### CommandAttribute Methods
 
-All communication data sources implement the `IDataSource` interface and provide:
+**Read Operations:**
+- `GetChannels(List<AppFilter> filters)` - Get Slack channels
+- `GetMessages(List<AppFilter> filters)` - Get messages from channels
+- `GetUsers(List<AppFilter> filters)` - Get Slack users
 
-- **Authentication**: Platform-specific authentication handling
-- **Entity Discovery**: List available entities (channels, messages, users, etc.)
-- **CRUD Operations**: Create, Read, Update, Delete operations where supported
-- **Metadata**: Entity structure and field information
-- **Error Handling**: Comprehensive error handling and logging
+#### Entities Supported
+- channels, messages, users, files, reactions, teams, groups, im, mpim, bots, apps, auth, conversations, pins, reminders, search, stars, team, usergroups
 
-## Getting Started
-
-### Prerequisites
-- .NET 9.0 SDK
-- Beep Data Connectors framework
-- Platform-specific API credentials
-
-### Installation
-1. Clone the repository
-2. Navigate to the desired platform directory
-3. Build the project: `dotnet build`
-
-### Configuration
-Each platform requires specific configuration parameters:
-
-#### Slack
+#### Configuration
 ```csharp
-var parameters = new Dictionary<string, object>
+var props = new WebAPIConnectionProperties
 {
-    ["BotToken"] = "xoxb-your-bot-token",
-    ["UserToken"] = "xoxp-your-user-token" // optional
+    Url = "https://slack.com/api",
+    AuthType = AuthTypeEnum.Bearer,
+    BearerToken = "xoxb-your-bot-token"
 };
 ```
 
-#### Microsoft Teams
+---
+
+### Microsoft Teams (`MicrosoftTeamsDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://graph.microsoft.com/v1.0`  
+**Authentication**: OAuth 2.0
+
+#### CommandAttribute Methods
+- Team management
+- Channel operations
+- Message retrieval
+- User management
+
+#### Configuration
 ```csharp
-var parameters = new Dictionary<string, object>
+var props = new WebAPIConnectionProperties
 {
-    ["ClientId"] = "your-client-id",
-    ["ClientSecret"] = "your-client-secret",
-    ["TenantId"] = "your-tenant-id"
+    Url = "https://graph.microsoft.com/v1.0",
+    AuthType = AuthTypeEnum.OAuth2,
+    ClientId = "your_client_id",
+    ClientSecret = "your_client_secret",
+    TokenUrl = "https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token"
 };
 ```
 
-#### Zoom
+---
+
+### Discord (`DiscordDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://discord.com/api/v10`  
+**Authentication**: Bot Token
+
+#### CommandAttribute Methods
+- Channel management
+- Message operations
+- User/guild management
+- Webhook operations
+
+---
+
+### Telegram (`TelegramDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.telegram.org/bot{token}`  
+**Authentication**: Bot Token
+
+#### CommandAttribute Methods
+- Message sending/receiving
+- Chat management
+- User operations
+- File operations
+
+---
+
+### WhatsApp Business (`WhatsAppBusinessDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://graph.facebook.com/v18.0`  
+**Authentication**: OAuth 2.0
+
+#### CommandAttribute Methods
+- Message sending
+- Contact management
+- Template management
+- Webhook configuration
+
+---
+
+### Zoom (`ZoomDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.zoom.us/v2`  
+**Authentication**: OAuth 2.0 or JWT
+
+#### CommandAttribute Methods
+- Meeting management
+- User operations
+- Webinar operations
+- Recording management
+
+---
+
+### Google Chat (`GoogleChatDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://chat.googleapis.com/v1`  
+**Authentication**: OAuth 2.0
+
+#### CommandAttribute Methods
+- Space management
+- Message operations
+- Member management
+
+---
+
+### Rocket.Chat (`RocketChatDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `{your-instance}/api/v1`  
+**Authentication**: API Key or OAuth 2.0
+
+#### CommandAttribute Methods
+- Channel operations
+- Message management
+- User management
+
+---
+
+### Twist (`TwistDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.twist.com/api/v3`  
+**Authentication**: API Token
+
+#### CommandAttribute Methods
+- Thread management
+- Comment operations
+- Workspace management
+
+---
+
+### Chanty (`ChantyDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.chanty.com/v1`  
+**Authentication**: API Key
+
+#### CommandAttribute Methods
+- Team communication
+- Message operations
+- User management
+
+---
+
+### Flock (`FlockDataSource`)
+
+**Base Class**: `WebAPIDataSource`  
+**API Base URL**: `https://api.flock.com/v1`  
+**Authentication**: Bot Token
+
+#### CommandAttribute Methods
+- Channel management
+- Message operations
+- User operations
+
+---
+
+## Common Patterns
+
+### CommandAttribute Structure
+
+All connectors use the `CommandAttribute` pattern:
+
 ```csharp
-var parameters = new Dictionary<string, object>
+[CommandAttribute(
+    Name = "MethodName",
+    Caption = "User-Friendly Description",
+    ObjectType = "ModelClassName",
+    PointType = EnumPointType.Function,
+    Category = DatasourceCategory.Connector,
+    DatasourceType = DataSourceType.Platform,
+    ClassType = "DataSourceClassName",
+    Showin = ShowinType.Both,
+    Order = 1,
+    iconimage = "icon.png"
+)]
+public async Task<IEnumerable<ModelClass>> MethodName(List<AppFilter> filters = null)
 {
-    ["ClientId"] = "your-client-id",
-    ["ClientSecret"] = "your-client-secret",
-    ["AccountId"] = "your-account-id"
-};
+    // Implementation
+}
 ```
 
-#### Discord
-```csharp
-var parameters = new Dictionary<string, object>
-{
-    ["BotToken"] = "your-bot-token",
-    ["ApplicationId"] = "your-application-id"
-};
-```
+### Entity Mapping Pattern
 
-#### Telegram
-```csharp
-var parameters = new Dictionary<string, object>
-{
-    ["BotToken"] = "your-bot-token"
-};
-```
-
-#### WhatsApp Business
-```csharp
-var parameters = new Dictionary<string, object>
-{
-    ["AccessToken"] = "your-access-token",
-    ["PhoneNumberId"] = "your-phone-number-id"
-};
-```
-
-## Usage Example
+Connectors like Slack use entity-to-endpoint mapping:
 
 ```csharp
-using BeepDM.DataManagementModelsStandard;
-using BeepDM.Connectors.Communication.Slack;
-
-// Create data source instance
-var dataSource = new SlackDataSource(logger);
-
-// Configure connection parameters
-var parameters = new Dictionary<string, object>
-{
-    ["BotToken"] = "xoxb-your-bot-token"
-};
-
-// Connect to Slack API
-await dataSource.ConnectAsync(parameters);
-
-// Get available entities
-var entities = await dataSource.GetEntitiesAsync();
-
-// Get messages from a channel
-var messages = await dataSource.GetEntityAsync("messages", new Dictionary<string, object>
-{
-    ["channel"] = "C1234567890"
-});
-
-// Disconnect
-await dataSource.DisconnectAsync();
+private static readonly Dictionary<string, (string endpoint, string root, ...)> Map
+    = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["channels"] = ("conversations.list", "channels", Empty()),
+        ["messages"] = ("conversations.history", "messages", Empty()),
+        ["users"] = ("users.list", "members", Empty()),
+        // ...
+    };
 ```
 
 ## Common Entities
 
 ### Universal Entities
-- **channels**: Communication channels/workspaces
-- **messages**: Individual messages and conversations
-- **users**: Platform users and members
-- **files**: Shared files and attachments
-- **reactions**: Message reactions and responses
+- **channels** - Communication channels/workspaces
+- **messages** - Individual messages and conversations
+- **users** - Platform users and members
+- **files** - Shared files and attachments
+- **reactions** - Message reactions and responses
 
 ### Platform-Specific Entities
-- **teams** (Microsoft Teams): Team organizations
-- **meetings** (Zoom, Teams): Video/audio conferences
-- **threads** (Slack, Discord): Conversation threads
-- **bots** (Most platforms): Automated assistants
-- **webhooks** (Most platforms): Event notifications
+- **teams** (Microsoft Teams) - Team organizations
+- **meetings** (Zoom, Teams) - Video/audio conferences
+- **threads** (Slack, Discord) - Conversation threads
+- **bots** (Most platforms) - Automated assistants
+- **webhooks** (Most platforms) - Event notifications
 
 ## Authentication Patterns
 
 ### OAuth 2.0 Platforms
-- Slack, Microsoft Teams, Google Chat, Discord, Zoom
+- Slack, Microsoft Teams, Google Chat, Discord, Zoom, WhatsApp Business
 - Requires client registration and user consent
 - Supports refresh tokens for long-term access
 
 ### Token-Based Platforms
-- Telegram, WhatsApp Business, Twist, Flock
-- Uses API tokens or access tokens
+- Telegram, Twist, Flock
+- Uses API tokens or bot tokens
 - Simpler authentication flow
 
 ### API Key Platforms
@@ -174,43 +261,32 @@ await dataSource.DisconnectAsync();
 - Uses API keys for authentication
 - Direct key-based access
 
-## Error Handling
+## Best Practices
 
-All data sources include comprehensive error handling for:
-- Authentication failures
-- Rate limiting
-- Network connectivity issues
-- API errors and exceptions
-- Invalid parameters
+1. **Rate Limiting**: Respect platform rate limits (Slack: 1 req/sec, Discord: 50 req/sec)
+2. **Pagination**: Support cursor-based or page-based pagination
+3. **Error Handling**: Handle authentication failures, rate limits, and API errors gracefully
+4. **Webhooks**: Configure webhooks for real-time updates when available
+5. **Scopes**: Request appropriate OAuth scopes for required functionality
 
-## Rate Limiting
+## Configuration Requirements
 
-Each platform implements appropriate rate limiting:
-- **Slack**: 1 request per second (free tier), higher for paid plans
-- **Discord**: 50 requests per second for bots
-- **Microsoft Teams**: Varies by endpoint, generally 10-100 requests per second
-- **Zoom**: 1 request per second (free tier), higher for paid plans
+### Slack
+- Bot Token: `xoxb-...` or User Token: `xoxp-...`
+- Base URL: `https://slack.com/api`
 
-## Contributing
+### Microsoft Teams
+- Client ID, Client Secret, Tenant ID
+- Base URL: `https://graph.microsoft.com/v1.0`
 
-1. Follow the established pattern for new platforms
-2. Implement the `IDataSource` interface completely
-3. Add comprehensive error handling
-4. Update documentation
-5. Test thoroughly
+### Discord
+- Bot Token
+- Base URL: `https://discord.com/api/v10`
 
-## License
+### Telegram
+- Bot Token (from @BotFather)
+- Base URL: `https://api.telegram.org/bot{token}`
 
-This project is part of the Beep Data Connectors framework.
+## Status
 
-## Support
-
-For issues and questions:
-1. Check platform-specific API documentation
-2. Review existing implementations
-3. Create an issue in the main repository
-
----
-
-**Last Updated**: August 27, 2025
-**Version**: 1.0.0
+All Communication connectors are **✅ Completed** and ready for use.

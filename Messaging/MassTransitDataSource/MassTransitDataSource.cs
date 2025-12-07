@@ -27,7 +27,7 @@ using TheTechIdea.Beep.Vis;
 namespace TheTechIdea.Beep.MassTransitDataSourceCore
 {
     [AddinAttribute(Category = DatasourceCategory.MessageQueue, DatasourceType = DataSourceType.MassTransit)]
-    public class MassTransitDataSource : IDataSource
+    public class MassTransitDataSource : IDataSource, IMessageDataSource<GenericMessage, StreamConfig>
     {
         private bool disposedValue;
         #region Properties
@@ -126,32 +126,63 @@ namespace TheTechIdea.Beep.MassTransitDataSourceCore
 
 
         /// <summary>
-        /// Sends a message to the specified stream.
-        /// 'message' should match the type indicated by StreamConfig.MessageType.
+        /// Sends a message to the specified stream following messaging standards.
         /// </summary>
-        public async Task SendMessageAsync(string streamName, object message, CancellationToken cancellationToken)
+        public async Task SendMessageAsync(string streamName, GenericMessage message, CancellationToken cancellationToken)
         {
-            if (_busControl == null || ConnectionStatus != ConnectionState.Open)
-                throw new InvalidOperationException("Bus is not connected. Call OpenConnection() before sending messages.");
+            try
+            {
+                if (_busControl == null || ConnectionStatus != ConnectionState.Open)
+                    throw new InvalidOperationException("Bus is not connected. Call OpenConnection() before sending messages.");
 
-            if (!StreamConfigs.ContainsKey(streamName))
-                throw new KeyNotFoundException($"Stream configuration for '{streamName}' not found.");
+                if (!StreamConfigs.ContainsKey(streamName))
+                    throw new KeyNotFoundException($"Stream configuration for '{streamName}' not found.");
 
-            var config = StreamConfigs[streamName];
-            // Build the endpoint URI. The format depends on your transport.
-            var endpointUri = new Uri($"{Dataconnection.ConnectionProp.Host}/{config.EntityName}");
-            var sendEndpoint = await _busControl.GetSendEndpoint(endpointUri);
+                // Ensure message follows standards
+                message = MessageStandardsHelper.EnsureMessageStandards(message, DatasourceName ?? "MassTransitDataSource");
+                
+                // Validate message
+                var validation = MessageStandardsHelper.ValidateMessage(message);
+                if (!validation.IsValid)
+                {
+                    var errorMsg = $"Message validation failed: {string.Join("; ", validation.Errors)}";
+                    Logger?.WriteLog($"[SendMessageAsync] {errorMsg}");
+                    throw new InvalidOperationException(errorMsg);
+                }
 
-            // Send the object as is. The actual message type at runtime must match the consumer side.
-            await sendEndpoint.Send(message, cancellationToken);
-            Logger?.WriteLog($"Message of type '{message.GetType().Name}' sent to stream '{streamName}'.");
+                var config = StreamConfigs[streamName];
+                
+                // Build the endpoint URI. The format depends on your transport.
+                var endpointUri = new Uri($"{Dataconnection.ConnectionProp.Host}/{config.EntityName}");
+                var sendEndpoint = await _busControl.GetSendEndpoint(endpointUri);
+
+                // Deserialize payload to the expected type if needed
+                object payloadToSend = message.Payload;
+                if (message.Payload is string payloadString && !string.IsNullOrEmpty(config.MessageType))
+                {
+                    var messageType = MessageStandardsHelper.ResolveMessageType(config.MessageType);
+                    if (messageType != null && messageType != typeof(object))
+                    {
+                        payloadToSend = MessageStandardsHelper.DeserializePayload(payloadString, messageType);
+                    }
+                }
+
+                // Send the message payload
+                await sendEndpoint.Send(payloadToSend, cancellationToken);
+                Logger?.WriteLog($"[SendMessageAsync] Message sent to stream '{streamName}' with MessageId: {message.MessageId}");
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"[SendMessageAsync] Error sending message to stream '{streamName}': {ex.Message}");
+                MessageStandardsHelper.SetErrorMessage(message, ex);
+                throw;
+            }
         }
 
         /// <summary>
-        /// Subscribes to messages for a specific stream (entity). 
-        /// We create a dynamic endpoint and store consumed messages in QueueData.
+        /// Subscribes to messages for a specific stream (entity) with a callback handler.
         /// </summary>
-        public async Task SubscribeAsync(string streamName, CancellationToken cancellationToken)
+        public async Task SubscribeAsync(string streamName, Func<GenericMessage, Task> onMessageReceived, CancellationToken cancellationToken)
         {
             if (_busControl == null || ConnectionStatus != ConnectionState.Open)
                 throw new InvalidOperationException("Bus is not connected. Call OpenConnection() first.");
@@ -159,7 +190,7 @@ namespace TheTechIdea.Beep.MassTransitDataSourceCore
             if (!StreamConfigs.TryGetValue(streamName, out var config))
                 throw new KeyNotFoundException($"Stream config for '{streamName}' not found.");
 
-            var messageType = Type.GetType(config.MessageType);
+            var messageType = MessageStandardsHelper.ResolveMessageType(config.MessageType);
             if (messageType == null)
                 throw new InvalidOperationException($"Cannot load message type: {config.MessageType}");
 
@@ -170,14 +201,52 @@ namespace TheTechIdea.Beep.MassTransitDataSourceCore
             }
             var channel = ChannelData[streamName];
 
+            // Start background task to process messages from channel
+            _ = Task.Run(async () =>
+            {
+                await foreach (var consumedMessage in channel.Reader.ReadAllAsync(cancellationToken))
+                {
+                    try
+                    {
+                        // Create GenericMessage from consumed message
+                        var genericMessage = new GenericMessage
+                        {
+                            MessageId = Guid.NewGuid().ToString(),
+                            EntityName = streamName,
+                            Payload = consumedMessage,
+                            Timestamp = DateTime.UtcNow
+                        };
+
+                        // Set metadata from config
+                        genericMessage.MessageType = config.MessageType;
+                        genericMessage.MessageVersion = "1.0.0"; // Default, can be overridden
+                        genericMessage.Source = DatasourceName ?? "MassTransitDataSource";
+                        genericMessage.ContentType = "application/json";
+
+                        // Ensure standards compliance
+                        genericMessage = MessageStandardsHelper.EnsureMessageStandards(genericMessage, DatasourceName ?? "MassTransitDataSource");
+
+                        // Invoke callback
+                        if (onMessageReceived != null)
+                        {
+                            await onMessageReceived(genericMessage);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger?.WriteLog($"[SubscribeAsync] Error processing message from stream '{streamName}': {ex.Message}");
+                    }
+                }
+            }, cancellationToken);
+
             var handle = _busControl.ConnectReceiveEndpoint(config.EntityName, ep =>
             {
                 // Example: dynamic reflection or a typed consumer
                 var handlerMethod = ep.GetType()
-    .GetMethods(BindingFlags.Public | BindingFlags.Instance)
-    .FirstOrDefault(m => m.Name == "Handler"
-                         && m.IsGenericMethod
-                         && m.GetParameters().Length == 1);
+                    .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                    .FirstOrDefault(m => m.Name == "Handler"
+                                         && m.IsGenericMethod
+                                         && m.GetParameters().Length == 1);
 
                 if (handlerMethod == null)
                     throw new InvalidOperationException("Could not find ep.Handler<T> extension method.");
@@ -191,7 +260,7 @@ namespace TheTechIdea.Beep.MassTransitDataSourceCore
             });
 
             await handle.Ready;
-            Logger?.WriteLog($"Subscribed to stream '{streamName}' for message type '{config.MessageType}'.");
+            Logger?.WriteLog($"[SubscribeAsync] Subscribed to stream '{streamName}' for message type '{config.MessageType}'.");
         }
 
         private Delegate BuildCallbackDelegate(Type messageType, ChannelWriter<object> writer)
@@ -242,6 +311,106 @@ namespace TheTechIdea.Beep.MassTransitDataSourceCore
         public void Disconnect()
         {
             Closeconnection();
+        }
+
+        /// <summary>
+        /// Acknowledges that a message has been successfully processed.
+        /// Note: MassTransit handles acknowledgments automatically, but this method is provided for interface compliance.
+        /// </summary>
+        public async Task AcknowledgeMessageAsync(string streamName, GenericMessage message, CancellationToken cancellationToken)
+        {
+            // MassTransit handles acknowledgments automatically through its consumer pipeline
+            // This method is provided for interface compliance
+            await Task.CompletedTask;
+            Logger?.WriteLog($"[AcknowledgeMessageAsync] Message acknowledged for stream '{streamName}' with MessageId: {message.MessageId}");
+        }
+
+        /// <summary>
+        /// Retrieves a message without committing its acknowledgment (peek functionality).
+        /// Note: MassTransit doesn't support true peek operations, but we can read from the channel if available.
+        /// </summary>
+        public async Task<GenericMessage> PeekMessageAsync(string streamName, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (!StreamConfigs.TryGetValue(streamName, out var config))
+                    throw new KeyNotFoundException($"Stream config for '{streamName}' not found.");
+
+                if (!ChannelData.TryGetValue(streamName, out var channel))
+                    return null;
+
+                // Try to read from channel without removing (peek)
+                // Note: Channel doesn't support true peek, so we read and write back
+                if (await channel.Reader.WaitToReadAsync(cancellationToken))
+                {
+                    if (channel.Reader.TryRead(out var consumedMessage))
+                    {
+                        // Create GenericMessage
+                        var genericMessage = new GenericMessage
+                        {
+                            MessageId = Guid.NewGuid().ToString(),
+                            EntityName = streamName,
+                            Payload = consumedMessage,
+                            Timestamp = DateTime.UtcNow
+                        };
+
+                        // Set metadata from config
+                        genericMessage.MessageType = config.MessageType;
+                        genericMessage.MessageVersion = "1.0.0";
+                        genericMessage.Source = DatasourceName ?? "MassTransitDataSource";
+                        genericMessage.ContentType = "application/json";
+
+                        // Ensure standards compliance
+                        genericMessage = MessageStandardsHelper.EnsureMessageStandards(genericMessage, DatasourceName ?? "MassTransitDataSource");
+
+                        // Write back to channel (since we can't truly peek)
+                        await channel.Writer.WriteAsync(consumedMessage, cancellationToken);
+
+                        return genericMessage;
+                    }
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"[PeekMessageAsync] Error peeking message from stream '{streamName}': {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves metadata about a stream (e.g., queue depth, message count).
+        /// </summary>
+        public async Task<object> GetStreamMetadataAsync(string streamName, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (!StreamConfigs.TryGetValue(streamName, out var config))
+                    throw new KeyNotFoundException($"Stream config for '{streamName}' not found.");
+
+                var metadata = new
+                {
+                    StreamName = streamName,
+                    EntityName = config.EntityName,
+                    MessageType = config.MessageType,
+                    MessageCategory = config.MessageCategory,
+                    ConsumerType = config.ConsumerType,
+                    ChannelCapacity = ChannelData.TryGetValue(streamName, out var channel) 
+                        ? (channel.Reader.CanCount ? channel.Reader.Count : -1) 
+                        : 0,
+                    IsInitialized = StreamConfigs.ContainsKey(streamName),
+                    TransportType = TransportType.ToString(),
+                    SerializerType = SerializerType.ToString()
+                };
+
+                return metadata;
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"[GetStreamMetadataAsync] Error getting metadata for stream '{streamName}': {ex.Message}");
+                throw;
+            }
         }
 
         #endregion
