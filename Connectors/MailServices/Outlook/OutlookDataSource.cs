@@ -14,7 +14,6 @@ using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
 using TheTechIdea.Beep.Connectors.Outlook.Models;
-using TheTechIdea.Beep.Connectors.Outlook.Models;
 
 namespace TheTechIdea.Beep.Connectors.Outlook
 {
@@ -204,6 +203,25 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         {
             var calendar = JsonSerializer.Deserialize<OutlookCalendar>(json);
             return calendar != null ? new[] { calendar } : Array.Empty<OutlookCalendar>();
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         // Helper methods

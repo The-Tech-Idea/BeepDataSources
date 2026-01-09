@@ -13,12 +13,16 @@ using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
 using TheTechIdea.Beep.Workflow;
 using TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI.Models;
 
 namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
 {
-    [Addin(Caption = "Power BI Data Source", Name = "PowerBIDataSource", addinType = AddinType.DataSource, misc = "PowerBI", iconimage = "powerbi.png", dsType = DataSourceType.WebApi)]
+    /// <summary>
+    /// Power BI data source implementation using WebAPIDataSource as base class
+    /// </summary>
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI)]
     public class PowerBIDataSource : WebAPIDataSource
     {
         private const string BASE_URL = "https://api.powerbi.com/v1.0/myorg";
@@ -30,12 +34,39 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             Logger = logger;
             ErrorObject = per;
             DMEEditor = DMEEditor;
-            DatasourceType = DataSourceType.WebApi;
-            Category = "BusinessIntelligence";
-            Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
+            DatasourceType = DataSourceType.PowerBI;
+            Category = DatasourceCategory.Connector;
+
+            // Ensure WebAPI connection props exist
+            if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
+            {
+                if (Dataconnection != null)
+                    Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+            }
+            else
+            {
+                Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
+            }
+
+            // Register entities
+            EntitiesNames = new List<string>
+            {
+                "Workspaces",
+                "Datasets",
+                "Reports",
+                "Dashboards",
+                "Dataflows",
+                "Apps",
+                "Tables",
+                "ActivityEvents",
+                "Gateways"
+            };
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+                .ToList();
         }
 
-        [CommandAttribute(Caption = "Authenticate", Name = "Authenticate", Click = true)]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI, PointType = EnumPointType.Function, ObjectType = "Authentication", ClassName = "PowerBIDataSource", Showin = ShowinType.Both, misc = "ReturnType: bool")]
         public override async Task<bool> Authenticate()
         {
             try
@@ -68,7 +99,7 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             }
         }
 
-        [CommandAttribute(Caption = "Get Workspaces", Name = "GetWorkspaces", Click = true)]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI, PointType = EnumPointType.Function, ObjectType = "Workspaces", ClassName = "PowerBIDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<PowerBIWorkspace>")]
         public async Task<List<PowerBIWorkspace>> GetWorkspaces()
         {
             try
@@ -100,7 +131,7 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             }
         }
 
-        [CommandAttribute(Caption = "Get Datasets", Name = "GetDatasets", Click = true)]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI, PointType = EnumPointType.Function, ObjectType = "Datasets", ClassName = "PowerBIDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<PowerBIDataset>")]
         public async Task<List<PowerBIDataset>> GetDatasets(string workspaceId = null)
         {
             try
@@ -136,7 +167,7 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             }
         }
 
-        [CommandAttribute(Caption = "Get Reports", Name = "GetReports", Click = true)]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI, PointType = EnumPointType.Function, ObjectType = "Reports", ClassName = "PowerBIDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<PowerBIReport>")]
         public async Task<List<PowerBIReport>> GetReports(string workspaceId = null)
         {
             try
@@ -172,7 +203,7 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             }
         }
 
-        [CommandAttribute(Caption = "Get Dashboards", Name = "GetDashboards", Click = true)]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI, PointType = EnumPointType.Function, ObjectType = "Dashboards", ClassName = "PowerBIDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<PowerBIDashboard>")]
         public async Task<List<PowerBIDashboard>> GetDashboards(string workspaceId = null)
         {
             try
@@ -208,7 +239,7 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             }
         }
 
-        [CommandAttribute(Caption = "Get Dataflows", Name = "GetDataflows", Click = true)]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI, PointType = EnumPointType.Function, ObjectType = "Dataflows", ClassName = "PowerBIDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<PowerBIDataflow>")]
         public async Task<List<PowerBIDataflow>> GetDataflows(string workspaceId)
         {
             try
@@ -240,7 +271,7 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             }
         }
 
-        [CommandAttribute(Caption = "Get Apps", Name = "GetApps", Click = true)]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI, PointType = EnumPointType.Function, ObjectType = "Apps", ClassName = "PowerBIDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<PowerBIApp>")]
         public async Task<List<PowerBIApp>> GetApps()
         {
             try
@@ -272,7 +303,7 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             }
         }
 
-        [CommandAttribute(Caption = "Get Dataset Tables", Name = "GetDatasetTables", Click = true)]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI, PointType = EnumPointType.Function, ObjectType = "Tables", ClassName = "PowerBIDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<PowerBITable>")]
         public async Task<List<PowerBITable>> GetDatasetTables(string workspaceId, string datasetId)
         {
             try
@@ -304,7 +335,7 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             }
         }
 
-        [CommandAttribute(Caption = "Get Dataset Refresh History", Name = "GetDatasetRefreshHistory", Click = true)]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI, PointType = EnumPointType.Function, ObjectType = "RefreshHistory", ClassName = "PowerBIDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<PowerBIRefreshHistory>")]
         public async Task<List<PowerBIRefreshHistory>> GetDatasetRefreshHistory(string workspaceId, string datasetId, int top = 10)
         {
             try
@@ -336,7 +367,7 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             }
         }
 
-        [CommandAttribute(Caption = "Refresh Dataset", Name = "RefreshDataset", Click = true)]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI, PointType = EnumPointType.Function, ObjectType = "Dataset", ClassName = "PowerBIDataSource", Showin = ShowinType.Both, misc = "ReturnType: bool")]
         public async Task<bool> RefreshDataset(string workspaceId, string datasetId)
         {
             try
@@ -362,7 +393,7 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             }
         }
 
-        [CommandAttribute(Caption = "Get Activity Events", Name = "GetActivityEvents", Click = true)]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI, PointType = EnumPointType.Function, ObjectType = "ActivityEvents", ClassName = "PowerBIDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<PowerBIActivityEvent>")]
         public async Task<List<PowerBIActivityEvent>> GetActivityEvents(DateTime startDateTime, DateTime endDateTime, int top = 100)
         {
             try
@@ -397,7 +428,7 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             }
         }
 
-        [CommandAttribute(Caption = "Get Gateways", Name = "GetGateways", Click = true)]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.PowerBI, PointType = EnumPointType.Function, ObjectType = "Gateways", ClassName = "PowerBIDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<PowerBIGateway>")]
         public async Task<List<PowerBIGateway>> GetGateways()
         {
             try
@@ -477,20 +508,117 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
             throw new NotImplementedException();
         }
 
-        public override List<string> GetEntitesList()
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // -------------------- Overrides (same signatures) --------------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
-            return new List<string>
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        {
+            try
             {
-                "Workspaces",
-                "Datasets",
-                "Reports",
-                "Dashboards",
-                "Dataflows",
-                "Apps",
-                "Tables",
-                "ActivityEvents",
-                "Gateways"
+                string endpoint = GetEndpointForEntity(EntityName);
+                if (string.IsNullOrEmpty(endpoint))
+                {
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = $"Unknown Power BI entity: {EntityName}";
+                    return Array.Empty<object>();
+                }
+
+                string url = $"{BASE_URL}{endpoint}";
+                var response = await GetAsync(url);
+                if (response != null && response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    return ProcessApiResponse(EntityName, json);
+                }
+                else
+                {
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = $"Power BI API error: {response?.StatusCode.ToString() ?? "Unknown error"}";
+                    return Array.Empty<object>();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                return Array.Empty<object>();
+            }
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
             };
+        }
+
+        private string GetEndpointForEntity(string entityName)
+        {
+            return entityName switch
+            {
+                "Workspaces" => "/groups",
+                "Datasets" => "/datasets",
+                "Reports" => "/reports",
+                "Dashboards" => "/dashboards",
+                "Dataflows" => "/dataflows",
+                "Apps" => "/apps",
+                "Tables" => "/datasets", // Tables require workspace and dataset IDs
+                "ActivityEvents" => "/admin/activityevents",
+                "Gateways" => "/gateways",
+                _ => null
+            };
+        }
+
+        private IEnumerable<object> ProcessApiResponse(string entityName, string jsonResponse)
+        {
+            if (string.IsNullOrEmpty(jsonResponse))
+                return Array.Empty<object>();
+
+            try
+            {
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                
+                // Power BI API returns data in a "value" array
+                return entityName switch
+                {
+                    "Workspaces" => JsonSerializer.Deserialize<PowerBIApiResponse<PowerBIWorkspace>>(jsonResponse, options)?.Value?.Cast<object>() ?? Array.Empty<object>(),
+                    "Datasets" => JsonSerializer.Deserialize<PowerBIApiResponse<PowerBIDataset>>(jsonResponse, options)?.Value?.Cast<object>() ?? Array.Empty<object>(),
+                    "Reports" => JsonSerializer.Deserialize<PowerBIApiResponse<PowerBIReport>>(jsonResponse, options)?.Value?.Cast<object>() ?? Array.Empty<object>(),
+                    "Dashboards" => JsonSerializer.Deserialize<PowerBIApiResponse<PowerBIDashboard>>(jsonResponse, options)?.Value?.Cast<object>() ?? Array.Empty<object>(),
+                    "Dataflows" => JsonSerializer.Deserialize<PowerBIApiResponse<PowerBIDataflow>>(jsonResponse, options)?.Value?.Cast<object>() ?? Array.Empty<object>(),
+                    "Apps" => JsonSerializer.Deserialize<PowerBIApiResponse<PowerBIApp>>(jsonResponse, options)?.Value?.Cast<object>() ?? Array.Empty<object>(),
+                    "Tables" => JsonSerializer.Deserialize<PowerBIApiResponse<PowerBITable>>(jsonResponse, options)?.Value?.Cast<object>() ?? Array.Empty<object>(),
+                    "ActivityEvents" => JsonSerializer.Deserialize<PowerBIApiResponse<PowerBIActivityEvent>>(jsonResponse, options)?.Value?.Cast<object>() ?? Array.Empty<object>(),
+                    "Gateways" => JsonSerializer.Deserialize<PowerBIApiResponse<PowerBIGateway>>(jsonResponse, options)?.Value?.Cast<object>() ?? Array.Empty<object>(),
+                    _ => Array.Empty<object>()
+                };
+            }
+            catch
+            {
+                return Array.Empty<object>();
+            }
         }
 
         public override List<EntityStructure> GetEntityStructure(string EntityName, bool refresh = false)
@@ -499,11 +627,6 @@ namespace TheTechIdea.Beep.Connectors.BusinessIntelligence.PowerBI
         }
 
         public override IErrorsInfo CreateEntityAs(EntityStructure entity)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override object GetEntity(string EntityName, List<AppFilter> filter)
         {
             throw new NotImplementedException();
         }

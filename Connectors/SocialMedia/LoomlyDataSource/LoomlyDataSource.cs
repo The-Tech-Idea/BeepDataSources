@@ -105,6 +105,25 @@ namespace TheTechIdea.Beep.Connectors.Loomly
             };
         }
 
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
+        }
+
         // Helper methods for parsing
         private IEnumerable<object> ParseEntityResponse(string entityName, string json)
         {

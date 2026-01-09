@@ -64,6 +64,9 @@ namespace TheTechIdea.Beep.Connectors.Zendesk
                 .ToList();
         }
 
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
         public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
             return GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();

@@ -443,7 +443,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             return base.Dataconnection.ConnectionProp.ConnectionString;
         }
-        public override List<string> GetEntitesList()
+        public override IEnumerable<string> GetEntitesList()
         {
 
             base.GetEntitesList();

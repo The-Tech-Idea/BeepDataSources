@@ -93,6 +93,18 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
                 .ToList();
         }
 
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // -------------------- Overrides (same signatures) --------------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
         // Helper method to resolve endpoints with parameters
         private string ResolveEndpoint(string entityName, List<AppFilter>? filters = null)
         {
@@ -158,14 +170,15 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return queryParams.Any() ? $"?{string.Join("&", queryParams)}" : "";
         }
 
-        // Override GetEntity to handle BigCommerce API specifics
-        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter>? filter)
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> filter)
         {
             try
             {
-                RequireFilters(EntityName, filter);
-                var endpoint = ResolveEndpoint(EntityName, filter);
-                var query = FiltersToQuery(filter);
+                var filters = filter ?? new List<AppFilter>();
+                RequireFilters(EntityName, filters);
+                var endpoint = ResolveEndpoint(EntityName, filters);
+                var query = FiltersToQuery(filters);
 
                 var fullUrl = $"{BaseURL?.TrimEnd('/')}/{endpoint}{query}";
 
@@ -267,6 +280,25 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             "store_reviews" => typeof(List<BigCommerceStoreReview>),
             _ => typeof(List<Dictionary<string, object>>)
         };
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
+        }
 
         // Properties for BigCommerce authentication
         private string? AccessToken => (Dataconnection?.ConnectionProp as WebAPIConnectionProperties)?.ApiKey;

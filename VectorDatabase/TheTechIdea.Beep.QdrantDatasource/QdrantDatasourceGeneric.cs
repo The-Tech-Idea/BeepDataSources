@@ -412,21 +412,26 @@ public QdrantDatasourceGeneric(string pdatasourcename, IDMLogger plogger, IDMEEd
                 }
 
                 var allData = GetEntity(EntityName, filter).ToList();
-                var pagedData = allData.Skip(pageNumber * pageSize).Take(pageSize).ToList();
+                var totalRecords = allData.Count;
+                var pagedData = allData.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
                 
                 return new PagedResult
                 {
                     Data = pagedData,
-                    PageNumber = pageNumber,
+                    PageNumber = Math.Max(1, pageNumber),
                     PageSize = pageSize,
-                    TotalRecords = allData.Count,
-                    TotalPages = (int)Math.Ceiling((double)allData.Count / pageSize)
+                    TotalRecords = totalRecords,
+                    TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                    HasPreviousPage = pageNumber > 1,
+                    HasNextPage = pageNumber * pageSize < totalRecords
                 };
             }
             catch (Exception ex)
             {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
                 DMEEditor.AddLogMessage("Error", $"Error getting collection with pagination: {ex.Message}", DateTime.Now, -1, "", Errors.Failed);
-                return new PagedResult { Data = Array.Empty<object>(), PageNumber = pageNumber, PageSize = pageSize, TotalRecords = 0, TotalPages = 0 };
+                return new PagedResult(Array.Empty<object>(), pageNumber, pageSize, 0);
             }
         }
 
@@ -530,8 +535,10 @@ public QdrantDatasourceGeneric(string pdatasourcename, IDMLogger plogger, IDMEEd
             }
             catch (Exception ex)
             {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
                 DMEEditor.AddLogMessage("Error", $"Error getting entity structure: {ex.Message}", DateTime.Now, -1, "", Errors.Failed);
-                return null;
+                return new EntityStructure { EntityName = EntityName };
             }
         }
 

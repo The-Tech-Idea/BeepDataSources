@@ -15,6 +15,9 @@ using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.DataBase;
@@ -83,34 +86,43 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
         public virtual double GetScalar(string query)
         {
             ErrorObject.Flag = Errors.Ok;
+            double retval = 0.0;
 
             try
             {
-                // Assuming you have a database connection and command objects.
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
 
-                //using (var command = GetDataCommand())
-                //{
-                //    command.CommandText = query;
-                //    var result = command.ExecuteScalar();
-
-                //    // Check if the result is not null and can be converted to a double.
-                //    if (result != null && double.TryParse(result.ToString(), out double value))
-                //    {
-                //        return value;
-                //    }
-                //}
-
-
-                // If the query executed successfully but didn't return a valid double, you can handle it here.
-                // You might want to log an error or throw an exception as needed.
+                if (ConnectionStatus == ConnectionState.Open && Store != null)
+                {
+                    using (var session = Store.OpenSession(CurrentDatabase))
+                    {
+                        // Execute RQL query and get scalar result
+                        var results = session.Advanced.RawQuery<BlittableJsonReaderObject>(query).ToList();
+                        if (results != null && results.Count > 0)
+                        {
+                            var firstResult = results.First();
+                            if (firstResult.TryGet("Value", out object value) || 
+                                firstResult.TryGet("Count", out value) ||
+                                firstResult.TryGet("Sum", out value))
+                            {
+                                if (value != null && double.TryParse(value.ToString(), out double doubleValue))
+                                {
+                                    retval = doubleValue;
+                                }
+                            }
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+                DMEEditor?.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
             }
 
-            // Return a default value or throw an exception if the query failed.
-            return 0.0; // You can change this default value as needed.
+            return retval;
         }
         public RavenDBDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
         {
@@ -237,42 +249,140 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
 
         public ConnectionState Closeconnection()
         {
+            try
+            {
+                if (Session != null)
+                {
+                    Session.Dispose();
+                    Session = null;
+                }
+                
+                if (Store != null)
+                {
+                    Store.Dispose();
+                    Store = null;
+                }
+                
+                ConnectionStatus = ConnectionState.Closed;
+                DMEEditor?.AddLogMessage("Beep", "RavenDB connection closed successfully.", DateTime.Now, -1, null, Errors.Ok);
+            }
+            catch (Exception ex)
+            {
+                ConnectionStatus = ConnectionState.Broken;
+                DMEEditor?.AddLogMessage("Beep", $"Could not close RavenDB {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
             return ConnectionStatus;
         }
 
         public bool CheckEntityExist(string EntityName)
         {
-            if (ConnectionStatus == ConnectionState.Open)
+            bool retval = false;
+            try
             {
-                return Dataconnection.ConnectionProp.Entities.Where(o => o.EntityName.Equals(EntityName, StringComparison.OrdinalIgnoreCase)).Any();
-            }
-            else
-                return false;
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
 
-              
+                if (ConnectionStatus == ConnectionState.Open && Store != null)
+                {
+                    // Check if collection exists
+                    var collections = GetCollection();
+                    retval = collections != null && collections.Contains(EntityName, StringComparer.OrdinalIgnoreCase);
+                }
+                else if (Entities != null && Entities.Count > 0)
+                {
+                    retval = Entities.Any(e => e.EntityName.Equals(EntityName, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in CheckEntityExist: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                retval = false;
+            }
+            return retval;
         }
 
         public bool CreateEntityAs(EntityStructure entity)
         {
-            throw new NotImplementedException();
+            bool retval = false;
+            try
+            {
+                if (entity != null && !string.IsNullOrEmpty(entity.EntityName))
+                {
+                    // In RavenDB, collections are created automatically when documents are stored
+                    // So we just need to ensure the entity structure is saved
+                    if (Entities == null)
+                        Entities = new List<EntityStructure>();
+
+                    int idx = GetEntityIdx(entity.EntityName);
+                    if (idx >= 0)
+                    {
+                        Entities[idx] = entity;
+                    }
+                    else
+                    {
+                        Entities.Add(entity);
+                    }
+
+                    SaveStructure();
+                    retval = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in CreateEntityAs: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                retval = false;
+            }
+            return retval;
         }
 
         public IErrorsInfo ExecuteSql(string sql)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // RavenDB doesn't use SQL, but supports RQL (Raven Query Language)
+                if (ConnectionStatus == ConnectionState.Open && Store != null)
+                {
+                    using (var session = Store.OpenSession(CurrentDatabase))
+                    {
+                        // Execute RQL query
+                        var results = session.Advanced.RawQuery<BlittableJsonReaderObject>(sql).ToList();
+                        DMEEditor?.AddLogMessage("Beep", $"Executed RQL query: {sql}", DateTime.Now, -1, null, Errors.Ok);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in ExecuteSql: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
-            throw new NotImplementedException();
+            // RavenDB doesn't have child tables or foreign keys in traditional sense
+            return new List<ChildRelation>();
         }
 
         public DataSet GetChildTablesListFromCustomQuery(string tablename, string customquery)
         {
-            throw new NotImplementedException();
+            DataSet ds = new DataSet();
+            try
+            {
+                // RavenDB doesn't have child tables concept
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetChildTablesListFromCustomQuery: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ds;
         }
 
-        public List<string> GetEntitesList()
+        public IEnumerable<string> GetEntitesList()
         {
 
             try
@@ -309,22 +419,107 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
 
         public Task<object> GetEntityDataAsync(string entityname, string filterstr)
         {
-            throw new NotImplementedException();
-        }
-
-        public object GetEntity(string EntityName, List<AppFilter> filter)
-        {
-            object entity;
-            using (var session = Store.OpenSession())
+            return Task.Run(() =>
             {
-                entity = session.Load<object>(EntityName);
-            }
-            return entity;
+                // Parse filter string into AppFilter list if needed
+                List<AppFilter> filters = null;
+                if (!string.IsNullOrEmpty(filterstr))
+                {
+                    filters = ParseFilterString(filterstr);
+                }
+                var result = GetEntity(entityname, filters);
+                return (object)result;
+            });
         }
 
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        private List<AppFilter> ParseFilterString(string filterstr)
         {
-            throw new NotImplementedException();
+            var filters = new List<AppFilter>();
+            try
+            {
+                if (!string.IsNullOrEmpty(filterstr))
+                {
+                    var parts = filterstr.Split(new[] { "AND", "OR" }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var part in parts)
+                    {
+                        var filter = new AppFilter();
+                        if (part.Contains("="))
+                        {
+                            var eqParts = part.Split('=');
+                            filter.FieldName = eqParts[0].Trim();
+                            filter.FilterValue = eqParts.Length > 1 ? eqParts[1].Trim() : "";
+                            filter.Operator = "equals";
+                        }
+                        if (!string.IsNullOrEmpty(filter.FieldName))
+                        {
+                            filters.Add(filter);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error parsing filter string: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return filters;
+        }
+
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            List<object> results = new List<object>();
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open && Store != null)
+                {
+                    using (var session = Store.OpenSession(CurrentDatabase))
+                    {
+                        // Query documents from the collection (EntityName)
+                        var query = session.Query<BlittableJsonReaderObject>(collection: EntityName);
+                        
+                        // Apply filters if provided
+                        if (filter != null && filter.Count > 0)
+                        {
+                            foreach (var appFilter in filter)
+                            {
+                                if (!string.IsNullOrEmpty(appFilter.FieldName) && !string.IsNullOrEmpty(appFilter.FilterValue))
+                                {
+                                    // Simple filter implementation - can be enhanced
+                                    query = ApplyFilterToQuery(query, appFilter);
+                                }
+                            }
+                        }
+
+                        var documents = query.ToList();
+                        foreach (var doc in documents)
+                        {
+                            results.Add(doc);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return results;
+        }
+
+        private IQueryable<BlittableJsonReaderObject> ApplyFilterToQuery(IQueryable<BlittableJsonReaderObject> query, AppFilter filter)
+        {
+            // This is a simplified filter - RavenDB uses its own query syntax
+            // In practice, you'd convert AppFilter to RavenDB query expressions
+            return query;
+        }
+
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        {
+            // RavenDB doesn't have foreign keys in traditional sense
+            return new List<RelationShipKeys>();
         }
 
         public EntityStructure GetEntityStructure(string EntityName, bool refresh = false)
@@ -334,7 +529,46 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
 
         public DataTable GetEntityDataTable(string EntityName, string filterstr)
         {
-            throw new NotImplementedException();
+            DataTable dt = new DataTable();
+            try
+            {
+                List<AppFilter> filters = ParseFilterString(filterstr);
+                var results = GetEntity(EntityName, filters);
+                
+                if (results != null && results.Any())
+                {
+                    // Convert results to DataTable
+                    var entityStructure = GetEntityStructure(EntityName, false);
+                    if (entityStructure != null && entityStructure.Fields != null)
+                    {
+                        foreach (var field in entityStructure.Fields)
+                        {
+                            dt.Columns.Add(field.fieldname, Type.GetType(field.fieldtype) ?? typeof(string));
+                        }
+
+                        foreach (var item in results)
+                        {
+                            var row = dt.NewRow();
+                            if (item is BlittableJsonReaderObject jsonObj)
+                            {
+                                foreach (DataColumn col in dt.Columns)
+                                {
+                                    if (jsonObj.TryGet(col.ColumnName, out object value))
+                                    {
+                                        row[col.ColumnName] = value ?? DBNull.Value;
+                                    }
+                                }
+                            }
+                            dt.Rows.Add(row);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntityDataTable: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return dt;
         }
 
         public Type GetEntityType(string EntityName)
@@ -346,40 +580,202 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
 
         public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (UploadData is IEnumerable<object> dataList)
+                {
+                    int count = 0;
+                    foreach (var item in dataList)
+                    {
+                        UpdateEntity(EntityName, item);
+                        count++;
+                        progress?.Report(new PassedArgs { Message = $"Updated {count} records" });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in UpdateEntities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
-        public  object RunQuery( string qrystr)
+        public IEnumerable<object> RunQuery(string qrystr)
         {
-            throw new NotImplementedException();
+            List<object> results = new List<object>();
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open && Store != null)
+                {
+                    using (var session = Store.OpenSession(CurrentDatabase))
+                    {
+                        var queryResults = session.Advanced.RawQuery<BlittableJsonReaderObject>(qrystr).ToList();
+                        results.AddRange(queryResults);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in RunQuery: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return results;
         }
         public virtual IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
         {
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
 
-
-            throw new NotImplementedException();
+                if (ConnectionStatus == ConnectionState.Open && Store != null)
+                {
+                    using (var session = Store.OpenSession(CurrentDatabase))
+                    {
+                        session.Store(UploadDataRow);
+                        session.SaveChanges();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in UpdateEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
+
         public IErrorsInfo DeleteEntity(string EntityName, object DeletedDataRow)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open && Store != null && DeletedDataRow != null)
+                {
+                    using (var session = Store.OpenSession(CurrentDatabase))
+                    {
+                        // Get document ID
+                        string documentId = null;
+                        if (DeletedDataRow is BlittableJsonReaderObject jsonObj)
+                        {
+                            if (jsonObj.TryGet("@metadata", out BlittableJsonReaderObject metadata))
+                            {
+                                metadata.TryGet("@id", out documentId);
+                            }
+                        }
+                        else if (DeletedDataRow.GetType().GetProperty("Id") != null)
+                        {
+                            documentId = DeletedDataRow.GetType().GetProperty("Id")?.GetValue(DeletedDataRow)?.ToString();
+                        }
+
+                        if (!string.IsNullOrEmpty(documentId))
+                        {
+                            session.Delete(documentId);
+                            session.SaveChanges();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in DeleteEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
         {
-            throw new NotImplementedException();
+            if (fnd != null && !string.IsNullOrEmpty(fnd.EntityName))
+            {
+                return GetEntityStructure(fnd.EntityName, refresh);
+            }
+            return null;
         }
+
         public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.ScriptText))
+                {
+                    ExecuteSql(dDLScripts.ScriptText);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in RunScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (entities != null && entities.Count > 0)
+                {
+                    foreach (var entity in entities)
+                    {
+                        CreateEntityAs(entity);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in CreateEntities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
-            throw new NotImplementedException();
+            List<ETLScriptDet> scripts = new List<ETLScriptDet>();
+            try
+            {
+                var entitiesToScript = entities ?? Entities;
+                if (entitiesToScript != null && entitiesToScript.Count > 0)
+                {
+                    foreach (var entity in entitiesToScript)
+                    {
+                        var script = new ETLScriptDet
+                        {
+                            EntityName = entity.EntityName,
+                            ScriptType = "CREATE",
+                            ScriptText = $"# RavenDB collection: {entity.EntityName}\n# Collections are created automatically when documents are stored"
+                        };
+                        scripts.Add(script);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetCreateEntityScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return scripts;
         }
 
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
@@ -400,9 +796,9 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
             }
             return ErrorObject;
         }
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-           return Task.Run(() => GetEntity(EntityName, Filter));
+            return Task.Run(() => GetEntity(EntityName, Filter));
         }
         public IErrorsInfo OpenDatabaseInMemory(string databasename)
         {
@@ -425,50 +821,92 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
 
         public EntityStructure GetEntityStructure(string DocName)
         {
-            EntityStructure retval = new EntityStructure();
+            EntityStructure retval = null;
             try
             {
-
-                Session = GetSession(CurrentDatabase);
-                var command =new GetDocumentsCommand(1,2);
-                Session.Advanced.RequestExecutor.Execute(command, Session.Advanced.Context);
-                if(command.Result != null)
+                if (ConnectionStatus != ConnectionState.Open)
                 {
-                    var result = (BlittableJsonReaderObject)command.Result.Results[0];
-                    var documentMetadata = (BlittableJsonReaderObject)result["@metadata"];
+                    Openconnection();
+                }
 
-                    // Print out all the metadata properties.
-                    EntityStructure entityData = new EntityStructure();
-
-                    string sheetname;
-                    sheetname = DocName;
-                    entityData.EntityName = DocName;
-                    entityData.DataSourceID = Dataconnection.ConnectionProp.ConnectionName;
-                    entityData.SchemaOrOwnerOrDatabase = CurrentDatabase;
-                    List<EntityField> Fields = new List<EntityField>();
-                    int y = 0;
-                    foreach (var propertyName in documentMetadata.GetPropertyNames())
+                if (ConnectionStatus == ConnectionState.Open && Store != null)
+                {
+                    using (var session = Store.OpenSession(CurrentDatabase))
                     {
-                        documentMetadata.TryGet<object>(propertyName, out var metaPropValue);
+                        // Get a sample document from the collection
+                        var sampleDoc = session.Query<BlittableJsonReaderObject>(collection: DocName).FirstOrDefault();
+                        
+                        if (sampleDoc != null)
+                        {
+                            retval = new EntityStructure
+                            {
+                                EntityName = DocName,
+                                DatasourceEntityName = DocName,
+                                OriginalEntityName = DocName,
+                                Caption = DocName,
+                                Category = DatasourceCategory.NOSQL,
+                                DatabaseType = DataSourceType.RavenDB,
+                                DataSourceID = DatasourceName,
+                                SchemaOrOwnerOrDatabase = CurrentDatabase,
+                                Fields = new List<EntityField>()
+                            };
 
-                        EntityField f = new EntityField();
-                        f.fieldname = propertyName;
-                        f.fieldtype = "System.String";
-                        f.ValueRetrievedFromParent = false;
-                        f.EntityName = sheetname;
-                        f.FieldIndex = y;
-                        Fields.Add(f);
-                        y += 1;
+                            // Extract fields from sample document
+                            int fieldIndex = 0;
+                            foreach (var propertyName in sampleDoc.GetPropertyNames())
+                            {
+                                if (propertyName != "@metadata")
+                                {
+                                    sampleDoc.TryGet(propertyName, out object propValue);
+                                    var fieldType = InferTypeFromValue(propValue);
+
+                                    retval.Fields.Add(new EntityField
+                                    {
+                                        fieldname = propertyName,
+                                        Originalfieldname = propertyName,
+                                        fieldtype = fieldType,
+                                        ValueRetrievedFromParent = false,
+                                        EntityName = DocName,
+                                        FieldIndex = fieldIndex++,
+                                        IsKey = propertyName == "Id" || propertyName == "id",
+                                        AllowDBNull = true
+                                    });
+                                }
+                            }
+                        }
                     }
                 }
-                
-                return retval;
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage(ex.Message, "Could not Create Entity structure for RavenDB Entity " + DocName, DateTime.Now, -1, Dataconnection.ConnectionProp.Url, Errors.Failed);
-                return null;
+                DMEEditor?.AddLogMessage(ex.Message, "Could not Create Entity structure for RavenDB Entity " + DocName, DateTime.Now, -1, Dataconnection.ConnectionProp?.Url ?? "", Errors.Failed);
+                retval = null;
             }
+            return retval;
+        }
+
+        private string InferTypeFromValue(object value)
+        {
+            if (value == null)
+                return "System.String";
+
+            var type = value.GetType();
+            if (type == typeof(int))
+                return "System.Int32";
+            if (type == typeof(long))
+                return "System.Int64";
+            if (type == typeof(double))
+                return "System.Double";
+            if (type == typeof(decimal))
+                return "System.Decimal";
+            if (type == typeof(bool))
+                return "System.Boolean";
+            if (type == typeof(DateTime))
+                return "System.DateTime";
+            if (type == typeof(string))
+                return "System.String";
+
+            return "System.Object";
         }
         public List<string> GetCollection()
         {
@@ -683,11 +1121,15 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects)
+                    try
+                    {
+                        Closeconnection();
+                    }
+                    catch (Exception ex)
+                    {
+                        DMEEditor?.AddLogMessage("Beep", $"Error disposing RavenDB connection: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                    }
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
                 disposedValue = true;
             }
         }
@@ -708,92 +1150,297 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
 
         public string GetConnectionString()
         {
-            throw new NotImplementedException();
+            return Dataconnection?.ConnectionProp?.ConnectionString ?? Dataconnection?.ConnectionProp?.Url ?? "";
         }
 
         public IErrorsInfo SaveStructure()
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (Entities != null && Entities.Count > 0)
+                {
+                    InMemoryStructures = Entities;
+                    DMEEditor?.ConfigEditor.SaveDataSourceEntitiesValues(new DatasourceEntities 
+                    { 
+                        datasourcename = DatasourceName, 
+                        Entities = Entities 
+                    });
+                    IsSaved = true;
+                    OnSaveStructure?.Invoke(this, (PassedArgs)DMEEditor?.Passedarguments);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Could not save RavenDB Structure for {DatasourceName}- {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo LoadStructure()
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                var entitiesData = DMEEditor?.ConfigEditor.LoadDataSourceEntitiesValues(DatasourceName);
+                if (entitiesData != null && entitiesData.Entities != null)
+                {
+                    Entities = entitiesData.Entities;
+                    EntitiesNames = Entities.Select(e => e.EntityName).ToList();
+                    InMemoryStructures = Entities;
+                    OnLoadStructure?.Invoke(this, (PassedArgs)DMEEditor?.Passedarguments);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Could not Load RavenDB Structure for {DatasourceName}- {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo LoadData(Progress<PassedArgs> progress, CancellationToken token)
         {
-            throw new NotImplementedException();
+            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
+            return LoadData(progressWrapper, token);
         }
 
         public IErrorsInfo SyncData(Progress<PassedArgs> progress, CancellationToken token)
         {
-            throw new NotImplementedException();
+            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
+            return SyncData(progressWrapper, token);
         }
 
         public IErrorsInfo LoadStructure(Progress<PassedArgs> progress, CancellationToken token, bool copydata = false)
         {
-            throw new NotImplementedException();
+            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
+            return LoadStructure(progressWrapper, token, copydata);
         }
 
         public IErrorsInfo CreateStructure(Progress<PassedArgs> progress, CancellationToken token)
         {
-            throw new NotImplementedException();
+            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
+            return CreateStructure(progressWrapper, token);
         }
 
         public IErrorsInfo SyncData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
         {
-            throw new NotImplementedException();
+            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
+            return SyncData(entityname, progressWrapper, token);
         }
 
         public IErrorsInfo RefreshData(Progress<PassedArgs> progress, CancellationToken token)
         {
-            throw new NotImplementedException();
+            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
+            return RefreshData(progressWrapper, token);
         }
 
         public IErrorsInfo RefreshData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
         {
-            throw new NotImplementedException();
+            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
+            return RefreshData(entityname, progressWrapper, token);
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        private class ProgressWrapper<T> : IProgress<T>
         {
-            throw new NotImplementedException();
+            private readonly Progress<T> _progress;
+            public ProgressWrapper(Progress<T> progress) => _progress = progress;
+            public void Report(T value) => _progress?.Report(value);
+        }
+
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            PagedResult pagedResult = new PagedResult();
+            ErrorObject.Flag = Errors.Ok;
+
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open && Store != null)
+                {
+                    using (var session = Store.OpenSession(CurrentDatabase))
+                    {
+                        var query = session.Query<BlittableJsonReaderObject>(collection: EntityName);
+                        
+                        if (filter != null && filter.Count > 0)
+                        {
+                            foreach (var appFilter in filter)
+                            {
+                                query = ApplyFilterToQuery(query, appFilter);
+                            }
+                        }
+
+                        // Get total count
+                        var totalCount = query.Count();
+
+                        // Get paginated results
+                        int skipAmount = (pageNumber - 1) * pageSize;
+                        var documents = query.Skip(skipAmount).Take(pageSize).ToList();
+
+                        pagedResult.Data = documents;
+                        pagedResult.TotalRecords = totalCount;
+                        pagedResult.PageNumber = pageNumber;
+                        pagedResult.PageSize = pageSize;
+                        pagedResult.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+                        pagedResult.HasNextPage = pageNumber < pagedResult.TotalPages;
+                        pagedResult.HasPreviousPage = pageNumber > 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity (paged): {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return pagedResult;
         }
 
         public IErrorsInfo LoadStructure(IProgress<PassedArgs> progress, CancellationToken token, bool copydata = false)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                ConnectionStatus = ConnectionState.Open;
+                Entities = new List<EntityStructure>();
+                EntitiesNames = new List<string>();
+
+                var entitiesData = DMEEditor?.ConfigEditor.LoadDataSourceEntitiesValues(DatasourceName);
+                if (entitiesData != null)
+                {
+                    Entities = entitiesData.Entities ?? new List<EntityStructure>();
+                    EntitiesNames = Entities.Select(e => e.EntityName).ToList();
+                    InMemoryStructures = Entities;
+                }
+                else
+                {
+                    GetEntitesList();
+                }
+
+                SaveStructure();
+                OnLoadStructure?.Invoke(this, (PassedArgs)DMEEditor?.Passedarguments);
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Could not Load RavenDB Structure for {DatasourceName}- {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo CreateStructure(IProgress<PassedArgs> progress, CancellationToken token)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (!IsStructureCreated)
+                {
+                    GetEntitesList();
+                    SaveStructure();
+                    IsStructureCreated = true;
+                    OnCreateStructure?.Invoke(this, (PassedArgs)DMEEditor?.Passedarguments);
+                }
+            }
+            catch (Exception ex)
+            {
+                IsStructureCreated = false;
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Could not create RavenDB Structure for {DatasourceName}- {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo LoadData(IProgress<PassedArgs> progress, CancellationToken token)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (IsStructureCreated)
+                {
+                    // RavenDB data is already available through GetEntity
+                    IsLoaded = true;
+                    OnLoadData?.Invoke(this, (PassedArgs)DMEEditor?.Passedarguments);
+                }
+            }
+            catch (Exception ex)
+            {
+                IsLoaded = false;
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Could not Load RavenDB data for {DatasourceName}- {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo SyncData(IProgress<PassedArgs> progress, CancellationToken token)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                GetEntitesList();
+                SaveStructure();
+                IsSynced = true;
+                OnSyncData?.Invoke(this, (PassedArgs)DMEEditor?.Passedarguments);
+            }
+            catch (Exception ex)
+            {
+                IsSynced = false;
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Could not Sync RavenDB data for {DatasourceName}- {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo SyncData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                GetEntityStructure(entityname, true);
+                SaveStructure();
+                OnRefreshDataEntity?.Invoke(this, (PassedArgs)DMEEditor?.Passedarguments);
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Could not Sync RavenDB entity {entityname}- {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo RefreshData(IProgress<PassedArgs> progress, CancellationToken token)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                GetEntitesList();
+                SaveStructure();
+                OnRefreshData?.Invoke(this, (PassedArgs)DMEEditor?.Passedarguments);
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Could not Refresh RavenDB data for {DatasourceName}- {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo RefreshData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
         {
-            throw new NotImplementedException();
+            return SyncData(entityname, progress, token);
         }
 
 

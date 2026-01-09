@@ -55,8 +55,8 @@ namespace LiteDBDataSourceCore
         public ConnectionState ConnectionStatus { get  ; set  ; }
         public string ColumnDelimiter { get  ; set  ; }
         public string ParameterDelimiter { get  ; set  ; }
-        public bool CanCreateLocal { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool InMemory { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool CanCreateLocal { get; set; } = true;
+        public bool InMemory { get; set; } = false;
 
         public event EventHandler<PassedArgs> PassEvent;
         Type enttype = null;
@@ -65,14 +65,37 @@ namespace LiteDBDataSourceCore
         EntityStructure DataStruct = null;
         string DBfilepathandname=string.Empty;
         #region "Misc"
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
-            throw new NotImplementedException();
+            // LiteDB doesn't have child tables
+            return new List<ChildRelation>();
         }
 
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
-            throw new NotImplementedException();
+            List<ETLScriptDet> scripts = new List<ETLScriptDet>();
+            try
+            {
+                var entitiesToScript = entities ?? Entities;
+                if (entitiesToScript != null && entitiesToScript.Count > 0)
+                {
+                    foreach (var entity in entitiesToScript)
+                    {
+                        var script = new ETLScriptDet
+                        {
+                            EntityName = entity.EntityName,
+                            ScriptType = "CREATE",
+                            ScriptText = $"# LiteDB collection: {entity.EntityName}\n# Collections are created automatically when first document is inserted"
+                        };
+                        scripts.Add(script);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetCreateEntityScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return scripts;
         }
         private void SetObjects(string Entityname)
         {
@@ -84,7 +107,7 @@ namespace LiteDBDataSourceCore
                 lastentityname = Entityname;
             }
         }
-        public List<string> GetEntitesList()
+        public IEnumerable<string> GetEntitesList()
         {
 
             ErrorsInfo retval = new ErrorsInfo();
@@ -156,9 +179,10 @@ namespace LiteDBDataSourceCore
             return EntitiesNames;
         }
 
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
-            throw new NotImplementedException();
+            // LiteDB doesn't have foreign keys
+            return new List<RelationShipKeys>();
         }
 
         public int GetEntityIdx(string entityName)
@@ -432,7 +456,22 @@ namespace LiteDBDataSourceCore
         #region "DDL"
         public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.ScriptText))
+                {
+                    // Execute script as SQL command
+                    ExecuteSql(dDLScripts.ScriptText);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in RunScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo CreateEntities(List<EntityStructure> entities)
@@ -598,15 +637,63 @@ namespace LiteDBDataSourceCore
         #endregion
         public IErrorsInfo BeginTransaction(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // LiteDB uses file-based transactions
+                // Transactions are handled automatically on dispose or commit
+                if (db == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
         public IErrorsInfo Commit(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // LiteDB commits automatically when operations complete
+                // Explicit commit may not be necessary, but we can ensure consistency
+                if (db != null)
+                {
+                    db.Checkpoint();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in Commit Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
         public IErrorsInfo EndTransaction(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // LiteDB transactions end automatically
+                // Ensure checkpoint is called if needed
+                if (db != null)
+                {
+                    db.Checkpoint();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in End Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
         public ConnectionState Openconnection()
         {
@@ -700,12 +787,12 @@ namespace LiteDBDataSourceCore
         }
 
 
-        public object GetEntity(string EntityName, List<AppFilter> filter)
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
             ErrorsInfo retval = new ErrorsInfo();
             retval.Flag = Errors.Ok;
             retval.Message = "Get Entity Successfully";
-            object result = null;
+            List<object> results = new List<object>();
             IEnumerable<BsonDocument> documents;
             try
             {
@@ -718,29 +805,30 @@ namespace LiteDBDataSourceCore
                     using (var db = new LiteDatabase(_connectionString))
                     {
                         var collection = db.GetCollection<BsonDocument>(EntityName);
+                        SetObjects(EntityName);
 
-                        if (filter!=null && filter.Count > 0) {
+                        if (filter != null && filter.Count > 0)
+                        {
                             var bsonExpression = BuildLiteDBExpression(filter);
-
-                            // Execute the query
                             documents = collection.Find(bsonExpression);
                         }
                         else
                         {
-                            documents=collection.Count() > 0 ? collection.FindAll() : null;
+                            documents = collection.Count() > 0 ? collection.FindAll() : new List<BsonDocument>();
                         }
-                        // Build the LiteDB BsonExpression from the list of AppFilter
-                      
 
-                        // Optionally, convert BSON documents to a specific object type if necessary
-                        // This conversion would depend on the expected return type and data structure
-                      //  result = documents.ToList(); // Convert to List to ensure the query executes
-
-                        List<BsonDocument> ls = documents.ToList();  // Convert to List to realize the query and gather results
-                        result = ConvertBsonDocumentsToObjects(ls, enttype, DataStruct);
+                        List<BsonDocument> ls = documents.ToList();
+                        var converted = ConvertBsonDocumentsToObjects(ls, enttype, DataStruct);
+                        
+                        // Convert IBindingListView to IEnumerable<object>
+                        if (converted is System.Collections.IEnumerable enumerable)
+                        {
+                            foreach (var item in enumerable)
+                            {
+                                results.Add(item);
+                            }
+                        }
                     }
-                  
-
                 }
 
             }
@@ -749,75 +837,75 @@ namespace LiteDBDataSourceCore
                 string methodName = MethodBase.GetCurrentMethod().Name;
                 retval.Flag = Errors.Failed;
                 retval.Message = ex.Message;
-                DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
             }
-            return result;
+            return results;
         }
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Get Entity Successfully" };
-           object retlist = null;
+            PagedResult pagedResult = new PagedResult();
+            ErrorObject.Flag = Errors.Ok;
+
             try
             {
-                if (db == null)
+                if (db == null || ConnectionStatus != ConnectionState.Open)
                 {
-                    Openconnection();  // Ensure the database connection is open
+                    Openconnection();
                 }
+
                 using (var db = new LiteDatabase(_connectionString))
                 {
                     var collection = db.GetCollection<BsonDocument>(EntityName);
+                    SetObjects(EntityName);
 
-                    // Convert AppFilters to LiteDB BsonExpression
+                    // Get total count
                     var bsonExpression = BuildLiteDBExpression(filter);
+                    int totalRecords = (int)collection.Count(bsonExpression);
 
                     // Calculate pagination parameters
                     int skipAmount = (pageNumber - 1) * pageSize;
 
-                    // Apply the filter and pagination to the query
-                    // Here we directly use skip and limit parameters in the Find method
-                    var col = collection.Find(bsonExpression, skipAmount, pageSize);
+                    // Get paginated results
+                    var documents = collection.Find(bsonExpression, skipAmount, pageSize);
+                    List<BsonDocument> result = documents.ToList();
 
-                    List<BsonDocument> result = col.ToList();  // Convert to List to realize the query and gather results
-                    retlist = ConvertBsonDocumentsToObjects(result, enttype, DataStruct);
+                    var converted = ConvertBsonDocumentsToObjects(result, enttype, DataStruct);
+                    List<object> results = new List<object>();
 
+                    // Convert IBindingListView to List<object>
+                    if (converted is System.Collections.IEnumerable enumerable)
+                    {
+                        foreach (var item in enumerable)
+                        {
+                            results.Add(item);
+                        }
+                    }
+
+                    pagedResult.Data = results;
+                    pagedResult.TotalRecords = totalRecords;
+                    pagedResult.PageNumber = pageNumber;
+                    pagedResult.PageSize = pageSize;
+                    pagedResult.TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+                    pagedResult.HasNextPage = pageNumber < pagedResult.TotalPages;
+                    pagedResult.HasPreviousPage = pageNumber > 1;
                 }
-            
             }
             catch (Exception ex)
             {
                 string methodName = MethodBase.GetCurrentMethod().Name;
-                retval.Flag = Errors.Failed;
-                retval.Message = ex.Message;
-                DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
             }
 
-            return retlist;
+            return pagedResult;
         }
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-
-            return Task.Run(() =>
-            {
-                ErrorsInfo retval = new ErrorsInfo();
-                retval.Flag = Errors.Ok;
-                retval.Message = "Get Entity Successfully";
-                object result = null;
-                try
-                {
-                    result = GetEntity(EntityName, Filter);
-                }
-                catch (Exception ex)
-                {
-                    string methodName = MethodBase.GetCurrentMethod().Name;
-                    retval.Flag = Errors.Failed;
-                    retval.Message = ex.Message;
-                    DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                }
-                return result;
-            });
+            return Task.Run(() => GetEntity(EntityName, Filter));
         }
 
-        public object RunQuery(string qrystr)
+        public IEnumerable<object> RunQuery(string qrystr)
         {
             ErrorsInfo retval = new ErrorsInfo();
             object result = null;

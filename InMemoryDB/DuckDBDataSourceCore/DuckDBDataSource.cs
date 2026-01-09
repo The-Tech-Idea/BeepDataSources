@@ -3,8 +3,10 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Xml;
 using TheTechIdea.Beep;
 using TheTechIdea.Beep.Addin;
@@ -799,14 +801,59 @@ namespace DuckDBDataSourceCore
 
             catch (Exception ex)
             {
-
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
                 DMEEditor.AddLogMessage("Fail", $"Error in getting entity Data({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
 
-                return null;
+                return Enumerable.Empty<object>();
             }
 
 
         }
+
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        {
+            return await Task.Run(() => GetEntity(EntityName, Filter));
+        }
+
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            ErrorObject.Flag = Errors.Ok;
+            ErrorObject.Message = "Successfully retrieved data";
+            try
+            {
+                var data = GetEntity(EntityName, filter).ToList();
+                var totalRecords = data.Count;
+                var pagedItems = data.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+                return new PagedResult
+                {
+                    Data = pagedItems,
+                    PageNumber = Math.Max(1, pageNumber),
+                    PageSize = pageSize,
+                    TotalRecords = totalRecords,
+                    TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                    HasPreviousPage = pageNumber > 1,
+                    HasNextPage = pageNumber * pageSize < totalRecords
+                };
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                return new PagedResult
+                {
+                    Data = Enumerable.Empty<object>(),
+                    PageNumber = Math.Max(1, pageNumber),
+                    PageSize = pageSize,
+                    TotalRecords = 0,
+                    TotalPages = 0,
+                    HasPreviousPage = false,
+                    HasNextPage = false
+                };
+            }
+        }
+
         public override IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
         {
             DataTable tb = new DataTable();
@@ -1200,7 +1247,7 @@ namespace DuckDBDataSourceCore
 
             return ErrorObject;
         }
-        public override List<string> GetEntitesList()
+        public override IEnumerable<string> GetEntitesList()
         {
             EntitiesNames = new List<string>();
 
@@ -1229,8 +1276,10 @@ namespace DuckDBDataSourceCore
             }
             catch (Exception ex)
             {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
                 DMEEditor.AddLogMessage("DuckDB", $"Failed to get list of entities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                return new List<string>();
+                return Enumerable.Empty<string>();
             }
         }
      
@@ -1279,9 +1328,11 @@ namespace DuckDBDataSourceCore
             if (RDBMSHelper.IsSqlStatementValid(qrystr)) { return RunQueryOnDuckDb(qrystr); }
             else
             {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = "Invalid Query";
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
                 DMEEditor.ErrorObject.Message = "Invalid Query";
-                return null;
+                return Enumerable.Empty<object>();
             }
             
         }

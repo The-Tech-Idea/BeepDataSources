@@ -245,7 +245,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             }
         }
 
-        public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter>? filter = null)
+        public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter> filter)
         {
             try
             {
@@ -800,9 +800,29 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             return Task.Run(() => DeleteEntityAsync(entityname, entityid)).GetAwaiter().GetResult();
         }
 
-        public new object GetEntity(string entityname, List<AppFilter> filter)
+        public override IEnumerable<object> GetEntity(string entityname, List<AppFilter> filter)
         {
-            return Task.Run(() => GetEntityAsync(entityname, filter)).GetAwaiter().GetResult();
+            var data = GetEntityAsync(entityname, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         public List<EntityStructure> GetEntityStructures(bool refresh = false)
@@ -810,9 +830,9 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             return Task.Run(() => GetEntityStructuresAsync(refresh)).GetAwaiter().GetResult();
         }
 
-        public new List<string> GetEntitesList()
+        public new IEnumerable<string> GetEntitesList()
         {
-            return Task.Run(() => GetEntitiesNamesAsync()).GetAwaiter().GetResult();
+            return EntitiesNames;
         }
 
         public new bool Openconnection()

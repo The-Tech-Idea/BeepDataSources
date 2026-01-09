@@ -21,7 +21,22 @@ namespace TheTechIdea.Beep.DataSources
     {
         public KayakoDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
         {
+            // Ensure WebAPI connection props exist
+            if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
+            {
+                if (Dataconnection != null)
+                    Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+            }
+
+            // Register entities from Map
+            EntitiesNames = Map.Keys.ToList();
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+                .ToList();
         }
+
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
 
         private record EntityMapping(string endpoint, string root, string[] requiredFilters);
 

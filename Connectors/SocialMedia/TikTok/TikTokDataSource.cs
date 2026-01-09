@@ -81,7 +81,7 @@ namespace BeepDataSources.Connectors.SocialMedia.TikTok
     /// TikTok data source implementation for Beep framework
     /// Supports TikTok for Developers API
     /// </summary>
-    [AddinAttribute("TikTok", "SocialMedia", "TikTok API Data Source", "1.0", "TikTok for Developers API integration")]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.TikTok)]
     public class TikTokDataSource : WebAPIDataSource
     {
         private readonly TikTokConfig _config;

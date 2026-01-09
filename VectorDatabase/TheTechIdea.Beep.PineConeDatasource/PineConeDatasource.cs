@@ -361,17 +361,31 @@ namespace TheTechIdea.Beep.PineConeDatasource
 
         public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            var allData = GetEntity(EntityName, filter).ToList();
-            var pagedData = allData.Skip(pageNumber * pageSize).Take(pageSize).ToList();
-            
-            return new PagedResult
+            ErrorObject.Flag = Errors.Ok;
+            ErrorObject.Message = "Successfully retrieved data";
+            try
             {
-                Data = pagedData,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalRecords = allData.Count,
-                TotalPages = (int)Math.Ceiling((double)allData.Count / pageSize)
-            };
+                var allData = GetEntity(EntityName, filter).ToList();
+                var totalRecords = allData.Count;
+                var pagedData = allData.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+                
+                return new PagedResult
+                {
+                    Data = pagedData,
+                    PageNumber = Math.Max(1, pageNumber),
+                    PageSize = pageSize,
+                    TotalRecords = totalRecords,
+                    TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                    HasPreviousPage = pageNumber > 1,
+                    HasNextPage = pageNumber * pageSize < totalRecords
+                };
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                return new PagedResult(Array.Empty<object>(), pageNumber, pageSize, 0);
+            }
         }
 
         public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
@@ -455,8 +469,10 @@ namespace TheTechIdea.Beep.PineConeDatasource
             }
             catch (Exception ex)
             {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
                 DMEEditor.AddLogMessage("Error", $"Error getting entity structure: {ex.Message}", DateTime.Now, -1, "", Errors.Failed);
-                return null;
+                return new EntityStructure { EntityName = EntityName };
             }
         }
 

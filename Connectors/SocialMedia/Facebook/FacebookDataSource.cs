@@ -55,20 +55,78 @@ namespace TheTechIdea.Beep.FacebookDataSource
                 .ToList();
         }
 
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // -------------------- Overrides (same signatures) --------------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Async
         /// <summary>
         /// Gets entity data asynchronously
         /// </summary>
         public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            // Implementation will go here
-            await Task.CompletedTask;
-            return new List<object>();
+            try
+            {
+                if (!KnownEntities.Contains(EntityName, StringComparer.OrdinalIgnoreCase))
+                {
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = $"Unknown Facebook entity: {EntityName}";
+                    return Array.Empty<object>();
+                }
+
+                // Map entity name to appropriate method
+                return EntityName.ToLower() switch
+                {
+                    "posts" => (await GetPosts(Filter?.FirstOrDefault(f => f.FieldName == "pageId")?.FilterValue?.ToString() ?? "", 
+                        int.TryParse(Filter?.FirstOrDefault(f => f.FieldName == "limit")?.FilterValue?.ToString(), out var limit) ? limit : 10)).Cast<object>(),
+                    "pages" => (await GetPageInfo(Filter?.FirstOrDefault(f => f.FieldName == "pageId")?.FilterValue?.ToString() ?? "")).Cast<object>(),
+                    "users" => (await GetUserProfile(Filter?.FirstOrDefault(f => f.FieldName == "userId")?.FilterValue?.ToString() ?? "")).Cast<object>(),
+                    "events" => (await GetEvents(Filter?.FirstOrDefault(f => f.FieldName == "pageId")?.FilterValue?.ToString() ?? "", 
+                        int.TryParse(Filter?.FirstOrDefault(f => f.FieldName == "limit")?.FilterValue?.ToString(), out var eventLimit) ? eventLimit : 10)).Cast<object>(),
+                    "photos" => (await GetPhotos(Filter?.FirstOrDefault(f => f.FieldName == "albumId")?.FilterValue?.ToString() ?? "", 
+                        int.TryParse(Filter?.FirstOrDefault(f => f.FieldName == "limit")?.FilterValue?.ToString(), out var photoLimit) ? photoLimit : 10)).Cast<object>(),
+                    _ => Array.Empty<object>()
+                };
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                return Array.Empty<object>();
+            }
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         /// <summary>
         /// Gets posts from a Facebook page
         /// </summary>
-        [CommandAttribute(ObjectType = "FacebookPost", PointType = EnumPointType.Function, Name = "GetPosts", Caption = "Get Facebook Posts", ClassName = "FacebookDataSource", misc = "ReturnType: IEnumerable<FacebookPost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookPost", Name = "GetPosts", Caption = "Get Facebook Posts", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookPost>")]
         public async Task<IEnumerable<FacebookPost>> GetPosts(string pageId, int limit = 10)
         {
             string fields = "id,message,story,created_time,updated_time,type,status_type,permalink_url,full_picture,picture,source,name,caption,description,link,likes.summary(true),comments.summary(true),shares.summary(true),reactions.summary(true)";
@@ -82,7 +140,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Gets information about a Facebook page
         /// </summary>
-        [CommandAttribute(ObjectType = "FacebookPage", PointType = EnumPointType.Function, Name = "GetPageInfo", Caption = "Get Facebook Page Info", ClassName = "FacebookDataSource", misc = "ReturnType: IEnumerable<FacebookPage>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookPage", Name = "GetPageInfo", Caption = "Get Facebook Page Info", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookPage>")]
         public async Task<IEnumerable<FacebookPage>> GetPageInfo(string pageId)
         {
             string fields = "id,name,category,description,website,phone,emails,location,hours,cover,picture,about,link,followers_count,fan_count";
@@ -96,7 +154,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Gets posts from a Facebook group
         /// </summary>
-        [CommandAttribute(ObjectType = "FacebookPost", PointType = EnumPointType.Function, Name = "GetGroupPosts", Caption = "Get Facebook Group Posts", ClassName = "FacebookDataSource", misc = "ReturnType: IEnumerable<FacebookPost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookPost", Name = "GetGroupPosts", Caption = "Get Facebook Group Posts", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookPost>")]
         public async Task<IEnumerable<FacebookPost>> GetGroupPosts(string groupId, int limit = 10)
         {
             string fields = "id,message,story,created_time,updated_time,type,status_type,permalink_url,full_picture,picture,source,name,caption,description,link,likes.summary(true),comments.summary(true),shares.summary(true),reactions.summary(true)";
@@ -110,7 +168,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Gets user profile information
         /// </summary>
-        [CommandAttribute(ObjectType = "FacebookUser", PointType = EnumPointType.Function, Name = "GetUserProfile", Caption = "Get Facebook User Profile", ClassName = "FacebookDataSource", misc = "ReturnType: IEnumerable<FacebookUser>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookUser", Name = "GetUserProfile", Caption = "Get Facebook User Profile", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookUser>")]
         public async Task<IEnumerable<FacebookUser>> GetUserProfile(string userId)
         {
             string fields = "id,name,first_name,last_name,email,birthday,gender,location,hometown,about,website,picture";
@@ -124,7 +182,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Gets events from a Facebook page
         /// </summary>
-        [CommandAttribute(ObjectType = "FacebookEvent", PointType = EnumPointType.Function, Name = "GetEvents", Caption = "Get Facebook Events", ClassName = "FacebookDataSource", misc = "ReturnType: IEnumerable<FacebookEvent>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookEvent", Name = "GetEvents", Caption = "Get Facebook Events", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookEvent>")]
         public async Task<IEnumerable<FacebookEvent>> GetEvents(string pageId, int limit = 10)
         {
             string fields = "id,name,description,start_time,end_time,place,attending_count,interested_count,maybe_count,noreply_count,cover,picture,type,category,ticket_uri";
@@ -138,7 +196,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Gets photos from a Facebook album or page
         /// </summary>
-        [CommandAttribute(ObjectType = "FacebookPicture", PointType = EnumPointType.Function, Name = "GetPhotos", Caption = "Get Facebook Photos", ClassName = "FacebookDataSource", misc = "ReturnType: IEnumerable<FacebookPicture>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookPicture", Name = "GetPhotos", Caption = "Get Facebook Photos", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookPicture>")]
         public async Task<IEnumerable<FacebookPicture>> GetPhotos(string albumId, int limit = 10)
         {
             string fields = "id,name,source,images,height,width,created_time,updated_time,link,likes.summary(true),comments.summary(true)";

@@ -117,12 +117,26 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Marketo
 
             // Register entities from the Map
             var entitiesNames = Map.Keys.ToList();
+            EntitiesNames = entitiesNames;
             Entities = entitiesNames
                 .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
                 .ToList();
         }
 
-        public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter>? filter)
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // -------------------- Overrides (same signatures) --------------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter> filter)
         {
             if (!Map.TryGetValue(entityName, out var mapping))
             {
@@ -196,39 +210,58 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Marketo
             return list;
         }
 
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
+        }
+
         // CommandAttribute methods for framework integration
-        [CommandAttribute(ObjectType = nameof(MarketoLead), PointType = EnumPointType.Function, Name = "GetLeads", Caption = "Get Leads", ClassName = "MarketoDataSource", misc = "GetLeads")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Marketo, PointType = EnumPointType.Function, ObjectType = nameof(MarketoLead), Name = "GetLeads", Caption = "Get Leads", ClassName = "MarketoDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<MarketoLead>")]
         public IEnumerable<MarketoLead> GetLeads()
         {
             return GetEntity("leads", null).Cast<MarketoLead>();
         }
 
-        [CommandAttribute(ObjectType = nameof(MarketoList), PointType = EnumPointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "MarketoDataSource", misc = "GetLists")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Marketo, PointType = EnumPointType.Function, ObjectType = nameof(MarketoList), Name = "GetLists", Caption = "Get Lists", ClassName = "MarketoDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<MarketoList>")]
         public IEnumerable<MarketoList> GetLists()
         {
             return GetEntity("static_lists", null).Cast<MarketoList>();
         }
 
-        [CommandAttribute(ObjectType = nameof(MarketoCampaign), PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "MarketoDataSource", misc = "GetCampaigns")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Marketo, PointType = EnumPointType.Function, ObjectType = nameof(MarketoCampaign), Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "MarketoDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<MarketoCampaign>")]
         public IEnumerable<MarketoCampaign> GetCampaigns()
         {
             return GetEntity("smart_campaigns", null).Cast<MarketoCampaign>();
         }
 
-        [CommandAttribute(ObjectType = nameof(MarketoProgram), PointType = EnumPointType.Function, Name = "GetPrograms", Caption = "Get Programs", ClassName = "MarketoDataSource", misc = "GetPrograms")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Marketo, PointType = EnumPointType.Function, ObjectType = nameof(MarketoProgram), Name = "GetPrograms", Caption = "Get Programs", ClassName = "MarketoDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<MarketoProgram>")]
         public IEnumerable<MarketoProgram> GetPrograms()
         {
             return GetEntity("programs", null).Cast<MarketoProgram>();
         }
 
-        [CommandAttribute(ObjectType = nameof(MarketoEmail), PointType = EnumPointType.Function, Name = "GetEmails", Caption = "Get Emails", ClassName = "MarketoDataSource", misc = "GetEmails")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Marketo, PointType = EnumPointType.Function, ObjectType = nameof(MarketoEmail), Name = "GetEmails", Caption = "Get Emails", ClassName = "MarketoDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<MarketoEmail>")]
         public IEnumerable<MarketoEmail> GetEmails()
         {
             return GetEntity("emails", null).Cast<MarketoEmail>();
         }
 
         // POST methods for creating entities
-        [CommandAttribute(ObjectType = nameof(MarketoLead), PointType = EnumPointType.Function, Name = "CreateLead", Caption = "Create Lead", ClassName = "MarketoDataSource", misc = "CreateLead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Marketo, PointType = EnumPointType.Function, ObjectType = nameof(MarketoLead), Name = "CreateLead", Caption = "Create Lead", ClassName = "MarketoDataSource", Showin = ShowinType.Both, misc = "ReturnType: MarketoLead")]
         public async Task<MarketoLead> CreateLeadAsync(MarketoLead lead)
         {
             var response = await PostAsync("rest/v1/leads.json", lead);
@@ -237,7 +270,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Marketo
             return JsonSerializer.Deserialize<MarketoLead>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
 
-        [CommandAttribute(ObjectType = nameof(MarketoList), PointType = EnumPointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "MarketoDataSource", misc = "CreateList")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Marketo, PointType = EnumPointType.Function, ObjectType = nameof(MarketoList), Name = "CreateList", Caption = "Create List", ClassName = "MarketoDataSource", Showin = ShowinType.Both, misc = "ReturnType: MarketoList")]
         public async Task<MarketoList> CreateListAsync(MarketoList list)
         {
             var response = await PostAsync("rest/v1/lists.json", list);
@@ -246,7 +279,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Marketo
             return JsonSerializer.Deserialize<MarketoList>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
 
-        [CommandAttribute(ObjectType = nameof(MarketoCampaign), PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "MarketoDataSource", misc = "CreateCampaign")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Marketo, PointType = EnumPointType.Function, ObjectType = nameof(MarketoCampaign), Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "MarketoDataSource", Showin = ShowinType.Both, misc = "ReturnType: MarketoCampaign")]
         public async Task<MarketoCampaign> CreateCampaignAsync(MarketoCampaign campaign)
         {
             var response = await PostAsync("rest/v1/campaigns.json", campaign);
@@ -255,7 +288,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Marketo
             return JsonSerializer.Deserialize<MarketoCampaign>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
 
-        [CommandAttribute(ObjectType = nameof(MarketoProgram), PointType = EnumPointType.Function, Name = "CreateProgram", Caption = "Create Program", ClassName = "MarketoDataSource", misc = "CreateProgram")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Marketo, PointType = EnumPointType.Function, ObjectType = nameof(MarketoProgram), Name = "CreateProgram", Caption = "Create Program", ClassName = "MarketoDataSource", Showin = ShowinType.Both, misc = "ReturnType: MarketoProgram")]
         public async Task<MarketoProgram> CreateProgramAsync(MarketoProgram program)
         {
             var response = await PostAsync("rest/v1/programs.json", program);
@@ -264,7 +297,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Marketo
             return JsonSerializer.Deserialize<MarketoProgram>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
 
-        [CommandAttribute(ObjectType = nameof(MarketoEmail), PointType = EnumPointType.Function, Name = "CreateEmail", Caption = "Create Email", ClassName = "MarketoDataSource", misc = "CreateEmail")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Marketo, PointType = EnumPointType.Function, ObjectType = nameof(MarketoEmail), Name = "CreateEmail", Caption = "Create Email", ClassName = "MarketoDataSource", Showin = ShowinType.Both, misc = "ReturnType: MarketoEmail")]
         public async Task<MarketoEmail> CreateEmailAsync(MarketoEmail email)
         {
             var response = await PostAsync("rest/v1/emails.json", email);
@@ -274,7 +307,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Marketo
         }
 
         // PUT methods for updating entities
-        [CommandAttribute(ObjectType = nameof(MarketoLead), PointType = EnumPointType.Function, Name = "UpdateLead", Caption = "Update Lead", ClassName = "MarketoDataSource", misc = "UpdateLead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Marketo, PointType = EnumPointType.Function, ObjectType = nameof(MarketoLead), Name = "UpdateLead", Caption = "Update Lead", ClassName = "MarketoDataSource", Showin = ShowinType.Both, misc = "ReturnType: MarketoLead")]
         public async Task<MarketoLead> UpdateLeadAsync(MarketoLead lead)
         {
             var response = await PutAsync("rest/v1/leads.json", lead);

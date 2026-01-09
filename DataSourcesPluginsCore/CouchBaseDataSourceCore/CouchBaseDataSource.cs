@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Reflection;
+using System.Reflection.Metadata;
+using System.Net.Http.Headers;
 using TheTechIdea;
 using TheTechIdea.Beep;
 using TheTechIdea.Beep.DataBase;
@@ -11,14 +16,13 @@ using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Addin;
-
-
 using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Helpers;
 using Newtonsoft.Json;
 using Couchbase;
+using Couchbase.Query;
+using Couchbase.KeyValue;
 using Newtonsoft.Json.Linq;
-using System.Reflection.Metadata;
-using System.Net.Http.Headers;
 
 namespace CouchBaseDataSourceCore
 {
@@ -124,12 +128,44 @@ namespace CouchBaseDataSourceCore
 
         public IErrorsInfo BeginTransaction(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // Couchbase transactions are handled at the cluster level
+                // Transactions are managed implicitly with write operations
+                if (_cluster == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public bool CheckEntityExist(string EntityName)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (EntitiesNames != null && EntitiesNames.Count > 0)
+                {
+                    return EntitiesNames.Any(e => e.Equals(EntityName, StringComparison.OrdinalIgnoreCase));
+                }
+                else
+                {
+                    GetEntitesList();
+                    return EntitiesNames.Any(e => e.Equals(EntityName, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error checking entity existence: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return false;
+            }
         }
         public ConnectionState Openconnection()
         {
@@ -176,45 +212,212 @@ namespace CouchBaseDataSourceCore
 
         public IErrorsInfo Commit(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // Couchbase commits are handled automatically with write operations
+                // No explicit commit needed
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in Commit Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                foreach (var entity in entities)
+                {
+                    CreateEntityAs(entity);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in CreateEntities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public bool CreateEntityAs(EntityStructure entity)
         {
-            throw new NotImplementedException();
+            bool retval = false;
+            try
+            {
+                if (_cluster == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    // In Couchbase, collections are created through the management API
+                    // For now, we'll add the entity to our local structures
+                    if (Entities == null)
+                    {
+                        Entities = new List<EntityStructure>();
+                    }
+                    if (!Entities.Any(p => p.EntityName == entity.EntityName))
+                    {
+                        Entities.Add(entity);
+                    }
+                    if (EntitiesNames == null)
+                    {
+                        EntitiesNames = new List<string>();
+                    }
+                    if (!EntitiesNames.Contains(entity.EntityName))
+                    {
+                        EntitiesNames.Add(entity.EntityName);
+                    }
+                    retval = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in CreateEntityAs: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                retval = false;
+            }
+            return retval;
         }
 
         public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data deleted successfully." };
+            try
+            {
+                if (_cluster == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    var bucket = _cluster.BucketAsync(BucketName).Result;
+                    var collection = bucket.DefaultCollection();
+                    
+                    // Get document ID from UploadDataRow
+                    string docId = GetDocumentId(UploadDataRow);
+                    if (string.IsNullOrEmpty(docId))
+                    {
+                        retval.Flag = Errors.Failed;
+                        retval.Message = "Could not extract document ID from UploadDataRow";
+                        return retval;
+                    }
+
+                    var result = collection.RemoveAsync(docId).Result;
+                    if (result.Status == KeyValueStatus.Success)
+                    {
+                        retval.Flag = Errors.Ok;
+                        retval.Message = "Document deleted successfully.";
+                    }
+                    else
+                    {
+                        retval.Flag = Errors.Failed;
+                        retval.Message = $"Failed to delete document: {result.Status}";
+                    }
+                }
+                else
+                {
+                    retval.Flag = Errors.Failed;
+                    retval.Message = "Database connection is not open.";
+                }
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error deleting document: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error deleting document: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
         }
 
         public IErrorsInfo EndTransaction(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // Couchbase transactions end automatically with write operations
+                // No explicit end needed
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in End Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo ExecuteSql(string sql)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (_cluster == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    var result = _cluster.QueryAsync<dynamic>(sql).Result;
+                    // Execute the query
+                    foreach (var row in result)
+                    {
+                        // Process results if needed
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in ExecuteSql: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
-            throw new NotImplementedException();
+            // Couchbase doesn't have traditional child tables
+            return new List<ChildRelation>();
         }
 
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
-            throw new NotImplementedException();
+            List<ETLScriptDet> scripts = new List<ETLScriptDet>();
+            try
+            {
+                var entitiesToScript = entities ?? Entities;
+                if (entitiesToScript != null && entitiesToScript.Count > 0)
+                {
+                    foreach (var entity in entitiesToScript)
+                    {
+                        var script = new ETLScriptDet
+                        {
+                            EntityName = entity.EntityName,
+                            ScriptType = "CREATE",
+                            ScriptText = $"# Couchbase collection: {entity.EntityName}\n# Collections are created through management API"
+                        };
+                        scripts.Add(script);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetCreateEntityScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return scripts;
         }
 
-        public List<string> GetEntitesList()
+        public IEnumerable<string> GetEntitesList()
         {
             List<string> collectionNames = new List<string>();
             try
@@ -248,54 +451,248 @@ namespace CouchBaseDataSourceCore
 
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter)
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
-            throw new NotImplementedException();
+            List<object> results = new List<object>();
+            try
+            {
+                if (_cluster == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    // Build N1QL query
+                    var queryBuilder = new StringBuilder($"SELECT * FROM `{BucketName}` WHERE _type = '{EntityName}'");
+                    
+                    if (filter != null && filter.Count > 0)
+                    {
+                        foreach (var f in filter)
+                        {
+                            queryBuilder.Append($" AND `{f.FieldName}` {f.Operator} {PrepareValue(f.FilterValue, f.valueType)}");
+                        }
+                    }
+
+                    var query = queryBuilder.ToString();
+                    var result = _cluster.QueryAsync<dynamic>(query).Result;
+
+                    foreach (var row in result)
+                    {
+                        results.Add(row);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return results;
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            throw new NotImplementedException();
+            PagedResult pagedResult = new PagedResult();
+            ErrorObject.Flag = Errors.Ok;
+
+            try
+            {
+                if (_cluster == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    // Build count query
+                    var countQueryBuilder = new StringBuilder($"SELECT COUNT(*) as total FROM `{BucketName}` WHERE _type = '{EntityName}'");
+                    if (filter != null && filter.Count > 0)
+                    {
+                        foreach (var f in filter)
+                        {
+                            countQueryBuilder.Append($" AND `{f.FieldName}` {f.Operator} {PrepareValue(f.FilterValue, f.valueType)}");
+                        }
+                    }
+
+                    var countQuery = countQueryBuilder.ToString();
+                    var countResult = _cluster.QueryAsync<dynamic>(countQuery).Result;
+                    int totalRecords = 0;
+                    foreach (var row in countResult)
+                    {
+                        totalRecords = Convert.ToInt32(row.total);
+                        break;
+                    }
+
+                    // Build paginated query
+                    int offset = (pageNumber - 1) * pageSize;
+                    var queryBuilder = new StringBuilder($"SELECT * FROM `{BucketName}` WHERE _type = '{EntityName}'");
+                    if (filter != null && filter.Count > 0)
+                    {
+                        foreach (var f in filter)
+                        {
+                            queryBuilder.Append($" AND `{f.FieldName}` {f.Operator} {PrepareValue(f.FilterValue, f.valueType)}");
+                        }
+                    }
+                    queryBuilder.Append($" LIMIT {pageSize} OFFSET {offset}");
+
+                    var query = queryBuilder.ToString();
+                    var result = _cluster.QueryAsync<dynamic>(query).Result;
+
+                    List<object> results = new List<object>();
+                    foreach (var row in result)
+                    {
+                        results.Add(row);
+                    }
+
+                    pagedResult.Data = results;
+                    pagedResult.TotalRecords = totalRecords;
+                    pagedResult.PageNumber = pageNumber;
+                    pagedResult.PageSize = pageSize;
+                    pagedResult.TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+                    pagedResult.HasNextPage = pageNumber < pagedResult.TotalPages;
+                    pagedResult.HasPreviousPage = pageNumber > 1;
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity with pagination: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return pagedResult;
         }
 
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            throw new NotImplementedException();
+            return Task.Run(() => GetEntity(EntityName, Filter));
         }
 
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
-            throw new NotImplementedException();
+            // Couchbase doesn't have traditional foreign keys
+            return new List<RelationShipKeys>();
         }
 
         public int GetEntityIdx(string entityName)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (Entities == null || Entities.Count == 0)
+                {
+                    GetEntitesList();
+                }
+                return Entities.FindIndex(e => e.EntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase));
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntityIdx: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return -1;
+            }
         }
 
         public EntityStructure GetEntityStructure(string EntityName, bool refresh)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (!refresh && Entities != null && Entities.Count > 0)
+                {
+                    var entity = Entities.FirstOrDefault(e => e.EntityName.Equals(EntityName, StringComparison.OrdinalIgnoreCase));
+                    if (entity != null)
+                    {
+                        return entity;
+                    }
+                }
+
+                // Try to get sample document to infer structure
+                if (_cluster != null && ConnectionStatus == ConnectionState.Open)
+                {
+                    var query = $"SELECT * FROM `{BucketName}` WHERE _type = '{EntityName}' LIMIT 1";
+                    var result = _cluster.QueryAsync<JObject>(query).Result;
+
+                    foreach (var row in result)
+                    {
+                        return InferSchemaFromDocument(row, BucketName, EntityName);
+                    }
+                }
+
+                // Return empty structure if not found
+                return new EntityStructure
+                {
+                    EntityName = EntityName,
+                    Fields = new List<EntityField>()
+                };
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntityStructure: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return new EntityStructure { EntityName = EntityName, Fields = new List<EntityField>() };
+            }
         }
 
         public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
         {
-            throw new NotImplementedException();
+            return GetEntityStructure(fnd.EntityName, refresh);
         }
 
         public Type GetEntityType(string EntityName)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var entityStructure = GetEntityStructure(EntityName, false);
+                if (entityStructure != null && entityStructure.Fields != null && entityStructure.Fields.Count > 0)
+                {
+                    // Use DMTypeBuilder to create type from entity structure
+                    if (DMEEditor != null)
+                    {
+                        string code = DMTypeBuilder.ConvertPOCOClassToEntity(DMEEditor, entityStructure, "CouchbaseGeneratedTypes");
+                        return DMTypeBuilder.CreateTypeFromCode(DMEEditor, code, EntityName);
+                    }
+                }
+                return typeof(object);
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntityType: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return typeof(object);
+            }
         }
 
         public double GetScalar(string query)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (_cluster == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    var result = _cluster.QueryAsync<dynamic>(query).Result;
+                    foreach (var row in result)
+                    {
+                        if (row != null)
+                        {
+                            var firstValue = row.Values.FirstOrDefault();
+                            if (firstValue != null && double.TryParse(firstValue.ToString(), out double value))
+                            {
+                                return value;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetScalar: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return 0.0;
         }
 
         public Task<double> GetScalarAsync(string query)
         {
-            throw new NotImplementedException();
+            return Task.Run(() => GetScalar(query));
         }
 
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
@@ -352,24 +749,134 @@ namespace CouchBaseDataSourceCore
 
     
 
-        public object RunQuery(string qrystr)
+        public IEnumerable<object> RunQuery(string qrystr)
         {
-            throw new NotImplementedException();
+            List<object> results = new List<object>();
+            try
+            {
+                if (_cluster == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    var result = _cluster.QueryAsync<dynamic>(qrystr).Result;
+                    foreach (var row in result)
+                    {
+                        results.Add(row);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in RunQuery: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return results;
         }
 
         public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.ScriptText))
+                {
+                    ExecuteSql(dDLScripts.ScriptText);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in RunScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
         {
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data updated successfully." };
+            try
+            {
+                if (UploadData is IEnumerable<object> dataList)
+                {
+                    int count = 0;
+                    foreach (var item in dataList)
+                    {
+                        UpdateEntity(EntityName, item);
+                        count++;
+                        progress?.Report(new PassedArgs { Message = $"Updated {count} records" });
+                    }
+                    retval.Message = $"Updated {count} records successfully.";
+                }
+                else
+                {
+                    retval.Flag = Errors.Failed;
+                    retval.Message = "UploadData must be an IEnumerable<object>.";
+                }
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error in UpdateEntities: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error in UpdateEntities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
         }
 
         public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data updated successfully." };
+            try
+            {
+                if (_cluster == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    var bucket = _cluster.BucketAsync(BucketName).Result;
+                    var collection = bucket.DefaultCollection();
+
+                    // Get document ID from UploadDataRow
+                    string docId = GetDocumentId(UploadDataRow);
+                    if (string.IsNullOrEmpty(docId))
+                    {
+                        retval.Flag = Errors.Failed;
+                        retval.Message = "Could not extract document ID from UploadDataRow";
+                        return retval;
+                    }
+
+                    // Serialize the updated data
+                    string jsonData = SerializeInsertedData(UploadDataRow);
+                    var result = collection.UpsertAsync(docId, jsonData).Result;
+
+                    if (result.Status == KeyValueStatus.Success)
+                    {
+                        retval.Flag = Errors.Ok;
+                        retval.Message = "Document updated successfully.";
+                    }
+                    else
+                    {
+                        retval.Flag = Errors.Failed;
+                        retval.Message = $"Failed to update document: {result.Status}";
+                    }
+                }
+                else
+                {
+                    retval.Flag = Errors.Failed;
+                    retval.Message = "Database connection is not open.";
+                }
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error updating document: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error updating document: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -632,6 +1139,49 @@ namespace CouchBaseDataSourceCore
             {
                 throw new ArgumentException("Unsupported data type for insertion. Expected DataRow or POCO class.");
             }
+        }
+
+        private string GetDocumentId(object data)
+        {
+            try
+            {
+                if (data is Dictionary<string, object> dict)
+                {
+                    if (dict.ContainsKey("id")) return dict["id"].ToString();
+                    if (dict.ContainsKey("_id")) return dict["_id"].ToString();
+                    if (dict.ContainsKey("Id")) return dict["Id"].ToString();
+                }
+                else if (data != null)
+                {
+                    var idProp = data.GetType().GetProperty("id") ?? 
+                                 data.GetType().GetProperty("_id") ?? 
+                                 data.GetType().GetProperty("Id");
+                    if (idProp != null)
+                    {
+                        return idProp.GetValue(data)?.ToString();
+                    }
+                }
+                return Guid.NewGuid().ToString();
+            }
+            catch
+            {
+                return Guid.NewGuid().ToString();
+            }
+        }
+
+        private string PrepareValue(string value, string valueType)
+        {
+            if (string.IsNullOrEmpty(value))
+                return "NULL";
+
+            // For string types, wrap in quotes
+            if (valueType == null || valueType.ToLower().Contains("string") || valueType.ToLower().Contains("text"))
+            {
+                return $"'{value.Replace("'", "''")}'";
+            }
+
+            // For numeric types, return as-is
+            return value;
         }
     }
 }

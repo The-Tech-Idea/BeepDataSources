@@ -118,7 +118,17 @@ namespace InfluxDBDataSourceCore
 
         public IErrorsInfo BeginTransaction(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // InfluxDB doesn't support traditional transactions
+                // Points are written atomically per write operation
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public bool CheckEntityExist(string EntityName)
@@ -171,7 +181,17 @@ namespace InfluxDBDataSourceCore
         }
         public IErrorsInfo Commit(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // InfluxDB doesn't support traditional transactions
+                // Points are committed immediately when written
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in Commit Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
         private bool BucketExists(string bucketName)
         {
@@ -283,7 +303,17 @@ namespace InfluxDBDataSourceCore
 
         public IErrorsInfo EndTransaction(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // InfluxDB doesn't support traditional transactions
+                // Points are written atomically per write operation
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in End Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo ExecuteSql(string sql)
@@ -324,17 +354,40 @@ namespace InfluxDBDataSourceCore
             return retval;
         }
 
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
-            throw new NotImplementedException();
+            // InfluxDB doesn't have child tables
+            return new List<ChildRelation>();
         }
 
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
-            throw new NotImplementedException();
+            List<ETLScriptDet> scripts = new List<ETLScriptDet>();
+            try
+            {
+                var entitiesToScript = entities ?? Entities;
+                if (entitiesToScript != null && entitiesToScript.Count > 0)
+                {
+                    foreach (var entity in entitiesToScript)
+                    {
+                        var script = new ETLScriptDet
+                        {
+                            EntityName = entity.EntityName,
+                            ScriptType = "CREATE",
+                            ScriptText = $"# InfluxDB measurement (bucket): {entity.EntityName}\n# Buckets are created automatically when data is written\n# Use Flux or InfluxDB CLI to create buckets"
+                        };
+                        scripts.Add(script);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetCreateEntityScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return scripts;
         }
 
-        public  List<string> GetEntitesList()
+        public IEnumerable<string> GetEntitesList()
         {
             List<string> entities = new List<string>();
             try
@@ -372,14 +425,14 @@ namespace InfluxDBDataSourceCore
         }
 
 
-        public object GetEntity(string EntityName, List<AppFilter> filters)
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filters)
         {
             List<Dictionary<string, object>> results = new List<Dictionary<string, object>>();
             try
             {
                 if (_client == null || ConnectionStatus != ConnectionState.Open)
                 {
-                    Openconnection(); // Ensure the database is connected
+                    Openconnection();
                 }
 
                 if (ConnectionStatus == ConnectionState.Open)
@@ -389,18 +442,21 @@ namespace InfluxDBDataSourceCore
 
                     // Determine the range start from filters or default to 30 days
                     string timeFilter = FindTimeFilter(filters) ?? "-30d";
-                    query.AppendLine($"  |> range(start: {timeFilter})"); // Using dynamic or default time range
+                    query.AppendLine($"  |> range(start: {timeFilter})");
 
                     query.AppendLine($"  |> filter(fn: (r) => r._measurement == \"{EntityName}\")");
 
                     // Applying other filters from AppFilter list
-                    foreach (var filter in filters.Where(f => f.FieldName.ToLower() != "time"))
+                    if (filters != null)
                     {
-                        query.AppendLine($"  |> filter(fn: (r) => r[\"{filter.FieldName}\"] {ConvertOperator(filter.Operator)} {PrepareValue(filter.FilterValue, filter.valueType)})");
+                        foreach (var filter in filters.Where(f => f.FieldName.ToLower() != "time"))
+                        {
+                            query.AppendLine($"  |> filter(fn: (r) => r[\"{filter.FieldName}\"] {ConvertOperator(filter.Operator)} {PrepareValue(filter.FilterValue, filter.valueType)})");
+                        }
                     }
 
                     var fluxQuery = query.ToString();
-                    var fluxTables =  _client.GetQueryApi().QueryAsync(fluxQuery, org).Result;
+                    var fluxTables = _client.GetQueryApi().QueryAsync(fluxQuery, org).Result;
 
                     // Processing results
                     foreach (var fluxTable in fluxTables)
@@ -419,7 +475,7 @@ namespace InfluxDBDataSourceCore
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Beep", $"Error in GetEntity: {ex.Message}",DateTime.Now, -1, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
                 ConnectionStatus = ConnectionState.Broken;
             }
             return results;
@@ -463,31 +519,66 @@ namespace InfluxDBDataSourceCore
             }
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filters, int pageNumber, int pageSize)
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filters, int pageNumber, int pageSize)
         {
-            List<Dictionary<string, object>> results = new List<Dictionary<string, object>>();
+            PagedResult pagedResult = new PagedResult();
+            ErrorObject.Flag = Errors.Ok;
+
             try
             {
                 if (_client == null || ConnectionStatus != ConnectionState.Open)
                 {
-                    Openconnection(); // Ensure the database is connected
+                    Openconnection();
                 }
 
                 if (ConnectionStatus == ConnectionState.Open)
                 {
-                    var timeFilter = filters.FirstOrDefault(f => f.FieldName.ToLower() == "time");
-                    string timeRange = timeFilter != null ? timeFilter.FilterValue : "-30d"; // Default to last 30 days if no time filter is provided
+                    var timeFilter = filters?.FirstOrDefault(f => f.FieldName.ToLower() == "time");
+                    string timeRange = timeFilter != null ? timeFilter.FilterValue : "-30d";
 
-                    int offset = (pageNumber - 1) * pageSize; // Calculate the offset
+                    // Get total count first
+                    var countQuery = new System.Text.StringBuilder();
+                    countQuery.AppendLine($"from(bucket: \"{bucket}\")");
+                    countQuery.AppendLine($"  |> range(start: {timeRange})");
+                    countQuery.AppendLine($"  |> filter(fn: (r) => r._measurement == \"{EntityName}\")");
+                    
+                    if (filters != null)
+                    {
+                        foreach (var filter in filters.Where(f => f.FieldName.ToLower() != "time"))
+                        {
+                            countQuery.AppendLine($"  |> filter(fn: (r) => r[\"{filter.FieldName}\"] {ConvertOperator(filter.Operator)} {PrepareValue(filter.FilterValue, filter.valueType)})");
+                        }
+                    }
+                    
+                    countQuery.AppendLine("  |> count()");
+                    
+                    var countTables = _client.GetQueryApi().QueryAsync(countQuery.ToString(), org).Result;
+                    int totalRecords = 0;
+                    foreach (var table in countTables)
+                    {
+                        foreach (var record in table.Records)
+                        {
+                            if (record.GetValueByKey("_value") != null)
+                            {
+                                totalRecords = Convert.ToInt32(record.GetValueByKey("_value"));
+                                break;
+                            }
+                        }
+                    }
+
+                    // Get paginated results
+                    int offset = (pageNumber - 1) * pageSize;
                     var query = new System.Text.StringBuilder();
                     query.AppendLine($"from(bucket: \"{bucket}\")");
-                    query.AppendLine($"  |> range(start: {timeRange})"); // Dynamically set time range
+                    query.AppendLine($"  |> range(start: {timeRange})");
                     query.AppendLine($"  |> filter(fn: (r) => r._measurement == \"{EntityName}\")");
 
-                    // Applying other filters from AppFilter list
-                    foreach (var filter in filters.Where(f => f.FieldName.ToLower() != "time"))
+                    if (filters != null)
                     {
-                        query.AppendLine($"  |> filter(fn: (r) => r[\"{filter.FieldName}\"] {ConvertOperator(filter.Operator)} {PrepareValue(filter.FilterValue, filter.valueType)})");
+                        foreach (var filter in filters.Where(f => f.FieldName.ToLower() != "time"))
+                        {
+                            query.AppendLine($"  |> filter(fn: (r) => r[\"{filter.FieldName}\"] {ConvertOperator(filter.Operator)} {PrepareValue(filter.FilterValue, filter.valueType)})");
+                        }
                     }
 
                     query.AppendLine($"  |> limit(n: {pageSize}, offset: {offset})");
@@ -495,7 +586,7 @@ namespace InfluxDBDataSourceCore
                     var fluxQuery = query.ToString();
                     var fluxTables = _client.GetQueryApi().QueryAsync(fluxQuery, org).Result;
 
-                    // Processing results
+                    var results = new List<object>();
                     foreach (var fluxTable in fluxTables)
                     {
                         foreach (var fluxRecord in fluxTable.Records)
@@ -508,24 +599,36 @@ namespace InfluxDBDataSourceCore
                             results.Add(recordDict);
                         }
                     }
+
+                    pagedResult.Data = results;
+                    pagedResult.TotalRecords = totalRecords;
+                    pagedResult.PageNumber = pageNumber;
+                    pagedResult.PageSize = pageSize;
+                    pagedResult.TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+                    pagedResult.HasNextPage = pageNumber < pagedResult.TotalPages;
+                    pagedResult.HasPreviousPage = pageNumber > 1;
                 }
             }
             catch (Exception ex)
             {
-                Logger?.WriteLog($"Error in GetEntity with pagination and dynamic time range: {ex.Message}");
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                Logger?.WriteLog($"Error in GetEntity with pagination: {ex.Message}");
                 ConnectionStatus = ConnectionState.Broken;
             }
-            return results;
+
+            return pagedResult;
         }
 
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
              return Task.Run(() => GetEntity(EntityName, Filter));
         }
 
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
-            throw new NotImplementedException();
+            // InfluxDB doesn't have foreign keys
+            return new List<RelationShipKeys>();
         }
 
         public int GetEntityIdx(string entityName)
@@ -654,12 +757,58 @@ namespace InfluxDBDataSourceCore
 
         public double GetScalar(string query)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            double retval = 0.0;
+
+            try
+            {
+                if (_client == null || ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    // Execute Flux query and get scalar result
+                    var queryApi = _client.GetQueryApi();
+                    var tables = queryApi.QueryAsync(query, org).Result;
+
+                    // Get first value from first record
+                    foreach (var table in tables)
+                    {
+                        foreach (var record in table.Records)
+                        {
+                            if (record.GetValueByKey("_value") != null)
+                            {
+                                var value = record.GetValueByKey("_value");
+                                if (value != null && double.TryParse(value.ToString(), out double doubleValue))
+                                {
+                                    retval = doubleValue;
+                                    return retval;
+                                }
+                            }
+                        }
+                    }
+
+                    // Try COUNT query
+                    if (query.ToUpper().Contains("COUNT"))
+                    {
+                        var entities = GetEntitesList();
+                        return entities.Count();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+            }
+
+            return retval;
         }
 
         public Task<double> GetScalarAsync(string query)
         {
-            throw new NotImplementedException();
+            return Task.Run(() => GetScalar(query));
         }
 
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
@@ -724,7 +873,7 @@ namespace InfluxDBDataSourceCore
 
       
 
-        public object RunQuery(string qrystr)
+        public IEnumerable<object> RunQuery(string qrystr)
         {
             List<Dictionary<string, object>> results = new List<Dictionary<string, object>>();
             string methodName = MethodBase.GetCurrentMethod().Name;
@@ -768,7 +917,22 @@ namespace InfluxDBDataSourceCore
 
         public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.ScriptText))
+                {
+                    // Execute Flux script
+                    ExecuteSql(dDLScripts.ScriptText);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in RunScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
@@ -915,11 +1079,15 @@ namespace InfluxDBDataSourceCore
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects)
+                    try
+                    {
+                        Closeconnection();
+                    }
+                    catch (Exception ex)
+                    {
+                        DMEEditor?.AddLogMessage("Beep", $"Error disposing InfluxDB connection: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                    }
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
                 disposedValue = true;
             }
         }

@@ -20,7 +20,7 @@ namespace TheTechIdea.Beep.Connectors.AWSIoT
     /// <summary>
     /// AWS IoT data source implementation using WebAPIDataSource as base class
     /// </summary>
-    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WebApi)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.AWSIoT)]
     public class AWSIoTDataSource : WebAPIDataSource
     {
         // Entity endpoints mapping for AWS IoT API

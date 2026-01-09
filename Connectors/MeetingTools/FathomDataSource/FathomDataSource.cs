@@ -84,6 +84,32 @@ namespace TheTechIdea.Beep.Connectors.Fathom
         // Return the fixed list
         public new IEnumerable<string> GetEntitesList() => EntitiesNames;
 
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
+        }
+
         // Async
         public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
@@ -94,7 +120,10 @@ namespace TheTechIdea.Beep.Connectors.Fathom
             RequireFilters(EntityName, q, RequiredFilters.GetValueOrDefault(EntityName, Array.Empty<string>()));
 
             // Build the full URL
-            var url = $"https://api.fathom.video/v1/{endpoint}";
+            var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://api.fathom.video/v1";
+            if (!baseUrl.EndsWith("/"))
+                baseUrl = baseUrl.TrimEnd('/');
+            var url = $"{baseUrl}/{endpoint}";
             url = ReplacePlaceholders(url, q);
 
             // Add query parameters
@@ -293,7 +322,10 @@ namespace TheTechIdea.Beep.Connectors.Fathom
         {
             try
             {
-                var url = $"https://api.fathom.video/v1/videos/{videoId}/comments";
+                var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://api.fathom.video/v1";
+                if (!baseUrl.EndsWith("/"))
+                    baseUrl = baseUrl.TrimEnd('/');
+                var url = $"{baseUrl}/videos/{videoId}/comments";
                 var response = await PostAsync(url, comment);
                 var json = await response.Content.ReadAsStringAsync();
 
@@ -322,7 +354,10 @@ namespace TheTechIdea.Beep.Connectors.Fathom
         {
             try
             {
-                var url = $"https://api.fathom.video/v1/videos/{videoId}/shares";
+                var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://api.fathom.video/v1";
+                if (!baseUrl.EndsWith("/"))
+                    baseUrl = baseUrl.TrimEnd('/');
+                var url = $"{baseUrl}/videos/{videoId}/shares";
                 var response = await PostAsync(url, share);
                 var json = await response.Content.ReadAsStringAsync();
 

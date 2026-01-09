@@ -67,6 +67,122 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         // Keep your interface exactly
         public new IEnumerable<string> GetEntitesList() => EntitiesNames;
 
+        // ---------------- Overrides (same signatures) ----------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        {
+            if (!Map.TryGetValue(EntityName, out var m))
+                throw new InvalidOperationException($"Unknown Chanty entity '{EntityName}'.");
+
+            var q = FiltersToQuery(Filter);
+            RequireFilters(EntityName, q, m.requiredFilters);
+
+            var endpoint = ReplacePathParameters(m.endpoint, q);
+
+            using var resp = await GetAsync(endpoint, q).ConfigureAwait(false);
+            if (resp is null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
+
+            return ExtractArray(resp, m.root ?? "data");
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
+        }
+
+        // ---------------- Helper Methods ----------------
+
+        private static Dictionary<string, string> FiltersToQuery(List<AppFilter> filters)
+        {
+            var q = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (filters == null) return q;
+            foreach (var f in filters)
+            {
+                if (f == null || string.IsNullOrWhiteSpace(f.FieldName)) continue;
+                q[f.FieldName.Trim()] = f.FilterValue?.ToString() ?? string.Empty;
+            }
+            return q;
+        }
+
+        private static void RequireFilters(string entity, Dictionary<string, string> q, string[] required)
+        {
+            if (required == null || required.Length == 0) return;
+            var missing = required.Where(r => !q.ContainsKey(r) || string.IsNullOrWhiteSpace(q[r])).ToList();
+            if (missing.Count > 0)
+                throw new ArgumentException($"Chanty entity '{entity}' requires parameter(s): {string.Join(", ", missing)}.");
+        }
+
+        private static string ReplacePathParameters(string endpoint, Dictionary<string, string> q)
+        {
+            var result = endpoint;
+            foreach (var kvp in q)
+            {
+                var placeholder = $"{{{kvp.Key}}}";
+                if (result.Contains(placeholder))
+                {
+                    result = result.Replace(placeholder, Uri.EscapeDataString(kvp.Value));
+                }
+            }
+            return result;
+        }
+
+        private IEnumerable<object> ExtractArray(HttpResponseMessage resp, string? root)
+        {
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
+
+            var json = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            if (string.IsNullOrWhiteSpace(json)) return Array.Empty<object>();
+
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                var rootElement = doc.RootElement;
+
+                if (!string.IsNullOrEmpty(root))
+                {
+                    if (rootElement.TryGetProperty(root, out var rootProp))
+                        rootElement = rootProp;
+                }
+
+                if (rootElement.ValueKind == JsonValueKind.Array)
+                {
+                    return rootElement.EnumerateArray().Select(e => (object)e.Clone()).ToList();
+                }
+                else if (rootElement.ValueKind == JsonValueKind.Object)
+                {
+                    return new List<object> { rootElement.Clone() };
+                }
+
+                return Array.Empty<object>();
+            }
+            catch
+            {
+                return Array.Empty<object>();
+            }
+        }
+
         // ---------------- CommandAttribute methods ----------------
 
         [CommandAttribute(

@@ -39,6 +39,41 @@ namespace TheTechIdea.Beep.Connectors.Kudosity
                 if (Dataconnection != null)
                     Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
             }
+
+            // Register entities
+            EntitiesNames = new List<string> { "sms", "campaigns", "contacts", "contactlists", "messagehistory", "account", "webhooks", "templates" };
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+                .ToList();
+        }
+
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         /// <summary>
@@ -57,7 +92,10 @@ namespace TheTechIdea.Beep.Connectors.Kudosity
                 }
 
                 // Build the API URL
-                string url = $"https://api.kudosity.com{endpoint}";
+                var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://api.kudosity.com";
+                if (!baseUrl.EndsWith("/"))
+                    baseUrl = baseUrl.TrimEnd('/');
+                string url = $"{baseUrl}{endpoint}";
 
                 // Make the request using base class method (handles authentication automatically)
                 var response = await GetAsync(url);
@@ -182,7 +220,10 @@ namespace TheTechIdea.Beep.Connectors.Kudosity
         {
             try
             {
-                var url = "https://api.kudosity.com/api/v1/sms";
+                var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://api.kudosity.com";
+                if (!baseUrl.EndsWith("/"))
+                    baseUrl = baseUrl.TrimEnd('/');
+                var url = $"{baseUrl}/api/v1/sms";
                 var response = await PostAsync(url, sms);
                 var json = await response.Content.ReadAsStringAsync();
 
@@ -211,7 +252,10 @@ namespace TheTechIdea.Beep.Connectors.Kudosity
         {
             try
             {
-                var url = "https://api.kudosity.com/api/v1/contacts";
+                var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://api.kudosity.com";
+                if (!baseUrl.EndsWith("/"))
+                    baseUrl = baseUrl.TrimEnd('/');
+                var url = $"{baseUrl}/api/v1/contacts";
                 var response = await PostAsync(url, contact);
                 var json = await response.Content.ReadAsStringAsync();
 
@@ -240,7 +284,10 @@ namespace TheTechIdea.Beep.Connectors.Kudosity
         {
             try
             {
-                var url = "https://api.kudosity.com/api/v1/campaigns";
+                var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://api.kudosity.com";
+                if (!baseUrl.EndsWith("/"))
+                    baseUrl = baseUrl.TrimEnd('/');
+                var url = $"{baseUrl}/api/v1/campaigns";
                 var response = await PostAsync(url, campaign);
                 var json = await response.Content.ReadAsStringAsync();
 

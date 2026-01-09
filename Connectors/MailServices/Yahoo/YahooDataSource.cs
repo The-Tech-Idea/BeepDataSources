@@ -14,7 +14,6 @@ using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
 using TheTechIdea.Beep.Connectors.Yahoo.Models;
-using TheTechIdea.Beep.Connectors.Yahoo.Models;
 
 namespace TheTechIdea.Beep.Connectors.Yahoo
 {
@@ -199,6 +198,25 @@ namespace TheTechIdea.Beep.Connectors.Yahoo
                     query.Add($"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}");
             }
             return string.Join("&", query);
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         // Response classes

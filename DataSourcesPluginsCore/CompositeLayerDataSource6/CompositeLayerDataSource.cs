@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Threading;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.DataView;
 using TheTechIdea.Beep.Vis;
@@ -25,170 +27,713 @@ namespace TheTechIdea.Beep.Composite
 
         public CompositeLayerDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) 
         {
-            // LayerInfo = new CompositeLayer();
+            DatasourceName = datasourcename;
+            Logger = logger;
+            ErrorObject = per;
+            DMEEditor = DMEEditor;
+            DatasourceType = databasetype;
+            Category = DatasourceCategory.RDBMS;
+
+            EntitiesNames = new List<string>();
+            Entities = new List<EntityStructure>();
+            LayerInfo = new CompositeLayer();
+
+            Dataconnection = new WebAPIDataConnection
+            {
+                Logger = logger,
+                ErrorObject = ErrorObject
+            };
+
+            if (DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).Any())
+            {
+                Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
+            }
+
+            // Initialize LocalDB for composite storage
+            // LocalDB will be set by the caller or created here if needed
         }
 
-        public string ColumnDelimiter { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string ParameterDelimiter { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string GuidID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DataSourceType DatasourceType { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DatasourceCategory Category { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IDataConnection Dataconnection { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string DatasourceName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IErrorsInfo ErrorObject { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IDMLogger Logger { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public List<string> EntitiesNames { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public List<EntityStructure> Entities { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IDMEEditor DMEEditor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public ConnectionState ConnectionStatus { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ColumnDelimiter { get; set; } = ",";
+        public string ParameterDelimiter { get; set; } = ":";
+        public string GuidID { get; set; } = Guid.NewGuid().ToString();
+        public DataSourceType DatasourceType { get; set; }
+        public DatasourceCategory Category { get; set; }
+        public IDataConnection Dataconnection { get; set; }
+        public string DatasourceName { get; set; }
+        public IErrorsInfo ErrorObject { get; set; }
+        public string Id { get; set; }
+        public IDMLogger Logger { get; set; }
+        public List<string> EntitiesNames { get; set; } = new List<string>();
+        public List<EntityStructure> Entities { get; set; } = new List<EntityStructure>();
+        public IDMEEditor DMEEditor { get; set; }
+        public ConnectionState ConnectionStatus { get; set; } = ConnectionState.Closed;
 
-        public string DatabaseType => throw new NotImplementedException();
+        public string DatabaseType => LocalDB?.DatasourceName ?? "Composite";
 
-        public IDataViewDataSource DataViewSource { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public CompositeLayer LayerInfo { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public ILocalDB LocalDB { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IDataViewDataSource DataViewSource { get; set; }
+        public CompositeLayer LayerInfo { get; set; }
+        public ILocalDB LocalDB { get; set; }
 
         public event EventHandler<PassedArgs> PassEvent;
+        public event EventHandler<PassedArgs> OnLoadData;
+        public event EventHandler<PassedArgs> OnLoadStructure;
+        public event EventHandler<PassedArgs> OnSaveStructure;
+        public event EventHandler<PassedArgs> OnCreateStructure;
+        public event EventHandler<PassedArgs> OnRefreshData;
+        public event EventHandler<PassedArgs> OnRefreshDataEntity;
+        public event EventHandler<PassedArgs> OnSyncData;
 
         public IErrorsInfo BeginTransaction(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    ErrorObject = LocalDB.BeginTransaction(args);
+                }
+                else if (DataViewSource != null)
+                {
+                    ErrorObject = DataViewSource.BeginTransaction(args);
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public bool CheckEntityExist(string EntityName)
         {
-            throw new NotImplementedException();
+            bool retval = false;
+            try
+            {
+                if (DataViewSource != null)
+                {
+                    retval = DataViewSource.CheckEntityExist(EntityName);
+                }
+                else if (LocalDB != null)
+                {
+                    retval = LocalDB.CheckEntityExist(EntityName);
+                }
+                else
+                {
+                    retval = Entities.Any(e => e.EntityName.Equals(EntityName, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in CheckEntityExist: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                retval = false;
+            }
+            return retval;
         }
 
         public ConnectionState Closeconnection()
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (LocalDB != null)
+                {
+                    ConnectionStatus = LocalDB.Closeconnection();
+                }
+                else if (DataViewSource != null)
+                {
+                    ConnectionStatus = DataViewSource.Closeconnection();
+                }
+                else
+                {
+                    ConnectionStatus = ConnectionState.Closed;
+                }
+            }
+            catch (Exception ex)
+            {
+                ConnectionStatus = ConnectionState.Broken;
+                DMEEditor?.AddLogMessage("Beep", $"Could not close CompositeLayer {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ConnectionStatus;
         }
 
         public IErrorsInfo Commit(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    ErrorObject = LocalDB.Commit(args);
+                }
+                else if (DataViewSource != null)
+                {
+                    ErrorObject = DataViewSource.Commit(args);
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in Commit Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (entities != null && entities.Count > 0)
+                {
+                    foreach (var entity in entities)
+                    {
+                        AddEntitytoLayer(entity);
+                    }
+                    CreateLayer();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in CreateEntities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public bool CreateEntityAs(EntityStructure entity)
         {
-            throw new NotImplementedException();
+            bool retval = false;
+            try
+            {
+                retval = AddEntitytoLayer(entity);
+                if (retval && LocalDB != null)
+                {
+                    LocalDB.CreateEntityAs(entity);
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in CreateEntityAs: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                retval = false;
+            }
+            return retval;
         }
 
         public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    ErrorObject = LocalDB.DeleteEntity(EntityName, UploadDataRow);
+                }
+                else if (DataViewSource != null)
+                {
+                    ErrorObject = DataViewSource.DeleteEntity(EntityName, UploadDataRow);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in DeleteEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo EndTransaction(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    ErrorObject = LocalDB.EndTransaction(args);
+                }
+                else if (DataViewSource != null)
+                {
+                    ErrorObject = DataViewSource.EndTransaction(args);
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in End Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo ExecuteSql(string sql)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    ErrorObject = LocalDB.ExecuteSql(sql);
+                }
+                else if (DataViewSource != null)
+                {
+                    ErrorObject = DataViewSource.ExecuteSql(sql);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in ExecuteSql: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
-            throw new NotImplementedException();
+            List<ChildRelation> results = new List<ChildRelation>();
+            try
+            {
+                if (DataViewSource != null)
+                {
+                    results = DataViewSource.GetChildTablesList(tablename, SchemaName, Filterparamters).ToList();
+                }
+                else if (LocalDB != null)
+                {
+                    results = LocalDB.GetChildTablesList(tablename, SchemaName, Filterparamters).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetChildTablesList: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return results;
         }
 
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
-            throw new NotImplementedException();
+            List<ETLScriptDet> scripts = new List<ETLScriptDet>();
+            try
+            {
+                var entitiesToScript = entities ?? LayerInfo?.Entities ?? Entities;
+                if (entitiesToScript != null && entitiesToScript.Count > 0)
+                {
+                    foreach (var entity in entitiesToScript)
+                    {
+                        var script = new ETLScriptDet
+                        {
+                            EntityName = entity.EntityName,
+                            ScriptType = "CREATE",
+                            ScriptText = $"# Composite entity: {entity.EntityName}"
+                        };
+                        scripts.Add(script);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetCreateEntityScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return scripts;
         }
 
-        public List<string> GetEntitesList()
+        public IEnumerable<string> GetEntitesList()
         {
-            throw new NotImplementedException();
+            EntitiesNames = new List<string>();
+            ErrorObject.Flag = Errors.Ok;
+
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                // Get entities from LayerInfo first
+                if (LayerInfo?.Entities != null && LayerInfo.Entities.Count > 0)
+                {
+                    EntitiesNames = LayerInfo.Entities.Select(e => e.EntityName).ToList();
+                    Entities = LayerInfo.Entities.ToList();
+                }
+                else if (DataViewSource != null)
+                {
+                    // Get entities from DataViewSource
+                    var dataViewEntities = DataViewSource.GetEntitesList();
+                    if (dataViewEntities != null)
+                    {
+                        EntitiesNames = dataViewEntities.ToList();
+                        
+                        // Get entity structures
+                        foreach (var entityName in EntitiesNames)
+                        {
+                            var entity = DataViewSource.GetEntityStructure(entityName, false);
+                            if (entity != null)
+                            {
+                                Entities.Add(entity);
+                            }
+                        }
+                    }
+                }
+                else if (LocalDB != null)
+                {
+                    // Get entities from LocalDB
+                    var localEntities = LocalDB.GetEntitesList();
+                    if (localEntities != null)
+                    {
+                        EntitiesNames = localEntities.ToList();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntitesList: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return EntitiesNames;
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter)
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            List<object> results = new List<object>();
+
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                // Try DataViewSource first
+                if (DataViewSource != null && ConnectionStatus == ConnectionState.Open)
+                {
+                    var dataViewResults = DataViewSource.GetEntity(EntityName, filter);
+                    if (dataViewResults != null)
+                    {
+                        results.AddRange(dataViewResults);
+                    }
+                }
+                else if (LocalDB != null)
+                {
+                    var localResults = LocalDB.GetEntity(EntityName, filter);
+                    if (localResults != null)
+                    {
+                        results.AddRange(localResults);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return results;
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            throw new NotImplementedException();
+            PagedResult pagedResult = new PagedResult();
+            ErrorObject.Flag = Errors.Ok;
+
+            try
+            {
+                if (DataViewSource != null)
+                {
+                    pagedResult = DataViewSource.GetEntity(EntityName, filter, pageNumber, pageSize);
+                }
+                else if (LocalDB != null)
+                {
+                    pagedResult = LocalDB.GetEntity(EntityName, filter, pageNumber, pageSize);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity (paged): {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return pagedResult;
         }
 
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            throw new NotImplementedException();
+            return Task.Run(() => GetEntity(EntityName, Filter));
         }
 
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
-            throw new NotImplementedException();
+            List<RelationShipKeys> results = new List<RelationShipKeys>();
+            try
+            {
+                if (DataViewSource != null)
+                {
+                    results = DataViewSource.GetEntityforeignkeys(entityname, SchemaName).ToList();
+                }
+                else if (LocalDB != null)
+                {
+                    results = LocalDB.GetEntityforeignkeys(entityname, SchemaName).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntityforeignkeys: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return results;
         }
 
         public int GetEntityIdx(string entityName)
         {
-            throw new NotImplementedException();
+            if (Entities != null && Entities.Count > 0)
+            {
+                return Entities.FindIndex(p => p.EntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase) 
+                    || p.DatasourceEntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase)
+                    || p.OriginalEntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase));
+            }
+            return -1;
         }
 
         public EntityStructure GetEntityStructure(string EntityName, bool refresh)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            EntityStructure retval = null;
+
+            try
+            {
+                if (!refresh && Entities != null && Entities.Count > 0)
+                {
+                    retval = Entities.Find(c => c.EntityName.Equals(EntityName, StringComparison.OrdinalIgnoreCase));
+                    if (retval != null)
+                    {
+                        return retval;
+                    }
+                }
+
+                // Try to get from DataViewSource
+                if (DataViewSource != null)
+                {
+                    retval = DataViewSource.GetEntityStructure(EntityName, refresh);
+                }
+                else if (LocalDB != null)
+                {
+                    retval = LocalDB.GetEntityStructure(EntityName, refresh);
+                }
+
+                if (retval != null)
+                {
+                    int idx = GetEntityIdx(EntityName);
+                    if (idx >= 0)
+                    {
+                        Entities[idx] = retval;
+                    }
+                    else
+                    {
+                        Entities.Add(retval);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntityStructure: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return retval;
         }
 
         public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
         {
-            throw new NotImplementedException();
+            if (fnd != null && !string.IsNullOrEmpty(fnd.EntityName))
+            {
+                return GetEntityStructure(fnd.EntityName, refresh);
+            }
+            return null;
         }
 
         public Type GetEntityType(string EntityName)
         {
-            throw new NotImplementedException();
+            Type retval = null;
+            try
+            {
+                var entityStructure = GetEntityStructure(EntityName, false);
+                if (entityStructure != null && entityStructure.Fields != null && entityStructure.Fields.Count > 0)
+                {
+                    DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, entityStructure.Fields);
+                    retval = DMTypeBuilder.MyType;
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntityType: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
         }
 
         public double GetScalar(string query)
         {
-            throw new NotImplementedException();
+            double retval = 0.0;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    retval = LocalDB.GetScalar(query);
+                }
+                else if (DataViewSource != null)
+                {
+                    retval = DataViewSource.GetScalar(query);
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+            }
+            return retval;
         }
 
         public Task<double> GetScalarAsync(string query)
         {
-            throw new NotImplementedException();
+            return Task.Run(() => GetScalar(query));
         }
 
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    ErrorObject = LocalDB.InsertEntity(EntityName, InsertedData);
+                }
+                else if (DataViewSource != null)
+                {
+                    ErrorObject = DataViewSource.InsertEntity(EntityName, InsertedData);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in InsertEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public ConnectionState Openconnection()
         {
-            throw new NotImplementedException();
+            try
+            {
+                // Open LocalDB connection
+                if (LocalDB != null)
+                {
+                    ConnectionStatus = LocalDB.Openconnection();
+                }
+                else if (DataViewSource != null)
+                {
+                    ConnectionStatus = DataViewSource.Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    DMEEditor?.AddLogMessage("Beep", "CompositeLayer connection opened successfully.", DateTime.Now, -1, null, Errors.Ok);
+                }
+            }
+            catch (Exception ex)
+            {
+                ConnectionStatus = ConnectionState.Broken;
+                DMEEditor?.AddLogMessage("Beep", $"Could not open CompositeLayer {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ConnectionStatus;
         }
 
-        public object RunQuery(string qrystr)
+        public IEnumerable<object> RunQuery(string qrystr)
         {
-            throw new NotImplementedException();
+            List<object> results = new List<object>();
+            try
+            {
+                if (DataViewSource != null)
+                {
+                    results = DataViewSource.RunQuery(qrystr).ToList();
+                }
+                else if (LocalDB != null)
+                {
+                    results = LocalDB.RunQuery(qrystr).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in RunQuery: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return results;
         }
 
         public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    ErrorObject = LocalDB.RunScript(dDLScripts);
+                }
+                else if (DataViewSource != null)
+                {
+                    ErrorObject = DataViewSource.RunScript(dDLScripts);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in RunScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    ErrorObject = LocalDB.UpdateEntities(EntityName, UploadData, progress);
+                }
+                else if (DataViewSource != null)
+                {
+                    ErrorObject = DataViewSource.UpdateEntities(EntityName, UploadData, progress);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in UpdateEntities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    ErrorObject = LocalDB.UpdateEntity(EntityName, UploadDataRow);
+                }
+                else if (DataViewSource != null)
+                {
+                    ErrorObject = DataViewSource.UpdateEntity(EntityName, UploadDataRow);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in UpdateEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -197,11 +742,23 @@ namespace TheTechIdea.Beep.Composite
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects)
+                    try
+                    {
+                        if (LocalDB is IDisposable localDisposable)
+                        {
+                            localDisposable.Dispose();
+                        }
+                        if (DataViewSource is IDisposable dataViewDisposable)
+                        {
+                            dataViewDisposable.Dispose();
+                        }
+                        ConnectionStatus = ConnectionState.Closed;
+                    }
+                    catch (Exception ex)
+                    {
+                        DMEEditor?.AddLogMessage("Beep", $"Error disposing CompositeLayer connection: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                    }
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
                 disposedValue = true;
             }
         }
@@ -222,27 +779,122 @@ namespace TheTechIdea.Beep.Composite
 
         public bool AddEntitytoLayer(EntityStructure entity)
         {
-            throw new NotImplementedException();
+            bool retval = false;
+            try
+            {
+                if (entity != null && LayerInfo != null)
+                {
+                    if (LayerInfo.Entities == null)
+                    {
+                        LayerInfo.Entities = new List<EntityStructure>();
+                    }
+
+                    if (!LayerInfo.Entities.Any(e => e.EntityName.Equals(entity.EntityName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        LayerInfo.Entities.Add(entity);
+                        Entities.Add(entity);
+                        EntitiesNames.Add(entity.EntityName);
+                        retval = true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in AddEntitytoLayer: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                retval = false;
+            }
+            return retval;
         }
 
         public IErrorsInfo CreateLayer()
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    // Create layer tables in LocalDB
+                    if (LayerInfo?.Entities != null && LayerInfo.Entities.Count > 0)
+                    {
+                        LocalDB.CreateEntities(LayerInfo.Entities);
+                    }
+                }
+                OnCreateStructure?.Invoke(this, (PassedArgs)DMEEditor?.Passedarguments);
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in CreateLayer: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public bool DropDatabase()
         {
-            throw new NotImplementedException();
+            bool retval = false;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    retval = LocalDB.DropDatabase();
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in DropDatabase: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                retval = false;
+            }
+            return retval;
         }
 
         public IErrorsInfo DropEntity(string EntityName)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (LocalDB != null)
+                {
+                    ErrorObject = LocalDB.DropEntity(EntityName);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in DropEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public bool GetAllEntitiesFromDataView()
         {
-            throw new NotImplementedException();
+            bool retval = false;
+            try
+            {
+                if (DataViewSource != null)
+                {
+                    var entities = DataViewSource.GetEntitesList();
+                    if (entities != null)
+                    {
+                        foreach (var entityName in entities)
+                        {
+                            var entity = DataViewSource.GetEntityStructure(entityName, false);
+                            if (entity != null)
+                            {
+                                AddEntitytoLayer(entity);
+                            }
+                        }
+                        retval = true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetAllEntitiesFromDataView: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                retval = false;
+            }
+            return retval;
         }
     }
 }

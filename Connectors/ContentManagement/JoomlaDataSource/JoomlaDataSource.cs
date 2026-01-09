@@ -91,6 +91,25 @@ namespace TheTechIdea.Beep.Connectors.Joomla
             return data ?? Array.Empty<object>();
         }
 
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
+        }
+
         // Async
         public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
@@ -101,7 +120,8 @@ namespace TheTechIdea.Beep.Connectors.Joomla
             RequireFilters(EntityName, q, RequiredFilters.GetValueOrDefault(EntityName, Array.Empty<string>()));
 
             // Build the full URL
-            var url = $"https://api.joomla.org/{endpoint}";
+            var baseUrl = GetBaseUrl();
+            var url = $"{baseUrl}/{endpoint}";
             url = ReplacePlaceholders(url, q);
 
             // Add query parameters
@@ -130,6 +150,24 @@ namespace TheTechIdea.Beep.Connectors.Joomla
                 "menus.get" => ParseMenu(json),
                 _ => throw new NotSupportedException($"Entity '{EntityName}' parsing not implemented.")
             };
+        }
+
+        private string GetBaseUrl()
+        {
+            // Get the base URL from connection properties
+            var baseUrl = Dataconnection?.ConnectionProp?.Url;
+            if (string.IsNullOrWhiteSpace(baseUrl))
+                throw new InvalidOperationException("Joomla site URL is required in connection properties.");
+
+            // Ensure it ends with /api/index.php/v1
+            if (!baseUrl.EndsWith("/api/index.php/v1", StringComparison.OrdinalIgnoreCase))
+            {
+                if (baseUrl.EndsWith("/"))
+                    baseUrl = baseUrl.TrimEnd('/');
+                baseUrl += "/api/index.php/v1";
+            }
+
+            return baseUrl;
         }
 
         // Helper methods for parsing

@@ -41,6 +41,41 @@ namespace TheTechIdea.Beep.Connectors.ClickSend
                 if (Dataconnection != null)
                     Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
             }
+
+            // Register entities
+            EntitiesNames = new List<string> { "sms_history", "account", "contacts" };
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+                .ToList();
+        }
+
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         /// <summary>
@@ -59,7 +94,10 @@ namespace TheTechIdea.Beep.Connectors.ClickSend
                 }
 
                 // Build the API URL
-                string url = $"https://rest.clicksend.com/v3/{endpoint}";
+                var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://rest.clicksend.com/v3";
+                if (!baseUrl.EndsWith("/"))
+                    baseUrl = baseUrl.TrimEnd('/');
+                string url = $"{baseUrl}/{endpoint}";
 
                 // Make the request using base class method (handles authentication automatically)
                 var response = await GetAsync(url);

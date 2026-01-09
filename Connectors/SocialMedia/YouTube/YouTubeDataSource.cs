@@ -382,9 +382,29 @@ namespace BeepDataSources.Connectors.SocialMedia.YouTube
             }
         }
 
-        public override object? GetEntity(string EntityName, List<AppFilter> filter)
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
-            return GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         #endregion

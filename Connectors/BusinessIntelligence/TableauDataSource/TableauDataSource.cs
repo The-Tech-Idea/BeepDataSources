@@ -46,6 +46,19 @@ namespace TheTechIdea.Beep.Connectors.Tableau
                 .ToList();
         }
 
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // -------------------- Overrides (same signatures) --------------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Async
         /// <summary>
         /// Asynchronously retrieves an entity based on the provided name and filters.
         /// </summary>
@@ -61,9 +74,11 @@ namespace TheTechIdea.Beep.Connectors.Tableau
                     return Array.Empty<object>();
                 }
 
-                // Build the API URL - Tableau uses different base URLs depending on the operation
-                string baseUrl = "https://YOUR_TABLEAU_SERVER/api/3.21"; // This should be configured
-                string url = $"{baseUrl}{endpoint}";
+                // Get base URL from connection properties
+                string baseUrl = (Dataconnection?.ConnectionProp as WebAPIConnectionProperties)?.Url ?? "https://YOUR_TABLEAU_SERVER/api/3.21";
+                if (!baseUrl.EndsWith("/"))
+                    baseUrl += "/";
+                string url = $"{baseUrl.TrimEnd('/')}{endpoint}";
 
                 // Make the request using base class method (handles authentication automatically)
                 var response = await GetAsync(url);
@@ -87,6 +102,25 @@ namespace TheTechIdea.Beep.Connectors.Tableau
                 ErrorObject.Message = ex.Message;
                 return Array.Empty<object>();
             }
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         private string GetEndpointForEntity(string entityName)

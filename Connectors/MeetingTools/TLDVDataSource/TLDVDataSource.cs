@@ -83,6 +83,25 @@ namespace TheTechIdea.Beep.Connectors.TLDV
             return data ?? Array.Empty<object>();
         }
 
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
+        }
+
         // Async
         public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
@@ -93,7 +112,10 @@ namespace TheTechIdea.Beep.Connectors.TLDV
             RequireFilters(EntityName, q, RequiredFilters.GetValueOrDefault(EntityName, Array.Empty<string>()));
 
             // Build the full URL
-            var url = $"https://api.tldv.io/{endpoint}";
+            var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://api.tldv.io";
+            if (!baseUrl.EndsWith("/"))
+                baseUrl = baseUrl.TrimEnd('/');
+            var url = $"{baseUrl}/{endpoint}";
             url = ReplacePlaceholders(url, q);
 
             // Add query parameters
@@ -241,7 +263,10 @@ namespace TheTechIdea.Beep.Connectors.TLDV
         {
             try
             {
-                var url = "https://api.tldv.io/v1/meetings";
+                var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://api.tldv.io";
+                if (!baseUrl.EndsWith("/"))
+                    baseUrl = baseUrl.TrimEnd('/');
+                var url = $"{baseUrl}/v1/meetings";
                 var response = await PostAsync(url, meeting);
                 var json = await response.Content.ReadAsStringAsync();
 
@@ -270,7 +295,10 @@ namespace TheTechIdea.Beep.Connectors.TLDV
         {
             try
             {
-                var url = $"https://api.tldv.io/v1/meetings/{meetingId}/highlights";
+                var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://api.tldv.io";
+                if (!baseUrl.EndsWith("/"))
+                    baseUrl = baseUrl.TrimEnd('/');
+                var url = $"{baseUrl}/v1/meetings/{meetingId}/highlights";
                 var response = await PostAsync(url, highlight);
                 var json = await response.Content.ReadAsStringAsync();
 

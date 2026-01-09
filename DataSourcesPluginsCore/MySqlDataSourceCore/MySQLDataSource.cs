@@ -1,6 +1,6 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
 using TheTechIdea.Beep.Vis;
-
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Editor;
@@ -22,34 +22,36 @@ namespace TheTechIdea.Beep.DataBase
         }
         public override string ColumnDelimiter { get; set; } = "'";
         public override string ParameterDelimiter { get; set; } = "@";
-        public override string DisableFKConstraints( EntityStructure t1)
+        public override string DisableFKConstraints(EntityStructure t1)
         {
             try
             {
                 this.ExecuteSql($"SET FOREIGN_KEY_CHECKS=0;");
-                DMEEditor.ErrorObject.Message = "successfull Disabled Mysql FK Constraints";
+                DMEEditor.ErrorObject.Message = "Successfully Disabled MySQL FK Constraints";
                 DMEEditor.ErrorObject.Flag = Errors.Ok;
             }
             catch (Exception ex)
             {
-
-                DMEEditor.AddLogMessage("Fail", "Diabling Mysql FK Constraints" + ex.Message, DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                DMEEditor.AddLogMessage("Fail", "Disabling MySQL FK Constraints: " + ex.Message, DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Message = ex.Message;
             }
             return DMEEditor.ErrorObject.Message;
         }
 
-        public override string EnableFKConstraints( EntityStructure t1)
+        public override string EnableFKConstraints(EntityStructure t1)
         {
             try
             {
                 this.ExecuteSql($"SET FOREIGN_KEY_CHECKS=1;");
-                DMEEditor.ErrorObject.Message = "successfull Enabled Mysql FK Constraints";
+                DMEEditor.ErrorObject.Message = "Successfully Enabled MySQL FK Constraints";
                 DMEEditor.ErrorObject.Flag = Errors.Ok;
             }
             catch (Exception ex)
             {
-
-                DMEEditor.AddLogMessage("Fail", "Enabing Mysql FK Constraints" + ex.Message, DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                DMEEditor.AddLogMessage("Fail", "Enabling MySQL FK Constraints: " + ex.Message, DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Message = ex.Message;
             }
             return DMEEditor.ErrorObject.Message;
         }
@@ -62,8 +64,9 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-
                 DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
             }
             return DMEEditor.ErrorObject;
         }
@@ -77,8 +80,9 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-
-                DMEEditor.AddLogMessage("Beep", $"Error in end Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor.AddLogMessage("Beep", $"Error in End Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
             }
             return DMEEditor.ErrorObject;
         }
@@ -92,8 +96,9 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-
-                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor.AddLogMessage("Beep", $"Error in Commit Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
             }
             return DMEEditor.ErrorObject;
         }

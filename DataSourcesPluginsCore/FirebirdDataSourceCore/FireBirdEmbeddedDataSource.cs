@@ -19,9 +19,9 @@ namespace TheTechIdea.Beep.DataBase
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType =  DataSourceType.FireBird)]
     public class FireBirdEmbeddedDataSource : RDBSource, ILocalDB, IDataSource
     {
-        public bool CanCreateLocal { get ; set ; }
+        public bool CanCreateLocal { get ; set ; } = true;
         public bool InMemory { get; set; } = false;
-        public string Extension { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string Extension { get; set; } = ".fdb";
 
         public FireBirdEmbeddedDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, pDMEEditor, databasetype, per)
         {
@@ -214,12 +214,68 @@ namespace TheTechIdea.Beep.DataBase
 
         public bool CreateDB(bool inMemory)
         {
-            throw new NotImplementedException();
+            try
+            {
+                InMemory = inMemory;
+                // Firebird doesn't support true in-memory databases like SQLite
+                // So we'll use a temporary file or regular file
+                if (!Path.HasExtension(base.Dataconnection.ConnectionProp.FileName))
+                {
+                    base.Dataconnection.ConnectionProp.FileName = base.Dataconnection.ConnectionProp.FileName + Extension;
+                }
+                string fileName = inMemory 
+                    ? Path.Combine(Path.GetTempPath(), base.Dataconnection.ConnectionProp.FileName)
+                    : Path.Combine(base.Dataconnection.ConnectionProp.FilePath, base.Dataconnection.ConnectionProp.FileName);
+
+                if (!System.IO.File.Exists(fileName))
+                {
+                    CreateFBDatabase("localhost", fileName, base.Dataconnection.ConnectionProp.UserID, 
+                        base.Dataconnection.ConnectionProp.Password, 4096, true, true);
+                }
+
+                DMEEditor.AddLogMessage("Success", "Create FireBird Database", DateTime.Now, 0, null, Errors.Ok);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                string mes = "Could not Create Embedded Firebird Database";
+                DMEEditor.AddLogMessage(ex.Message, mes, DateTime.Now, -1, mes, Errors.Failed);
+                return false;
+            }
         }
 
         public bool CreateDB(string filepathandname)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (string.IsNullOrEmpty(filepathandname))
+                {
+                    return false;
+                }
+
+                if (!Path.HasExtension(filepathandname))
+                {
+                    filepathandname = filepathandname + Extension;
+                }
+
+                if (!System.IO.File.Exists(filepathandname))
+                {
+                    CreateFBDatabase("localhost", filepathandname, base.Dataconnection.ConnectionProp.UserID, 
+                        base.Dataconnection.ConnectionProp.Password, 4096, true, true);
+                }
+
+                base.Dataconnection.ConnectionProp.FilePath = Path.GetDirectoryName(filepathandname);
+                base.Dataconnection.ConnectionProp.FileName = Path.GetFileName(filepathandname);
+
+                DMEEditor.AddLogMessage("Success", "Create FireBird Database", DateTime.Now, 0, null, Errors.Ok);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                string mes = "Could not Create Embedded Firebird Database";
+                DMEEditor.AddLogMessage(ex.Message, mes, DateTime.Now, -1, mes, Errors.Failed);
+                return false;
+            }
         }
     }
 }

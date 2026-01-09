@@ -244,57 +244,87 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             return Task.FromResult(Entities);
         }
 
-        public new async Task<object?> GetEntityAsync(string entityName, List<AppFilter>? filter = null)
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
             try
             {
                 if (_httpClient == null)
                     throw new InvalidOperationException("Not connected to Insightly");
 
-                var queryParams = BuildQueryParameters(filter);
-                var url = $"{_config.BaseUrl}/{entityName}{queryParams}";
+                var queryParams = BuildQueryParameters(Filter);
+                var url = $"{_config.BaseUrl}/{EntityName}{queryParams}";
 
                 var response = await _httpClient.GetAsync(url);
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    return ParseResponse(content, entityName);
+                    return ParseResponse(content, EntityName);
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
                 ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Failed to get {entityName}: {response.StatusCode} - {errorContent}";
-                return null;
+                ErrorObject.Message = $"Failed to get {EntityName}: {response.StatusCode} - {errorContent}";
+                return Array.Empty<object>();
             }
             catch (Exception ex)
             {
                 ErrorObject.Flag = Errors.Failed;
                 ErrorObject.Message = $"Failed to get entity data: {ex.Message}";
-                return null;
+                return Array.Empty<object>();
             }
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         #endregion
 
         #region Response Parsing
 
-        private object? ParseResponse(string jsonContent, string entityName)
+        private IEnumerable<object> ParseResponse(string jsonContent, string entityName)
         {
             try
             {
                 return entityName switch
                 {
-                    "Contacts" => ExtractArray<Contact>(jsonContent),
-                    "Organisations" => ExtractArray<Organisation>(jsonContent),
-                    "Opportunities" => ExtractArray<Opportunity>(jsonContent),
-                    "Leads" => ExtractArray<Lead>(jsonContent),
-                    _ => JsonSerializer.Deserialize<JsonElement>(jsonContent)
+                    "Contacts" => ExtractArray<Contact>(jsonContent).Cast<object>(),
+                    "Organisations" => ExtractArray<Organisation>(jsonContent).Cast<object>(),
+                    "Opportunities" => ExtractArray<Opportunity>(jsonContent).Cast<object>(),
+                    "Leads" => ExtractArray<Lead>(jsonContent).Cast<object>(),
+                    _ => new List<object> { JsonSerializer.Deserialize<JsonElement>(jsonContent) }
                 };
             }
             catch (Exception ex)
             {
                 Logger.WriteLog($"Error parsing response for {entityName}: {ex.Message}");
-                return JsonSerializer.Deserialize<JsonElement>(jsonContent);
+                return Array.Empty<object>();
             }
         }
 

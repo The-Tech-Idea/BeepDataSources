@@ -55,14 +55,58 @@ namespace TheTechIdea.Beep.TikTokAdsDataSource
         // Return the fixed list (use 'override' if base is virtual; otherwise this hides the base)
         public new IEnumerable<string> GetEntitesList() => EntitiesNames;
 
+        // -------------------- Overrides (same signatures) --------------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
         /// <summary>
         /// Gets entity data asynchronously
         /// </summary>
         public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            // Implementation will go here
-            await Task.CompletedTask;
-            return new List<object>();
+            try
+            {
+                if (!KnownEntities.Contains(EntityName, StringComparer.OrdinalIgnoreCase))
+                {
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = $"Unknown TikTok Ads entity: {EntityName}";
+                    return Array.Empty<object>();
+                }
+
+                // Implementation will go here
+                await Task.CompletedTask;
+                return Array.Empty<object>();
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                return Array.Empty<object>();
+            }
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         /// <summary>

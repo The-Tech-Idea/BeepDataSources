@@ -537,7 +537,7 @@ namespace TheTechIdea.Beep.NOSQL
             }
             return retval;
         }
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
             ErrorsInfo retval = new ErrorsInfo();
             retval.Flag = Errors.Ok;
@@ -637,7 +637,7 @@ namespace TheTechIdea.Beep.NOSQL
             }
             return dataset;
         }
-        public List<string> GetEntitesList()
+        public IEnumerable<string> GetEntitesList()
         {
 
             ErrorsInfo retval = new ErrorsInfo();
@@ -759,12 +759,12 @@ namespace TheTechIdea.Beep.NOSQL
             }
             return (Task<object>)result;
         }
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
             ErrorsInfo retval = new ErrorsInfo();
             retval.Flag = Errors.Ok;
             retval.Message = "Get Entity Successfully";
-            object result = null;
+            PagedResult pagedResult = new PagedResult();
             try
             {
                 if (ConnectionStatus != ConnectionState.Open)
@@ -780,6 +780,9 @@ namespace TheTechIdea.Beep.NOSQL
                     // Build the MongoDB filter from the list of AppFilter
                     var mongoFilter = BuildMongoFilter(filter);
 
+                    // Get total count
+                    long totalRecords = collection.CountDocuments(mongoFilter);
+
                     // Calculate pagination parameters
                     int skipAmount = (pageNumber - 1) * pageSize;
 
@@ -789,9 +792,14 @@ namespace TheTechIdea.Beep.NOSQL
                                               .Limit(pageSize)
                                               .ToList();
 
-                    // Optionally, convert BSON documents to a specific object type if necessary
-                    // This conversion would depend on the expected return type and data structure
-                    result = documents; // Directly return documents or convert to DTOs as needed
+                    // Populate PagedResult
+                    pagedResult.Data = documents;
+                    pagedResult.TotalRecords = (int)totalRecords;
+                    pagedResult.PageNumber = pageNumber;
+                    pagedResult.PageSize = pageSize;
+                    pagedResult.TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+                    pagedResult.HasNextPage = pageNumber < pagedResult.TotalPages;
+                    pagedResult.HasPreviousPage = pageNumber > 1;
                 }
 
             }
@@ -802,36 +810,17 @@ namespace TheTechIdea.Beep.NOSQL
                 retval.Message = ex.Message;
                 DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
             }
-            return result;
+            return pagedResult;
         }
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            return Task.Run(() =>
-            {
-                ErrorsInfo retval = new ErrorsInfo();
-                retval.Flag = Errors.Ok;
-                retval.Message = "Get Entity Successfully";
-                object result = null;
-                try
-                {
-                    result = GetEntity(EntityName, Filter);
-                }
-                catch (Exception ex)
-                {
-                    string methodName = MethodBase.GetCurrentMethod().Name;
-                    retval.Flag = Errors.Failed;
-                    retval.Message = ex.Message;
-                    DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                }
-                return result;
-            });
+            return Task.Run(() => GetEntity(EntityName, Filter));
         }
-        public object GetEntity(string EntityName, List<AppFilter> filter)
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
             ErrorsInfo retval = new ErrorsInfo();
             retval.Flag = Errors.Ok;
             retval.Message = "Get Entity Successfully";
-            object result = null;
             try
             {
                 if (ConnectionStatus != ConnectionState.Open)
@@ -870,7 +859,25 @@ namespace TheTechIdea.Beep.NOSQL
                     // Assuming you have a method to determine the type from entityName
                     //  Type entityType = GetEntityType(EntityName);
                     enttype = GetEntityType(EntityName);
-                    result = ConvertBsonDocumentsToObjects(documents, enttype, DataStruct);
+                    object result = ConvertBsonDocumentsToObjects(documents, enttype, DataStruct);
+                    
+                    // Convert IBindingListView to IEnumerable<object>
+                    if (result != null)
+                    {
+                        if (result is System.Collections.IEnumerable enumerable)
+                        {
+                            List<object> results = new List<object>();
+                            foreach (var item in enumerable)
+                            {
+                                results.Add(item);
+                            }
+                            return results;
+                        }
+                        else
+                        {
+                            return new List<object> { result };
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -880,9 +887,9 @@ namespace TheTechIdea.Beep.NOSQL
                 retval.Message = ex.Message;
                 DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
             }
-            return result;
+            return Enumerable.Empty<object>();
         }
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
             ErrorsInfo retval = new ErrorsInfo();
             retval.Flag = Errors.Ok;
@@ -1236,7 +1243,7 @@ namespace TheTechIdea.Beep.NOSQL
             }
             return retval;
         }
-        public object RunQuery(string qrystr)
+        public IEnumerable<object> RunQuery(string qrystr)
         {
             ErrorsInfo retval = new ErrorsInfo();
             retval.Flag = Errors.Ok;
@@ -1428,7 +1435,7 @@ namespace TheTechIdea.Beep.NOSQL
             }
             return retval;
         }
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
             return null;
         }

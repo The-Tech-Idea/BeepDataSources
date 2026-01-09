@@ -102,12 +102,26 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MailerLite
 
             // Register entities from the Map
             var entitiesNames = Map.Keys.ToList();
+            EntitiesNames = entitiesNames;
             Entities = entitiesNames
                 .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
                 .ToList();
         }
 
-        public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter>? filter)
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // -------------------- Overrides (same signatures) --------------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter> filter)
         {
             if (!Map.TryGetValue(entityName, out var mapping))
             {

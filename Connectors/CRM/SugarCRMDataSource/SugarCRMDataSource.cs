@@ -66,14 +66,25 @@ namespace TheTechIdea.Beep.Connectors.SugarCRM
 
         #region Entity Methods
 
-        public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter>? filter = null)
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
             try
             {
-                if (!EntityEndpoints.TryGetValue(entityName.ToLower(), out var endpoint))
+                if (!EntityEndpoints.TryGetValue(EntityName.ToLower(), out var endpoint))
                 {
-                    Logger.WriteLog($"Unknown entity: {entityName}");
-                    return new List<object>();
+                    Logger.WriteLog($"Unknown entity: {EntityName}");
+                    return Array.Empty<object>();
                 }
 
                 var baseUrl = Dataconnection?.ConnectionProp?.ConnectionString ?? "https://your-instance.sugarondemand.com/rest/v11";
@@ -90,25 +101,44 @@ namespace TheTechIdea.Beep.Connectors.SugarCRM
                 if (_httpClient == null)
                 {
                     Logger.WriteLog("HTTP client not initialized");
-                    return new List<object>();
+                    return Array.Empty<object>();
                 }
 
                 var response = await _httpClient.SendAsync(request);
                 if (!response.IsSuccessStatusCode)
                 {
                     Logger.WriteLog($"API request failed: {response.StatusCode} - {response.ReasonPhrase}");
-                    return new List<object>();
+                    return Array.Empty<object>();
                 }
 
                 var jsonContent = await response.Content.ReadAsStringAsync();
-                var result = ParseResponse(jsonContent, entityName.ToLower());
-                return result ?? new List<object>();
+                var result = ParseResponse(jsonContent, EntityName.ToLower());
+                return result ?? Array.Empty<object>();
             }
             catch (Exception ex)
             {
-                Logger.WriteLog($"Error in GetEntityAsync for {entityName}: {ex.Message}");
-                return new List<object>();
+                Logger.WriteLog($"Error in GetEntityAsync for {EntityName}: {ex.Message}");
+                return Array.Empty<object>();
             }
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         #endregion

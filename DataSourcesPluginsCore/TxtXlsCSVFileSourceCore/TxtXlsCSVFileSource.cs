@@ -1,6 +1,6 @@
-﻿
-using System.Data;
-
+﻿using System.Data;
+using System.Linq;
+using System.Collections.Generic;
 
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Report;
@@ -209,7 +209,7 @@ namespace TheTechIdea.Beep.FileManager
         {
            return ConnectionStatus = ConnectionState.Closed;
         }
-        public List<string> GetEntitesList()
+        public IEnumerable<string> GetEntitesList()
         {
             ErrorObject.Flag = Errors.Ok;
 
@@ -273,7 +273,7 @@ namespace TheTechIdea.Beep.FileManager
             }
             return null;
         }
-        public  object GetEntity(string EntityName, List<AppFilter> filter)
+        public  IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
             ErrorObject.Flag = Errors.Ok;
             object data=null;
@@ -389,8 +389,12 @@ namespace TheTechIdea.Beep.FileManager
                 // Dynamically handle the instance since we can't cast to a specific IUnitofWork<T> at compile time
                 object uowInstance = Activator.CreateInstance(uowGenericType, constructorArgs);
 
-               
-                return uowInstance;
+                // Convert to IEnumerable<object> - ObservableBindingList<T> implements IEnumerable<T>
+                if (uowInstance is System.Collections.IEnumerable)
+                {
+                    return ((System.Collections.IEnumerable)uowInstance).Cast<object>();
+                }
+                return Enumerable.Empty<object>();
             }
             catch (Exception ex)
             {
@@ -528,25 +532,66 @@ namespace TheTechIdea.Beep.FileManager
 
             return ErrorObject;
         }
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
             return null;
         }
         public DataSet GetChildTablesListFromCustomQuery(string tablename, string customquery)
         {
-            throw new NotImplementedException();
+            // CSV/Excel files don't have child tables
+            return new DataSet();
         }
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
-            throw new NotImplementedException();
+            // CSV/Excel files don't have foreign keys
+            return new List<RelationShipKeys>();
         }
         public IErrorsInfo ExecuteSql(string sql)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // CSV/Excel files don't support SQL
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = "SQL execution not supported for CSV/Excel files";
+                DMEEditor?.AddLogMessage("Beep", "SQL execution not supported for CSV/Excel files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+            }
+            return ErrorObject;
         }
         public bool CreateEntityAs(EntityStructure entity)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // CSV/Excel files don't support creating entities
+                // Entities are sheets/worksheets in the file
+                if (Entities == null)
+                {
+                    Entities = new List<EntityStructure>();
+                }
+                if (!Entities.Any(p => p.EntityName == entity.EntityName))
+                {
+                    Entities.Add(entity);
+                }
+                if (EntitiesNames == null)
+                {
+                    EntitiesNames = new List<string>();
+                }
+                if (!EntitiesNames.Contains(entity.EntityName))
+                {
+                    EntitiesNames.Add(entity.EntityName);
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in CreateEntityAs: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return false;
+            }
         }
         public bool CheckEntityExist(string EntityName)
         {
@@ -648,39 +693,142 @@ namespace TheTechIdea.Beep.FileManager
             }
             return retval;
         }
-        public  object RunQuery( string qrystr)
+        public IEnumerable<object> RunQuery(string qrystr)
         {
-            throw new NotImplementedException();
+            List<object> results = new List<object>();
+            try
+            {
+                // CSV/Excel files don't support SQL queries directly
+                // Could parse simple queries if needed
+                DMEEditor?.AddLogMessage("Beep", "Query execution not fully supported for CSV/Excel files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in RunQuery: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return results;
         }
         public virtual IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
         {
-
-
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data updated successfully." };
+            try
+            {
+                // CSV/Excel files are typically read-only in this implementation
+                // Update would require rewriting the file
+                retval.Flag = Errors.Failed;
+                retval.Message = "Update operation not supported for CSV/Excel files. Files are read-only.";
+                DMEEditor?.AddLogMessage("Beep", "Update operation not supported for CSV/Excel files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error updating entity: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error updating entity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
         }
         public IErrorsInfo DeleteEntity(string EntityName, object DeletedDataRow)
         {
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data deleted successfully." };
+            try
+            {
+                // CSV/Excel files are typically read-only in this implementation
+                // Delete would require rewriting the file
+                retval.Flag = Errors.Failed;
+                retval.Message = "Delete operation not supported for CSV/Excel files. Files are read-only.";
+                DMEEditor?.AddLogMessage("Beep", "Delete operation not supported for CSV/Excel files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error deleting entity: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error deleting entity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
         }  
         public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // CSV/Excel files don't support scripts
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = "Script execution not supported for CSV/Excel files";
+                DMEEditor?.AddLogMessage("Beep", "Script execution not supported for CSV/Excel files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+            }
+            return ErrorObject;
         }
         public IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                foreach (var entity in entities)
+                {
+                    CreateEntityAs(entity);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in CreateEntities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
-            throw new NotImplementedException();
+            List<ETLScriptDet> scripts = new List<ETLScriptDet>();
+            try
+            {
+                var entitiesToScript = entities ?? Entities;
+                if (entitiesToScript != null && entitiesToScript.Count > 0)
+                {
+                    foreach (var entity in entitiesToScript)
+                    {
+                        var script = new ETLScriptDet
+                        {
+                            SourceEntity = entity,
+                            scriptType = DDLScriptType.CreateEntity,
+                          
+                        };
+                        scripts.Add(script);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetCreateEntityScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return scripts;
         }
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
         {
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data inserted successfully." };
+            try
+            {
+                // CSV/Excel files are typically read-only in this implementation
+                // Insert would require rewriting the file
+                retval.Flag = Errors.Failed;
+                retval.Message = "Insert operation not supported for CSV/Excel files. Files are read-only.";
+                DMEEditor?.AddLogMessage("Beep", "Insert operation not supported for CSV/Excel files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error inserting entity: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error inserting entity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
         }
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public Task<IEnumerable< object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            return (Task<object>)GetEntity(EntityName, Filter);
+            return Task.FromResult(GetEntity(EntityName, Filter));
         }
         #region "Excel and CSV Reader"
         
@@ -1228,7 +1376,6 @@ namespace TheTechIdea.Beep.FileManager
         //        dataRows = FileData;
         //        toline = dataRows.Rows.Count;
         //        List<EntityField> flds = GetSheetColumns(FileData.TableName);
-        //        string classpath = DMEEditor.ConfigEditor.Config.Folders.Where(c => c.FolderFilesType == FolderFileTypes.ProjectClass).Select(x => x.FolderPath).FirstOrDefault();
         //        // DMEEditor.classCreator.CreateClass(FileData.Tables[sheetno].TableName, flds, classpath);
         //        //GetTypeForSheetsFile(dataRows.TableName);
         //        return dataRows;
@@ -1592,7 +1739,7 @@ namespace TheTechIdea.Beep.FileManager
                         }
 
                     }
-                   
+                  
                   
                 }
             }
@@ -1659,9 +1806,35 @@ namespace TheTechIdea.Beep.FileManager
             GC.SuppressFinalize(this);
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            throw new NotImplementedException();
+            PagedResult pagedResult = new PagedResult();
+            ErrorObject.Flag = Errors.Ok;
+
+            try
+            {
+                // Get all data first
+                var allData = GetEntity(EntityName, filter).ToList();
+                int totalRecords = allData.Count;
+                int offset = (pageNumber - 1) * pageSize;
+                var pagedData = allData.Skip(offset).Take(pageSize).ToList();
+
+                pagedResult.Data = pagedData;
+                pagedResult.TotalRecords = totalRecords;
+                pagedResult.PageNumber = pageNumber;
+                pagedResult.PageSize = pageSize;
+                pagedResult.TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+                pagedResult.HasNextPage = pageNumber < pagedResult.TotalPages;
+                pagedResult.HasPreviousPage = pageNumber > 1;
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity with pagination: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return pagedResult;
         }
         #endregion
 

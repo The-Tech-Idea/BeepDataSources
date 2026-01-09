@@ -78,7 +78,7 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
     /// LinkedIn data source implementation for Beep framework
     /// Supports LinkedIn Marketing API v2
     /// </summary>
-    [AddinAttribute(Category = DatasourceCategory.SOCIALMEDIA, DatasourceType = DataSourceType.WebApi)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LinkedIn)]
     public class LinkedInDataSource : WebAPIDataSource
     {
         private readonly LinkedInConfig _config;

@@ -6,6 +6,10 @@ using Parquet.Data;
 using Parquet.File;
 using System.Data;
 using System.Text;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Reflection;
+using System.IO;
 using TheTechIdea;
 using TheTechIdea.Beep;
 using TheTechIdea.Beep.DataBase;
@@ -17,6 +21,7 @@ using TheTechIdea.Util;
 using System.Collections.Generic;
 using TheTechIdea.Beep.FileManager;
 using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Helpers;
 using Parquet.Serialization;
 
 namespace ParquetDataSourceCore
@@ -60,88 +65,347 @@ namespace ParquetDataSourceCore
         public ConnectionState ConnectionStatus { get { return Dataconnection.ConnectionStatus; } set { pConnectionStatus = value; } }
         public string ColumnDelimiter { get  ; set  ; }
         public string ParameterDelimiter { get  ; set  ; }
-        public string GuidID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string GuidID { get; set; } = Guid.NewGuid().ToString();
 
         public event EventHandler<PassedArgs> PassEvent;
 
         public IErrorsInfo BeginTransaction(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            // Parquet files don't support transactions
+            return ErrorObject;
         }
 
         public bool CheckEntityExist(string EntityName)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (EntitiesNames != null && EntitiesNames.Count > 0)
+                {
+                    return EntitiesNames.Any(e => e.Equals(EntityName, StringComparison.OrdinalIgnoreCase));
+                }
+                else
+                {
+                    GetEntitesList();
+                    return EntitiesNames.Any(e => e.Equals(EntityName, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error checking entity existence: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return false;
+            }
         }
 
         public ConnectionState Closeconnection()
         {
-            throw new NotImplementedException();
+            try
+            {
+                ConnectionStatus = Dataconnection.CloseConnection();
+            }
+            catch (Exception ex)
+            {
+                ConnectionStatus = ConnectionState.Broken;
+                DMEEditor?.AddLogMessage("Beep", $"Error closing connection: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ConnectionStatus;
         }
 
         public IErrorsInfo Commit(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            // Parquet files don't support transactions
+            return ErrorObject;
         }
 
         public IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                foreach (var entity in entities)
+                {
+                    CreateEntityAs(entity);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in CreateEntities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
 
         public bool CreateEntityAs(EntityStructure entity)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (Entities == null)
+                {
+                    Entities = new List<EntityStructure>();
+                }
+                if (!Entities.Any(p => p.EntityName == entity.EntityName))
+                {
+                    Entities.Add(entity);
+                }
+                if (EntitiesNames == null)
+                {
+                    EntitiesNames = new List<string>();
+                }
+                if (!EntitiesNames.Contains(entity.EntityName))
+                {
+                    EntitiesNames.Add(entity.EntityName);
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in CreateEntityAs: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return false;
+            }
         }
 
         public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data deleted successfully." };
+            try
+            {
+                // Parquet files are read-only in typical scenarios
+                // Deletion would require rewriting the file
+                retval.Flag = Errors.Failed;
+                retval.Message = "Delete operation not supported for Parquet files. Files are read-only.";
+                DMEEditor?.AddLogMessage("Beep", "Delete operation not supported for Parquet files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error deleting entity: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error deleting entity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
         }
 
         public IErrorsInfo EndTransaction(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            // Parquet files don't support transactions
+            return ErrorObject;
         }
 
         public IErrorsInfo ExecuteSql(string sql)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // Parquet files don't support SQL
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = "SQL execution not supported for Parquet files";
+                DMEEditor?.AddLogMessage("Beep", "SQL execution not supported for Parquet files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+            }
+            return ErrorObject;
         }
 
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
-            throw new NotImplementedException();
+            // Parquet files don't have child tables
+            return new List<ChildRelation>();
         }
 
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
-            throw new NotImplementedException();
+            List<ETLScriptDet> scripts = new List<ETLScriptDet>();
+            try
+            {
+                var entitiesToScript = entities ?? Entities;
+                if (entitiesToScript != null && entitiesToScript.Count > 0)
+                {
+                    foreach (var entity in entitiesToScript)
+                    {
+                        var script = new ETLScriptDet
+                        {
+                            EntityName = entity.EntityName,
+                            ScriptType = "CREATE",
+                            ScriptText = $"# Parquet entity: {entity.EntityName}\n# Schema defined in Parquet file"
+                        };
+                        scripts.Add(script);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetCreateEntityScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return scripts;
         }
 
-        public List<string> GetEntitesList()
+        public IEnumerable<string> GetEntitesList()
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (GetFileState() == ConnectionState.Open)
+                {
+                    if (EntitiesNames == null || EntitiesNames.Count == 0)
+                    {
+                        GetSheets();
+                    }
+                }
+                return EntitiesNames ?? new List<string>();
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntitesList: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return new List<string>();
+            }
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter)
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
-            throw new NotImplementedException();
+            List<object> results = new List<object>();
+            try
+            {
+                if (GetFileState() != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open && File.Exists(CombineFilePath))
+                {
+                    var rows = ReadRows();
+                    foreach (var row in rows)
+                    {
+                        // Apply filters if provided
+                        bool matches = true;
+                        if (filter != null && filter.Count > 0)
+                        {
+                            foreach (var f in filter)
+                            {
+                                if (row.TryGetValue(f.FieldName, out object value))
+                                {
+                                    bool fieldMatches = EvaluateFilter(value, f.Operator, f.FilterValue);
+                                    if (!fieldMatches)
+                                    {
+                                        matches = false;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (matches)
+                        {
+                            results.Add(row);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return results;
         }
 
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            throw new NotImplementedException();
+            PagedResult pagedResult = new PagedResult();
+            ErrorObject.Flag = Errors.Ok;
+
+            try
+            {
+                if (GetFileState() != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open && File.Exists(CombineFilePath))
+                {
+                    var allRows = ReadRows().ToList();
+                    
+                    // Apply filters
+                    if (filter != null && filter.Count > 0)
+                    {
+                        allRows = allRows.Where(row =>
+                        {
+                            foreach (var f in filter)
+                            {
+                                if (row.TryGetValue(f.FieldName, out object value))
+                                {
+                                    if (!EvaluateFilter(value, f.Operator, f.FilterValue))
+                                    {
+                                        return false;
+                                    }
+                                }
+                                else
+                                {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        }).ToList();
+                    }
+
+                    int totalRecords = allRows.Count;
+                    int offset = (pageNumber - 1) * pageSize;
+                    var pagedRows = allRows.Skip(offset).Take(pageSize).ToList();
+
+                    List<object> results = new List<object>();
+                    foreach (var row in pagedRows)
+                    {
+                        results.Add(row);
+                    }
+
+                    pagedResult.Data = results;
+                    pagedResult.TotalRecords = totalRecords;
+                    pagedResult.PageNumber = pageNumber;
+                    pagedResult.PageSize = pageSize;
+                    pagedResult.TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+                    pagedResult.HasNextPage = pageNumber < pagedResult.TotalPages;
+                    pagedResult.HasPreviousPage = pageNumber > 1;
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity with pagination: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return pagedResult;
         }
 
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            throw new NotImplementedException();
+            return Task.Run(() => GetEntity(EntityName, Filter));
+        }
+
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        {
+            // Parquet files don't have foreign keys
+            return new List<RelationShipKeys>();
         }
 
         public int GetEntityIdx(string entityName)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (Entities != null && Entities.Count > 0)
+                {
+                    return Entities.FindIndex(e => e.EntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase) ||
+                                                   e.OriginalEntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase));
+                }
+                return -1;
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntityIdx: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return -1;
+            }
         }
 
         public EntityStructure GetEntityStructure(string EntityName, bool refresh = false)
@@ -222,12 +486,44 @@ namespace ParquetDataSourceCore
 
         public Type GetEntityType(string EntityName)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var entityStructure = GetEntityStructure(EntityName, false);
+                if (entityStructure != null && entityStructure.Fields != null && entityStructure.Fields.Count > 0)
+                {
+                    if (DMEEditor != null)
+                    {
+                        string code = DMTypeBuilder.ConvertPOCOClassToEntity(DMEEditor, entityStructure, "ParquetGeneratedTypes");
+                        return DMTypeBuilder.CreateTypeFromCode(DMEEditor, code, EntityName);
+                    }
+                }
+                return typeof(object);
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntityType: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return typeof(object);
+            }
         }
 
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
         {
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data inserted successfully." };
+            try
+            {
+                // Parquet files are typically read-only
+                // Insertion would require rewriting the file
+                retval.Flag = Errors.Failed;
+                retval.Message = "Insert operation not supported for Parquet files. Files are read-only.";
+                DMEEditor?.AddLogMessage("Beep", "Insert operation not supported for Parquet files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error inserting entity: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error inserting entity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
         }
 
         public ConnectionState Openconnection()
@@ -251,24 +547,76 @@ namespace ParquetDataSourceCore
             return ConnectionStatus;
 
         }
-        public object RunQuery(string qrystr)
+        public IEnumerable<object> RunQuery(string qrystr)
         {
-            throw new NotImplementedException();
+            List<object> results = new List<object>();
+            try
+            {
+                // Parquet files don't support SQL queries directly
+                // Return empty results or parse simple queries
+                DMEEditor?.AddLogMessage("Beep", "Query execution not fully supported for Parquet files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in RunQuery: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return results;
         }
 
         public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // Parquet files don't support scripts
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = "Script execution not supported for Parquet files";
+                DMEEditor?.AddLogMessage("Beep", "Script execution not supported for Parquet files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+            }
+            return ErrorObject;
         }
 
         public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
         {
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data updated successfully." };
+            try
+            {
+                // Parquet files are read-only
+                retval.Flag = Errors.Failed;
+                retval.Message = "Update operation not supported for Parquet files. Files are read-only.";
+                DMEEditor?.AddLogMessage("Beep", "Update operation not supported for Parquet files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error updating entities: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error updating entities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
         }
 
         public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data updated successfully." };
+            try
+            {
+                // Parquet files are read-only
+                retval.Flag = Errors.Failed;
+                retval.Message = "Update operation not supported for Parquet files. Files are read-only.";
+                DMEEditor?.AddLogMessage("Beep", "Update operation not supported for Parquet files", DateTime.Now, -1, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error updating entity: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error updating entity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -314,22 +662,55 @@ namespace ParquetDataSourceCore
         }
         public IEnumerable<Row> ReadRows()
         {
-            using ParquetReader reader = new ParquetReader();
-            DataField[] dataFields = reader.Schema.GetDataFields();
-            foreach (RowGroupReader groupReader in reader.RowGroupReaders)
+            try
             {
-                IEnumerable<Row> rows = groupReader.ReadAsRows(dataFields);
-                foreach (Row row in rows)
+                if (!File.Exists(CombineFilePath))
                 {
-                    yield return row;
+                    yield break;
                 }
+
+                using (Stream fs = File.OpenRead(CombineFilePath))
+                {
+                    ParquetReader reader = ParquetReader.CreateAsync(fs).Result;
+                    DataField[] dataFields = reader.Schema.GetDataFields();
+                    for (int i = 0; i < reader.RowGroupCount; i++)
+                    {
+                        using (ParquetRowGroupReader groupReader = reader.OpenRowGroupReader(i))
+                        {
+                            IEnumerable<Row> rows = groupReader.ReadAsRows(dataFields);
+                            foreach (Row row in rows)
+                            {
+                                yield return row;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error reading rows: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
             }
         }
 
         public IEnumerable<T> ReadEntities<T>() where T : new()
         {
-            using var reader = new ParquetReader(filepath);
-            return reader.Read<T>().ToList();
+            try
+            {
+                if (!File.Exists(CombineFilePath))
+                {
+                    return new List<T>();
+                }
+
+                using (Stream fs = File.OpenRead(CombineFilePath))
+                {
+                    return ParquetSerializer.DeserializeAsync<T>(fs).Result;
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error reading entities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return new List<T>();
+            }
         }
         public async Task<IEnumerable<Parquet.Data.DataColumn>> GetSchemaColumns(string filepath)
         {
@@ -347,10 +728,15 @@ namespace ParquetDataSourceCore
                         using (ParquetRowGroupReader rowGroupReader = reader.OpenRowGroupReader(i))
                         {
                             EntityStructure entity = new EntityStructure();
-                            entity.EntityName = rowGroupReader.owGroup.ToString();
-                            entity.OriginalEntityName = rowGroupReader.owGroup.ToString();
-                            entity.DatasourceEntityName = rowGroupReader.owGroup.ToString();
-                            EntitiesNames.Add(entity.EntityName);
+                            entity.EntityName = Path.GetFileNameWithoutExtension(filepath);
+                            entity.OriginalEntityName = Path.GetFileNameWithoutExtension(filepath);
+                            entity.DatasourceEntityName = Path.GetFileNameWithoutExtension(filepath);
+                            entity.Fields = new List<EntityField>();
+                            
+                            if (!EntitiesNames.Contains(entity.EntityName))
+                            {
+                                EntitiesNames.Add(entity.EntityName);
+                            }
                             foreach (DataField df in reader.Schema.GetDataFields())
                             {
                                 EntityField field = new EntityField();
@@ -358,7 +744,8 @@ namespace ParquetDataSourceCore
                                 ls.Add(columnData);
                                 field.fieldname = df.Name;
                                 field.fieldtype = df.ClrType.ToString();
-                                fields.Add(field);
+                                field.BaseColumnName = df.Name;
+                                entity.Fields.Add(field);
                             }
                             entities.Add(entity);
                           
@@ -385,12 +772,99 @@ namespace ParquetDataSourceCore
 
         public Task<double> GetScalarAsync(string query)
         {
-            throw new NotImplementedException();
+            return Task.Run(() => GetScalar(query));
         }
 
         public double GetScalar(string query)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // Parquet files don't support scalar queries directly
+                return 0.0;
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetScalar: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return 0.0;
+            }
+        }
+        #endregion
+
+        #region "Helper Methods"
+        private void GetSheets()
+        {
+            try
+            {
+                EntitiesNames.Clear();
+                Entities.Clear();
+                var columns = GetSchemaColumns(CombineFilePath).Result;
+                // Entities and EntitiesNames are populated in GetSchemaColumns
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetSheets: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+        }
+
+        private EntityStructure GetSheetEntity(string EntityName)
+        {
+            try
+            {
+                if (Entities != null && Entities.Count > 0)
+                {
+                    return Entities.FirstOrDefault(e => e.EntityName.Equals(EntityName, StringComparison.OrdinalIgnoreCase) ||
+                                                        e.OriginalEntityName.Equals(EntityName, StringComparison.OrdinalIgnoreCase));
+                }
+                
+                // If not found, get schema from file
+                var columns = GetSchemaColumns(CombineFilePath).Result;
+                return Entities.FirstOrDefault(e => e.EntityName.Equals(EntityName, StringComparison.OrdinalIgnoreCase));
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetSheetEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                return null;
+            }
+        }
+
+        private bool EvaluateFilter(object value, string op, string filterValue)
+        {
+            try
+            {
+                if (value == null) return false;
+
+                switch (op)
+                {
+                    case "==":
+                    case "=":
+                        return value.ToString().Equals(filterValue, StringComparison.OrdinalIgnoreCase);
+                    case "!=":
+                    case "<>":
+                        return !value.ToString().Equals(filterValue, StringComparison.OrdinalIgnoreCase);
+                    case ">":
+                        if (double.TryParse(value.ToString(), out double val1) && double.TryParse(filterValue, out double val2))
+                            return val1 > val2;
+                        return string.Compare(value.ToString(), filterValue, StringComparison.OrdinalIgnoreCase) > 0;
+                    case "<":
+                        if (double.TryParse(value.ToString(), out double val3) && double.TryParse(filterValue, out double val4))
+                            return val3 < val4;
+                        return string.Compare(value.ToString(), filterValue, StringComparison.OrdinalIgnoreCase) < 0;
+                    case ">=":
+                        if (double.TryParse(value.ToString(), out double val5) && double.TryParse(filterValue, out double val6))
+                            return val5 >= val6;
+                        return string.Compare(value.ToString(), filterValue, StringComparison.OrdinalIgnoreCase) >= 0;
+                    case "<=":
+                        if (double.TryParse(value.ToString(), out double val7) && double.TryParse(filterValue, out double val8))
+                            return val7 <= val8;
+                        return string.Compare(value.ToString(), filterValue, StringComparison.OrdinalIgnoreCase) <= 0;
+                    default:
+                        return value.ToString().Contains(filterValue, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
         #endregion
     }

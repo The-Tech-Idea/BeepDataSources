@@ -424,14 +424,36 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
             return string.Join("&", query);
         }
 
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
+        }
+
         // -------------------- CommandAttribute Methods --------------------
 
         [CommandAttribute(
-            ObjectType = "AsanaWorkspace",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaWorkspace",
             Name = "GetWorkspaces",
             Caption = "Get Asana Workspaces",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaWorkspace>"
         )]
         public IEnumerable<AsanaWorkspace> GetWorkspaces()
@@ -440,11 +462,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaWorkspace",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaWorkspace",
             Name = "GetWorkspace",
             Caption = "Get Asana Workspace by ID",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaWorkspace>"
         )]
         public IEnumerable<AsanaWorkspace> GetWorkspace(string workspaceId)
@@ -453,11 +478,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaProject",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaProject",
             Name = "GetProjects",
             Caption = "Get Asana Projects",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaProject>"
         )]
         public IEnumerable<AsanaProject> GetProjects()
@@ -466,11 +494,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaProject",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaProject",
             Name = "GetProject",
             Caption = "Get Asana Project by ID",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaProject>"
         )]
         public IEnumerable<AsanaProject> GetProject(string projectId)
@@ -479,11 +510,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaProject",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaProject",
             Name = "GetWorkspaceProjects",
             Caption = "Get Projects in Workspace",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaProject>"
         )]
         public IEnumerable<AsanaProject> GetWorkspaceProjects(string workspaceId)
@@ -492,11 +526,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaTask",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaTask",
             Name = "GetTasks",
             Caption = "Get Asana Tasks",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaTask>"
         )]
         public IEnumerable<AsanaTask> GetTasks()
@@ -505,11 +542,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaTask",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaTask",
             Name = "GetTask",
             Caption = "Get Asana Task by ID",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaTask>"
         )]
         public IEnumerable<AsanaTask> GetTask(string taskId)
@@ -518,11 +558,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaTask",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaTask",
             Name = "GetProjectTasks",
             Caption = "Get Tasks in Project",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaTask>"
         )]
         public IEnumerable<AsanaTask> GetProjectTasks(string projectId)
@@ -531,11 +574,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaUser",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaUser",
             Name = "GetUsers",
             Caption = "Get Asana Users",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaUser>"
         )]
         public IEnumerable<AsanaUser> GetUsers()
@@ -544,11 +590,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaUser",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaUser",
             Name = "GetUser",
             Caption = "Get Asana User by ID",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaUser>"
         )]
         public IEnumerable<AsanaUser> GetUser(string userId)
@@ -557,11 +606,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaTeam",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaTeam",
             Name = "GetTeams",
             Caption = "Get Asana Teams",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaTeam>"
         )]
         public IEnumerable<AsanaTeam> GetTeams()
@@ -570,11 +622,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaTeam",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaTeam",
             Name = "GetTeam",
             Caption = "Get Asana Team by ID",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaTeam>"
         )]
         public IEnumerable<AsanaTeam> GetTeam(string teamId)
@@ -583,11 +638,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaSection",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaSection",
             Name = "GetSections",
             Caption = "Get Sections in Project",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaSection>"
         )]
         public IEnumerable<AsanaSection> GetSections(string projectId)
@@ -596,11 +654,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaTag",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaTag",
             Name = "GetTags",
             Caption = "Get Tags in Workspace",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaTag>"
         )]
         public IEnumerable<AsanaTag> GetTags(string workspaceId)
@@ -609,11 +670,14 @@ namespace TheTechIdea.Beep.Connectors.TaskManagement.Asana
         }
 
         [CommandAttribute(
-            ObjectType = "AsanaStory",
+            Category = DatasourceCategory.Connector,
+            DatasourceType = DataSourceType.Asana,
             PointType = EnumPointType.Function,
+            ObjectType = "AsanaStory",
             Name = "GetStories",
             Caption = "Get Stories for Task",
             ClassName = "AsanaDataSource",
+            Showin = ShowinType.Both,
             misc = "ReturnType: IEnumerable<AsanaStory>"
         )]
         public IEnumerable<AsanaStory> GetStories(string taskId)

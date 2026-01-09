@@ -336,14 +336,22 @@ namespace TheTechIdea.Beep.Connectors.Reddit
         return ErrorObject;
     }
 
+    // Sync
+    public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+    {
+        var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+        return data ?? Array.Empty<object>();
+    }
+
     /// <summary>
     /// Get data from Reddit API
     /// </summary>
-    public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter> filters = null)
+    public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter> filters)
     {
         try
         {
-            filters ??= new List<AppFilter>();
+            if (filters == null)
+                filters = new List<AppFilter>();
 
             string url;
 
@@ -427,6 +435,25 @@ namespace TheTechIdea.Beep.Connectors.Reddit
             ErrorObject.Message = $"Failed to get {entityName} data: {ex.Message}";
             return new List<object>();
         }
+    }
+
+    // Paged
+    public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+    {
+        var items = GetEntity(EntityName, filter).ToList();
+        var totalRecords = items.Count;
+        var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+        return new PagedResult
+        {
+            Data = pagedItems,
+            PageNumber = Math.Max(1, pageNumber),
+            PageSize = pageSize,
+            TotalRecords = totalRecords,
+            TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+            HasPreviousPage = pageNumber > 1,
+            HasNextPage = pageNumber * pageSize < totalRecords
+        };
     }
 
         /// <summary>

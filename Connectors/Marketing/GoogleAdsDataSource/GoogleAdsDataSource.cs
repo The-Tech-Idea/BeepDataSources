@@ -115,12 +115,26 @@ namespace TheTechIdea.Beep.Connectors.Marketing.GoogleAds
 
             // Register entities from the Map
             var entitiesNames = Map.Keys.ToList();
+            EntitiesNames = entitiesNames;
             Entities = entitiesNames
                 .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
                 .ToList();
         }
 
-        public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter>? filter)
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // -------------------- Overrides (same signatures) --------------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter> filter)
         {
             if (!Map.TryGetValue(entityName, out var mapping))
             {
@@ -192,6 +206,25 @@ namespace TheTechIdea.Beep.Connectors.Marketing.GoogleAds
             }
 
             return list;
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         // CommandAttribute methods for framework integration

@@ -20,7 +20,7 @@ namespace TheTechIdea.Beep.MilvusDatasource
     /// Milvus vector database data source implementation
     /// Milvus is an open-source vector database built for scalable similarity search
     /// </summary>
-    //[AddinAttribute(Category = DatasourceCategory.VectorDB, DatasourceType = DataSourceType.Milvus)]
+    [AddinAttribute(Category = DatasourceCategory.VectorDB, DatasourceType = DataSourceType.Milvus)]
     public class MilvusDataSource : IDataSource
     {
         #region IDataSource Properties
@@ -171,15 +171,31 @@ namespace TheTechIdea.Beep.MilvusDatasource
 
         public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
-            var allData = GetEntity(EntityName, filter).ToList();
-            var pagedData = allData.Skip(pageNumber * pageSize).Take(pageSize).ToList();
-            
-            return new PagedResult
+            ErrorObject.Flag = Errors.Ok;
+            ErrorObject.Message = "Successfully retrieved data";
+            try
             {
-                Data = pagedData,
-                PageNumber = pageNumber,
-                PageSize = pageSize
-            };
+                var allData = GetEntity(EntityName, filter).ToList();
+                var totalRecords = allData.Count;
+                var pagedData = allData.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+                
+                return new PagedResult
+                {
+                    Data = pagedData,
+                    PageNumber = Math.Max(1, pageNumber),
+                    PageSize = pageSize,
+                    TotalRecords = totalRecords,
+                    TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                    HasPreviousPage = pageNumber > 1,
+                    HasNextPage = pageNumber * pageSize < totalRecords
+                };
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                return new PagedResult(Array.Empty<object>(), pageNumber, pageSize, 0);
+            }
         }
 
         public IEnumerable<object> RunQuery(string qrystr)
@@ -732,9 +748,11 @@ namespace TheTechIdea.Beep.MilvusDatasource
             }
             catch (Exception ex)
             {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
                 Logger?.WriteLog($"Error in GetJsonAsync to {endpoint}: {ex.Message}");
             }
-            return null;
+            return new Dictionary<string, object>();
         }
 
         private async Task<Dictionary<string, object>> PostJsonAsync(string endpoint, object requestData)
@@ -755,9 +773,11 @@ namespace TheTechIdea.Beep.MilvusDatasource
             }
             catch (Exception ex)
             {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
                 Logger?.WriteLog($"Error in PostJsonAsync to {endpoint}: {ex.Message}");
             }
-            return null;
+            return new Dictionary<string, object>();
         }
 
         #endregion

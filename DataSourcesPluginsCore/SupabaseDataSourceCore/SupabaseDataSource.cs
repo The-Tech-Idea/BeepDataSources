@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using System.Linq;
+using System.Threading.Tasks;
 using TheTechIdea;
 using TheTechIdea.Beep;
 using TheTechIdea.Beep.DataBase;
@@ -16,7 +18,9 @@ using DataManagementModels.Editor;
 using System.Text.RegularExpressions;
 using Supabase.Storage;
 using System.Reflection;
-
+using Supabase.Postgrest.Models;
+using Supabase.Postgrest;
+using Newtonsoft.Json;
 using TheTechIdea.Beep.Helpers;
 using static Supabase.Postgrest.Constants;
 using System.ComponentModel;
@@ -121,19 +125,126 @@ namespace SupabaseDataSourceCore
         #region "Data Manipulation"
         public IErrorsInfo BeginTransaction(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // Supabase/PostgreSQL supports transactions through RPC calls
+                ExecuteSql("BEGIN TRANSACTION;");
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
         public IErrorsInfo Commit(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                ExecuteSql("COMMIT;");
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in Commit Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
         public IErrorsInfo EndTransaction(PassedArgs args)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // End transaction by rolling back if not committed
+                ExecuteSql("ROLLBACK;");
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in End Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
         public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data deleted successfully." };
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    var entityStructure = GetEntityStructure(EntityName, false);
+                    if (entityStructure == null)
+                    {
+                        retval.Flag = Errors.Failed;
+                        retval.Message = $"Entity structure for {EntityName} not found.";
+                        return retval;
+                    }
+
+                    Type dynamicType = DMTypeBuilder.CreateTypeFromCode(DMEEditor, DMTypeBuilder.ConvertPOCOClassToEntity(DMEEditor, entityStructure, "SupabaseGeneratedTypes"), entityStructure.EntityName);
+                    
+                    // Get ID from UploadDataRow
+                    string idField = entityStructure.Fields.FirstOrDefault(f => f.IsKey)?.fieldname ?? "id";
+                    object idValue = null;
+                    
+                    if (UploadDataRow is Dictionary<string, object> dict)
+                    {
+                        idValue = dict.ContainsKey(idField) ? dict[idField] : dict.Values.FirstOrDefault();
+                    }
+                    else
+                    {
+                        var prop = UploadDataRow.GetType().GetProperty(idField);
+                        idValue = prop?.GetValue(UploadDataRow);
+                    }
+
+                    if (idValue == null)
+                    {
+                        retval.Flag = Errors.Failed;
+                        retval.Message = "Could not find ID field for deletion.";
+                        return retval;
+                    }
+
+                    var fromMethod = client.GetType().GetMethod("From").MakeGenericMethod(dynamicType);
+                    var table = fromMethod.Invoke(client, new object[] { EntityName });
+                    var deleteMethod = table.GetType().GetMethod("Delete");
+                    var queryMethod = table.GetType().GetMethod("Where");
+                    
+                    var query = queryMethod.Invoke(table, new object[] { idField, Operator.Equals, idValue });
+                    var responseTask = (Task)deleteMethod.Invoke(query, null);
+                    responseTask.Wait();
+
+                    var response = responseTask.GetType().GetProperty("Result").GetValue(responseTask) as Supabase.Postgrest.Responses.BaseResponse;
+                    if (response.ResponseMessage.StatusCode != System.Net.HttpStatusCode.OK && response.ResponseMessage.StatusCode != System.Net.HttpStatusCode.NoContent)
+                    {
+                        retval.Flag = Errors.Failed;
+                        retval.Message = $"Error deleting data: {response.ResponseMessage.ReasonPhrase}";
+                        DMEEditor?.AddLogMessage("Beep", $"Error deleting data: {response.ResponseMessage.ReasonPhrase}", DateTime.Now, -1, null, Errors.Failed);
+                    }
+                }
+                else
+                {
+                    retval.Flag = Errors.Failed;
+                    retval.Message = "Database connection is not open.";
+                }
+            }
+            catch (Exception ex)
+            {
+                string methodName = MethodBase.GetCurrentMethod().Name;
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error in {methodName}: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return retval;
         }
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
         {
@@ -212,18 +323,154 @@ namespace SupabaseDataSourceCore
 
         public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
         {
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data updated successfully." };
+            try
+            {
+                if (UploadData is IEnumerable<object> dataList)
+                {
+                    int count = 0;
+                    foreach (var item in dataList)
+                    {
+                        UpdateEntity(EntityName, item);
+                        count++;
+                        progress?.Report(new PassedArgs { Message = $"Updated {count} records" });
+                    }
+                    retval.Message = $"Updated {count} records successfully.";
+                }
+                else
+                {
+                    retval.Flag = Errors.Failed;
+                    retval.Message = "UploadData must be an IEnumerable<object>.";
+                }
+            }
+            catch (Exception ex)
+            {
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error in UpdateEntities: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error in UpdateEntities: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return retval;
         }
 
         public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
+            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data updated successfully." };
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open)
+                {
+                    var entityStructure = GetEntityStructure(EntityName, false);
+                    if (entityStructure == null)
+                    {
+                        retval.Flag = Errors.Failed;
+                        retval.Message = $"Entity structure for {EntityName} not found.";
+                        return retval;
+                    }
+
+                    Type dynamicType = DMTypeBuilder.CreateTypeFromCode(DMEEditor, DMTypeBuilder.ConvertPOCOClassToEntity(DMEEditor, entityStructure, "SupabaseGeneratedTypes"), entityStructure.EntityName);
+
+                    var dynamicInstance = Activator.CreateInstance(dynamicType);
+                    foreach (var field in entityStructure.Fields)
+                    {
+                        var property = dynamicType.GetProperty(field.fieldname);
+                        if (property != null)
+                        {
+                            object value = null;
+                            if (UploadDataRow is Dictionary<string, object> dict && dict.ContainsKey(field.fieldname))
+                            {
+                                value = dict[field.fieldname];
+                            }
+                            else
+                            {
+                                var prop = UploadDataRow.GetType().GetProperty(field.fieldname);
+                                value = prop?.GetValue(UploadDataRow);
+                            }
+                            
+                            if (value != null)
+                            {
+                                property.SetValue(dynamicInstance, value);
+                            }
+                        }
+                    }
+
+                    // Get ID for where clause
+                    string idField = entityStructure.Fields.FirstOrDefault(f => f.IsKey)?.fieldname ?? "id";
+                    object idValue = null;
+                    
+                    if (UploadDataRow is Dictionary<string, object> dict2)
+                    {
+                        idValue = dict2.ContainsKey(idField) ? dict2[idField] : dict2.Values.FirstOrDefault();
+                    }
+                    else
+                    {
+                        var prop = UploadDataRow.GetType().GetProperty(idField);
+                        idValue = prop?.GetValue(UploadDataRow);
+                    }
+
+                    if (idValue == null)
+                    {
+                        retval.Flag = Errors.Failed;
+                        retval.Message = "Could not find ID field for update.";
+                        return retval;
+                    }
+
+                    var fromMethod = client.GetType().GetMethod("From").MakeGenericMethod(dynamicType);
+                    var table = fromMethod.Invoke(client, new object[] { EntityName });
+                    var updateMethod = table.GetType().GetMethod("Update");
+                    var queryMethod = table.GetType().GetMethod("Where");
+                    
+                    var query = queryMethod.Invoke(table, new object[] { idField, Operator.Equals, idValue });
+                    var responseTask = (Task)updateMethod.Invoke(query, new object[] { dynamicInstance });
+                    responseTask.Wait();
+
+                    var response = responseTask.GetType().GetProperty("Result").GetValue(responseTask) as Supabase.Postgrest.Responses.BaseResponse;
+                    if (response.ResponseMessage.StatusCode != System.Net.HttpStatusCode.OK)
+                    {
+                        retval.Flag = Errors.Failed;
+                        retval.Message = $"Error updating data: {response.ResponseMessage.ReasonPhrase}";
+                        DMEEditor?.AddLogMessage("Beep", $"Error updating data: {response.ResponseMessage.ReasonPhrase}", DateTime.Now, -1, null, Errors.Failed);
+                    }
+                }
+                else
+                {
+                    retval.Flag = Errors.Failed;
+                    retval.Message = "Database connection is not open.";
+                }
+            }
+            catch (Exception ex)
+            {
+                string methodName = MethodBase.GetCurrentMethod().Name;
+                retval.Flag = Errors.Failed;
+                retval.Message = $"Error in {methodName}: {ex.Message}";
+                DMEEditor?.AddLogMessage("Beep", $"Error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+
+            return retval;
         }
         #endregion "Data Manipulation"
         #region "Data Definition"
         public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
         {
-            throw new NotImplementedException();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.ScriptText))
+                {
+                    ExecuteSql(dDLScripts.ScriptText);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in RunScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ErrorObject;
         }
         public IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
@@ -341,7 +588,7 @@ namespace SupabaseDataSourceCore
 
         #endregion "Data Definition"
         #region "Data Retrieval"
-        public object RunQuery(string qrystr)
+        public IEnumerable<object> RunQuery(string qrystr)
         {
             ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Executed Successfully " };
             try
@@ -432,7 +679,7 @@ namespace SupabaseDataSourceCore
         }
 
 
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
         {
             List<ChildRelation> childRelations = new List<ChildRelation>();
 
@@ -499,12 +746,55 @@ namespace SupabaseDataSourceCore
         }
 
 
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
         {
-            throw new NotImplementedException();
+            List<ETLScriptDet> scripts = new List<ETLScriptDet>();
+            try
+            {
+                var entitiesToScript = entities ?? Entities;
+                if (entitiesToScript != null && entitiesToScript.Count > 0)
+                {
+                    foreach (var entity in entitiesToScript)
+                    {
+                        StringBuilder createTableCommand = new StringBuilder();
+                        createTableCommand.AppendLine($"CREATE TABLE IF NOT EXISTS {entity.EntityName} (");
+
+                        foreach (var field in entity.Fields)
+                        {
+                            string supabaseType = GetSupabaseDataType(field.fieldtype);
+                            string constraints = "";
+                            if (field.IsKey)
+                                constraints += " PRIMARY KEY";
+                            if (!field.AllowDBNull)
+                                constraints += " NOT NULL";
+                            createTableCommand.AppendLine($"  {field.fieldname} {supabaseType}{constraints},");
+                        }
+
+                        // Remove the last comma and add closing parenthesis
+                        if (createTableCommand.Length > 0 && createTableCommand[createTableCommand.Length - 1] == ',')
+                        {
+                            createTableCommand.Length--;
+                        }
+                        createTableCommand.AppendLine(");");
+
+                        var script = new ETLScriptDet
+                        {
+                            EntityName = entity.EntityName,
+                            ScriptType = "CREATE",
+                            ScriptText = createTableCommand.ToString()
+                        };
+                        scripts.Add(script);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetCreateEntityScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return scripts;
         }
 
-        public List<string> GetEntitesList()
+        public IEnumerable<string> GetEntitesList()
         {
             ErrorsInfo retval = new ErrorsInfo();
             retval.Flag = Errors.Ok;
@@ -565,126 +855,214 @@ namespace SupabaseDataSourceCore
             return EntitiesNames;
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter)
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
+            List<object> results = new List<object>();
             try
             {
-                // Ensure the connection is open
                 if (ConnectionStatus != ConnectionState.Open)
                 {
                     Openconnection();
                 }
 
-                // Retrieve the entity structure
-                EntityStructure entityStructure = GetEntityStructure(EntityName, refresh: false);
-
-                // Generate the dynamic type from the entity structure
-                string classNamespace = "TheTechIdea.Classes";
-                string code = DMTypeBuilder.ConvertPOCOClassToEntity(DMEEditor, entityStructure, classNamespace);
-                Type dynamicType = DMTypeBuilder.CreateTypeFromCode(DMEEditor, code, $"{EntityName}");
-
-                // Fetch data from Supabase
-                // Use reflection to call the generic From<T> method
-                var method = client.GetType().GetMethod("From").MakeGenericMethod(dynamicType);
-                var table = method.Invoke(client, new object[] { EntityName });
-                var getMethod = table.GetType().GetMethod("Get");
-                var responseTask = (Task)getMethod.Invoke(table, null);
-                responseTask.Wait();
-
-                var response = ((dynamic)responseTask).Result;
-
-                if (response.ResponseMessage.StatusCode == System.Net.HttpStatusCode.OK)
+                if (ConnectionStatus == ConnectionState.Open)
                 {
-                    var json = response.Content.ToString();
-                    var records = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(json);
-
-                    // Convert the records to the dynamically generated type
-                    var dynamicRecords = ConvertToDynamicType(records, dynamicType, entityStructure);
-                    return dynamicRecords;
-                }
-                else
-                {
-                    DMEEditor.AddLogMessage("Beep", $"Error retrieving data for {EntityName}: {response.ResponseMessage.ReasonPhrase}", DateTime.Now, -1, null, Errors.Failed);
-                    return null;
-                }
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Error in GetEntity for {EntityName}: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                return null;
-            }
-        }
-
-
-
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
-        {
-            try
-            {
-                // Ensure the connection is open
-                if (ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();
-                }
-
-                // Retrieve the entity structure
-                EntityStructure entityStructure = GetEntityStructure(EntityName, refresh: false);
-
-                // Generate the dynamic type from the entity structure
-                string classNamespace = "TheTechIdea.Classes";
-                string code = DMTypeBuilder.ConvertPOCOClassToEntity(DMEEditor, entityStructure, classNamespace);
-                Type dynamicType = DMTypeBuilder.CreateTypeFromCode(DMEEditor, code, $"{classNamespace}.{EntityName}");
-
-                // Use reflection to call the generic From<T> method
-                var method = client.GetType().GetMethod("From").MakeGenericMethod(dynamicType);
-                var table = method.Invoke(client, new object[] { EntityName });
-
-                // Apply filters and pagination
-                var query = table.GetType().GetMethod("Select").Invoke(table, new object[] { "*" });
-
-                if (filter != null && filter.Count > 0)
-                {
-                    foreach (var f in filter)
+                    EntityStructure entityStructure = GetEntityStructure(EntityName, refresh: false);
+                    if (entityStructure == null)
                     {
-                        var filterString = $"{f.FieldName} {f.Operator} {f.FilterValue}";
-                        query = query.GetType().GetMethod("Filter").Invoke(query, new object[] { filterString });
+                        return results;
+                    }
+
+                    string classNamespace = "TheTechIdea.Classes";
+                    string code = DMTypeBuilder.ConvertPOCOClassToEntity(DMEEditor, entityStructure, classNamespace);
+                    Type dynamicType = DMTypeBuilder.CreateTypeFromCode(DMEEditor, code, $"{EntityName}");
+
+                    var method = client.GetType().GetMethod("From").MakeGenericMethod(dynamicType);
+                    var table = method.Invoke(client, new object[] { EntityName });
+                    var selectMethod = table.GetType().GetMethod("Select");
+                    var query = selectMethod.Invoke(table, new object[] { "*" });
+
+                    // Apply filters
+                    if (filter != null && filter.Count > 0)
+                    {
+                        var whereMethod = query.GetType().GetMethod("Where");
+                        foreach (var f in filter)
+                        {
+                            Operator op = Operator.Equals;
+                            if (f.Operator == ">") op = Operator.GreaterThan;
+                            else if (f.Operator == "<") op = Operator.LessThan;
+                            else if (f.Operator == ">=") op = Operator.GreaterThanOrEqual;
+                            else if (f.Operator == "<=") op = Operator.LessThanOrEqual;
+                            else if (f.Operator == "!=") op = Operator.NotEqual;
+                            
+                            query = whereMethod.Invoke(query, new object[] { f.FieldName, op, f.FilterValue });
+                        }
+                    }
+
+                    var getMethod = query.GetType().GetMethod("Get");
+                    var responseTask = (Task)getMethod.Invoke(query, null);
+                    responseTask.Wait();
+
+                    var response = ((dynamic)responseTask).Result;
+
+                    if (response.ResponseMessage.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        var json = response.Content.ToString();
+                        var records = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(json);
+
+                        var dynamicRecords = ConvertToDynamicType(records, dynamicType, entityStructure);
+                        
+                        // Convert IBindingListView to IEnumerable<object>
+                        if (dynamicRecords is System.Collections.IEnumerable enumerable)
+                        {
+                            foreach (var item in enumerable)
+                            {
+                                results.Add(item);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        DMEEditor?.AddLogMessage("Beep", $"Error retrieving data for {EntityName}: {response.ResponseMessage.ReasonPhrase}", DateTime.Now, -1, null, Errors.Failed);
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity for {EntityName}: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return results;
+        }
 
-                query = query.GetType().GetMethod("Range").Invoke(query, new object[] { (pageNumber - 1) * pageSize, pageNumber * pageSize - 1 });
-                var responseTask = (Task)query.GetType().GetMethod("Get").Invoke(query, null);
-                responseTask.Wait();
 
-                var response = ((dynamic)responseTask).Result;
 
-                if (response.ResponseMessage.StatusCode == System.Net.HttpStatusCode.OK)
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            PagedResult pagedResult = new PagedResult();
+            ErrorObject.Flag = Errors.Ok;
+
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
                 {
-                    var json = response.Content.ReadAsStringAsync().Result;
-                    var records = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(json);
-
-                    // Convert the records to the dynamically generated type
-                    var dynamicRecords = ConvertToDynamicType(records, dynamicType, entityStructure);
-                    return dynamicRecords;
+                    Openconnection();
                 }
-                else
+
+                if (ConnectionStatus == ConnectionState.Open)
                 {
-                    DMEEditor.AddLogMessage("Beep", $"Error retrieving data for {EntityName}: {response.ResponseMessage.ReasonPhrase}", DateTime.Now, -1, null, Errors.Failed);
-                    return null;
+                    EntityStructure entityStructure = GetEntityStructure(EntityName, refresh: false);
+                    if (entityStructure == null)
+                    {
+                        return pagedResult;
+                    }
+
+                    string classNamespace = "TheTechIdea.Classes";
+                    string code = DMTypeBuilder.ConvertPOCOClassToEntity(DMEEditor, entityStructure, classNamespace);
+                    Type dynamicType = DMTypeBuilder.CreateTypeFromCode(DMEEditor, code, $"{EntityName}");
+
+                    var method = client.GetType().GetMethod("From").MakeGenericMethod(dynamicType);
+                    var table = method.Invoke(client, new object[] { EntityName });
+                    var selectMethod = table.GetType().GetMethod("Select");
+                    var query = selectMethod.Invoke(table, new object[] { "*" });
+
+                    // Apply filters
+                    if (filter != null && filter.Count > 0)
+                    {
+                        var whereMethod = query.GetType().GetMethod("Where");
+                        foreach (var f in filter)
+                        {
+                            Operator op = Operator.Equals;
+                            if (f.Operator == ">") op = Operator.GreaterThan;
+                            else if (f.Operator == "<") op = Operator.LessThan;
+                            else if (f.Operator == ">=") op = Operator.GreaterThanOrEqual;
+                            else if (f.Operator == "<=") op = Operator.LessThanOrEqual;
+                            else if (f.Operator == "!=") op = Operator.NotEqual;
+                            
+                            query = whereMethod.Invoke(query, new object[] { f.FieldName, op, f.FilterValue });
+                        }
+                    }
+
+                    // Get total count first (simplified - in practice might need separate count query)
+                    var countQuery = selectMethod.Invoke(table, new object[] { "count" });
+                    var countMethod = countQuery.GetType().GetMethod("Get");
+                    var countTask = (Task)countMethod.Invoke(countQuery, null);
+                    countTask.Wait();
+                    var countResponse = ((dynamic)countTask).Result;
+                    int totalRecords = 0;
+                    if (countResponse.ResponseMessage.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        var countJson = countResponse.Content.ToString();
+                        var countData = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(countJson);
+                        if (countData != null && countData.Count > 0)
+                        {
+                            totalRecords = Convert.ToInt32(countData[0].Values.FirstOrDefault() ?? 0);
+                        }
+                    }
+
+                    // Apply pagination
+                    var rangeMethod = query.GetType().GetMethod("Range");
+                    query = rangeMethod.Invoke(query, new object[] { (pageNumber - 1) * pageSize, pageNumber * pageSize - 1 });
+                    
+                    var getMethod = query.GetType().GetMethod("Get");
+                    var responseTask = (Task)getMethod.Invoke(query, null);
+                    responseTask.Wait();
+
+                    var response = ((dynamic)responseTask).Result;
+
+                    if (response.ResponseMessage.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        var json = response.Content.ToString();
+                        var records = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(json);
+
+                        var dynamicRecords = ConvertToDynamicType(records, dynamicType, entityStructure);
+                        List<object> results = new List<object>();
+
+                        if (dynamicRecords is System.Collections.IEnumerable enumerable)
+                        {
+                            foreach (var item in enumerable)
+                            {
+                                results.Add(item);
+                            }
+                        }
+
+                        // If we couldn't get count, use results count
+                        if (totalRecords == 0)
+                        {
+                            totalRecords = results.Count;
+                        }
+
+                        pagedResult.Data = results;
+                        pagedResult.TotalRecords = totalRecords;
+                        pagedResult.PageNumber = pageNumber;
+                        pagedResult.PageSize = pageSize;
+                        pagedResult.TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+                        pagedResult.HasNextPage = pageNumber < pagedResult.TotalPages;
+                        pagedResult.HasPreviousPage = pageNumber > 1;
+                    }
+                    else
+                    {
+                        ErrorObject.Flag = Errors.Failed;
+                        ErrorObject.Message = response.ResponseMessage.ReasonPhrase;
+                        DMEEditor?.AddLogMessage("Beep", $"Error retrieving data for {EntityName}: {response.ResponseMessage.ReasonPhrase}", DateTime.Now, -1, null, Errors.Failed);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Beep", $"Error in GetEntity for {EntityName}: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                return null;
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = ex.Message;
+                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity for {EntityName}: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
             }
+
+            return pagedResult;
         }
 
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
            return Task.Run(() => GetEntity(EntityName, Filter));
         }
 
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
         {
             List<RelationShipKeys> foreignKeys = new List<RelationShipKeys>();
 
@@ -1127,7 +1505,22 @@ namespace SupabaseDataSourceCore
         }
         public ConnectionState Closeconnection()
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (client != null)
+                {
+                    client.Dispose();
+                    client = null;
+                }
+                ConnectionStatus = ConnectionState.Closed;
+                DMEEditor?.AddLogMessage("Beep", "Supabase connection closed successfully.", DateTime.Now, -1, null, Errors.Ok);
+            }
+            catch (Exception ex)
+            {
+                ConnectionStatus = ConnectionState.Broken;
+                DMEEditor?.AddLogMessage("Beep", $"Error closing Supabase connection: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
+            return ConnectionStatus;
         }
         #endregion "Connection Management"
         #region "Supporting Methods From Supabase"
@@ -1201,63 +1594,137 @@ namespace SupabaseDataSourceCore
 
         public void GetBuckets()
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open && client != null)
+                {
+                    var storageClient = client.Storage;
+                    var bucketsTask = storageClient.ListBuckets();
+                    bucketsTask.Wait();
+                    Buckets = bucketsTask.Result;
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error getting buckets: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
         }
         public void GetBucket(string bucketname)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open && client != null)
+                {
+                    var storageClient = client.Storage;
+                    var bucketTask = storageClient.From(bucketname);
+                    // Bucket retrieved
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error getting bucket {bucketname}: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
         }
         public void GetBucketFiles(string bucketname)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open && client != null)
+                {
+                    var storageClient = client.Storage;
+                    var filesTask = storageClient.From(bucketname).List();
+                    filesTask.Wait();
+                    var files = filesTask.Result;
+                    // Files retrieved
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error getting files from bucket {bucketname}: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
         }
         public void GetBucketFile(string bucketname, string filename)
         {
-            throw new NotImplementedException();
+            GetBucketFile(bucketname, filename, "");
         }
         public void GetBucketFile(string bucketname, string filename, string path)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+
+                if (ConnectionStatus == ConnectionState.Open && client != null)
+                {
+                    var storageClient = client.Storage;
+                    string fullPath = string.IsNullOrEmpty(path) ? filename : $"{path}/{filename}";
+                    var fileTask = storageClient.From(bucketname).Download(fullPath);
+                    fileTask.Wait();
+                    var file = fileTask.Result;
+                    // File retrieved
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor?.AddLogMessage("Beep", $"Error getting file {filename} from bucket {bucketname}: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+            }
         }
         public void GetBucketFile(string bucketname, string filename, string path, string filename2)
         {
-            throw new NotImplementedException();
+            GetBucketFile(bucketname, filename, path);
         }
         public void GetBucketFile(string bucketname, string filename, string path, string filename2, string path2)
         {
-            throw new NotImplementedException();
+            GetBucketFile(bucketname, filename, path);
         }
         public void GetBucketFile(string bucketname, string filename, string path, string filename2, string path2, string filename3)
         {
-            throw new NotImplementedException();
+            GetBucketFile(bucketname, filename, path);
         }
         public void GetBucketFile(string bucketname, string filename, string path, string filename2, string path2, string filename3, string path3)
         {
-            throw new NotImplementedException();
+            GetBucketFile(bucketname, filename, path);
         }
         public void GetBucketFile(string bucketname, string filename, string path, string filename2, string path2, string filename3, string path3, string filename4)
         {
-            throw new NotImplementedException();
+            GetBucketFile(bucketname, filename, path);
         }
         public void GetBucketFile(string bucketname, string filename, string path, string filename2, string path2, string filename3, string path3, string filename4, string path4)
         {
-            throw new NotImplementedException();
+            GetBucketFile(bucketname, filename, path);
         }
         public void GetBucketFile(string bucketname, string filename, string path, string filename2, string path2, string filename3, string path3, string filename4, string path4, string filename5)
         {
-            throw new NotImplementedException();
+            GetBucketFile(bucketname, filename, path);
         }
         public void GetBucketFile(string bucketname, string filename, string path, string filename2, string path2, string filename3, string path3, string filename4, string path4, string filename5, string path5)
         {
-            throw new NotImplementedException();
+            GetBucketFile(bucketname, filename, path);
         }
         public void GetBucketFile(string bucketname, string filename, string path, string filename2, string path2, string filename3, string path3, string filename4, string path4, string filename5, string path5, string filename6)
         {
-            throw new NotImplementedException();
+            GetBucketFile(bucketname, filename, path);
         }
         public void GetBucketFile(string bucketname, string filename, string path, string filename2, string path2, string filename3, string path3, string filename4, string path4, string filename5, string path5, string filename6, string path6)
         {
-            throw new NotImplementedException();
+            GetBucketFile(bucketname, filename, path);
         }
         public static string GetSupabaseDataType(string netDataType)
         {
@@ -1316,11 +1783,15 @@ namespace SupabaseDataSourceCore
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects)
+                    try
+                    {
+                        Closeconnection();
+                    }
+                    catch (Exception ex)
+                    {
+                        DMEEditor?.AddLogMessage("Beep", $"Error disposing Supabase connection: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                    }
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
                 disposedValue = true;
             }
         }

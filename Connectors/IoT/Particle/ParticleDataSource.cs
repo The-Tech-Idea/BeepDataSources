@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
@@ -15,9 +17,9 @@ using TheTechIdea.Beep.Connectors.Particle;
 
 namespace TheTechIdea.Beep.Connectors.Particle
 {
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Particle)]
     public class ParticleDataSource : WebAPIDataSource
     {
-        private const string BaseUrl = "https://api.particle.io/v1";
 
         // Entity endpoints mapping for Particle API
         private static readonly Dictionary<string, string> EntityEndpoints = new(StringComparer.OrdinalIgnoreCase)
@@ -37,22 +39,22 @@ namespace TheTechIdea.Beep.Connectors.Particle
             ["token_details"] = "access_tokens/{token_id}"
         };
 
-        // Required filters for each entity
-        private static readonly Dictionary<string, List<string>> RequiredFilters = new(StringComparer.OrdinalIgnoreCase)
+        // Required filters for each entity (for AppFilter-based methods)
+        private static readonly Dictionary<string, string[]> RequiredFilters = new(StringComparer.OrdinalIgnoreCase)
         {
-            ["devices"] = new List<string> { "access_token" },
-            ["device_details"] = new List<string> { "access_token", "device_id" },
-            ["device_events"] = new List<string> { "access_token", "device_id" },
-            ["products"] = new List<string> { "access_token" },
-            ["product_details"] = new List<string> { "access_token", "product_id" },
-            ["customers"] = new List<string> { "access_token", "product_id" },
-            ["customer_details"] = new List<string> { "access_token", "product_id", "customer_id" },
-            ["sims"] = new List<string> { "access_token" },
-            ["sim_details"] = new List<string> { "access_token", "sim_id" },
-            ["billing"] = new List<string> { "access_token" },
-            ["diagnostics"] = new List<string> { "access_token" },
-            ["tokens"] = new List<string> { "access_token" },
-            ["token_details"] = new List<string> { "access_token", "token_id" }
+            ["devices"] = new[] { "access_token" },
+            ["device_details"] = new[] { "access_token", "device_id" },
+            ["device_events"] = new[] { "access_token", "device_id" },
+            ["products"] = new[] { "access_token" },
+            ["product_details"] = new[] { "access_token", "product_id" },
+            ["customers"] = new[] { "access_token", "product_id" },
+            ["customer_details"] = new[] { "access_token", "product_id", "customer_id" },
+            ["sims"] = new[] { "access_token" },
+            ["sim_details"] = new[] { "access_token", "sim_id" },
+            ["billing"] = new[] { "access_token" },
+            ["diagnostics"] = new[] { "access_token" },
+            ["tokens"] = new[] { "access_token" },
+            ["token_details"] = new[] { "access_token", "token_id" }
         };
 
         public ParticleDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
@@ -72,8 +74,158 @@ namespace TheTechIdea.Beep.Connectors.Particle
             {
                 Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
             }
+
+            // Register entities
+            EntitiesNames = EntityEndpoints.Keys.ToList();
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+                .ToList();
         }
 
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
+        }
+
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        {
+            if (!EntityEndpoints.TryGetValue(EntityName, out var endpoint))
+                throw new InvalidOperationException($"Unknown Particle entity '{EntityName}'.");
+
+            var q = FiltersToQuery(Filter);
+            RequireFilters(EntityName, q, RequiredFilters.GetValueOrDefault(EntityName, Array.Empty<string>()));
+
+            // Build the full URL
+            var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://api.particle.io/v1";
+            if (!baseUrl.EndsWith("/"))
+                baseUrl = baseUrl.TrimEnd('/');
+            var url = $"{baseUrl}/{endpoint}";
+            url = ReplacePlaceholders(url, q);
+
+            // Add query parameters
+            var queryParams = BuildQueryParameters(q);
+            if (!string.IsNullOrEmpty(queryParams))
+                url += "?" + queryParams;
+
+            // Make the request
+            var response = await GetAsync(url).ConfigureAwait(false);
+            if (response is null || !response.IsSuccessStatusCode)
+                return Array.Empty<object>();
+
+            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            return ExtractArray(response, "data");
+        }
+
+        // ---------------------------- Helper Methods ----------------------------
+
+        private static Dictionary<string, string> FiltersToQuery(List<AppFilter> filters)
+        {
+            var q = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (filters == null) return q;
+            foreach (var f in filters)
+            {
+                if (f == null || string.IsNullOrWhiteSpace(f.FieldName)) continue;
+                q[f.FieldName.Trim()] = f.FilterValue?.ToString() ?? string.Empty;
+            }
+            return q;
+        }
+
+        private static void RequireFilters(string entity, Dictionary<string, string> q, string[] required)
+        {
+            if (required == null || required.Length == 0) return;
+            var missing = required.Where(r => !q.ContainsKey(r) || string.IsNullOrWhiteSpace(q[r])).ToList();
+            if (missing.Count > 0)
+                throw new ArgumentException($"Particle entity '{entity}' requires parameter(s): {string.Join(", ", missing)}.");
+        }
+
+        private static string ReplacePlaceholders(string template, Dictionary<string, string> q)
+        {
+            var result = template;
+            foreach (var kvp in q)
+            {
+                var placeholder = $"{{{kvp.Key}}}";
+                if (result.Contains(placeholder))
+                {
+                    result = result.Replace(placeholder, Uri.EscapeDataString(kvp.Value));
+                }
+            }
+            return result;
+        }
+
+        private static string BuildQueryParameters(Dictionary<string, string> q)
+        {
+            var queryParams = new List<string>();
+            foreach (var kvp in q)
+            {
+                if (!string.IsNullOrWhiteSpace(kvp.Value))
+                {
+                    queryParams.Add($"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}");
+                }
+            }
+            return string.Join("&", queryParams);
+        }
+
+        private IEnumerable<object> ExtractArray(HttpResponseMessage resp, string? root)
+        {
+            if (resp == null || !resp.IsSuccessStatusCode) return Array.Empty<object>();
+
+            var json = resp.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            if (string.IsNullOrWhiteSpace(json)) return Array.Empty<object>();
+
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                var rootElement = doc.RootElement;
+
+                if (!string.IsNullOrEmpty(root))
+                {
+                    if (rootElement.TryGetProperty(root, out var rootProp))
+                        rootElement = rootProp;
+                }
+
+                if (rootElement.ValueKind == JsonValueKind.Array)
+                {
+                    return rootElement.EnumerateArray().Select(e => (object)e.Clone()).ToList();
+                }
+                else if (rootElement.ValueKind == JsonValueKind.Object)
+                {
+                    return new List<object> { rootElement.Clone() };
+                }
+
+                return Array.Empty<object>();
+            }
+            catch
+            {
+                return Array.Empty<object>();
+            }
+        }
+
+        // Legacy method for backward compatibility
         public async Task<object> GetEntity(string EntityName, List<ChildRelation> Parententity, List<string> ParentIds, string filter, int pageNumber = 1, int pageSize = 100)
         {
             try

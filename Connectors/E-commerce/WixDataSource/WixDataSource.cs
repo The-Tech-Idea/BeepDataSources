@@ -90,6 +90,18 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
                 .ToList();
         }
 
+        // Return the fixed list
+        public new IEnumerable<string> GetEntitesList() => EntitiesNames;
+
+        // -------------------- Overrides (same signatures) --------------------
+
+        // Sync
+        public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+            return data ?? Array.Empty<object>();
+        }
+
         // Helper method to resolve endpoints with parameters
         private static string ResolveEndpoint(string template, Dictionary<string, string> q)
         {
@@ -127,8 +139,8 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return q;
         }
 
-        // Override GetEntity to handle Wix API specifics
-        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter>? Filter)
+        // Async
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
             if (!Map.TryGetValue(EntityName, out var mapping))
                 throw new InvalidOperationException($"Unknown Wix entity '{EntityName}'.");
@@ -248,6 +260,25 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             }
 
             return list;
+        }
+
+        // Paged
+        public override PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            var items = GetEntity(EntityName, filter).ToList();
+            var totalRecords = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult
+            {
+                Data = pagedItems,
+                PageNumber = Math.Max(1, pageNumber),
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber * pageSize < totalRecords
+            };
         }
 
         #region Command Methods

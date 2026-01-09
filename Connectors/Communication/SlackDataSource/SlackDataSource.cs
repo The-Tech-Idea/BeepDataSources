@@ -14,9 +14,11 @@ using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.WebAPI;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Connectors.Slack.Models;
+using TheTechIdea.Beep.Addin;
 
 namespace TheTechIdea.Beep.Connectors.Communication.Slack
 {
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack)]
     public class SlackDataSource : WebAPIDataSource
     {
         // Fixed Slack entities (your list)

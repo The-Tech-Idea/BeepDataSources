@@ -22,7 +22,7 @@ namespace TheTechIdea.Beep.Connectors.AzureIoTHub
     /// Azure IoT Hub data source implementation using WebAPIDataSource as base class
     /// Incorporates Azure best practices: async patterns, error handling, structured logging
     /// </summary>
-    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WebApi)]
+    [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.AzureIoTHub)]
     public class AzureIoTHubDataSource : WebAPIDataSource
     {
         // Entity endpoints mapping for Azure IoT Hub API
