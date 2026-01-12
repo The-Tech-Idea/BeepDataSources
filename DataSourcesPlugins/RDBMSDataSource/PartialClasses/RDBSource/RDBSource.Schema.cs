@@ -8,6 +8,7 @@ using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Helpers.RDBMSHelpers;
+using TheTechIdea.Beep.Helpers.RDBMSHelpers.EntityHelpers;
 using System.Threading.Tasks;
 
 namespace TheTechIdea.Beep.DataBase
@@ -466,15 +467,40 @@ namespace TheTechIdea.Beep.DataBase
             return schemaname;
         }
         /// <summary>
-        /// Checks if an entity exists in the system.
+        /// Checks if an entity exists in the system with name validation.
         /// </summary>
         /// <param name="EntityName">The name of the entity to check.</param>
         /// <returns>True if the entity exists, otherwise false.</returns>
         /// <remarks>
-        /// This method checks for the existence of an entity by its name in the Entities collection.
+        /// This method validates entity name for SQL injection and reserved keywords before checking existence.
         /// </remarks>
         public bool CheckEntityExist(string EntityName)
         {
+            // Validate entity name for security and naming conventions
+            if (string.IsNullOrWhiteSpace(EntityName))
+            {
+                DMEEditor.AddLogMessage("Fail", "Entity name cannot be null or empty", 
+                    DateTime.Now, 0, null, Errors.Failed);
+                return false;
+            }
+
+            // Check for SQL injection attempts and invalid characters
+            if (!DatabaseEntityNamingValidator.IsValidIdentifier(EntityName))
+            {
+                DMEEditor.AddLogMessage("Fail", $"Invalid entity name '{EntityName}' - contains invalid characters", 
+                    DateTime.Now, 0, EntityName, Errors.Failed);
+                return false;
+            }
+
+            // Check for reserved keywords
+            if (DatabaseEntityReservedKeywordChecker.IsReservedKeyword(EntityName, DatasourceType))
+            {
+                DMEEditor.AddLogMessage("Fail", $"Entity name '{EntityName}' is a reserved keyword in {DatasourceType}", 
+                    DateTime.Now, 0, EntityName, Errors.Failed);
+                // Return false to prevent using reserved keywords without escaping
+                return false;
+            }
+
             bool retval = false;
             GetEntitesList();
             if (EntitiesNames.Count == 0)
@@ -505,16 +531,45 @@ namespace TheTechIdea.Beep.DataBase
             }
         }
         /// <summary>
-        /// Creates an entity in the database as per the specified structure.
+        /// Creates an entity in the database as per the specified structure with comprehensive validation.
         /// </summary>
         /// <param name="entity">The entity structure to create in the database.</param>
         /// <returns>True if creation is successful, otherwise false.</returns>
         /// <remarks>
-        /// This method attempts to create a new entity in the database if it does not already exist.
+        /// This method validates the entity structure for naming conventions, reserved keywords, 
+        /// field validation, and database-specific constraints before creating the entity.
         /// </remarks>
         public virtual bool CreateEntityAs(EntityStructure entity)
         {
             bool retval = false;
+
+            // Comprehensive entity validation
+            if (entity == null)
+            {
+                DMEEditor.AddLogMessage("Fail", "Entity structure cannot be null", 
+                    DateTime.Now, 0, null, Errors.Failed);
+                return false;
+            }
+
+            // Set database type if not already set
+            if (entity.DatabaseType == DataSourceType.NONE || entity.DatabaseType == DataSourceType.Unknown)
+            {
+                entity.DatabaseType = DatasourceType;
+            }
+
+            // Validate entity structure (naming, fields, constraints)
+            var (isValid, validationErrors) = DatabaseEntityValidator.ValidateEntityStructure(entity);
+            
+            if (!isValid)
+            {
+                string errorMessage = $"Entity validation failed for '{entity.EntityName}': {string.Join("; ", validationErrors)}";
+                DMEEditor.AddLogMessage("Fail", errorMessage, DateTime.Now, 0, entity.EntityName, Errors.Failed);
+                DMEEditor.ErrorObject.Message = errorMessage;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                return false;
+            }
+
+            // Check if entity already exists
             if (CheckEntityExist(entity.EntityName) == false)
             {
                 string createstring = CreateEntity(entity);
@@ -528,9 +583,15 @@ namespace TheTechIdea.Beep.DataBase
                     Entities.Add(entity);
                     EntitiesNames.Add(entity.EntityName);
                     retval = true;
+                    DMEEditor.AddLogMessage("Success", $"Entity '{entity.EntityName}' created successfully", 
+                        DateTime.Now, 0, entity.EntityName, Errors.Ok);
                 }
             }
-
+            else
+            {
+                DMEEditor.AddLogMessage("Fail", $"Entity '{entity.EntityName}' already exists", 
+                    DateTime.Now, 0, entity.EntityName, Errors.Failed);
+            }
 
             return retval;
         }
