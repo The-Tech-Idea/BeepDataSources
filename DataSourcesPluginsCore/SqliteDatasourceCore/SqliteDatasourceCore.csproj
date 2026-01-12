@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks> net8.0;net9.0</TargetFrameworks>
+		<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>Latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -12,9 +12,9 @@
 		<PackageIcon>SimpleODM.png</PackageIcon>
 		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<Version>1.0.55</Version>
 		<Title>TheTechIdea.Beep.SqliteDatasourceCore</Title>
 		<PackageId>TheTechIdea.Beep.SqliteDatasourceCore</PackageId>
+		<Version>1.0.55</Version>
 
 	</PropertyGroup>
 
@@ -39,7 +39,7 @@
  </ItemGroup>
  <ItemGroup>
    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.55" />
+   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.56" />
    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.109" />
  </ItemGroup>
  <ItemGroup>

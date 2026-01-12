@@ -1,12 +1,34 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Authors>The Tech Idea</Authors>
+    <Company>The Tech Idea</Company>
+    <Copyright>2022</Copyright>
+    <PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
+    <PackageIcon>SimpleODM.png</PackageIcon>
+    <RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Title>TheTechIdea.Beep.CouchBaseLiteDataSourceCore</Title>
+    <PackageId>TheTechIdea.Beep.CouchBaseLiteDataSourceCore</PackageId>
     <Version>1.0.1</Version>
   </PropertyGroup>
-
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName).dll" DestinationFolder="$(ProjectDir)..\..\..\outputDLL\DataSources\$(MSBuildProjectName)\$(TargetFramework)" SkipUnchangedFiles="false" />
+	</Target>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\LocalNugetFiles\DataSources" />
+	</Target>
+	<ItemGroup>
+		<None Include="..\..\..\InstallationScripts\LogoGFx\128\SimpleODM.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
   <ItemGroup>
     <PackageReference Include="Couchbase.Lite" Version="3.1.4" />
     <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="1.0.572" />
