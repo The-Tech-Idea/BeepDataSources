@@ -56,6 +56,11 @@ namespace TheTechIdea.Beep.DataBase
                         string msg = $"No records updated in {EntityName}";
                         DMEEditor.AddLogMessage("Beep", msg, DateTime.Now, 0, null, Errors.Failed);
                     }
+                    else
+                    {
+                        // Invalidate cache after successful update
+                        InvalidateEntityCache(EntityName);
+                    }
                 }
             }
             catch (Exception ex)
@@ -103,6 +108,11 @@ namespace TheTechIdea.Beep.DataBase
                         string msg = $"No records deleted from {EntityName}";
                         DMEEditor.AddLogMessage("Beep", msg, DateTime.Now, 0, null, Errors.Failed);
                     }
+                    else
+                    {
+                        // Invalidate cache after successful delete
+                        InvalidateEntityCache(EntityName);
+                    }
                 }
             }
             catch (Exception ex)
@@ -147,6 +157,9 @@ namespace TheTechIdea.Beep.DataBase
                     int rowsInserted = cmd.ExecuteNonQuery();
                     if (rowsInserted > 0)
                     {
+                        // Invalidate cache after successful insert
+                        InvalidateEntityCache(EntityName);
+                        
                         DMEEditor.ErrorObject.Message = $"Successfully inserted record to {EntityName}";
                         DMEEditor.ErrorObject.Flag = Errors.Ok;
                         
@@ -384,6 +397,9 @@ namespace TheTechIdea.Beep.DataBase
                     int rowsInserted = await ExecuteNonQueryAsync(cmd);
                     if (rowsInserted > 0)
                     {
+                        // Invalidate cache after successful insert
+                        InvalidateEntityCache(EntityName);
+                        
                         DMEEditor.ErrorObject.Message = $"Successfully inserted record to {EntityName}";
                         DMEEditor.ErrorObject.Flag = Errors.Ok;
                         
@@ -455,6 +471,11 @@ namespace TheTechIdea.Beep.DataBase
                         string msg = $"No records updated in {EntityName}";
                         DMEEditor.AddLogMessage("Beep", msg, DateTime.Now, 0, null, Errors.Failed);
                     }
+                    else
+                    {
+                        // Invalidate cache after successful update
+                        InvalidateEntityCache(EntityName);
+                    }
                 }
             }
             catch (Exception ex)
@@ -496,6 +517,11 @@ namespace TheTechIdea.Beep.DataBase
                     {
                         string msg = $"No records deleted from {EntityName}";
                         DMEEditor.AddLogMessage("Beep", msg, DateTime.Now, 0, null, Errors.Failed);
+                    }
+                    else
+                    {
+                        // Invalidate cache after successful delete
+                        InvalidateEntityCache(EntityName);
                     }
                 }
             }

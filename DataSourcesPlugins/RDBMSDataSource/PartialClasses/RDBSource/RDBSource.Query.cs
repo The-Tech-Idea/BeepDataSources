@@ -198,16 +198,45 @@ namespace TheTechIdea.Beep.DataBase
         /// </remarks>
         /// /// <summary>
         /// Dynamically builds an SQL query based on the original query and provided filters.
+        /// Uses caching to improve performance for repeated queries.
         /// </summary>
         /// <param name="originalquery">The base SQL query string.</param>
         /// <param name="Filter">List of filters to be applied to the query.</param>
+        /// <param name="entityName">Optional entity name for cache key generation.</param>
         /// <returns>The dynamically built SQL query string.</returns>
         /// <remarks>
         /// This method creates flexible, database-agnostic queries by properly handling 
         /// SQL syntax, filter operators, and parameter names for prepared statements.
         /// </remarks>
 
-        private string BuildQuery(string originalquery, List<AppFilter> Filter)
+        private string BuildQuery(string originalquery, List<AppFilter> Filter, string? entityName = null)
+        {
+            // Try to get from cache first
+            if (!string.IsNullOrEmpty(entityName))
+            {
+                var cacheKey = GenerateQueryCacheKey(entityName, Filter);
+                if (TryGetCachedQuery(cacheKey, out var cachedQuery) && !string.IsNullOrEmpty(cachedQuery))
+                {
+                    return cachedQuery;
+                }
+
+                // Build the query
+                var builtQuery = BuildQueryInternal(originalquery, Filter);
+
+                // Cache the result
+                CacheQuery(cacheKey, builtQuery);
+
+                return builtQuery;
+            }
+
+            // If no entity name provided, build without caching
+            return BuildQueryInternal(originalquery, Filter);
+        }
+
+        /// <summary>
+        /// Internal method that performs the actual query building logic.
+        /// </summary>
+        private string BuildQueryInternal(string originalquery, List<AppFilter> Filter)
         {
             string retval;
             string[] stringSeparators;
@@ -567,7 +596,7 @@ namespace TheTechIdea.Beep.DataBase
             catch { /* ignore metadata errors for streaming */ }
 
             // Inject filter placeholders (adds parameter tokens only)
-            qrystr = BuildQuery(qrystr, Filter);
+            qrystr = BuildQuery(qrystr, Filter, inname);
 
             if (Dataconnection.ConnectionStatus != ConnectionState.Open)
                 Openconnection();
@@ -671,12 +700,12 @@ namespace TheTechIdea.Beep.DataBase
 
             string baseQuery = isCustomQuery ? EntityName : $"SELECT * FROM {EntityName}";
             string inname = EntityName;
+            string entityForStruct = isCustomQuery ? ExtractFirstTableName(baseQuery) ?? EntityName : EntityName;
 
             // Try to resolve structure (may override with CustomBuildQuery)
             EntityStructure ent = null;
             try
             {
-                string entityForStruct = isCustomQuery ? ExtractFirstTableName(baseQuery) ?? EntityName : EntityName;
                 ent = GetEntityStructure(entityForStruct);
                 if (ent != null && !string.IsNullOrEmpty(ent.CustomBuildQuery))
                 {
@@ -700,7 +729,7 @@ namespace TheTechIdea.Beep.DataBase
             }
 
             // Build filtered query (adds WHERE and parameter placeholders)
-            string filteredQuery = BuildQuery(baseQuery, Filter);
+            string filteredQuery = BuildQuery(baseQuery, Filter, entityForStruct);
 
             // Count query
             string countQuery;
