@@ -1,8 +1,10 @@
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Utilities;
@@ -350,5 +352,185 @@ namespace TheTechIdea.Beep.DataBase
             }
             return DMEEditor.ErrorObject;
         }
+
+        #region "Async CRUD Methods"
+
+        /// <summary>
+        /// Asynchronously inserts a new record into the database for the specified entity.
+        /// </summary>
+        public virtual async Task<IErrorsInfo> InsertEntityAsync(string EntityName, object InsertedData)
+        {
+            SetObjects(EntityName);
+            ErrorObject.Flag = Errors.Ok;
+            
+            if (recEntity != EntityName)
+            {
+                recNumber = 1;
+                recEntity = EntityName;
+            }
+            else
+                recNumber += 1;
+
+            try
+            {
+                usedParameterNames = new HashSet<string>();
+                string insertString = GetInsertString(EntityName, DataStruct);
+                
+                using (var cmd = GetDataCommand())
+                {
+                    cmd.CommandText = insertString;
+                    CreateCommandParameters(cmd, InsertedData, DataStruct);
+
+                    int rowsInserted = await ExecuteNonQueryAsync(cmd);
+                    if (rowsInserted > 0)
+                    {
+                        DMEEditor.ErrorObject.Message = $"Successfully inserted record to {EntityName}";
+                        DMEEditor.ErrorObject.Flag = Errors.Ok;
+                        
+                        // Fetch auto-generated identity if applicable
+                        string fetchIdentityQuery = RDBMSHelper.GenerateFetchLastIdentityQuery(DatasourceType);
+                        if (fetchIdentityQuery.ToUpper().Contains("SELECT") && DataStruct.PrimaryKeys.Count() > 0)
+                        {
+                            cmd.CommandText = fetchIdentityQuery;
+                            object result = await ExecuteScalarAsync(cmd);
+                            if (result != null)
+                            {
+                                var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().fieldname);
+                                if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
+                                {
+                                    var primaryKeyType = primaryKeyProperty.PropertyType;
+                                    Type underlyingType = Nullable.GetUnderlyingType(primaryKeyType) ?? primaryKeyType;
+                                    var convertedIdentity = Convert.ChangeType(result, underlyingType);
+                                    primaryKeyProperty.SetValue(InsertedData, convertedIdentity);
+                                    DMEEditor.ErrorObject.Message = $"Successfully inserted record to {EntityName} with ID {convertedIdentity}";
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        DMEEditor.ErrorObject.Message = $"No records inserted to {EntityName}";
+                        DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                HandleDatabaseError(ex, EntityName, "Insert");
+            }
+
+            return ErrorObject;
+        }
+
+        /// <summary>
+        /// Asynchronously updates a specific record in the database for the given entity.
+        /// </summary>
+        public virtual async Task<IErrorsInfo> UpdateEntityAsync(string EntityName, object UploadDataRow)
+        {
+            if (recEntity != EntityName)
+            {
+                recNumber = 1;
+                recEntity = EntityName;
+            }
+            else
+                recNumber += 1;
+                
+            SetObjects(EntityName);
+            ErrorObject.Flag = Errors.Ok;
+
+            try
+            {
+                UpdateFieldSequnce = new List<EntityField>();
+                usedParameterNames = new HashSet<string>();
+                string updatestring = GetUpdateString(EntityName, DataStruct);
+                
+                using (var cmd = GetDataCommand())
+                {
+                    cmd.CommandText = updatestring;
+                    CreateUpdateCommandParameters(cmd, UploadDataRow, DataStruct);
+
+                    int rowsUpdated = await ExecuteNonQueryAsync(cmd);
+                    if (rowsUpdated == 0)
+                    {
+                        string msg = $"No records updated in {EntityName}";
+                        DMEEditor.AddLogMessage("Beep", msg, DateTime.Now, 0, null, Errors.Failed);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                HandleDatabaseError(ex, EntityName, "Update");
+            }
+
+            return ErrorObject;
+        }
+
+        /// <summary>
+        /// Asynchronously deletes a specific record from the database for the given entity.
+        /// </summary>
+        public virtual async Task<IErrorsInfo> DeleteEntityAsync(string EntityName, object DeletedDataRow)
+        {
+            SetObjects(EntityName);
+            ErrorObject.Flag = Errors.Ok;
+
+            if (recEntity != EntityName)
+            {
+                recNumber = 1;
+                recEntity = EntityName;
+            }
+            else
+                recNumber += 1;
+
+            try
+            {
+                usedParameterNames = new HashSet<string>();
+                string deleteString = GetDeleteString(EntityName, DataStruct);
+                
+                using (var cmd = GetDataCommand())
+                {
+                    cmd.CommandText = deleteString;
+                    CreateDeleteCommandParameters(cmd, DeletedDataRow, DataStruct);
+                    
+                    int rowsDeleted = await ExecuteNonQueryAsync(cmd);
+                    if (rowsDeleted == 0)
+                    {
+                        string msg = $"No records deleted from {EntityName}";
+                        DMEEditor.AddLogMessage("Beep", msg, DateTime.Now, 0, null, Errors.Failed);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                HandleDatabaseError(ex, EntityName, "Delete");
+            }
+
+            return ErrorObject;
+        }
+
+        /// <summary>
+        /// Helper method to execute a command asynchronously if DbCommand is available, otherwise falls back to sync.
+        /// </summary>
+        private async Task<int> ExecuteNonQueryAsync(IDbCommand cmd)
+        {
+            if (cmd is DbCommand dbCommand)
+            {
+                return await dbCommand.ExecuteNonQueryAsync();
+            }
+            return cmd.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Helper method to execute scalar asynchronously if DbCommand is available, otherwise falls back to sync.
+        /// </summary>
+        private async Task<object> ExecuteScalarAsync(IDbCommand cmd)
+        {
+            if (cmd is DbCommand dbCommand)
+            {
+                return await dbCommand.ExecuteScalarAsync();
+            }
+            return cmd.ExecuteScalar();
+        }
+
+        #endregion
     }
 }

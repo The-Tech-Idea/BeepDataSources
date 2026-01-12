@@ -17,19 +17,54 @@ namespace TheTechIdea.Beep.DataBase
     {
         #region "Repo Methods"
         /// <summary>
-        /// Executes a SQL query and retrieves the first column of the first row in the result set.
+        /// Executes a SQL query asynchronously and retrieves the first column of the first row in the result set.
         /// </summary>
         /// <param name="query">The SQL query to execute.</param>
         /// <returns>The scalar value as a double. Returns 0.0 if the query fails or doesn't return a valid double.</returns>
         /// <remarks>
-        /// This method is used to retrieve a single value, such as an aggregate or a count, from the database.
+        /// This method uses true async/await when the underlying provider supports it (DbCommand),
+        /// falling back to Task.Run for legacy IDbCommand-only providers.
         /// </remarks>
-        public virtual Task<double> GetScalarAsync(string query)
+        public virtual async Task<double> GetScalarAsync(string query)
         {
-            return Task.Run(() => GetScalar(query));
+            ErrorObject.Flag = Errors.Ok;
+
+            try
+            {
+                using (var command = GetDataCommand())
+                {
+                    command.CommandText = query;
+                    
+                    // Try to use async if DbCommand is available
+                    if (command is System.Data.Common.DbCommand dbCommand)
+                    {
+                        var result = await dbCommand.ExecuteScalarAsync();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            return Convert.ToDouble(result);
+                        }
+                    }
+                    else
+                    {
+                        // Fallback for IDbCommand-only providers
+                        var result = command.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            return Convert.ToDouble(result);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+            }
+
+            return 0.0;
         }
+
         /// <summary>
-        /// Asynchronously retrieves a single scalar value from the database.
+        /// Synchronously retrieves a single scalar value from the database.
         /// </summary>
         /// <param name="query">The SQL query to be executed.</param>
         /// <returns>A task representing the asynchronous operation, resulting in the scalar value.</returns>
