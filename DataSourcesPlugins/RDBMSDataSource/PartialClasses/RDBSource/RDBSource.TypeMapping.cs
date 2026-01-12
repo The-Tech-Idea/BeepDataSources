@@ -3,83 +3,19 @@ using System.Data;
 using System.Linq;
 using System.Text.RegularExpressions;
 using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.DataBase.Helpers;
 
 namespace TheTechIdea.Beep.DataBase
 {
     public partial class RDBSource : IRDBSource
     {
+        /// <summary>
+        /// Converts a .NET type string to DbType using the DbTypeMapper helper.
+        /// This eliminates 70+ lines of duplicate switch logic by using the centralized helper.
+        /// </summary>
         private DbType GetDbType(string fieldType)
         {
-            // Convert field type to DbType
-            switch (fieldType)
-            {
-                case "System.String":
-                    return DbType.String;
-                case "System.Int32":
-                    return DbType.Int32;
-                case "System.Int64":
-                    return DbType.Int64;
-                case "System.Int16":
-                    return DbType.Int16;
-                case "System.Byte":
-                    return DbType.Byte;
-                case "System.Boolean":
-                    return DbType.Boolean;
-                case "System.DateTime":
-                    return DbType.DateTime;
-                case "System.Decimal":
-                    return DbType.Decimal;
-                case "System.Double":
-                    return DbType.Double;
-                case "System.Single":
-                    return DbType.Single;
-                case "System.Guid":
-                    return DbType.Guid;
-                case "System.TimeSpan":
-                    return DbType.Time;
-                case "System.Byte[]":
-                    return DbType.Binary;
-                case "System.UInt16":
-                    return DbType.UInt16;
-                case "System.UInt32":
-                    return DbType.UInt32;
-                case "System.UInt64":
-                    return DbType.UInt64;
-                case "System.SByte":
-                    return DbType.SByte;
-                case "System.Object":
-                    return DbType.Object;
-                case "System.Xml.XmlDocument":
-                    return DbType.Xml;
-                case "System.Data.SqlTypes.SqlBinary":
-                    return DbType.Binary;
-                case "System.Data.SqlTypes.SqlBoolean":
-                    return DbType.Boolean;
-                case "System.Data.SqlTypes.SqlByte":
-                    return DbType.Byte;
-                case "System.Data.SqlTypes.SqlDateTime":
-                    return DbType.DateTime;
-                case "System.Data.SqlTypes.SqlDecimal":
-                    return DbType.Decimal;
-                case "System.Data.SqlTypes.SqlDouble":
-                    return DbType.Double;
-                case "System.Data.SqlTypes.SqlGuid":
-                    return DbType.Guid;
-                case "System.Data.SqlTypes.SqlInt16":
-                    return DbType.Int16;
-                case "System.Data.SqlTypes.SqlInt32":
-                    return DbType.Int32;
-                case "System.Data.SqlTypes.SqlInt64":
-                    return DbType.Int64;
-                case "System.Data.SqlTypes.SqlMoney":
-                    return DbType.Currency;
-                case "System.Data.SqlTypes.SqlSingle":
-                    return DbType.Single;
-                case "System.Data.SqlTypes.SqlString":
-                    return DbType.String;
-                default:
-                    return DbType.String; // Default to string if type is unknown
-            }
+            return DbTypeMapper.ToDbType(fieldType);
         }
 
 

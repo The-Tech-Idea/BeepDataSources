@@ -8,6 +8,8 @@ using System.Text.RegularExpressions;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.DriversConfigurations;
 using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.ConfigUtil;
+using static TheTechIdea.Beep.Utils.Util;
 
 namespace TheTechIdea.Beep.DataBase
 {
