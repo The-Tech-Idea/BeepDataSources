@@ -15,6 +15,34 @@ namespace TheTechIdea.Beep.DataBase
 {
     public partial class RDBSource : IRDBSource
     {
+        #region "Error Handling Helpers"
+
+        /// <summary>
+        /// Handles database operation errors with consistent logging and error object assignment.
+        /// </summary>
+        /// <param name="ex">The exception that occurred.</param>
+        /// <param name="entityName">The entity name involved in the operation.</param>
+        /// <param name="operation">The operation being performed (Insert, Update, Delete, etc.).</param>
+        /// <param name="sqlCommand">Optional SQL command text for logging.</param>
+        private void HandleDatabaseError(Exception ex, string entityName, string operation, string sqlCommand = null)
+        {
+            ErrorObject.Ex = ex;
+            ErrorObject.Flag = Errors.Failed;
+            
+            string errorMsg = $"Failed to {operation} record in {entityName}: {ex.Message}";
+            ErrorObject.Message = errorMsg;
+            DMEEditor.ErrorObject.Message = errorMsg;
+            DMEEditor.ErrorObject.Flag = Errors.Failed;
+            
+            string logMessage = string.IsNullOrEmpty(sqlCommand) 
+                ? errorMsg 
+                : $"{errorMsg} | SQL: {sqlCommand}";
+            
+            DMEEditor.AddLogMessage("Beep", logMessage, DateTime.Now, 0, entityName, Errors.Failed);
+        }
+
+        #endregion
+
         #region "RDBSSource Database Methods"
 
         private int GetCtorForAdapter(List<ConstructorInfo> ls)

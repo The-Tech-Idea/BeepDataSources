@@ -37,58 +37,28 @@ namespace TheTechIdea.Beep.DataBase
             SetObjects(EntityName);
             ErrorObject.Flag = Errors.Ok;
 
-            //DataRowView dv;
-            //DataTable tb;
-            //DataRow dr;
-            string msg = "";
-            // dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, UploadDataRow, DataStruct);
             try
             {
                 UpdateFieldSequnce = new List<EntityField>();
                 usedParameterNames = new HashSet<string>();
                 string updatestring = GetUpdateString(EntityName, DataStruct);
-                command = GetDataCommand();
-                command.CommandText = updatestring;
-                command = CreateUpdateCommandParameters(command, UploadDataRow, DataStruct);
-
-
-                int rowsUpdated = command.ExecuteNonQuery();
-                if (rowsUpdated > 0)
+                
+                using (var cmd = GetDataCommand())
                 {
-                    msg = $"Successfully Updated  Record  to {EntityName} : {updatestring}";
-                    // DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
-                }
-                else
-                {
-                    msg = $"Fail to Updated  Record  to {EntityName} : {updatestring}";
-                    DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-                }
+                    cmd.CommandText = updatestring;
+                    CreateUpdateCommandParameters(cmd, UploadDataRow, DataStruct);
 
-
+                    int rowsUpdated = cmd.ExecuteNonQuery();
+                    if (rowsUpdated == 0)
+                    {
+                        string msg = $"No records updated in {EntityName}";
+                        DMEEditor.AddLogMessage("Beep", msg, DateTime.Now, 0, null, Errors.Failed);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                ErrorObject.Ex = ex;
-
-                command.Dispose();
-                try
-                {
-                    // Attempt to roll back the transaction.
-                    //     sqlTran.Rollback();
-                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback Complete";
-                }
-                catch (Exception exRollback)
-                {
-                    // Throws an InvalidOperationException if the connection
-                    // is closed or the transaction has already been rolled
-                    // back on the server.
-                    // Console.WriteLine(exRollback.Message);
-                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback InComplete";
-                    ErrorObject.Ex = exRollback;
-                }
-                msg = "Unsuccessfully no Data has been written to Data Source";
-                DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-
+                HandleDatabaseError(ex, EntityName, "Update");
             }
 
             return ErrorObject;
@@ -107,11 +77,6 @@ namespace TheTechIdea.Beep.DataBase
             SetObjects(EntityName);
             ErrorObject.Flag = Errors.Ok;
 
-            string msg;
-            //   DataRowView dv;
-            //   DataTable tb;
-            //   DataRow dr;
-            //var sqlTran = RDBMSConnection.DbConn.BeginTransaction();
             if (recEntity != EntityName)
             {
                 recNumber = 1;
@@ -120,55 +85,27 @@ namespace TheTechIdea.Beep.DataBase
             else
                 recNumber += 1;
 
-            //   dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, DeletedDataRow, DataStruct);
             try
             {
                 usedParameterNames = new HashSet<string>();
-                string updatestring = GetDeleteString(EntityName, DataStruct);
-                command = GetDataCommand();
-                //    command.Transaction = sqlTran;
-                command.CommandText = updatestring;
-                command = CreateDeleteCommandParameters(command, DeletedDataRow, DataStruct);
-                //command = CreateDeleteCommandParameters(command, dr, DataStruct);
-                int rowsUpdated = command.ExecuteNonQuery();
-                if (rowsUpdated > 0)
+                string deleteString = GetDeleteString(EntityName, DataStruct);
+                
+                using (var cmd = GetDataCommand())
                 {
-                    msg = $"Successfully Deleted  Record  to {EntityName} : {updatestring}";
-                    //  DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
+                    cmd.CommandText = deleteString;
+                    CreateDeleteCommandParameters(cmd, DeletedDataRow, DataStruct);
+                    
+                    int rowsDeleted = cmd.ExecuteNonQuery();
+                    if (rowsDeleted == 0)
+                    {
+                        string msg = $"No records deleted from {EntityName}";
+                        DMEEditor.AddLogMessage("Beep", msg, DateTime.Now, 0, null, Errors.Failed);
+                    }
                 }
-                else
-                {
-                    msg = $"Fail to Delete Record  from {EntityName} : {updatestring}";
-                    DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-                }
-                //   sqlTran.Commit();
-                command.Dispose();
-
-
             }
             catch (Exception ex)
             {
-                ErrorObject.Ex = ex;
-
-                command.Dispose();
-                try
-                {
-                    // Attempt to roll back the transaction.
-                    //  sqlTran.Rollback();
-                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback Complete";
-                }
-                catch (Exception exRollback)
-                {
-                    // Throws an InvalidOperationException if the connection
-                    // is closed or the transaction has already been rolled
-                    // back on the server.
-                    // Console.WriteLine(exRollback.Message);
-                    msg = "Unsuccessfully no Data has been written to Data Source,Rollback InComplete";
-                    ErrorObject.Ex = exRollback;
-                }
-                msg = "Unsuccessfully no Data has been written to Data Source";
-                DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-
+                HandleDatabaseError(ex, EntityName, "Delete");
             }
 
             return ErrorObject;
@@ -186,9 +123,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             SetObjects(EntityName);
             ErrorObject.Flag = Errors.Ok;
-            DataRow dr;
-            string msg = "";
-            string updatestring = "";
+            
             if (recEntity != EntityName)
             {
                 recNumber = 1;
@@ -197,75 +132,57 @@ namespace TheTechIdea.Beep.DataBase
             else
                 recNumber += 1;
 
-            //     dr = DMEEditor.Utilfunction.GetDataRowFromobject(EntityName, enttype, InsertedData, DataStruct);
             try
             {
                 usedParameterNames = new HashSet<string>();
-                updatestring = GetInsertString(EntityName, DataStruct);
-                command = GetDataCommand();
-                command.CommandText = updatestring;
-                command = CreateCommandParameters(command, InsertedData, DataStruct);
-
-                int rowsUpdated = command.ExecuteNonQuery();
-                if (rowsUpdated > 0)
+                string insertString = GetInsertString(EntityName, DataStruct);
+                
+                using (var cmd = GetDataCommand())
                 {
-                    msg = $"Successfully Inserted  Record  to {EntityName} ";
-                    DMEEditor.ErrorObject.Message = msg;
-                    DMEEditor.ErrorObject.Flag = Errors.Ok;
-                    string fetchIdentityQuery = RDBMSHelper.GenerateFetchLastIdentityQuery(DatasourceType);
-                    if (fetchIdentityQuery.ToUpper().Contains("SELECT") && DataStruct.PrimaryKeys.Count() > 0)
+                    cmd.CommandText = insertString;
+                    CreateCommandParameters(cmd, InsertedData, DataStruct);
+
+                    int rowsInserted = cmd.ExecuteNonQuery();
+                    if (rowsInserted > 0)
                     {
-                        command.CommandText = fetchIdentityQuery;
-                        object result = command.ExecuteScalar();
-                        if (result != null)
+                        DMEEditor.ErrorObject.Message = $"Successfully inserted record to {EntityName}";
+                        DMEEditor.ErrorObject.Flag = Errors.Ok;
+                        
+                        // Fetch auto-generated identity if applicable
+                        string fetchIdentityQuery = RDBMSHelper.GenerateFetchLastIdentityQuery(DatasourceType);
+                        if (fetchIdentityQuery.ToUpper().Contains("SELECT") && DataStruct.PrimaryKeys.Count() > 0)
                         {
-                            var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().fieldname);
-                            if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
+                            cmd.CommandText = fetchIdentityQuery;
+                            object result = cmd.ExecuteScalar();
+                            if (result != null)
                             {
-                                var primaryKeyType = primaryKeyProperty.PropertyType;
-                                Type underlyingType = Nullable.GetUnderlyingType(primaryKeyType) ?? primaryKeyType;
-
-                                // Convert the identity to the appropriate type
-                                var convertedIdentity = Convert.ChangeType(result, underlyingType);
-                                primaryKeyProperty.SetValue(InsertedData, convertedIdentity);
-
-                                msg = $"Successfully Inserted Record to {EntityName} with ID {convertedIdentity}";
-                                DMEEditor.ErrorObject.Message = msg;
-                                DMEEditor.ErrorObject.Flag = Errors.Ok;
+                                var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().fieldname);
+                                if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
+                                {
+                                    var primaryKeyType = primaryKeyProperty.PropertyType;
+                                    Type underlyingType = Nullable.GetUnderlyingType(primaryKeyType) ?? primaryKeyType;
+                                    var convertedIdentity = Convert.ChangeType(result, underlyingType);
+                                    primaryKeyProperty.SetValue(InsertedData, convertedIdentity);
+                                    DMEEditor.ErrorObject.Message = $"Successfully inserted record to {EntityName} with ID {convertedIdentity}";
+                                }
+                            }
+                            else
+                            {
+                                DMEEditor.ErrorObject.Message = "Failed to retrieve the identity of the inserted record";
+                                DMEEditor.ErrorObject.Flag = Errors.Failed;
                             }
                         }
-                        else
-                        {
-                            msg = "Failed to retrieve the identity of the inserted record.";
-                            DMEEditor.ErrorObject.Message = msg;
-                            DMEEditor.ErrorObject.Flag = Errors.Failed;
-                        }
                     }
-
-                    // DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Ok);
+                    else
+                    {
+                        DMEEditor.ErrorObject.Message = $"No records inserted to {EntityName}";
+                        DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    }
                 }
-                else
-                {
-                    msg = $"Fail to Insert  Record  to {EntityName} : {updatestring}";
-                    DMEEditor.ErrorObject.Message = msg;
-                    DMEEditor.ErrorObject.Flag = Errors.Failed;
-
-
-                    //  DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
-                }
-                // DMEEditor.AddLogMessage("Success",$"Successfully Written Data to {EntityName}",DateTime.Now,0,null, Errors.Ok);
-
             }
             catch (Exception ex)
             {
-                msg = $"Fail to Insert  Record  to {EntityName} : {ex.Message}";
-                ErrorObject.Ex = ex;
-                DMEEditor.ErrorObject.Message = msg;
-                DMEEditor.ErrorObject.Flag = Errors.Failed;
-                command.Dispose();
-
-                DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, updatestring, Errors.Failed);
-
+                HandleDatabaseError(ex, EntityName, "Insert");
             }
 
             return ErrorObject;
