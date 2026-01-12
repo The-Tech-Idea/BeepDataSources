@@ -576,10 +576,10 @@
     <None Remove="C:\Users\f_ald\.nuget\packages\ravendb.embedded\6.0.0\contentFiles\any\any\RavenDBServer\ZstdSharp.dll" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="RavenDB.Client" Version="7.1.4" />
-    <PackageReference Include="RavenDB.Embedded" Version="7.1.4" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.55" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.108" />
+    <PackageReference Include="RavenDB.Client" Version="7.1.5" />
+    <PackageReference Include="RavenDB.Embedded" Version="7.1.5" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.57" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.110" />
   </ItemGroup>
 
 
