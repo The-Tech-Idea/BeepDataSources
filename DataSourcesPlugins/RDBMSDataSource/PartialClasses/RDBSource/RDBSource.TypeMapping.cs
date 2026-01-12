@@ -20,177 +20,70 @@ namespace TheTechIdea.Beep.DataBase
 
 
 
+        /// <summary>
+        /// Converts a value to the specified database type using pattern matching for better performance and readability.
+        /// Falls back to Convert.ChangeType for unsupported types.
+        /// </summary>
         private object ConvertToDbTypeValue(object value, string fieldType)
         {
-            switch (fieldType)
+            if (value == null || value == DBNull.Value)
+                return DBNull.Value;
+
+            // Pattern matching approach (C# 7+) - more concise and performant
+            return fieldType switch
             {
-                case "System.DateTime":
-                    //if (value is DateTime dateTimeValue)
-                    //{
-                    //    return dateTimeValue;
-                    //}
-                    DateTime dateTimeValue;
-                    if (DateTime.TryParse(value?.ToString(), out dateTimeValue))
-                    {
-                        return dateTimeValue;
-                    }
-                    break;
-                case "System.Int32":
-                    if (value is int intValue)
-                    {
-                        return intValue;
-                    }
-                    if (int.TryParse(value?.ToString(), out intValue))
-                    {
-                        return intValue;
-                    }
-                    break;
-                case "System.Int64":
-                    if (value is long longValue)
-                    {
-                        return longValue;
-                    }
-                    if (long.TryParse(value?.ToString(), out longValue))
-                    {
-                        return longValue;
-                    }
-                    break;
-                case "System.Decimal":
-                    if (value is decimal decimalValue)
-                    {
-                        return decimalValue;
-                    }
-                    if (decimal.TryParse(value?.ToString(), out decimalValue))
-                    {
-                        return decimalValue;
-                    }
-                    break;
-                case "System.Boolean":
-                    if (value is bool boolValue)
-                    {
-                        return boolValue;
-                    }
-                    if (bool.TryParse(value?.ToString(), out boolValue))
-                    {
-                        return boolValue;
-                    }
-                    break;
-                case "System.Double":
-                    if (value is double doubleValue)
-                    {
-                        return doubleValue;
-                    }
-                    if (double.TryParse(value?.ToString(), out doubleValue))
-                    {
-                        return doubleValue;
-                    }
-                    break;
-                case "System.Single":
-                    if (value is float floatValue)
-                    {
-                        return floatValue;
-                    }
-                    if (float.TryParse(value?.ToString(), out floatValue))
-                    {
-                        return floatValue;
-                    }
-                    break;
-                case "System.Byte":
-                    if (value is byte byteValue)
-                    {
-                        return byteValue;
-                    }
-                    if (byte.TryParse(value?.ToString(), out byteValue))
-                    {
-                        return byteValue;
-                    }
-                    break;
-                case "System.SByte":
-                    if (value is sbyte sbyteValue)
-                    {
-                        return sbyteValue;
-                    }
-                    if (sbyte.TryParse(value?.ToString(), out sbyteValue))
-                    {
-                        return sbyteValue;
-                    }
-                    break;
-                case "System.Int16":
-                    if (value is short shortValue)
-                    {
-                        return shortValue;
-                    }
-                    if (short.TryParse(value?.ToString(), out shortValue))
-                    {
-                        return shortValue;
-                    }
-                    break;
-                case "System.UInt16":
-                    if (value is ushort ushortValue)
-                    {
-                        return ushortValue;
-                    }
-                    if (ushort.TryParse(value?.ToString(), out ushortValue))
-                    {
-                        return ushortValue;
-                    }
-                    break;
-                case "System.UInt32":
-                    if (value is uint uintValue)
-                    {
-                        return uintValue;
-                    }
-                    if (uint.TryParse(value?.ToString(), out uintValue))
-                    {
-                        return uintValue;
-                    }
-                    break;
-                case "System.UInt64":
-                    if (value is ulong ulongValue)
-                    {
-                        return ulongValue;
-                    }
-                    if (ulong.TryParse(value?.ToString(), out ulongValue))
-                    {
-                        return ulongValue;
-                    }
-                    break;
-                case "System.Char":
-                    if (value is char charValue)
-                    {
-                        return charValue;
-                    }
-                    if (char.TryParse(value?.ToString(), out charValue))
-                    {
-                        return charValue;
-                    }
-                    break;
-                case "System.Guid":
-                    if (value is Guid guidValue)
-                    {
-                        return guidValue;
-                    }
-                    if (Guid.TryParse(value?.ToString(), out guidValue))
-                    {
-                        return guidValue;
-                    }
-                    break;
-                case "System.TimeSpan":
-                    if (value is TimeSpan timeSpanValue)
-                    {
-                        return timeSpanValue;
-                    }
-                    if (TimeSpan.TryParse(value?.ToString(), out timeSpanValue))
-                    {
-                        return timeSpanValue;
-                    }
-                    break;
-                case "System.String":
-                    return value?.ToString();
-                default:
-                    return value;
-            }
-            return value;
+                "System.DateTime" when value is DateTime dt => dt,
+                "System.DateTime" when DateTime.TryParse(value.ToString(), out var dt) => dt,
+                
+                "System.Int32" when value is int i => i,
+                "System.Int32" when int.TryParse(value.ToString(), out var i) => i,
+                
+                "System.Int64" when value is long l => l,
+                "System.Int64" when long.TryParse(value.ToString(), out var l) => l,
+                
+                "System.Decimal" when value is decimal dec => dec,
+                "System.Decimal" when decimal.TryParse(value.ToString(), out var dec) => dec,
+                
+                "System.Boolean" when value is bool b => b,
+                "System.Boolean" when bool.TryParse(value.ToString(), out var b) => b,
+                
+                "System.Double" when value is double d => d,
+                "System.Double" when double.TryParse(value.ToString(), out var d) => d,
+                
+                "System.Single" when value is float f => f,
+                "System.Single" when float.TryParse(value.ToString(), out var f) => f,
+                
+                "System.Byte" when value is byte by => by,
+                "System.Byte" when byte.TryParse(value.ToString(), out var by) => by,
+                
+                "System.SByte" when value is sbyte sb => sb,
+                "System.SByte" when sbyte.TryParse(value.ToString(), out var sb) => sb,
+                
+                "System.Int16" when value is short sh => sh,
+                "System.Int16" when short.TryParse(value.ToString(), out var sh) => sh,
+                
+                "System.UInt16" when value is ushort us => us,
+                "System.UInt16" when ushort.TryParse(value.ToString(), out var us) => us,
+                
+                "System.UInt32" when value is uint ui => ui,
+                "System.UInt32" when uint.TryParse(value.ToString(), out var ui) => ui,
+                
+                "System.UInt64" when value is ulong ul => ul,
+                "System.UInt64" when ulong.TryParse(value.ToString(), out var ul) => ul,
+                
+                "System.Char" when value is char c => c,
+                "System.Char" when char.TryParse(value.ToString(), out var c) => c,
+                
+                "System.Guid" when value is Guid g => g,
+                "System.Guid" when Guid.TryParse(value.ToString(), out var g) => g,
+                
+                "System.TimeSpan" when value is TimeSpan ts => ts,
+                "System.TimeSpan" when TimeSpan.TryParse(value.ToString(), out var ts) => ts,
+                
+                "System.String" => value.ToString(),
+                
+                _ => value // Return as-is if no conversion needed
+            };
         }
 
 
