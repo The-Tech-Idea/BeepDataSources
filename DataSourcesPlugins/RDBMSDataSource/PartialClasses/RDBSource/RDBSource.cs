@@ -23,16 +23,30 @@ using System.Text;
 using System.Collections;
 using static TheTechIdea.Beep.Utils.Util;
 using TheTechIdea.Beep.Helpers.RDBMSHelpers;
+using TheTechIdea.Beep.DataBase.Helpers;
 
 namespace TheTechIdea.Beep.DataBase
 {
     public partial class RDBSource : IRDBSource
     {
+        // Note: usedParameterNames is reset at the beginning of each operation, making it thread-safe per-operation
         HashSet<string> usedParameterNames = new HashSet<string>();
         List<EntityField> UpdateFieldSequnce = new List<EntityField>();
         public event EventHandler<PassedArgs> PassEvent;
-        // Static random number generator used for various purposes within the class.
-        static Random r = new Random();
+        
+        // Thread-safe entity structure cache
+        private EntityStructureCache _entityCache;
+        private EntityStructureCache EntityCache
+        {
+            get
+            {
+                if (_entityCache == null)
+                {
+                    _entityCache = new EntityStructureCache((name, refresh) => LoadEntityStructure(name, refresh));
+                }
+                return _entityCache;
+            }
+        }
 
         /// <summary>
         /// Unique identifier for the RDBSource instance, generated using Guid.

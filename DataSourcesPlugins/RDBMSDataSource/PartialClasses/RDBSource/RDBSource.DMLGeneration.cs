@@ -713,7 +713,7 @@ namespace TheTechIdea.Beep.DataBase
                     i += 1;
                     forkeys = forkeys.Remove(forkeys.Length - 1, 1);
                     refkeys = refkeys.Remove(refkeys.Length - 1, 1);
-                    retval += @" ALTER TABLE " + t1.EntityName + " ADD CONSTRAINT " + t1.EntityName + i + r.Next(10, 1000) + "  FOREIGN KEY (" + forkeys + ")  REFERENCES " + item + "(" + refkeys + "); \n";
+                    retval += @" ALTER TABLE " + t1.EntityName + " ADD CONSTRAINT " + t1.EntityName + i + Random.Shared.Next(10, 1000) + "  FOREIGN KEY (" + forkeys + ")  REFERENCES " + item + "(" + refkeys + "); \n";
                 }
                 if (i == 0)
                 {

@@ -24,6 +24,15 @@ namespace TheTechIdea.Beep.DataBase
         /// <returns>The updated or refreshed EntityStructure object.</returns>
         public virtual EntityStructure GetEntityStructure(string EntityName, bool refresh = false)
         {
+            // Use thread-safe cache for entity structures
+            return EntityCache.Get(EntityName, refresh);
+        }
+
+        /// <summary>
+        /// Internal method to load entity structure - called by EntityStructureCache.
+        /// </summary>
+        private EntityStructure LoadEntityStructure(string EntityName, bool refresh)
+        {
             EntityStructure retval = new EntityStructure();
 
             if (Entities.Count == 0)
