@@ -16,10 +16,12 @@ using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Addin;
-using TheTechIdea.Beep.Helpers;
+
 using TheTechIdea.Beep.WebAPI;
 using Opc.Ua;
 using Opc.Ua.Client;
+using Opc.Ua.Configuration;
+using TheTechIdea.Beep.DriversConfigurations;
 
 namespace OPCUADataSource
 {
@@ -311,9 +313,9 @@ namespace OPCUADataSource
                     {
                         var script = new ETLScriptDet
                         {
-                            EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
-                            ScriptText = $"# OPC UA Node: {entity.EntityName}\n# Nodes are defined in the OPC UA server"
+                            SourceEntity = entity,
+                            scriptType = DDLScriptType.CreateEntity
+                           
                         };
                         scripts.Add(script);
                     }
@@ -845,7 +847,7 @@ namespace OPCUADataSource
                     {
                         UpdateEntity(EntityName, item);
                         count++;
-                        progress?.Report(new PassedArgs { Message = $"Updated {count} records" });
+                        progress?.Report(new PassedArgs { Messege = $"Updated {count} records" });
                     }
                     retval.Message = $"Updated {count} records successfully.";
                 }

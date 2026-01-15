@@ -39,8 +39,8 @@
  </ItemGroup>
  <ItemGroup>
    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.59" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.113" />
+   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.60" />
+   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.115" />
  </ItemGroup>
  <ItemGroup>
    <ProjectReference Include="..\..\DataSourcesPlugins\RDBMSDataSource\RDBDataSource.csproj" />
