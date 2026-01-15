@@ -149,9 +149,9 @@ namespace TheTechIdea.Beep.FileManager
                             {
                                 var field = new EntityField
                                 {
-                                    fieldname = fieldName?.Trim() ?? $"Column{colIdx}",
+                                   FieldName = fieldName?.Trim() ?? $"Column{colIdx}",
                                     Originalfieldname = fieldName?.Trim() ?? $"Column{colIdx}",
-                                    fieldtype = "System.String",
+                                    Fieldtype = "System.String",
                                     IsKey = colIdx == 0,
                                     AllowDBNull = true
                                 };

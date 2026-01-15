@@ -31,7 +31,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Snowflake.Data" Version="5.3.0" />
-		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.57" />
+		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.61" />
 		<PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.13" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">

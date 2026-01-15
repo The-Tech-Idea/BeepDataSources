@@ -543,7 +543,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
                     {
                         foreach (var field in entityStructure.Fields)
                         {
-                            dt.Columns.Add(field.fieldname, Type.GetType(field.fieldtype) ?? typeof(string));
+                            dt.Columns.Add(field.FieldName, Type.GetType(field.Fieldtype) ?? typeof(string));
                         }
 
                         foreach (var item in results)
@@ -590,7 +590,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
                     {
                         UpdateEntity(EntityName, item);
                         count++;
-                        progress?.Report(new PassedArgs { Message = $"Updated {count} records" });
+                        progress?.Report(new PassedArgs { Messege = $"Updated {count} records" });
                     }
                 }
             }
@@ -715,9 +715,9 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
             ErrorObject.Flag = Errors.Ok;
             try
             {
-                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.ScriptText))
+                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.Ddl))
                 {
-                    ExecuteSql(dDLScripts.ScriptText);
+                    ExecuteSql(dDLScripts.Ddl);
                 }
             }
             catch (Exception ex)
@@ -763,9 +763,9 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
                     {
                         var script = new ETLScriptDet
                         {
-                            EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
-                            ScriptText = $"# RavenDB collection: {entity.EntityName}\n# Collections are created automatically when documents are stored"
+                            SourceDataSourceEntityName = entity.EntityName,
+                           ScriptType= DDLScriptType.CreateEntity,
+                            Ddl = $"# RavenDB collection: {entity.EntityName}\n# Collections are created automatically when documents are stored"
                         };
                         scripts.Add(script);
                     }
@@ -858,13 +858,13 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
                                 if (propertyName != "@metadata")
                                 {
                                     sampleDoc.TryGet(propertyName, out object propValue);
-                                    var fieldType = InferTypeFromValue(propValue);
+                                    var Fieldtype = InferTypeFromValue(propValue);
 
                                     retval.Fields.Add(new EntityField
                                     {
-                                        fieldname = propertyName,
+                                        FieldName = propertyName,
                                         Originalfieldname = propertyName,
-                                        fieldtype = fieldType,
+                                        Fieldtype = fieldType,
                                         ValueRetrievedFromParent = false,
                                         EntityName = DocName,
                                         FieldIndex = fieldIndex++,

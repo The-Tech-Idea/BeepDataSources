@@ -533,18 +533,18 @@ namespace TheTechIdea.Beep.Cloud
                     if (string.IsNullOrEmpty(_bucketName))
                     {
                         // Bucket structure
-                        retval.Fields.Add(new EntityField { fieldname = "BucketName", fieldtype = "System.String", EntityName = EntityName, IsKey = true });
-                        retval.Fields.Add(new EntityField { fieldname = "CreationDate", fieldtype = "System.DateTime", EntityName = EntityName });
+                        retval.Fields.Add(new EntityField { FieldName = "BucketName", Fieldtype = "System.String", EntityName = EntityName, IsKey = true });
+                        retval.Fields.Add(new EntityField { FieldName = "CreationDate", Fieldtype = "System.DateTime", EntityName = EntityName });
                     }
                     else
                     {
                         // Object structure
-                        retval.Fields.Add(new EntityField { fieldname = "Key", fieldtype = "System.String", EntityName = EntityName, IsKey = true });
-                        retval.Fields.Add(new EntityField { fieldname = "Bucket", fieldtype = "System.String", EntityName = EntityName });
-                        retval.Fields.Add(new EntityField { fieldname = "Content", fieldtype = "System.String", EntityName = EntityName });
-                        retval.Fields.Add(new EntityField { fieldname = "Size", fieldtype = "System.Int64", EntityName = EntityName });
-                        retval.Fields.Add(new EntityField { fieldname = "LastModified", fieldtype = "System.DateTime", EntityName = EntityName });
-                        retval.Fields.Add(new EntityField { fieldname = "ContentType", fieldtype = "System.String", EntityName = EntityName });
+                        retval.Fields.Add(new EntityField { FieldName = "Key", Fieldtype = "System.String", EntityName = EntityName, IsKey = true });
+                        retval.Fields.Add(new EntityField { FieldName = "Bucket", Fieldtype = "System.String", EntityName = EntityName });
+                        retval.Fields.Add(new EntityField { FieldName = "Content", Fieldtype = "System.String", EntityName = EntityName });
+                        retval.Fields.Add(new EntityField { FieldName = "Size", Fieldtype = "System.Int64", EntityName = EntityName });
+                        retval.Fields.Add(new EntityField { FieldName = "LastModified", Fieldtype = "System.DateTime", EntityName = EntityName });
+                        retval.Fields.Add(new EntityField { FieldName = "ContentType", Fieldtype = "System.String", EntityName = EntityName });
                     }
 
                     // Add or update in Entities list
@@ -584,7 +584,7 @@ namespace TheTechIdea.Beep.Cloud
                     {
                         foreach (var field in entityStructure.Fields)
                         {
-                            dt.Columns.Add(field.fieldname, Type.GetType(field.fieldtype) ?? typeof(string));
+                            dt.Columns.Add(field.FieldName, Type.GetType(field.Fieldtype) ?? typeof(string));
                         }
 
                         foreach (var item in results)
@@ -762,7 +762,7 @@ namespace TheTechIdea.Beep.Cloud
                         var script = new ETLScriptDet
                         {
                             EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
+                           ScriptType= "CREATE",
                             ScriptText = $"# S3 bucket/object: {entity.EntityName}\n# Use AWS CLI or SDK to create buckets/upload objects"
                         };
                         scripts.Add(script);

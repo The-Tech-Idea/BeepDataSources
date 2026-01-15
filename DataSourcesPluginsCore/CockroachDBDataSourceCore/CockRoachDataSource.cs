@@ -16,7 +16,7 @@ using TheTechIdea.Beep.Vis;
 
 namespace TheTechIdea.Beep.DataBase
 {
-    [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.CockroachDB)]
+    [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.Cockroach)]
     public class CockRoachDataSource : RDBSource, IDataSource
     {
         public CockRoachDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)

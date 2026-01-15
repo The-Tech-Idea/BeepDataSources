@@ -128,8 +128,8 @@ namespace TheTechIdea.Beep.FileManager
                     string colName = null;
                     if (dr.Table.Columns.Contains(field.Originalfieldname))
                         colName = field.Originalfieldname;
-                    else if (dr.Table.Columns.Contains(field.fieldname))
-                        colName = field.fieldname;
+                    else if (dr.Table.Columns.Contains(field.FieldName))
+                        colName = field.FieldName;
                     
                     return colName != null ? dr[colName] : null;
                 }
@@ -137,21 +137,21 @@ namespace TheTechIdea.Beep.FileManager
                 // Try IDictionary
                 if (source is IDictionary<string, object> dict)
                 {
-                    if (dict.ContainsKey(field.fieldname))
-                        return dict[field.fieldname];
+                    if (dict.ContainsKey(field.FieldName))
+                        return dict[field.FieldName];
                     if (dict.ContainsKey(field.Originalfieldname))
                         return dict[field.Originalfieldname];
                     return null;
                 }
                 
                 // Try POCO via reflection
-                var prop = source.GetType().GetProperty(field.fieldname) 
+                var prop = source.GetType().GetProperty(field.FieldName) 
                     ?? source.GetType().GetProperty(field.Originalfieldname);
                 return prop?.GetValue(source);
             }
             catch (Exception ex)
             {
-                Logger?.WriteLog($"Error extracting field value '{field.fieldname}': {ex.Message}");
+                Logger?.WriteLog($"Error extracting field value '{field.FieldName}': {ex.Message}");
                 return null;
             }
         }
@@ -566,8 +566,8 @@ namespace TheTechIdea.Beep.FileManager
             // Create new DataTable with properly typed columns
             foreach (var field in ent.Fields)
             {
-                Type fieldType = Type.GetType(field.fieldtype) ?? typeof(string);
-                newdt.Columns.Add(new DataColumn(field.fieldname, fieldType));
+                Type pFieldtype = Type.GetType(field.Fieldtype) ?? typeof(string);
+                newdt.Columns.Add(new DataColumn(field.FieldName, pFieldtype));
             }
 
             // Convert and copy rows with type conversion
@@ -589,14 +589,14 @@ namespace TheTechIdea.Beep.FileManager
                                 if (!string.IsNullOrEmpty(stringValue) && !string.IsNullOrWhiteSpace(stringValue))
                                 {
                                     // Use Convert.ChangeType with helper for type-safe conversion
-                                    Type targetType = Type.GetType(field.fieldtype) ?? typeof(string);
-                                    targetRow[field.fieldname] = Convert.ChangeType(stringValue, targetType);
+                                    Type targetType = Type.GetType(field.Fieldtype) ?? typeof(string);
+                                    targetRow[field.FieldName] = Convert.ChangeType(stringValue, targetType);
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
-                            Logger?.WriteLog($"Error converting field {field.fieldname}: {ex.Message}");
+                            Logger?.WriteLog($"Error converting field {field.FieldName}: {ex.Message}");
                         }
                     }
                     
@@ -815,7 +815,7 @@ namespace TheTechIdea.Beep.FileManager
                             char delim = Delimiter != '\0' ? Delimiter : (Dataconnection.ConnectionProp.Delimiter != '\0' ? Dataconnection.ConnectionProp.Delimiter : ',');
                             using (var sw = new StreamWriter(targetPath, false, Encoding.UTF8))
                             {
-                                var header = string.Join(delim.ToString(), entity.Fields.Select(f => _helper.EscapeCsvValue(f.Originalfieldname ?? f.fieldname, delim)));
+                                var header = string.Join(delim.ToString(), entity.Fields.Select(f => _helper.EscapeCsvValue(f.Originalfieldname ?? f.FieldName, delim)));
                                 sw.WriteLine(header);
                             }
                         }
@@ -831,7 +831,7 @@ namespace TheTechIdea.Beep.FileManager
                                 foreach (var f in entity.Fields)
                                 {
                                     var cell = headerRow.CreateCell(ci++);
-                                    cell.SetCellValue(f.Originalfieldname ?? f.fieldname);
+                                    cell.SetCellValue(f.Originalfieldname ?? f.FieldName);
                                 }
                                 using (var fs = new FileStream(targetPath, FileMode.Create, FileAccess.Write))
                                 {
@@ -1052,7 +1052,7 @@ namespace TheTechIdea.Beep.FileManager
                         var script = new ETLScriptDet
                         {
                             SourceEntity = entity,
-                            scriptType = DDLScriptType.CreateEntity,
+                           ScriptType= DDLScriptType.CreateEntity,
                           
                         };
                         scripts.Add(script);
@@ -1415,9 +1415,9 @@ namespace TheTechIdea.Beep.FileManager
                 {
                     entspace = "_" + entspace;
                 }
-                f.fieldname = entspace;
+                f.FieldName = entspace;
                 f.Originalfieldname = field.ColumnName;
-                f.fieldtype = field.DataType.ToString();
+                f.Fieldtype = field.DataType.ToString();
                 f.ValueRetrievedFromParent = false;
                 f.EntityName = sheetname;
                 f.FieldIndex = y;
@@ -1447,72 +1447,72 @@ namespace TheTechIdea.Beep.FileManager
 
                                 if (!string.IsNullOrEmpty(valstring) && !string.IsNullOrWhiteSpace(valstring))
                                 {
-                                    if (f.fieldtype != "System.String")
+                                    if (f.Fieldtype != "System.String")
                                     {
                                         if (decimal.TryParse(valstring, out dval))
                                         {
-                                            f.fieldtype = "System.Decimal";
+                                            f.Fieldtype = "System.Decimal";
                                             f.Checked = true;
                                         }
                                         else
                                         if (double.TryParse(valstring, out dblval))
                                         {
-                                            f.fieldtype = "System.Double";
+                                            f.Fieldtype = "System.Double";
                                             f.Checked = true;
                                         }
                                         else
                                         if (long.TryParse(valstring, out longval))
                                         {
-                                            f.fieldtype = "System.Long";
+                                            f.Fieldtype = "System.Long";
                                             f.Checked = true;
                                         }
                                         else
                                         if (float.TryParse(valstring, out floatval))
                                         {
-                                            f.fieldtype = "System.Float";
+                                            f.Fieldtype = "System.Float";
                                             f.Checked = true;
                                         }
                                         else
                                         if (int.TryParse(valstring, out intval))
                                         {
-                                            f.fieldtype = "System.Int32";
+                                            f.Fieldtype = "System.Int32";
                                             f.Checked = true;
                                         }
                                         else
                                         if (DateTime.TryParse(valstring, out dateval))
                                         {
-                                            f.fieldtype = "System.DateTime";
+                                            f.Fieldtype = "System.DateTime";
                                             f.Checked = true;
                                         }
                                         else
                                         if (bool.TryParse(valstring, out boolval))
                                         {
-                                            f.fieldtype = "System.Bool";
+                                            f.Fieldtype = "System.Bool";
                                             f.Checked = true;
                                         }
                                         else
                                         if (short.TryParse(valstring, out shortval))
                                         {
-                                            f.fieldtype = "System.Short";
+                                            f.Fieldtype = "System.Short";
                                             f.Checked = true;
                                         }
                                         else
-                                            f.fieldtype = "System.String";
+                                            f.Fieldtype = "System.String";
                                     }
                                     else
-                                        f.fieldtype = "System.String";
+                                        f.Fieldtype = "System.String";
 
                                 }
                             }
                         }
                         catch (Exception Fieldex)
                         {
-                            Logger?.WriteLog($"Field type detection error for field {f.fieldname}: {Fieldex.Message}");
+                            Logger?.WriteLog($"Field type detection error for field {f.FieldName}: {Fieldex.Message}");
                             try { ErrorObject.Flag = Errors.Failed; ErrorObject.Ex = Fieldex; ErrorObject.Message = Fieldex.Message; } catch { }
                         }
                         try
                         {
-                            if (f.fieldtype.Equals("System.String", StringComparison.OrdinalIgnoreCase))
+                            if (f.Fieldtype.Equals("System.String", StringComparison.OrdinalIgnoreCase))
                             {
                                 if (r[f.Originalfieldname] != DBNull.Value)
                                 {
@@ -1530,12 +1530,12 @@ namespace TheTechIdea.Beep.FileManager
                         }
                         catch (Exception stringsizeex)
                         {
-                            Logger?.WriteLog($"String size detection error for field {f.fieldname}: {stringsizeex.Message}");
+                            Logger?.WriteLog($"String size detection error for field {f.FieldName}: {stringsizeex.Message}");
                             try { ErrorObject.Flag = Errors.Failed; ErrorObject.Ex = stringsizeex; ErrorObject.Message = stringsizeex.Message; } catch { }
                         }
                         try
                         {
-                            if (f.fieldtype.Equals("System.Decimal", StringComparison.OrdinalIgnoreCase))
+                            if (f.Fieldtype.Equals("System.Decimal", StringComparison.OrdinalIgnoreCase))
                             {
                                 if (r[f.Originalfieldname] != DBNull.Value)
                                 {
@@ -1545,7 +1545,7 @@ namespace TheTechIdea.Beep.FileManager
                                         if (decimal.TryParse(valstring, out dval))
                                         {
 
-                                            f.fieldtype = "System.Decimal";
+                                            f.Fieldtype = "System.Decimal";
                                             f.Size1 = GetDecimalPrecision(dval);
                                             f.Size2 = GetDecimalScale(dval);
                                         }
@@ -1556,7 +1556,7 @@ namespace TheTechIdea.Beep.FileManager
                         }
                         catch (Exception decimalsizeex)
                         {
-                            Logger?.WriteLog($"Decimal size detection error for field {f.fieldname}: {decimalsizeex.Message}");
+                            Logger?.WriteLog($"Decimal size detection error for field {f.FieldName}: {decimalsizeex.Message}");
                             try { ErrorObject.Flag = Errors.Failed; ErrorObject.Ex = decimalsizeex; ErrorObject.Message = decimalsizeex.Message; } catch { }
                         }
                       
@@ -1572,7 +1572,7 @@ namespace TheTechIdea.Beep.FileManager
             // Check for string size
             foreach (EntityField fld in flds)
             {
-                if (fld.fieldtype.Equals("System.string", StringComparison.OrdinalIgnoreCase))
+                if (fld.Fieldtype.Equals("System.string", StringComparison.OrdinalIgnoreCase))
                 {
                     if (fld.Size1 == 0)
                     {
@@ -1590,15 +1590,15 @@ namespace TheTechIdea.Beep.FileManager
             {
                 foreach (EntityField fld in entityFields)
                 {
-                    if (fld.fieldtype.Equals("System.string", StringComparison.OrdinalIgnoreCase))
+                    if (fld.Fieldtype.Equals("System.string", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (r[fld.fieldname] != DBNull.Value)
+                        if (r[fld.FieldName] != DBNull.Value)
                         {
-                            if (!string.IsNullOrEmpty(r[fld.fieldname].ToString()))
+                            if (!string.IsNullOrEmpty(r[fld.FieldName].ToString()))
                             {
-                                if (r[fld.fieldname].ToString().Length > fld.Size1)
+                                if (r[fld.FieldName].ToString().Length > fld.Size1)
                                 {
-                                    fld.Size1 = r[fld.fieldname].ToString().Length;
+                                    fld.Size1 = r[fld.FieldName].ToString().Length;
                                 }
                            
                             }
@@ -1609,17 +1609,17 @@ namespace TheTechIdea.Beep.FileManager
                
                     string valstring;
                    
-                    if (fld.fieldtype.Equals("System.Decimal", StringComparison.OrdinalIgnoreCase))
+                    if (fld.Fieldtype.Equals("System.Decimal", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (r[fld.fieldname] != DBNull.Value)
+                        if (r[fld.FieldName] != DBNull.Value)
                         {
-                            if (!string.IsNullOrEmpty(r[fld.fieldname].ToString()))
+                            if (!string.IsNullOrEmpty(r[fld.FieldName].ToString()))
                             {
-                                valstring = r[fld.fieldname].ToString();
+                                valstring = r[fld.FieldName].ToString();
                                 if (decimal.TryParse(valstring, out dval))
                                 {
                                     
-                                    fld.fieldtype = "System.Decimal";
+                                    fld.Fieldtype = "System.Decimal";
                                     fld.Size1 = GetDecimalPrecision(dval);
                                     fld.Size2= GetDecimalScale(dval);
 
@@ -1638,7 +1638,7 @@ namespace TheTechIdea.Beep.FileManager
             }
             foreach (EntityField fld in entityFields)
             {
-                if (fld.fieldtype.Equals("System.string", StringComparison.OrdinalIgnoreCase))
+                if (fld.Fieldtype.Equals("System.string", StringComparison.OrdinalIgnoreCase))
                 {
                   if (fld.Size1==0)
                   {

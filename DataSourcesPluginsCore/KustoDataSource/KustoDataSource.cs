@@ -18,7 +18,7 @@ using System.Data.Common;
 
 namespace TheTechIdea.Beep.Cloud.Kusto
 {
-    [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.Kusto)]
+    [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.Kudosity)]
     public class KustoDataSource : IDataSource
     {
         public string GuidID { get; set; }
@@ -69,7 +69,7 @@ namespace TheTechIdea.Beep.Cloud.Kusto
                     ConnectionString = driversConfig?.ConnectionString ?? "",
                     DriverName = driversConfig?.PackageName ?? "",
                     DriverVersion = driversConfig?.version ?? "",
-                    DatabaseType = DataSourceType.Kusto,
+                    DatabaseType = DataSourceType.Kudosity,
                     Category = DatasourceCategory.CLOUD
                 };
             }
@@ -349,9 +349,9 @@ namespace TheTechIdea.Beep.Cloud.Kusto
                             {
                                 entity.Fields.Add(new EntityField
                                 {
-                                    fieldname = dict["ColumnName"].ToString(),
+                                    FieldName = dict["ColumnName"].ToString(),
                                     Originalfieldname = dict["ColumnName"].ToString(),
-                                    fieldtype = GetDotNetType(dict["ColumnType"].ToString()),
+                                    Fieldtype = GetDotNetType(dict["ColumnType"].ToString()),
                                     EntityName = EntityName
                                 });
                             }
@@ -515,7 +515,7 @@ namespace TheTechIdea.Beep.Cloud.Kusto
             ErrorObject.Flag = Errors.Ok;
             try
             {
-                ExecuteSql(dDLScripts.ScriptText);
+                ExecuteSql(dDLScripts.Ddl);
             }
             catch (Exception ex)
             {
@@ -548,16 +548,16 @@ namespace TheTechIdea.Beep.Cloud.Kusto
                     foreach (var field in entity.Fields)
                     {
                         if (!first) sb.Append(",\n");
-                        sb.Append($"  {field.fieldname}: {GetKustoType(field.fieldtype)}");
+                        sb.Append($"  {field.FieldName}: {GetKustoType(field.Fieldtype)}");
                         first = false;
                     }
                     sb.Append("\n)");
 
                     scripts.Add(new ETLScriptDet
                     {
-                        EntityName = entity.EntityName,
-                        ScriptType = "CREATE",
-                        ScriptText = sb.ToString()
+                        SourceDataSourceEntityName = entity.EntityName,
+                       ScriptType=  DDLScriptType.CreateEntity,
+                        Ddl = sb.ToString()
                     });
                 }
             }

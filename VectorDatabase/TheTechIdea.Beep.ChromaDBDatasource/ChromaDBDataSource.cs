@@ -366,8 +366,8 @@ namespace TheTechIdea.Beep.ChromaDBDatasource
             {
                 scripts.Add(new ETLScriptDet
                 {
-                    ddl = $"-- Create ChromaDB collection: {entity.EntityName}",
-                    scriptType = DDLScriptType.CreateEntity
+                    Ddl = $"-- Create ChromaDB collection: {entity.EntityName}",
+                   ScriptType= DDLScriptType.CreateEntity
                 });
             }
             return scripts;
@@ -707,27 +707,27 @@ namespace TheTechIdea.Beep.ChromaDBDatasource
                 case "collections":
                     entity.Fields.AddRange(new[]
                     {
-                        new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true },
-                        new EntityField { fieldname = "name", fieldtype = "System.String" },
-                        new EntityField { fieldname = "metadata", fieldtype = "System.Object" }
+                        new EntityField { FieldName = "id", Fieldtype = "System.String", IsKey = true },
+                        new EntityField { FieldName = "name", Fieldtype = "System.String" },
+                        new EntityField { FieldName = "metadata", Fieldtype = "System.Object" }
                     });
                     break;
                 case "embeddings":
                     entity.Fields.AddRange(new[]
                     {
-                        new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true },
-                        new EntityField { fieldname = "embedding", fieldtype = "System.Single[]" },
-                        new EntityField { fieldname = "document", fieldtype = "System.String" },
-                        new EntityField { fieldname = "metadata", fieldtype = "System.Object" },
-                        new EntityField { fieldname = "distance", fieldtype = "System.Single" }
+                        new EntityField { FieldName = "id", Fieldtype = "System.String", IsKey = true },
+                        new EntityField { FieldName = "embedding", Fieldtype = "System.Single[]" },
+                        new EntityField { FieldName = "document", Fieldtype = "System.String" },
+                        new EntityField { FieldName = "metadata", Fieldtype = "System.Object" },
+                        new EntityField { FieldName = "distance", Fieldtype = "System.Single" }
                     });
                     break;
                 case "system":
                     entity.Fields.AddRange(new[]
                     {
-                        new EntityField { fieldname = "status", fieldtype = "System.String" },
-                        new EntityField { fieldname = "version", fieldtype = "System.String" },
-                        new EntityField { fieldname = "time", fieldtype = "System.DateTime" }
+                        new EntityField { FieldName = "status", Fieldtype = "System.String" },
+                        new EntityField { FieldName = "version", Fieldtype = "System.String" },
+                        new EntityField { FieldName = "time", Fieldtype = "System.DateTime" }
                     });
                     break;
             }

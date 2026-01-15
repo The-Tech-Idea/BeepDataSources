@@ -73,11 +73,11 @@ namespace TheTechIdea.Beep.DataBase
 
             return GetEntityStructure(retval, refresh);
         }
-        private bool GetBooleanField(DataRow r, string fieldName)
+        private bool GetBooleanField(DataRow r, string FieldName)
         {
             try
             {
-                return r.Field<bool>(fieldName);
+                return r.Field<bool>(FieldName);
             }
             catch
             {
@@ -152,15 +152,15 @@ namespace TheTechIdea.Beep.DataBase
                         EntityField x = new EntityField();
                         try
                         {
-                            x.fieldname = SafeField<string>(r, "ColumnName");
-                            x.fieldtype = SafeField<Type>(r, "DataType")?.ToString() ?? "System.String";
+                            x.FieldName = SafeField<string>(r, "ColumnName");
+                            x.Fieldtype = SafeField<Type>(r, "DataType")?.ToString() ?? "System.String";
 
                             // Oracle FLOAT → .NET mapping
                             if (DatasourceType == DataSourceType.Oracle
-                             && x.fieldtype.Equals("FLOAT", StringComparison.OrdinalIgnoreCase))
+                             && x.Fieldtype.Equals("FLOAT", StringComparison.OrdinalIgnoreCase))
                             {
-                                int precision = GetFloatPrecision(x.EntityName, x.fieldname);
-                                x.fieldtype = MapOracleFloatToDotNetType(precision);
+                                int precision = GetFloatPrecision(x.EntityName, x.FieldName);
+                                x.Fieldtype = MapOracleFloatToDotNetType(precision);
                             }
 
                             x.Size1 = SafeField<int>(r, "ColumnSize");
@@ -185,7 +185,7 @@ namespace TheTechIdea.Beep.DataBase
                             x.IsHidden = SafeField<bool>(r, "IsHidden");
 
                             // NumericPrecision/Scale only if the schema provides them
-                            if (IsNumericType(x.fieldtype))
+                            if (IsNumericType(x.Fieldtype))
                             {
                                 x.NumericPrecision = SafeField<short>(r, "NumericPrecision");
                                 x.NumericScale = SafeField<short>(r, "NumericScale");
@@ -195,7 +195,7 @@ namespace TheTechIdea.Beep.DataBase
                         {
                             DMEEditor.AddLogMessage(
                               "Fail",
-                              $"Error creating Field metadata for {entname}.{x.fieldname}: {ex.Message}",
+                              $"Error creating Field metadata for {entname}.{x.FieldName}: {ex.Message}",
                               DateTime.Now, 0, entname, Errors.Failed
                             );
                         }
@@ -290,8 +290,8 @@ namespace TheTechIdea.Beep.DataBase
             foreach (DataRow row in schemaTable.Rows)
             {
                 EntityField field = new EntityField();
-                field.fieldname = row[columnNameKey].ToString();
-                field.fieldtype = row[dataTypeKey].ToString();
+                field.FieldName = row[columnNameKey].ToString();
+                field.Fieldtype = row[dataTypeKey].ToString();
                 field.Size1 = Convert.ToInt32(row[maxLengthKey]);
                 field.NumericPrecision = Convert.ToInt16(row[numericPrecisionKey]);
                 field.NumericScale = Convert.ToInt16(row[numericScaleKey]);
@@ -685,10 +685,10 @@ namespace TheTechIdea.Beep.DataBase
         /// </remarks>
         public virtual IErrorsInfo RunScript(ETLScriptDet scripts)
         {
-            var t = Task.Run<IErrorsInfo>(() => { return ExecuteSql(scripts.ddl); });
+            var t = Task.Run<IErrorsInfo>(() => { return ExecuteSql(scripts.Ddl); });
             t.Wait();
             DMEEditor.ErrorObject = t.Result;
-            scripts.errormessage = DMEEditor.ErrorObject.Message;
+            scripts.ErrorMessage = DMEEditor.ErrorObject.Message;
 
             return DMEEditor.ErrorObject;
         }
@@ -788,10 +788,10 @@ namespace TheTechIdea.Beep.DataBase
                 return "System.Decimal";
             }
         }
-        public int GetFloatPrecision(string tableName, string fieldName)
+        public int GetFloatPrecision(string tableName, string FieldName)
         {
             int precision = 0;
-            string query = $"SELECT DATA_PRECISION FROM ALL_TAB_COLUMNS WHERE TABLE_NAME = '{tableName.ToUpper()}' AND COLUMN_NAME = '{fieldName.ToUpper()}'";
+            string query = $"SELECT DATA_PRECISION FROM ALL_TAB_COLUMNS WHERE TABLE_NAME = '{tableName.ToUpper()}' AND COLUMN_NAME = '{FieldName.ToUpper()}'";
 
 
             IDbCommand command = GetDataCommand();

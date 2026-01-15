@@ -92,8 +92,8 @@ namespace TheTechIdea.Beep.DataBase
                 {
                     if (fld.IsKey == false)
                     {
-                        sql += fld.fieldname + ",";
-                        sql2 += $"'{InsertedData.GetType().GetProperty(fld.fieldname).GetValue(InsertedData)}',";
+                        sql += fld.FieldName + ",";
+                        sql2 += $"'{InsertedData.GetType().GetProperty(fld.FieldName).GetValue(InsertedData)}',";
                     }
                 }
                 sql = sql.Substring(0, sql.Length - 1) + ")";

@@ -16,6 +16,7 @@ using FirebaseStorage;
 using System.IO;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using System.Data;
 
 namespace TheTechIdea.Beep.Cloud.Firebase
 {
@@ -215,10 +216,10 @@ namespace TheTechIdea.Beep.Cloud.Firebase
                     DatasourceEntityName = EntityName,
                     Fields = new List<EntityField>
                     {
-                        new EntityField { fieldname = "Name", fieldtype = "System.String", EntityName = EntityName },
-                        new EntityField { fieldname = "Path", fieldtype = "System.String", EntityName = EntityName },
-                        new EntityField { fieldname = "Size", fieldtype = "System.Int64", EntityName = EntityName },
-                        new EntityField { fieldname = "ContentType", fieldtype = "System.String", EntityName = EntityName }
+                        new EntityField { FieldName = "Name", Fieldtype = "System.String", EntityName = EntityName },
+                        new EntityField { FieldName = "Path", Fieldtype = "System.String", EntityName = EntityName },
+                        new EntityField { FieldName = "Size", Fieldtype = "System.Int64", EntityName = EntityName },
+                        new EntityField { FieldName = "ContentType", Fieldtype = "System.String", EntityName = EntityName }
                     }
                 };
 
@@ -351,9 +352,9 @@ namespace TheTechIdea.Beep.Cloud.Firebase
                 {
                     scripts.Add(new ETLScriptDet
                     {
-                        EntityName = entity.EntityName,
-                        ScriptType = "CREATE",
-                        ScriptText = $"# Firebase Storage entity: {entity.EntityName}"
+                        SourceDataSourceEntityName = entity.EntityName,
+                       ScriptType= DDLScriptType.CreateEntity,
+                        Ddl = $"# Firebase Storage entity: {entity.EntityName}"
                     });
                 }
             }

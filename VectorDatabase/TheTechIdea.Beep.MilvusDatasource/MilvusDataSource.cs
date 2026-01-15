@@ -13,6 +13,7 @@ using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
 
 namespace TheTechIdea.Beep.MilvusDatasource
 {
@@ -369,8 +370,8 @@ namespace TheTechIdea.Beep.MilvusDatasource
             {
                 scripts.Add(new ETLScriptDet
                 {
-                    ddl = $"-- Create Milvus collection: {entity.EntityName}",
-                    scriptType = DDLScriptType.CreateEntity
+                    Ddl = $"-- Create Milvus collection: {entity.EntityName}",
+                   ScriptType= DDLScriptType.CreateEntity
                 });
             }
             return scripts;
@@ -704,28 +705,28 @@ namespace TheTechIdea.Beep.MilvusDatasource
                 case "collections":
                     entity.Fields.AddRange(new[]
                     {
-                        new EntityField { fieldname = "collection_name", fieldtype = "System.String", IsKey = true },
-                        new EntityField { fieldname = "description", fieldtype = "System.String" },
-                        new EntityField { fieldname = "vector_count", fieldtype = "System.Int64" },
-                        new EntityField { fieldname = "index_count", fieldtype = "System.Int32" }
+                        new EntityField { FieldName = "collection_name", Fieldtype = "System.String", IsKey = true },
+                        new EntityField { FieldName = "description", Fieldtype = "System.String" },
+                        new EntityField { FieldName = "vector_count", Fieldtype = "System.Int64" },
+                        new EntityField { FieldName = "index_count", Fieldtype = "System.Int32" }
                     });
                     break;
                 case "vectors":
                     entity.Fields.AddRange(new[]
                     {
-                        new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true },
-                        new EntityField { fieldname = "vector", fieldtype = "System.Single[]" },
-                        new EntityField { fieldname = "distance", fieldtype = "System.Single" },
-                        new EntityField { fieldname = "fields", fieldtype = "System.Object" }
+                        new EntityField { FieldName = "id", Fieldtype = "System.String", IsKey = true },
+                        new EntityField { FieldName = "vector", Fieldtype = "System.Single[]" },
+                        new EntityField { FieldName = "distance", Fieldtype = "System.Single" },
+                        new EntityField { FieldName = "fields", Fieldtype = "System.Object" }
                     });
                     break;
                 case "indexes":
                     entity.Fields.AddRange(new[]
                     {
-                        new EntityField { fieldname = "index_name", fieldtype = "System.String", IsKey = true },
-                        new EntityField { fieldname = "field_name", fieldtype = "System.String" },
-                        new EntityField { fieldname = "metric_type", fieldtype = "System.String" },
-                        new EntityField { fieldname = "index_type", fieldtype = "System.String" }
+                        new EntityField { FieldName = "index_name", Fieldtype = "System.String", IsKey = true },
+                        new EntityField { FieldName = "field_name", Fieldtype = "System.String" },
+                        new EntityField { FieldName = "metric_type", Fieldtype = "System.String" },
+                        new EntityField { FieldName = "index_type", Fieldtype = "System.String" }
                     });
                     break;
             }

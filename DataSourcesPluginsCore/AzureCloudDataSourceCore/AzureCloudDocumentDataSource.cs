@@ -634,9 +634,9 @@ namespace TheTechIdea.Beep.Cloud
                         {
                             retval.Fields.Add(new EntityField
                             {
-                                fieldname = kvp.Key,
+                                FieldName = kvp.Key,
                                 Originalfieldname = kvp.Key,
-                                fieldtype = GetFieldTypeFromValue(kvp.Value),
+                                Fieldtype = GetFieldTypeFromValue(kvp.Value),
                                 EntityName = EntityName,
                                 IsKey = kvp.Key == "id",
                                 AllowDBNull = true,
@@ -646,7 +646,7 @@ namespace TheTechIdea.Beep.Cloud
                     }
                     else
                     {
-                        retval.Fields.Add(new EntityField { fieldname = "id", fieldtype = "System.String", EntityName = EntityName, IsKey = true });
+                        retval.Fields.Add(new EntityField { FieldName = "id", Fieldtype = "System.String", EntityName = EntityName, IsKey = true });
                     }
 
                     int idx = GetEntityIdx(EntityName);
@@ -699,7 +699,7 @@ namespace TheTechIdea.Beep.Cloud
                     {
                         foreach (var field in entityStructure.Fields)
                         {
-                            dt.Columns.Add(field.fieldname, Type.GetType(field.fieldtype) ?? typeof(string));
+                            dt.Columns.Add(field.FieldName, Type.GetType(field.Fieldtype) ?? typeof(string));
                         }
 
                         foreach (var item in results)
@@ -886,7 +886,7 @@ namespace TheTechIdea.Beep.Cloud
                         var script = new ETLScriptDet
                         {
                             EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
+                           ScriptType= "CREATE",
                             ScriptText = $"# Azure DocumentDB container: {entity.EntityName}\n# Use Azure SDK or Portal to create containers"
                         };
                         scripts.Add(script);

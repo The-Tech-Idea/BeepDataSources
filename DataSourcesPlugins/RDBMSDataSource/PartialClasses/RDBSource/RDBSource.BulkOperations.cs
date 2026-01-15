@@ -737,7 +737,7 @@ namespace TheTechIdea.Beep.DataBase
 
             // INSERT INTO table (col1, col2, ...)
             sb.Append($"INSERT INTO {Dataconnection.ConnectionProp.SchemaName}{entityName} (");
-            sb.Append(string.Join(", ", fields.Select(f => GetFieldName(f.fieldname))));
+            sb.Append(string.Join(", ", fields.Select(f => GetFieldName(f.FieldName))));
             sb.Append(") VALUES ");
 
             // Build VALUES clauses
@@ -753,7 +753,7 @@ namespace TheTechIdea.Beep.DataBase
                     string paramName = $"{ParameterDelimiter}p{paramIndex++}";
                     paramNames.Add(paramName);
 
-                    var property = typeof(T).GetProperty(field.fieldname);
+                    var property = typeof(T).GetProperty(field.FieldName);
                     var value = property?.GetValue(entity);
                     
                     var param = cmd.CreateParameter();
@@ -879,12 +879,12 @@ namespace TheTechIdea.Beep.DataBase
             
             // ON clause (primary key match)
             var onConditions = primaryKeys.Select(pk => 
-                $"target.{GetFieldName(pk.fieldname)} = source.{GetFieldName(pk.fieldname)}");
+                $"target.{GetFieldName(pk.FieldName)} = source.{GetFieldName(pk.FieldName)}");
             sb.AppendLine($"ON ({string.Join(" AND ", onConditions)})");
             
             // WHEN MATCHED
             var setStatements = updateFields.Select(f => 
-                $"{GetFieldName(f.fieldname)} = source.{GetFieldName(f.fieldname)}");
+                $"{GetFieldName(f.FieldName)} = source.{GetFieldName(f.FieldName)}");
             sb.AppendLine($"WHEN MATCHED THEN UPDATE SET {string.Join(", ", setStatements)};");
             
             return sb.ToString();
@@ -900,11 +900,11 @@ namespace TheTechIdea.Beep.DataBase
             sb.Append($"INNER JOIN {tempTable} AS source ");
             
             var onConditions = primaryKeys.Select(pk => 
-                $"target.{GetFieldName(pk.fieldname)} = source.{GetFieldName(pk.fieldname)}");
+                $"target.{GetFieldName(pk.FieldName)} = source.{GetFieldName(pk.FieldName)}");
             sb.Append($"ON {string.Join(" AND ", onConditions)} ");
             
             var setStatements = updateFields.Select(f => 
-                $"target.{GetFieldName(f.fieldname)} = source.{GetFieldName(f.fieldname)}");
+                $"target.{GetFieldName(f.FieldName)} = source.{GetFieldName(f.FieldName)}");
             sb.Append($"SET {string.Join(", ", setStatements)}");
             
             return sb.ToString();
@@ -919,13 +919,13 @@ namespace TheTechIdea.Beep.DataBase
             sb.Append($"UPDATE {Dataconnection.ConnectionProp.SchemaName}{targetTable} AS target SET ");
             
             var setStatements = updateFields.Select(f => 
-                $"{GetFieldName(f.fieldname)} = source.{GetFieldName(f.fieldname)}");
+                $"{GetFieldName(f.FieldName)} = source.{GetFieldName(f.FieldName)}");
             sb.Append(string.Join(", ", setStatements));
             
             sb.Append($" FROM {tempTable} AS source WHERE ");
             
             var whereConditions = primaryKeys.Select(pk => 
-                $"target.{GetFieldName(pk.fieldname)} = source.{GetFieldName(pk.fieldname)}");
+                $"target.{GetFieldName(pk.FieldName)} = source.{GetFieldName(pk.FieldName)}");
             sb.Append(string.Join(" AND ", whereConditions));
             
             return sb.ToString();
@@ -940,7 +940,7 @@ namespace TheTechIdea.Beep.DataBase
             sb.AppendLine($"CREATE TABLE {tempTableName} (");
             
             var columns = DataStruct.Fields.Select(f => 
-                $"{GetFieldName(f.fieldname)} {f.fieldtype}");
+                $"{GetFieldName(f.FieldName)} {f.Fieldtype}");
             sb.AppendLine(string.Join(",\n", columns));
             sb.AppendLine(")");
             
@@ -956,7 +956,7 @@ namespace TheTechIdea.Beep.DataBase
             sb.AppendLine($"CREATE TEMPORARY TABLE {tempTableName} (");
             
             var columns = DataStruct.Fields.Select(f => 
-                $"{GetFieldName(f.fieldname)} {f.fieldtype}");
+                $"{GetFieldName(f.FieldName)} {f.Fieldtype}");
             sb.AppendLine(string.Join(",\n", columns));
             sb.AppendLine(")");
             
@@ -972,7 +972,7 @@ namespace TheTechIdea.Beep.DataBase
             sb.AppendLine($"CREATE TEMP TABLE {tempTableName} (");
             
             var columns = DataStruct.Fields.Select(f => 
-                $"{GetFieldName(f.fieldname)} {f.fieldtype}");
+                $"{GetFieldName(f.FieldName)} {f.Fieldtype}");
             sb.AppendLine(string.Join(",\n", columns));
             sb.AppendLine(")");
             

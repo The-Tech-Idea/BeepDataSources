@@ -676,8 +676,8 @@ namespace DuckDBDataSourceCore
                         try
                         {
 
-                            x.fieldname = r.Field<string>("Column_Name");
-                            x.fieldtype = DataTypeFieldMappingHelper.GetDataType(DatasourceName, r.Field<string>("Data_Type"),DMEEditor);
+                            x.FieldName = r.Field<string>("Column_Name");
+                            x.Fieldtype = DataTypeFieldMappingHelper.GetDataType(DatasourceName, r.Field<string>("Data_Type"),DMEEditor);
                            
                             try
                             {
@@ -698,7 +698,7 @@ namespace DuckDBDataSourceCore
                            
                             try
                             {
-                                if (x.fieldtype == "System.Decimal" || x.fieldtype == "System.Float" || x.fieldtype == "System.Double")
+                                if (x.Fieldtype == "System.Decimal" || x.Fieldtype == "System.Float" || x.Fieldtype == "System.Double")
                                 {
                                     var NumericPrecision = r["Numeric_Precision"];
                                     var NumericScale = r["Numeric_Scale"];
@@ -940,15 +940,15 @@ namespace DuckDBDataSourceCore
                                     //    {
                                     //        string s;
                                     //        string f;
-                                    //        if (r[item.fieldname] == DBNull.Value)
+                                    //        if (r[item.FieldName] == DBNull.Value)
                                     //        {
                                     //            s = "\' \'";
                                     //        }
                                     //        else
                                     //        {
-                                    //            s = "\'" + r[item.fieldname].ToString() + "\'";
+                                    //            s = "\'" + r[item.FieldName].ToString() + "\'";
                                     //        }
-                                    //        f = "@p_" + Regex.Replace(item.fieldname, @"\s+", "_");
+                                    //        f = "@p_" + Regex.Replace(item.FieldName, @"\s+", "_");
                                     //        errorstring = errorstring.Replace(f, s);
                                     //    }
                                     //    catch (Exception ex1)
@@ -982,15 +982,15 @@ namespace DuckDBDataSourceCore
                                     {
                                         if (DataStruct.PrimaryKeys.Count == 1)
                                         {
-                                            args.ParameterString1 = r[DataStruct.PrimaryKeys[0].fieldname].ToString();
+                                            args.ParameterString1 = r[DataStruct.PrimaryKeys[0].FieldName].ToString();
                                         }
                                         if (DataStruct.PrimaryKeys.Count == 2)
                                         {
-                                            args.ParameterString2 = r[DataStruct.PrimaryKeys[1].fieldname].ToString();
+                                            args.ParameterString2 = r[DataStruct.PrimaryKeys[1].FieldName].ToString();
                                         }
                                         if (DataStruct.PrimaryKeys.Count == 3)
                                         {
-                                            args.ParameterString3 = r[DataStruct.PrimaryKeys[2].fieldname].ToString();
+                                            args.ParameterString3 = r[DataStruct.PrimaryKeys[2].FieldName].ToString();
                                         }
                                     }
                                     args.ParameterInt1 = percentComplete;
@@ -1142,7 +1142,7 @@ namespace DuckDBDataSourceCore
                         {
                             identity = Convert.ToInt32(result);
                             // Update the primary key property of the inserted record
-                            var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().fieldname);
+                            var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().FieldName);
                             if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
                             {
                                 primaryKeyProperty.SetValue(InsertedData, identity);
@@ -1294,8 +1294,8 @@ namespace DuckDBDataSourceCore
         //        string sql = $"CREATE TABLE {entity.EntityName} (";
         //        foreach (EntityField fld in entity.Fields)
         //        {
-        //            string fieldType = DuckDBConvert(fld.fieldtype);
-        //            sql += $"{fld.fieldname} {fieldType}";
+        //            string Fieldtype = DuckDBConvert(fld.Fieldtype);
+        //            sql += $"{fld.FieldName} {fieldType}";
 
         //            // Add constraints
         //            if (!fld.AllowDBNull)
@@ -1402,27 +1402,27 @@ namespace DuckDBDataSourceCore
         {
             command.Parameters.Clear();
 
-            foreach (EntityField item in DataStruct.PrimaryKeys.OrderBy(o => o.fieldname))
+            foreach (EntityField item in DataStruct.PrimaryKeys.OrderBy(o => o.FieldName))
             {
 
-                if (!command.Parameters.Contains("p_" + Regex.Replace(item.fieldname, @"\s+", "_")))
+                if (!command.Parameters.Contains("p_" + Regex.Replace(item.FieldName, @"\s+", "_")))
                 {
                     DbParameter parameter = command.CreateParameter();
-                    //if (!item.fieldtype.Equals("System.String", StringComparison.InvariantCultureIgnoreCase) && !item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
+                    //if (!item.Fieldtype.Equals("System.String", StringComparison.InvariantCultureIgnoreCase) && !item.Fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
                     //{
-                    //    if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                    //    if (r[item.FieldName] == DBNull.Value || r[item.FieldName].ToString() == "")
                     //    {
                     //        parameter.Value = Convert.ToDecimal(null);
                     //    }
                     //    else
                     //    {
-                    //        parameter.Value = r[item.fieldname];
+                    //        parameter.Value = r[item.FieldName];
                     //    }
                     //}
                     //else
-                    if (item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
+                    if (item.Fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                        if (r[item.FieldName] == DBNull.Value || r[item.FieldName].ToString() == "")
                         {
 
                             parameter.Value = DBNull.Value;
@@ -1433,7 +1433,7 @@ namespace DuckDBDataSourceCore
                             parameter.DbType = DbType.DateTime;
                             try
                             {
-                                parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
+                                parameter.Value = DateTime.Parse(r[item.FieldName].ToString());
                             }
                             catch (FormatException formatex)
                             {
@@ -1443,9 +1443,9 @@ namespace DuckDBDataSourceCore
                         }
                     }
                     else
-                        parameter.Value = r[item.fieldname];
-                    parameter.ParameterName = "p_" + Regex.Replace(item.fieldname, @"\s+", "_");
-                    //   parameter.DbType = TypeToDbType(tb.Columns[item.fieldname].DataType);
+                        parameter.Value = r[item.FieldName];
+                    parameter.ParameterName = "p_" + Regex.Replace(item.FieldName, @"\s+", "_");
+                    //   parameter.DbType = TypeToDbType(tb.Columns[item.FieldName].DataType);
                     command.Parameters.Add(parameter);
                 }
 
@@ -1456,25 +1456,25 @@ namespace DuckDBDataSourceCore
         {
             command.Parameters.Clear();
          
-            foreach (EntityField item in DataStruct.Fields.OrderBy(o => o.fieldname))
+            foreach (EntityField item in DataStruct.Fields.OrderBy(o => o.FieldName))
             {
 
-                if (!command.Parameters.Contains("p_" + Regex.Replace(item.fieldname, @"\s+", "_")))
+                if (!command.Parameters.Contains("p_" + Regex.Replace(item.FieldName, @"\s+", "_")))
                 {
                     DbParameter parameter = command.CreateParameter();
-                    parameter.ParameterName = "p_" + Regex.Replace(item.fieldname, @"\s+", "_");
+                    parameter.ParameterName = "p_" + Regex.Replace(item.FieldName, @"\s+", "_");
 
-                    if (r.IsNull(item.fieldname))
+                    if (r.IsNull(item.FieldName))
                     {
                         parameter.Value = DBNull.Value;
                     }
                     else
                     {
-                        switch (item.fieldtype)
+                        switch (item.Fieldtype)
                         {
                             case "System.DateTime":
                                 parameter.DbType = DbType.DateTime;
-                                if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                                if (r[item.FieldName] == DBNull.Value || r[item.FieldName].ToString() == "")
                                 {
 
                                     parameter.Value = DBNull.Value;
@@ -1485,7 +1485,7 @@ namespace DuckDBDataSourceCore
                                     parameter.DbType = DbType.DateTime;
                                     try
                                     {
-                                        parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
+                                        parameter.Value = DateTime.Parse(r[item.FieldName].ToString());
                                     }
                                     catch (FormatException formatex)
                                     {
@@ -1496,50 +1496,50 @@ namespace DuckDBDataSourceCore
                                 break;
                             case "System.Double":
                                 parameter.DbType = DbType.Double;
-                                parameter.Value = Convert.ToDouble(r[item.fieldname]);
+                                parameter.Value = Convert.ToDouble(r[item.FieldName]);
                                 break;
                             case "System.Single": // Single is equivalent to float in C#
                                 parameter.DbType = DbType.Single;
-                                parameter.Value = Convert.ToSingle(r[item.fieldname]);
+                                parameter.Value = Convert.ToSingle(r[item.FieldName]);
                                 break;
                             case "System.Byte":
                                 parameter.DbType = DbType.Byte;
-                                parameter.Value = Convert.ToByte(r[item.fieldname]);
+                                parameter.Value = Convert.ToByte(r[item.FieldName]);
                                 break;
                             case "System.Guid":
                                 parameter.DbType = DbType.Guid;
-                                parameter.Value = Guid.Parse(r[item.fieldname].ToString());
+                                parameter.Value = Guid.Parse(r[item.FieldName].ToString());
                                 break;
                             case "System.String":  // For VARCHAR2 and NVARCHAR2
                                 parameter.DbType = DbType.String;
-                                parameter.Value = r[item.fieldname] ?? DBNull.Value;
+                                parameter.Value = r[item.FieldName] ?? DBNull.Value;
                                 break;
                             case "System.Decimal":  // For NUMBER without scale
                                 parameter.DbType = DbType.Decimal;
-                                parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToDecimal(r[item.fieldname]);
+                                parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : (object)Convert.ToDecimal(r[item.FieldName]);
                                 break;
                             case "System.Int32":  // For NUMBER that fits into Int32
                                 parameter.DbType = DbType.Int32;
-                                parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToInt32(r[item.fieldname]);
+                                parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : (object)Convert.ToInt32(r[item.FieldName]);
                                 break;
                             case "System.Int64":  // For NUMBER that fits into Int64
                                 parameter.DbType = DbType.Int64;
-                                parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToInt64(r[item.fieldname]);
+                                parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : (object)Convert.ToInt64(r[item.FieldName]);
                                 break;
                             case "System.Boolean":  // If you have a boolean in .NET mapped to VARCHAR2(3 CHAR) in Oracle
                                 parameter.DbType = DbType.Boolean;
-                                parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToBoolean(r[item.fieldname]);
+                                parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : (object)Convert.ToBoolean(r[item.FieldName]);
                                 break;
                             // Add more cases as needed for other types
                             default:
-                                parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : r[item.fieldname];
+                                parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : r[item.FieldName];
                                 break;
                         }
                     }
                   
             
                     
-                    //   parameter.DbType = TypeToDbType(tb.Columns[item.fieldname].DataType);
+                    //   parameter.DbType = TypeToDbType(tb.Columns[item.FieldName].DataType);
                     command.Parameters.Add(parameter);
                 }
 
@@ -1647,7 +1647,7 @@ namespace DuckDBDataSourceCore
                                 //item.FieldName.Equals("Pagesize", StringComparison.OrdinalIgnoreCase) && item.FieldName.Equals("pagenumber", StringComparison.OrdinalIgnoreCase)
                                 if (!string.IsNullOrEmpty(item.FilterValue) && !string.IsNullOrWhiteSpace(item.FilterValue))
                                 {
-                                    //  EntityField f = ent.Fields.Where(i => i.fieldname == item.FieldName).FirstOrDefault();
+                                    //  EntityField f = ent.Fields.Where(i => i.FieldName == item.FieldName).FirstOrDefault();
                                     //>= (((pageNumber-1) * pageSize) + 1)
 
                                     if (item.Operator.ToLower() == "between")
@@ -1793,8 +1793,8 @@ namespace DuckDBDataSourceCore
             {
                 EntityField field = new EntityField();
                 field.GuidID = Guid.NewGuid().ToString();
-                field.fieldname = row[columnNameKey].ToString();
-                field.fieldtype = row[dataTypeKey].ToString();
+                field.FieldName = row[columnNameKey].ToString();
+                field.Fieldtype = row[dataTypeKey].ToString();
 
                 // Handle possible DBNull values and check for column existence
                 field.Size1 = schemaTable.Columns.Contains(maxLengthKey) && row[maxLengthKey] != DBNull.Value ? Convert.ToInt32(row[maxLengthKey]) : 0;

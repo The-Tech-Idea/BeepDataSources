@@ -883,6 +883,46 @@ namespace TheTechIdea.Beep.EventStream
             Logger?.WriteLog("[Disconnect] Disconnected all Kafka producers and consumers.");
         }
 
+        IEnumerable<string> IDataSource.GetEntitesList()
+        {
+            return GetEntitesList();
+        }
+
+        IEnumerable<object> IDataSource.RunQuery(string qrystr)
+        {
+            throw new NotImplementedException();
+        }
+
+        IEnumerable<ChildRelation> IDataSource.GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+        {
+            return GetChildTablesList(tablename, SchemaName, Filterparamters);
+        }
+
+        IEnumerable<RelationShipKeys> IDataSource.GetEntityforeignkeys(string entityname, string SchemaName)
+        {
+            return GetEntityforeignkeys(entityname, SchemaName);
+        }
+
+        IEnumerable<ETLScriptDet> IDataSource.GetCreateEntityScript(List<EntityStructure> entities)
+        {
+            return GetCreateEntityScript(entities);
+        }
+
+        IEnumerable<object> IDataSource.GetEntity(string EntityName, List<AppFilter> filter)
+        {
+            throw new NotImplementedException();
+        }
+
+        PagedResult IDataSource.GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<IEnumerable<object>> IDataSource.GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
 
     }

@@ -580,7 +580,7 @@ namespace TheTechIdea.Beep.DataBase
                 if (Isfoldercreated && IsCreated)
                 {
                     List<ETLScriptDet> retscripts = DMEEditor.ETL.GetCopyDataEntityScript(this, Entities, progress, token);
-                    DMEEditor.ETL.Script.ScriptDTL = retscripts;
+                    DMEEditor.ETL.Script.ScriptDetails = retscripts;
                     DMEEditor.ETL.Script.LastRunDateTime = System.DateTime.Now;
                     DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
                     OnLoadData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);

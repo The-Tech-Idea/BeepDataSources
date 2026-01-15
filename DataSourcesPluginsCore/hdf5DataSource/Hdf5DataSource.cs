@@ -20,7 +20,7 @@ using System.Text;
 
 namespace TheTechIdea.Beep.FileManager
 {
-    [AddinAttribute(Category = DatasourceCategory.FILE, DatasourceType = DataSourceType.HDF5, FileType = "h5,hdf5")]
+    [AddinAttribute(Category = DatasourceCategory.FILE, DatasourceType = DataSourceType.Hdf5, FileType = "h5,hdf5")]
     public class Hdf5DataSource : IDataSource
     {
         public string GuidID { get; set; }
@@ -315,9 +315,9 @@ namespace TheTechIdea.Beep.FileManager
                         DatasourceEntityName = EntityName,
                         Fields = new List<EntityField>
                         {
-                            new EntityField { fieldname = "Path", fieldtype = "System.String", EntityName = EntityName },
-                            new EntityField { fieldname = "DataType", fieldtype = "System.String", EntityName = EntityName },
-                            new EntityField { fieldname = "Dimensions", fieldtype = "System.String", EntityName = EntityName }
+                            new EntityField { FieldName = "Path", Fieldtype = "System.String", EntityName = EntityName },
+                            new EntityField { FieldName = "DataType", Fieldtype = "System.String", EntityName = EntityName },
+                            new EntityField { FieldName = "Dimensions", Fieldtype = "System.String", EntityName = EntityName }
                         }
                     };
 
@@ -449,9 +449,9 @@ namespace TheTechIdea.Beep.FileManager
                 {
                     scripts.Add(new ETLScriptDet
                     {
-                        EntityName = entity.EntityName,
-                        ScriptType = "CREATE",
-                        ScriptText = $"# HDF5 dataset: {entity.EntityName}"
+                        SourceDataSourceEntityName = entity.EntityName,
+                       ScriptType=   DDLScriptType.CreateEntity,
+                        Ddl = $"# HDF5 dataset: {entity.EntityName}"
                     });
                 }
             }

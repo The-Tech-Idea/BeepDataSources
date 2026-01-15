@@ -234,13 +234,13 @@ namespace TheTechIdea.Beep.FileManager
                                     for (int col = headerRow.FirstCellNum; col < headerRow.LastCellNum; col++)
                                     {
                                         ICell cell = headerRow.GetCell(col);
-                                        string fieldName = cell?.StringCellValue ?? $"Column{col}";
+                                        string pFieldName = cell?.StringCellValue ?? $"Column{col}";
 
                                         var field = new EntityField
                                         {
-                                            fieldname = fieldName,
-                                            Originalfieldname = fieldName,
-                                            fieldtype = "System.String", // Default type; will be inferred during read
+                                           FieldName = pFieldName,
+                                            Originalfieldname = pFieldName,
+                                            Fieldtype = "System.String", // Default type; will be inferred during read
                                             IsKey = col == 0,
                                             AllowDBNull = true
                                         };

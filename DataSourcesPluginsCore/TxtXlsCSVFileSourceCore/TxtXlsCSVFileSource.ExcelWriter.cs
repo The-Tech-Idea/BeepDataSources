@@ -65,7 +65,7 @@ namespace TheTechIdea.Beep.FileManager
                     for (int c = 0; c < entity.Fields.Count; c++)
                     {
                         var cell = headerRow.CreateCell(c);
-                        cell.SetCellValue(entity.Fields[c].Originalfieldname ?? entity.Fields[c].fieldname);
+                        cell.SetCellValue(entity.Fields[c].Originalfieldname ?? entity.Fields[c].FieldName);
                     }
                     startRow = 1;
                 }
@@ -91,16 +91,16 @@ namespace TheTechIdea.Beep.FileManager
                                 if (r is DataRow dr)
                                 {
                                     if (dr.Table.Columns.Contains(fld.Originalfieldname)) val = dr[fld.Originalfieldname];
-                                    else if (dr.Table.Columns.Contains(fld.fieldname)) val = dr[fld.fieldname];
+                                    else if (dr.Table.Columns.Contains(fld.FieldName)) val = dr[fld.FieldName];
                                 }
                                 else if (r is IDictionary<string, object> dict)
                                 {
-                                    if (dict.ContainsKey(fld.fieldname)) val = dict[fld.fieldname];
+                                    if (dict.ContainsKey(fld.FieldName)) val = dict[fld.FieldName];
                                     else if (dict.ContainsKey(fld.Originalfieldname)) val = dict[fld.Originalfieldname];
                                 }
                                 else
                                 {
-                                    var pi = r.GetType().GetProperty(fld.fieldname) ?? r.GetType().GetProperty(fld.Originalfieldname);
+                                    var pi = r.GetType().GetProperty(fld.FieldName) ?? r.GetType().GetProperty(fld.Originalfieldname);
                                     if (pi != null) val = pi.GetValue(r);
                                 }
                                 if (val != null)

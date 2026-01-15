@@ -285,7 +285,7 @@ namespace TheTechIdea.Beep.DataBase
                             {
                                 if (!string.IsNullOrEmpty(item.FilterValue) && !string.IsNullOrWhiteSpace(item.FilterValue))
                                 {
-                                    //  EntityField f = ent.Fields.Where(i => i.fieldname == item.FieldName).FirstOrDefault();
+                                    //  EntityField f = ent.Fields.Where(i => i.FieldName == item.FieldName).FirstOrDefault();
                                     if (item.Operator.ToLower() == "between")
                                     {
                                         qrystr += item.FieldName + " " + item.Operator + $" {ParameterDelimiter}p_" + item.FieldName + $" and  {ParameterDelimiter}p_" + item.FieldName + "1 " + Environment.NewLine;
@@ -506,26 +506,26 @@ namespace TheTechIdea.Beep.DataBase
         /// </summary>
         private string FormatFilterCondition(AppFilter filter)
         {
-            string fieldName = filter.FieldName;
+            string FieldName = filter.FieldName;
             string paramName = SanitizeParameterName(filter.FieldName);
 
             if (filter.Operator.ToLower() == "between")
             {
-                return $"{fieldName} BETWEEN {ParameterDelimiter}p_{paramName} AND {ParameterDelimiter}p_{paramName}1";
+                return $"{FieldName} BETWEEN {ParameterDelimiter}p_{paramName} AND {ParameterDelimiter}p_{paramName}1";
             }
             else
             {
-                return $"{fieldName} {filter.Operator} {ParameterDelimiter}p_{paramName}";
+                return $"{FieldName} {filter.Operator} {ParameterDelimiter}p_{paramName}";
             }
         }
 
         /// <summary>
         /// Sanitizes a parameter name to ensure it's valid for SQL.
         /// </summary>
-        private string SanitizeParameterName(string fieldName)
+        private string SanitizeParameterName(string FieldName)
         {
             // Replace spaces with underscores and ensure name is valid
-            string paramName = Regex.Replace(fieldName, @"\s+", "_");
+            string paramName = Regex.Replace(FieldName, @"\s+", "_");
 
             // Truncate if needed (for databases with name length limits)
             if (paramName.Length > 30 && (DatasourceType == DataSourceType.Oracle || DatasourceType == DataSourceType.Postgre))
@@ -720,7 +720,7 @@ namespace TheTechIdea.Beep.DataBase
             {
                 if (ent?.PrimaryKeys != null && ent.PrimaryKeys.Count > 0)
                 {
-                    baseQuery += $" ORDER BY {GetFieldName(ent.PrimaryKeys[0].fieldname)}";
+                    baseQuery += $" ORDER BY {GetFieldName(ent.PrimaryKeys[0].FieldName)}";
                 }
                 else
                 {

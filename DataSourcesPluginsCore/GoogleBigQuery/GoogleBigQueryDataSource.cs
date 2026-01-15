@@ -18,7 +18,7 @@ using System.Text;
 
 namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
 {
-    [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.BigQuery)]
+    [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.GoogleBigQuery)]
     public class GoogleBigQueryDataSource : IDataSource
     {
         public string GuidID { get; set; }
@@ -69,13 +69,13 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
                     ConnectionString = driversConfig?.ConnectionString ?? "",
                     DriverName = driversConfig?.PackageName ?? "",
                     DriverVersion = driversConfig?.version ?? "",
-                    DatabaseType = DataSourceType.BigQuery,
+                    DatabaseType = DataSourceType.GoogleBigQuery,
                     Category = DatasourceCategory.CLOUD
                 };
             }
 
             _projectId = Dataconnection.ConnectionProp?.Database ?? "";
-            _datasetId = Dataconnection.ConnectionProp?.Schema ?? "default";
+            _datasetId = Dataconnection.ConnectionProp?.SchemaName ?? "default";
             
             GuidID = Guid.NewGuid().ToString();
         }
@@ -348,9 +348,9 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
                     {
                         entity.Fields.Add(new EntityField
                         {
-                            fieldname = field.Name,
+                            FieldName = field.Name,
                             Originalfieldname = field.Name,
-                            fieldtype = GetDotNetType(field.Type),
+                            Fieldtype = GetDotNetType(field.Type),
                             EntityName = EntityName,
                             AllowDBNull = field.Mode == "NULLABLE"
                         });
@@ -461,7 +461,7 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
                     var schema = new TableSchemaBuilder();
                     foreach (var field in entity.Fields)
                     {
-                        schema.Add(field.fieldname, GetBigQueryType(field.fieldtype), field.AllowDBNull ? "NULLABLE" : "REQUIRED");
+                        schema.Add(field.FieldName, GetBigQueryType(field.Fieldtype), field.AllowDBNull ? "NULLABLE" : "REQUIRED");
                     }
 
                     var tableRef = new TableReference
@@ -627,7 +627,7 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
                     foreach (var field in entity.Fields)
                     {
                         if (!first) sb.Append(",\n");
-                        sb.Append($"  `{field.fieldname}` {GetBigQueryTypeString(field.fieldtype)}");
+                        sb.Append($"  `{field.FieldName}` {GetBigQueryTypeString(field.Fieldtype)}");
                         if (!field.AllowDBNull) sb.Append(" NOT NULL");
                         first = false;
                     }
@@ -636,7 +636,7 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
                     scripts.Add(new ETLScriptDet
                     {
                         EntityName = entity.EntityName,
-                        ScriptType = "CREATE",
+                       ScriptType= "CREATE",
                         ScriptText = sb.ToString()
                     });
                 }

@@ -358,24 +358,24 @@ namespace TheTechIdea.Beep.DataBase
         {
             command.Parameters.Clear();
 
-            foreach (EntityField item in DataStruct.Fields.OrderBy(o => o.fieldname))
+            foreach (EntityField item in DataStruct.Fields.OrderBy(o => o.FieldName))
             {
 
-                if (!command.Parameters.Contains("p_" + Regex.Replace(item.fieldname, @"\s+", "_")))
+                if (!command.Parameters.Contains("p_" + Regex.Replace(item.FieldName, @"\s+", "_")))
                 {
                     IDbDataParameter parameter = command.CreateParameter();
-                    switch (item.fieldtype)
+                    switch (item.Fieldtype)
                     {
                         case "System.DateTime":
                             parameter.DbType = DbType.DateTime;  // Set this once as it's common for both branches
 
-                            if (r[item.fieldname] == DBNull.Value || string.IsNullOrWhiteSpace(r[item.fieldname].ToString()))
+                            if (r[item.FieldName] == DBNull.Value || string.IsNullOrWhiteSpace(r[item.FieldName].ToString()))
                             {
                                 parameter.Value = DBNull.Value;
                             }
                             else
                             {
-                                if (DateTime.TryParse(r[item.fieldname].ToString(), out DateTime dateValue))
+                                if (DateTime.TryParse(r[item.FieldName].ToString(), out DateTime dateValue))
                                 {
                                     // Ensuring the DateTime Kind is correctly set
                                     if (dateValue.Kind == DateTimeKind.Unspecified)
@@ -399,48 +399,48 @@ namespace TheTechIdea.Beep.DataBase
                             break;
                         case "System.Double":
                             parameter.DbType = DbType.Double;
-                            parameter.Value = Convert.ToDouble(r[item.fieldname]);
+                            parameter.Value = Convert.ToDouble(r[item.FieldName]);
                             break;
                         case "System.Single": // Single is equivalent to float in C#
                             parameter.DbType = DbType.Single;
-                            parameter.Value = Convert.ToSingle(r[item.fieldname]);
+                            parameter.Value = Convert.ToSingle(r[item.FieldName]);
                             break;
                         case "System.Byte":
                             parameter.DbType = DbType.Byte;
-                            parameter.Value = Convert.ToByte(r[item.fieldname]);
+                            parameter.Value = Convert.ToByte(r[item.FieldName]);
                             break;
                         case "System.Guid":
                             parameter.DbType = DbType.Guid;
-                            parameter.Value = Guid.Parse(r[item.fieldname].ToString());
+                            parameter.Value = Guid.Parse(r[item.FieldName].ToString());
                             break;
                         case "System.String":  // For VARCHAR2 and NVARCHAR2
                             parameter.DbType = DbType.String;
-                            parameter.Value = r[item.fieldname] ?? DBNull.Value;
+                            parameter.Value = r[item.FieldName] ?? DBNull.Value;
                             break;
                         case "System.Decimal":  // For NUMBER without scale
                             parameter.DbType = DbType.Decimal;
-                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToDecimal(r[item.fieldname]);
+                            parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : (object)Convert.ToDecimal(r[item.FieldName]);
                             break;
                         case "System.Int32":  // For NUMBER that fits into Int32
                             parameter.DbType = DbType.Int32;
-                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToInt32(r[item.fieldname]);
+                            parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : (object)Convert.ToInt32(r[item.FieldName]);
                             break;
                         case "System.Int64":  // For NUMBER that fits into Int64
                             parameter.DbType = DbType.Int64;
-                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToInt64(r[item.fieldname]);
+                            parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : (object)Convert.ToInt64(r[item.FieldName]);
                             break;
                         case "System.Boolean":  // If you have a boolean in .NET mapped to VARCHAR2(3 CHAR) in Oracle
                             parameter.DbType = DbType.Boolean;
-                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : (object)Convert.ToBoolean(r[item.fieldname]);
+                            parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : (object)Convert.ToBoolean(r[item.FieldName]);
                             break;
                         // Add more cases as needed for other types
                         default:
-                            parameter.Value = r.IsNull(item.fieldname) ? DBNull.Value : r[item.fieldname];
+                            parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : r[item.FieldName];
                             break;
                     }
-                    //if (item.fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
+                    //if (item.Fieldtype.Equals("System.DateTime", StringComparison.InvariantCultureIgnoreCase))
                     //{
-                    //    if (r[item.fieldname] == DBNull.Value || r[item.fieldname].ToString() == "")
+                    //    if (r[item.FieldName] == DBNull.Value || r[item.FieldName].ToString() == "")
                     //    {
 
                     //        parameter.Value = DBNull.Value;
@@ -451,7 +451,7 @@ namespace TheTechIdea.Beep.DataBase
                     //        parameter.DbType = DbType.DateTime;
                     //        try
                     //        {
-                    //            parameter.Value = DateTime.Parse(r[item.fieldname].ToString());
+                    //            parameter.Value = DateTime.Parse(r[item.FieldName].ToString());
                     //        }
                     //        catch (FormatException formatex)
                     //        {
@@ -461,9 +461,9 @@ namespace TheTechIdea.Beep.DataBase
                     //    }
                     //}
                     //else
-                    //    parameter.Value = r[item.fieldname];
-                    parameter.ParameterName = "p_" + Regex.Replace(item.fieldname, @"\s+", "_");
-                    //   parameter.DbType = TypeToDbType(tb.Columns[item.fieldname].DataType);
+                    //    parameter.Value = r[item.FieldName];
+                    parameter.ParameterName = "p_" + Regex.Replace(item.FieldName, @"\s+", "_");
+                    //   parameter.DbType = TypeToDbType(tb.Columns[item.FieldName].DataType);
                     command.Parameters.Add(parameter);
                 }
 
@@ -473,7 +473,7 @@ namespace TheTechIdea.Beep.DataBase
         private IDbCommand CreateCommandParameters(IDbCommand command, object InsertedData, EntityStructure DataStruct)
         {
 
-            foreach (var field in DataStruct.Fields.OrderBy(o => o.fieldname))
+            foreach (var field in DataStruct.Fields.OrderBy(o => o.FieldName))
             {
                 // Skip auto-increment (identity) fields
                 if (field.IsAutoIncrement)
@@ -481,14 +481,14 @@ namespace TheTechIdea.Beep.DataBase
                     continue;
                 }
 
-                var property = InsertedData.GetType().GetProperty(field.fieldname);
+                var property = InsertedData.GetType().GetProperty(field.FieldName);
                 if (property != null)
                 {
-                    var value = InsertedData.GetType().GetProperty(field.fieldname).GetValue(InsertedData) ?? DBNull.Value;
+                    var value = InsertedData.GetType().GetProperty(field.FieldName).GetValue(InsertedData) ?? DBNull.Value;
                     var parameter = command.CreateParameter();
                    
                     // Find the corresponding parameter name in usedParameterNames
-                    string paramName = Regex.Replace(field.fieldname, @"\s+", "_");
+                    string paramName = Regex.Replace(field.FieldName, @"\s+", "_");
                     if (paramName.Length > 30)
                     {
                         paramName = paramName.Substring(0, 30);
@@ -497,16 +497,16 @@ namespace TheTechIdea.Beep.DataBase
                     string matchingParamName = usedParameterNames.FirstOrDefault(p => p.StartsWith(paramName));
                     if (string.IsNullOrEmpty(matchingParamName))
                     {
-                        throw new InvalidOperationException($"Parameter name for field '{field.fieldname}' not found in usedParameterNames.");
+                        throw new InvalidOperationException($"Parameter name for field '{field.FieldName}' not found in usedParameterNames.");
                     }
 
                     parameter.ParameterName = $"{ParameterDelimiter}p_" + matchingParamName;
                     
                     
-                    parameter.DbType = GetDbType(field.fieldtype);
+                    parameter.DbType = GetDbType(field.Fieldtype);
                     if (value != DBNull.Value && value.GetType() != typeof(DBNull))
                     {
-                        parameter.Value = ConvertToDbTypeValue(value, field.fieldtype);
+                        parameter.Value = ConvertToDbTypeValue(value, field.Fieldtype);
                     }
                     else
                     {
@@ -529,14 +529,14 @@ namespace TheTechIdea.Beep.DataBase
                     continue;
                 }
 
-                var property = InsertedData.GetType().GetProperty(field.fieldname);
+                var property = InsertedData.GetType().GetProperty(field.FieldName);
                 if (property != null)
                 {
-                    var value = InsertedData.GetType().GetProperty(field.fieldname).GetValue(InsertedData) ?? DBNull.Value;
+                    var value = InsertedData.GetType().GetProperty(field.FieldName).GetValue(InsertedData) ?? DBNull.Value;
                     var parameter = command.CreateParameter();
 
                     // Find the corresponding parameter name in usedParameterNames
-                    string paramName = Regex.Replace(field.fieldname, @"\s+", "_");
+                    string paramName = Regex.Replace(field.FieldName, @"\s+", "_");
                     if (paramName.Length > 30)
                     {
                         paramName = paramName.Substring(0, 30);
@@ -545,16 +545,16 @@ namespace TheTechIdea.Beep.DataBase
                     string matchingParamName = usedParameterNames.FirstOrDefault(p => p.StartsWith(paramName));
                     if (string.IsNullOrEmpty(matchingParamName))
                     {
-                        throw new InvalidOperationException($"Parameter name for field '{field.fieldname}' not found in usedParameterNames.");
+                        throw new InvalidOperationException($"Parameter name for field '{field.FieldName}' not found in usedParameterNames.");
                     }
 
                     parameter.ParameterName = $"{ParameterDelimiter}p_" + matchingParamName;
 
 
-                    parameter.DbType = GetDbType(field.fieldtype);
+                    parameter.DbType = GetDbType(field.Fieldtype);
                     if (value != DBNull.Value && value.GetType() != typeof(DBNull))
                     {
-                        parameter.Value = ConvertToDbTypeValue(value, field.fieldtype);
+                        parameter.Value = ConvertToDbTypeValue(value, field.Fieldtype);
                     }
                     else
                     {
@@ -563,7 +563,7 @@ namespace TheTechIdea.Beep.DataBase
                     command.Parameters.Add(parameter);
                 }
             }
-            //foreach (var field in UpdateFieldSequnce.OrderBy(o => o.fieldname))
+            //foreach (var field in UpdateFieldSequnce.OrderBy(o => o.FieldName))
             //{
               
             //}
@@ -848,17 +848,17 @@ namespace TheTechIdea.Beep.DataBase
         {
             command.Parameters.Clear();
 
-            foreach (EntityField field in DataStruct.PrimaryKeys.OrderBy(o => o.fieldname))
+            foreach (EntityField field in DataStruct.PrimaryKeys.OrderBy(o => o.FieldName))
             {
 
-                var property = r.GetType().GetProperty(field.fieldname);
+                var property = r.GetType().GetProperty(field.FieldName);
                 if (property != null)
                 {
                     var value = property.GetValue(r);
                     var parameter = command.CreateParameter();
 
                     // Find the corresponding parameter name in usedParameterNames
-                    string paramName = Regex.Replace(field.fieldname, @"\s+", "_");
+                    string paramName = Regex.Replace(field.FieldName, @"\s+", "_");
                     if (paramName.Length > 30)
                     {
                         paramName = paramName.Substring(0, 30);
@@ -867,15 +867,15 @@ namespace TheTechIdea.Beep.DataBase
                     string matchingParamName = usedParameterNames.FirstOrDefault(p => p.StartsWith(paramName));
                     if (string.IsNullOrEmpty(matchingParamName))
                     {
-                        throw new InvalidOperationException($"Parameter name for field '{field.fieldname}' not found in usedParameterNames.");
+                        throw new InvalidOperationException($"Parameter name for field '{field.FieldName}' not found in usedParameterNames.");
                     }
 
                     parameter.ParameterName = $"{ParameterDelimiter}p_" + matchingParamName;
                     parameter.Value = value ?? DBNull.Value;
-                    parameter.DbType = GetDbType(field.fieldtype);
+                    parameter.DbType = GetDbType(field.Fieldtype);
                     if (value != DBNull.Value && value.GetType() != typeof(DBNull))
                     {
-                        parameter.Value = ConvertToDbTypeValue(value, field.fieldtype);
+                        parameter.Value = ConvertToDbTypeValue(value, field.Fieldtype);
                     }
                     else
                     {
@@ -1107,7 +1107,7 @@ namespace TheTechIdea.Beep.DataBase
                         object result = command.ExecuteScalar();
                         if (result != null)
                         {
-                            var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().fieldname);
+                            var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().FieldName);
                             if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
                             {
                                 var primaryKeyType = primaryKeyProperty.PropertyType;
@@ -1245,7 +1245,7 @@ namespace TheTechIdea.Beep.DataBase
                             {
                                 if (!string.IsNullOrEmpty(item.FilterValue) && !string.IsNullOrWhiteSpace(item.FilterValue))
                                 {
-                                    //  EntityField f = ent.Fields.Where(i => i.fieldname == item.FieldName).FirstOrDefault();
+                                    //  EntityField f = ent.Fields.Where(i => i.FieldName == item.FieldName).FirstOrDefault();
                                     if (item.Operator.ToLower() == "between")
                                     {
                                         qrystr += item.FieldName + " " + item.Operator + $" {ParameterDelimiter}p_" + item.FieldName + $" and  {ParameterDelimiter}p_" + item.FieldName + "1 " + Environment.NewLine;
@@ -1513,26 +1513,26 @@ namespace TheTechIdea.Beep.DataBase
         /// </summary>
         private string FormatFilterCondition(AppFilter filter)
         {
-            string fieldName = filter.FieldName;
+            string FieldName = filter.FieldName;
             string paramName = SanitizeParameterName(filter.FieldName);
 
             if (filter.Operator.ToLower() == "between")
             {
-                return $"{fieldName} BETWEEN {ParameterDelimiter}p_{paramName} AND {ParameterDelimiter}p_{paramName}1";
+                return $"{FieldName} BETWEEN {ParameterDelimiter}p_{paramName} AND {ParameterDelimiter}p_{paramName}1";
             }
             else
             {
-                return $"{fieldName} {filter.Operator} {ParameterDelimiter}p_{paramName}";
+                return $"{FieldName} {filter.Operator} {ParameterDelimiter}p_{paramName}";
             }
         }
 
         /// <summary>
         /// Sanitizes a parameter name to ensure it's valid for SQL.
         /// </summary>
-        private string SanitizeParameterName(string fieldName)
+        private string SanitizeParameterName(string FieldName)
         {
             // Replace spaces with underscores and ensure name is valid
-            string paramName = Regex.Replace(fieldName, @"\s+", "_");
+            string paramName = Regex.Replace(FieldName, @"\s+", "_");
 
             // Truncate if needed (for databases with name length limits)
             if (paramName.Length > 30 && (DatasourceType == DataSourceType.Oracle || DatasourceType == DataSourceType.Postgre))
@@ -1603,7 +1603,7 @@ namespace TheTechIdea.Beep.DataBase
         //                    {
         //                        if (!string.IsNullOrEmpty(item.FilterValue) && !string.IsNullOrWhiteSpace(item.FilterValue))
         //                        {
-        //                            //  EntityField f = ent.Fields.Where(i => i.fieldname == item.FieldName).FirstOrDefault();
+        //                            //  EntityField f = ent.Fields.Where(i => i.FieldName == item.FieldName).FirstOrDefault();
         //                            if (item.Operator.ToLower() == "between")
         //                            {
         //                                qrystr += item.FieldName + " " + item.Operator + $" {ParameterDelimiter}p_" + item.FieldName + $" and  {ParameterDelimiter}p_" + item.FieldName + "1 " + Environment.NewLine;
@@ -1855,7 +1855,7 @@ namespace TheTechIdea.Beep.DataBase
             {
                 if (ent?.PrimaryKeys != null && ent.PrimaryKeys.Count > 0)
                 {
-                    baseQuery += $" ORDER BY {GetFieldName(ent.PrimaryKeys[0].fieldname)}";
+                    baseQuery += $" ORDER BY {GetFieldName(ent.PrimaryKeys[0].FieldName)}";
                 }
                 else
                 {
@@ -2247,11 +2247,11 @@ namespace TheTechIdea.Beep.DataBase
 
             return GetEntityStructure(retval, refresh);
         }
-        private bool GetBooleanField(DataRow r, string fieldName)
+        private bool GetBooleanField(DataRow r, string FieldName)
         {
             try
             {
-                return r.Field<bool>(fieldName);
+                return r.Field<bool>(FieldName);
             }
             catch
             {
@@ -2261,7 +2261,7 @@ namespace TheTechIdea.Beep.DataBase
 
         private bool IsNumericType(string fieldType)
         {
-            return fieldType == "System.Decimal" || fieldType == "System.Float" || fieldType == "System.Double";
+            return Fieldtype == "System.Decimal" || Fieldtype == "System.Float" || Fieldtype == "System.Double";
         }
         // helper to read a typed column only if it exists (otherwise return default)
         private static T SafeField<T>(DataRow row, string colName, T defaultValue = default)
@@ -2326,15 +2326,15 @@ namespace TheTechIdea.Beep.DataBase
                         EntityField x = new EntityField();
                         try
                         {
-                            x.fieldname = SafeField<string>(r, "ColumnName");
-                            x.fieldtype = SafeField<Type>(r, "DataType")?.ToString() ?? "System.String";
+                            x.FieldName = SafeField<string>(r, "ColumnName");
+                            x.Fieldtype = SafeField<Type>(r, "DataType")?.ToString() ?? "System.String";
 
                             // Oracle FLOAT → .NET mapping
                             if (DatasourceType == DataSourceType.Oracle
-                             && x.fieldtype.Equals("FLOAT", StringComparison.OrdinalIgnoreCase))
+                             && x.Fieldtype.Equals("FLOAT", StringComparison.OrdinalIgnoreCase))
                             {
-                                int precision = GetFloatPrecision(x.EntityName, x.fieldname);
-                                x.fieldtype = MapOracleFloatToDotNetType(precision);
+                                int precision = GetFloatPrecision(x.EntityName, x.FieldName);
+                                x.Fieldtype = MapOracleFloatToDotNetType(precision);
                             }
 
                             x.Size1 = SafeField<int>(r, "ColumnSize");
@@ -2359,7 +2359,7 @@ namespace TheTechIdea.Beep.DataBase
                             x.IsHidden = SafeField<bool>(r, "IsHidden");
 
                             // NumericPrecision/Scale only if the schema provides them
-                            if (IsNumericType(x.fieldtype))
+                            if (IsNumericType(x.Fieldtype))
                             {
                                 x.NumericPrecision = SafeField<short>(r, "NumericPrecision");
                                 x.NumericScale = SafeField<short>(r, "NumericScale");
@@ -2369,7 +2369,7 @@ namespace TheTechIdea.Beep.DataBase
                         {
                             DMEEditor.AddLogMessage(
                               "Fail",
-                              $"Error creating Field metadata for {entname}.{x.fieldname}: {ex.Message}",
+                              $"Error creating Field metadata for {entname}.{x.FieldName}: {ex.Message}",
                               DateTime.Now, 0, entname, Errors.Failed
                             );
                         }
@@ -2464,8 +2464,8 @@ namespace TheTechIdea.Beep.DataBase
             foreach (DataRow row in schemaTable.Rows)
             {
                 EntityField field = new EntityField();
-                field.fieldname = row[columnNameKey].ToString();
-                field.fieldtype = row[dataTypeKey].ToString();
+                field.FieldName = row[columnNameKey].ToString();
+                field.Fieldtype = row[dataTypeKey].ToString();
                 field.Size1 = Convert.ToInt32(row[maxLengthKey]);
                 field.NumericPrecision = Convert.ToInt16(row[numericPrecisionKey]);
                 field.NumericScale = Convert.ToInt16(row[numericScaleKey]);
@@ -2865,7 +2865,7 @@ namespace TheTechIdea.Beep.DataBase
                 }
 
                 // Filter out fields with empty names before calculating total
-                var validFields = t1.Fields.Where(p => !string.IsNullOrEmpty(p.fieldname?.Trim())).ToList();
+                var validFields = t1.Fields.Where(p => !string.IsNullOrEmpty(p.FieldName?.Trim())).ToList();
                 int totalValidFields = validFields.Count;
 
                 if (totalValidFields == 0)
@@ -2879,20 +2879,20 @@ namespace TheTechIdea.Beep.DataBase
                 foreach (EntityField dbf in t1.Fields)
                 {
                     // Skip fields with empty names
-                    if (string.IsNullOrEmpty(dbf.fieldname))
+                    if (string.IsNullOrEmpty(dbf.FieldName))
                     {
                         DMEEditor.AddLogMessage("Fail", $"Field Name is empty for {t1.EntityName}", DateTime.Now, 0, t1.EntityName, Errors.Failed);
                         continue;
                     }
 
-                    string fieldName = dbf.fieldname;
+                    string FieldName = dbf.FieldName;
                     if (DatasourceType == DataSourceType.Mysql)
                     {
-                        fieldName = fieldName.Replace(" ", "_");
-                        fieldName = "`" + fieldName + "`";
+                       FieldName = FieldName.Replace(" ", "_");
+                       FieldName = "`" + FieldName + "`";
                     }
 
-                    createtablestring += "\n " + fieldName + " " + DMEEditor.typesHelper.GetDataType(DatasourceName, dbf) + " ";
+                    createtablestring += "\n " + FieldName + " " + DMEEditor.typesHelper.GetDataType(DatasourceName, dbf) + " ";
 
                     if (dbf.IsAutoIncrement)
                     {
@@ -3077,7 +3077,7 @@ namespace TheTechIdea.Beep.DataBase
                 int i = 0;
                 foreach (EntityField dbf in t1.PrimaryKeys)
                 {
-                    retval += dbf.fieldname + ",";
+                    retval += dbf.FieldName + ",";
 
                     i += 1;
                 }
@@ -3218,7 +3218,7 @@ namespace TheTechIdea.Beep.DataBase
                             AutnumberString = "NULL AUTO_INCREMENT";
                             break;
                         case DataSourceType.Oracle:
-                            AutnumberString = " GENERATED BY DEFAULT ON NULL AS IDENTITY";// "CREATE SEQUENCE " + f.fieldname + "_seq MINVALUE 1 START WITH 1 INCREMENT BY 1 CACHE 1 ";
+                            AutnumberString = " GENERATED BY DEFAULT ON NULL AS IDENTITY";// "CREATE SEQUENCE " + f.FieldName + "_seq MINVALUE 1 START WITH 1 INCREMENT BY 1 CACHE 1 ";
                             break;
                         case DataSourceType.SqlCompact:
                             AutnumberString = "IDENTITY(1,1)";
@@ -3237,7 +3237,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (System.Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error Creating Auto number Field {f.EntityName} and {f.fieldname} ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+                DMEEditor.AddLogMessage("Fail", $"Error Creating Auto number Field {f.EntityName} and {f.FieldName} ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
 
             }
             return AutnumberString;
@@ -3267,17 +3267,17 @@ namespace TheTechIdea.Beep.DataBase
             string Valuestr = ") VALUES (";
 
             int t = 0;
-            foreach (EntityField item in DataStruct.Fields.OrderBy(o => o.fieldname))
+            foreach (EntityField item in DataStruct.Fields.OrderBy(o => o.FieldName))
             {
                 if (!(item.IsAutoIncrement))
                 {
-                    string fieldName = GetFieldName(item.fieldname);
-                    string paramName = Regex.Replace(item.fieldname, @"\s+", "_");
+                    string FieldName = GetFieldName(item.FieldName);
+                    string paramName = Regex.Replace(item.FieldName, @"\s+", "_");
 
                     // Ensure the field name and parameter name are within the Oracle identifier length limit
-                    if (fieldName.Length > 30)
+                    if (FieldName.Length > 30)
                     {
-                        fieldName = fieldName.Substring(0, 30);
+                       FieldName = FieldName.Substring(0, 30);
                     }
 
                     if (paramName.Length > 30)
@@ -3294,7 +3294,7 @@ namespace TheTechIdea.Beep.DataBase
                     }
                     usedParameterNames.Add(paramName);
 
-                    Insertstr += $"{fieldName},";
+                    Insertstr += $"{FieldName},";
                     Valuestr += $"{ParameterDelimiter}p_" + paramName + ",";
                 }
 
@@ -3318,7 +3318,7 @@ namespace TheTechIdea.Beep.DataBase
             for (int i = 0; i < DataStruct.Fields.Count; i++)
             {
                 EntityField field = DataStruct.Fields[i];
-                if (!DataStruct.PrimaryKeys.Any(l => l.fieldname == field.fieldname))
+                if (!DataStruct.PrimaryKeys.Any(l => l.FieldName == field.FieldName))
                 {
                     UpdateFieldSequnce.Add(field);
                 }
@@ -3326,15 +3326,15 @@ namespace TheTechIdea.Beep.DataBase
             for (int i = 0; i < UpdateFieldSequnce.Count; i++)
             {
                 EntityField item= UpdateFieldSequnce[i];
-                if (!DataStruct.PrimaryKeys.Any(l => l.fieldname == item.fieldname))
+                if (!DataStruct.PrimaryKeys.Any(l => l.FieldName == item.FieldName))
                 {
-                    string fieldName = GetFieldName(item.fieldname);
-                    string paramName = Regex.Replace(item.fieldname, @"\s+", "_");
+                    string FieldName = GetFieldName(item.FieldName);
+                    string paramName = Regex.Replace(item.FieldName, @"\s+", "_");
 
                     // Ensure the field name and parameter name are within the Oracle identifier length limit
-                    if (fieldName.Length > 30)
+                    if (FieldName.Length > 30)
                     {
-                        fieldName = fieldName.Substring(0, 30);
+                       FieldName = FieldName.Substring(0, 30);
                     }
 
                     if (paramName.Length > 30)
@@ -3351,7 +3351,7 @@ namespace TheTechIdea.Beep.DataBase
                     }
                     usedParameterNames.Add(paramName);
 
-                    Updatestr += $"{GetFieldName(item.fieldname)}= {ParameterDelimiter}p_{paramName},";
+                    Updatestr += $"{GetFieldName(item.FieldName)}= {ParameterDelimiter}p_{paramName},";
                 }
             }
 
@@ -3364,8 +3364,8 @@ namespace TheTechIdea.Beep.DataBase
             for (int i = 0; i < DataStruct.PrimaryKeys.Count; i++)
             {
                 EntityField item = DataStruct.PrimaryKeys[i];
-                string fieldName = GetFieldName(item.fieldname);
-                string paramName = Regex.Replace(item.fieldname, @"\s+", "_");
+                string FieldName = GetFieldName(item.FieldName);
+                string paramName = Regex.Replace(item.FieldName, @"\s+", "_");
                 if (usedParameterNames.Contains(paramName))
                 {
                     paramName = usedParameterNames.FirstOrDefault(p => p.Contains(paramName));
@@ -3373,9 +3373,9 @@ namespace TheTechIdea.Beep.DataBase
                 else
                 {
                     // Ensure the field name and parameter name are within the Oracle identifier length limit
-                    if (fieldName.Length > 30)
+                    if (FieldName.Length > 30)
                     {
-                        fieldName = fieldName.Substring(0, 30);
+                       FieldName = FieldName.Substring(0, 30);
                     }
 
                     if (paramName.Length > 30)
@@ -3395,11 +3395,11 @@ namespace TheTechIdea.Beep.DataBase
 
                 if (t == 1)
                 {
-                    Updatestr += $"{GetFieldName(item.fieldname)}= {ParameterDelimiter}p_{paramName}";
+                    Updatestr += $"{GetFieldName(item.FieldName)}= {ParameterDelimiter}p_{paramName}";
                 }
                 else
                 {
-                    Updatestr += $" and {GetFieldName(item.fieldname)}= {ParameterDelimiter}p_{paramName}";
+                    Updatestr += $" and {GetFieldName(item.FieldName)}= {ParameterDelimiter}p_{paramName}";
                 }
                 t += 1;
             }
@@ -3410,15 +3410,15 @@ namespace TheTechIdea.Beep.DataBase
         {
             string deleteStr = $"DELETE FROM {EntityName} WHERE ";
             int t = 1;
-            foreach (EntityField item in DataStruct.PrimaryKeys.OrderBy(o => o.fieldname))
+            foreach (EntityField item in DataStruct.PrimaryKeys.OrderBy(o => o.FieldName))
             {
-                string fieldName = GetFieldName(item.fieldname);
-                string paramName = Regex.Replace(item.fieldname, @"\s+", "_");
+                string FieldName = GetFieldName(item.FieldName);
+                string paramName = Regex.Replace(item.FieldName, @"\s+", "_");
 
                 // Ensure the field name and parameter name are within the Oracle identifier length limit
-                if (fieldName.Length > 30)
+                if (FieldName.Length > 30)
                 {
-                    fieldName = fieldName.Substring(0, 30);
+                   FieldName = FieldName.Substring(0, 30);
                 }
 
                 if (paramName.Length > 30)
@@ -3438,7 +3438,7 @@ namespace TheTechIdea.Beep.DataBase
                 {
                     deleteStr += " AND ";
                 }
-                deleteStr += $"{GetFieldName(item.fieldname)} = {ParameterDelimiter}p_{paramName}";
+                deleteStr += $"{GetFieldName(item.FieldName)} = {ParameterDelimiter}p_{paramName}";
                 t += 1;
             }
             return deleteStr;
@@ -3469,19 +3469,19 @@ namespace TheTechIdea.Beep.DataBase
             return uniqueParameterName;
         }
 
-        public virtual string GetFieldName(string fieldname)
+        public virtual string GetFieldName(string FieldName)
         {
-            string retval = fieldname;
-            if (fieldname.IndexOf(" ") != -1)
+            string retval = FieldName;
+            if (FieldName.IndexOf(" ") != -1)
             {
                 if (ColumnDelimiter.Length == 2) //(ColumnDelimiter.Contains("[") || ColumnDelimiter.Contains("]"))
                 {
 
-                    retval = $"{ColumnDelimiter[0]}{fieldname}{ColumnDelimiter[1]}";
+                    retval = $"{ColumnDelimiter[0]}{FieldName}{ColumnDelimiter[1]}";
                 }
                 else
                 {
-                    retval = $"{ColumnDelimiter}{fieldname}{ColumnDelimiter}";
+                    retval = $"{ColumnDelimiter}{FieldName}{ColumnDelimiter}";
                 }
 
             }
@@ -3641,7 +3641,7 @@ namespace TheTechIdea.Beep.DataBase
                                     adp.SelectCommand.Parameters.Add(parameter1);
                                 }
 
-                                //  parameter.DbType = TypeToDbType(tb.Columns[item.fieldname].DataType);
+                                //  parameter.DbType = TypeToDbType(tb.Columns[item.FieldName].DataType);
                                 adp.SelectCommand.Parameters.Add(parameter);
 
                             }
@@ -3756,10 +3756,10 @@ namespace TheTechIdea.Beep.DataBase
                 return "System.Decimal";
             }
         }
-        public int GetFloatPrecision(string tableName, string fieldName)
+        public int GetFloatPrecision(string tableName, string FieldName)
         {
             int precision = 0;
-            string query = $"SELECT DATA_PRECISION FROM ALL_TAB_COLUMNS WHERE TABLE_NAME = '{tableName.ToUpper()}' AND COLUMN_NAME = '{fieldName.ToUpper()}'";
+            string query = $"SELECT DATA_PRECISION FROM ALL_TAB_COLUMNS WHERE TABLE_NAME = '{tableName.ToUpper()}' AND COLUMN_NAME = '{FieldName.ToUpper()}'";
 
 
             IDbCommand command = GetDataCommand();

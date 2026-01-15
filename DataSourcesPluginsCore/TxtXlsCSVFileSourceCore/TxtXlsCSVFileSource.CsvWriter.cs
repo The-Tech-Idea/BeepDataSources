@@ -43,7 +43,7 @@ namespace TheTechIdea.Beep.FileManager
                     {
                         // header
                         var header = string.Join(_delimiter.ToString(), entity.Fields.Select(f => 
-                            _helper.EscapeCsvValue(f.Originalfieldname ?? f.fieldname, _delimiter)));
+                            _helper.EscapeCsvValue(f.Originalfieldname ?? f.FieldName, _delimiter)));
                         sw.WriteLine(header);
                         if (rows != null)
                         {

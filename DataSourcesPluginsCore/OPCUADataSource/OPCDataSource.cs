@@ -314,7 +314,7 @@ namespace OPCUADataSource
                         var script = new ETLScriptDet
                         {
                             SourceEntity = entity,
-                            scriptType = DDLScriptType.CreateEntity
+                           ScriptType= DDLScriptType.CreateEntity
                            
                         };
                         scripts.Add(script);
@@ -618,22 +618,22 @@ namespace OPCUADataSource
                                         {
                                             entityStructure.Fields.Add(new EntityField
                                             {
-                                                fieldname = "Value",
-                                                fieldtype = GetDotNetType(values[2].Value),
+                                                FieldName = "Value",
+                                                Fieldtype = GetDotNetType(values[2].Value),
                                                 BaseColumnName = "Value"
                                             });
 
                                             entityStructure.Fields.Add(new EntityField
                                             {
-                                                fieldname = "NodeId",
-                                                fieldtype = "System.String",
+                                                FieldName = "NodeId",
+                                                Fieldtype = "System.String",
                                                 BaseColumnName = "NodeId"
                                             });
 
                                             entityStructure.Fields.Add(new EntityField
                                             {
-                                                fieldname = "DisplayName",
-                                                fieldtype = "System.String",
+                                                FieldName = "DisplayName",
+                                                Fieldtype = "System.String",
                                                 BaseColumnName = "DisplayName"
                                             });
                                         }

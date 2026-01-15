@@ -515,8 +515,8 @@ namespace TheTechIdea.Beep.MassTransitDataSourceCore
                         EntityName = EntityName,
                         Fields = new List<EntityField>
                         {
-                            new EntityField { fieldname = "MessageId", fieldtype = "System.Guid" },
-                            new EntityField { fieldname = "Data", fieldtype = "System.String" }
+                            new EntityField { FieldName = "MessageId", Fieldtype = "System.Guid" },
+                            new EntityField { FieldName = "Data", Fieldtype = "System.String" }
                         }
                     };
                     Entities.Add(entity);
@@ -632,8 +632,8 @@ namespace TheTechIdea.Beep.MassTransitDataSourceCore
                 {
                     var field = new EntityField
                     {
-                        fieldname = prop.Name,
-                        fieldtype = prop.PropertyType.FullName
+                        FieldName = prop.Name,
+                        Fieldtype = prop.PropertyType.FullName
                     };
                     entity.Fields.Add(field);
                 }

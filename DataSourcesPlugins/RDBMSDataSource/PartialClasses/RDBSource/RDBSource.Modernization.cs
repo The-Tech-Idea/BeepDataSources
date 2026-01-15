@@ -73,9 +73,9 @@ namespace TheTechIdea.Beep.DataBase
 
                     for (int i = 0; i < reader.FieldCount; i++)
                     {
-                        var fieldName = reader.GetName(i);
+                        var FieldName = reader.GetName(i);
                         var property = properties.FirstOrDefault(p => 
-                            p.Name.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+                            p.Name.Equals(FieldName, StringComparison.OrdinalIgnoreCase));
 
                         if (property != null && property.CanWrite)
                         {
@@ -243,9 +243,9 @@ namespace TheTechIdea.Beep.DataBase
 
                         for (int i = 0; i < reader.FieldCount; i++)
                         {
-                            var fieldName = reader.GetName(i);
+                            var FieldName = reader.GetName(i);
                             var property = properties.FirstOrDefault(p => 
-                                p.Name.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+                                p.Name.Equals(FieldName, StringComparison.OrdinalIgnoreCase));
 
                             if (property != null && property.CanWrite)
                             {
@@ -397,14 +397,14 @@ namespace TheTechIdea.Beep.DataBase
                 var primaryKey = DataStruct?.PrimaryKeys?.FirstOrDefault();
                 if (primaryKey != null)
                 {
-                    baseQuery += $" ORDER BY {GetFieldName(primaryKey.fieldname)}";
+                    baseQuery += $" ORDER BY {GetFieldName(primaryKey.FieldName)}";
                 }
                 else
                 {
                     // Fallback to first column
                     var firstField = DataStruct?.Fields?.FirstOrDefault();
                     if (firstField != null)
-                        baseQuery += $" ORDER BY {GetFieldName(firstField.fieldname)}";
+                        baseQuery += $" ORDER BY {GetFieldName(firstField.FieldName)}";
                 }
             }
 

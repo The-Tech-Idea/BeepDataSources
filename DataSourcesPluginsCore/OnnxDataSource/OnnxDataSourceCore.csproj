@@ -32,8 +32,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.23.0" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.23.2" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.57" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.110" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.61" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.118" />
   </ItemGroup>
 
 </Project>

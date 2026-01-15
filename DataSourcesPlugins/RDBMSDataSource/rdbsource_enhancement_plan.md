@@ -127,7 +127,7 @@ public DbType ConvertToDbType(Type type)
 }
 
 // Replace type conversions in CRUD operations
-var mappedType = DataTypesHelper.GetMappedNetType(field.fieldtype, DatasourceType);
+var mappedType = DataTypesHelper.GetMappedNetType(field.Fieldtype, DatasourceType);
 ```
 
 **Impact**:

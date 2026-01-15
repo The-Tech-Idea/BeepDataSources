@@ -20,7 +20,7 @@ using Newtonsoft.Json.Linq;
 
 namespace TheTechIdea.Beep.Cloud.Rockset
 {
-    [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.Rockset)]
+    [AddinAttribute(Category = DatasourceCategory.CLOUD, DatasourceType = DataSourceType.RocketSet)]
     public class RocksetDataSource : IDataSource
     {
         public string GuidID { get; set; }
@@ -72,7 +72,7 @@ namespace TheTechIdea.Beep.Cloud.Rockset
                     ConnectionString = driversConfig?.ConnectionString ?? "",
                     DriverName = driversConfig?.PackageName ?? "",
                     DriverVersion = driversConfig?.version ?? "",
-                    DatabaseType = DataSourceType.Rockset,
+                    DatabaseType = DataSourceType.RocketSet,
                     Category = DatasourceCategory.CLOUD
                 };
             }
@@ -458,9 +458,9 @@ namespace TheTechIdea.Beep.Cloud.Rockset
                                 {
                                     entity.Fields.Add(new EntityField
                                     {
-                                        fieldname = prop.Name,
+                                        FieldName = prop.Name,
                                         Originalfieldname = prop.Name,
-                                        fieldtype = GetFieldType(prop.Value),
+                                        Fieldtype = GetFieldType(prop.Value),
                                         EntityName = EntityName
                                     });
                                 }
@@ -527,7 +527,7 @@ namespace TheTechIdea.Beep.Cloud.Rockset
                 var entity = GetEntityStructure(EntityName, false);
                 if (entity != null)
                 {
-                    return DMTypeBuilder.CreateTypeFromEntityStructure(entity, DMEEditor);
+                    return DMTypeBuilder.CreateDynamicTypeFromObject(entity, DMEEditor);
                 }
             }
             catch (Exception ex)
@@ -679,7 +679,7 @@ namespace TheTechIdea.Beep.Cloud.Rockset
             ErrorObject.Flag = Errors.Ok;
             try
             {
-                ExecuteSql(dDLScripts.ScriptText);
+                ExecuteSql(dDLScripts.Ddl);
             }
             catch (Exception ex)
             {
@@ -709,9 +709,9 @@ namespace TheTechIdea.Beep.Cloud.Rockset
                 {
                     scripts.Add(new ETLScriptDet
                     {
-                        EntityName = entity.EntityName,
-                        ScriptType = "CREATE",
-                        ScriptText = $"# Rockset collection: {entity.EntityName}\n# Create via Rockset API or console"
+                        SourceDataSourceEntityName = entity.EntityName,
+                       ScriptType=  DDLScriptType.CreateEntity,
+                        Ddl = $"# Rockset collection: {entity.EntityName}\n# Create via Rockset API or console"
                     });
                 }
             }

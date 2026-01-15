@@ -31,6 +31,7 @@ using Microsoft.CodeAnalysis;
 using System.Collections;
 using System.Text.RegularExpressions;
 using MongoDB.Driver.Core.Events;
+using TheTechIdea.Beep.Helpers.DataTypesHelpers;
 
 
 
@@ -1542,12 +1543,12 @@ namespace TheTechIdea.Beep.NOSQL
         {
             foreach (var element in document.Elements)
             {
-                if (!structure.Fields.Any(f => f.fieldname.Equals(element.Name, StringComparison.OrdinalIgnoreCase)))
+                if (!structure.Fields.Any(f => f.FieldName.Equals(element.Name, StringComparison.OrdinalIgnoreCase)))
                 {
                     structure.Fields.Add(new EntityField
                     {
-                        fieldname = element.Name,
-                        fieldtype = element.Value.BsonType.ToString(), // Assuming a method to translate BsonType to a more general type name
+                        FieldName = element.Name,
+                        Fieldtype = element.Value.BsonType.ToString(), // Assuming a method to translate BsonType to a more general type name
                         EntityName = structure.EntityName
                     });
                 }
@@ -1566,12 +1567,12 @@ namespace TheTechIdea.Beep.NOSQL
             var schemaDoc = new BsonDocument();
             foreach (var field in entity.Fields)
             {
-                schemaDoc[field.fieldname] = new BsonDocument("$type", field.fieldtype);
+                schemaDoc[field.FieldName] = new BsonDocument("$type", field.Fieldtype);
             }
             return new BsonDocument("$jsonSchema", new BsonDocument
             {
                 { "bsonType", "object" },
-                  { "required", new BsonArray(entity.Fields.Where(f => f.IsKey).Select(f => f.fieldname)) },
+                  { "required", new BsonArray(entity.Fields.Where(f => f.IsKey).Select(f => f.FieldName)) },
                   { "properties", schemaDoc }
                 });
         }
@@ -1723,8 +1724,8 @@ namespace TheTechIdea.Beep.NOSQL
                 dynamic instance = Activator.CreateInstance(type);
                 foreach (var field in entStructure.Fields)
                 {
-                    var fieldName = field.fieldname.ToLower();
-                    var f = document.Names.FirstOrDefault(p => p.Equals(fieldName, StringComparison.InvariantCultureIgnoreCase));
+                    var FieldName = field.FieldName.ToLower();
+                    var f = document.Names.FirstOrDefault(p => p.Equals(FieldName, StringComparison.InvariantCultureIgnoreCase));
                     if (!string.IsNullOrEmpty(f))
                     {
                         var bsonValue = document.GetElement(f).Value;
@@ -1732,48 +1733,48 @@ namespace TheTechIdea.Beep.NOSQL
                         {
                             try
                             {
-                                string netTypeString = field.fieldtype; // Use field.fieldtype directly
+                                string netTypeString = field.Fieldtype; // Use field.Fieldtype directly
                                 Type netType = Type.GetType(netTypeString);
 
                                 if (netType == typeof(string) && bsonValue.BsonType == BsonType.ObjectId)
                                 {
                                     // Convert ObjectId to string
                                     var value = bsonValue.AsObjectId.ToString();
-                                    type.GetProperty(field.fieldname).SetValue(instance, value);
+                                    type.GetProperty(field.FieldName).SetValue(instance, value);
                                 }
-                                else if (Type.GetTypeCode(netType) == Type.GetTypeCode(Type.GetType(field.fieldtype)))
+                                else if (Type.GetTypeCode(netType) == Type.GetTypeCode(Type.GetType(field.Fieldtype)))
                                 {
                                     // Directly assign if types match
                                     object value;
-                                    if (Type.GetType(field.fieldtype) == typeof(string))
+                                    if (Type.GetType(field.Fieldtype) == typeof(string))
                                     {
                                         value = bsonValue.ToString();
                                     }
                                     else
                                     {
-                                        value = BsonSerializer.Deserialize(bsonValue.ToJson(), Type.GetType(field.fieldtype));
+                                        value = BsonSerializer.Deserialize(bsonValue.ToJson(), Type.GetType(field.Fieldtype));
                                     }
-                                    type.GetProperty(field.fieldname).SetValue(instance, value);
+                                    type.GetProperty(field.FieldName).SetValue(instance, value);
                                 }
                                 else
                                 {
                                     // Handle type conversion if necessary
                                     object value;
-                                    if (Type.GetType(field.fieldtype) == typeof(string))
+                                    if (Type.GetType(field.Fieldtype) == typeof(string))
                                     {
                                         value = bsonValue.ToString();
                                     }
                                     else
                                     {
-                                        value = Convert.ChangeType(bsonValue, Type.GetType(field.fieldtype));
+                                        value = Convert.ChangeType(bsonValue, Type.GetType(field.Fieldtype));
                                     }
-                                    type.GetProperty(field.fieldname).SetValue(instance, value);
+                                    type.GetProperty(field.FieldName).SetValue(instance, value);
                                 }
                             }
                             catch (Exception ex)
                             {
                                 // Handle or log the error appropriately
-                                DMEEditor.AddLogMessage("Beep", $"Error setting property {field.fieldname} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                                DMEEditor.AddLogMessage("Beep", $"Error setting property {field.FieldName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
                             }
                         }
                     }
@@ -1821,9 +1822,9 @@ namespace TheTechIdea.Beep.NOSQL
                     {
                         EntityField newField = new EntityField
                         {
-                            fieldname = element.Name,
+                            FieldName = element.Name,
                             BaseColumnName = element.Name,
-                            fieldtype = GetTypeFromBsonValue(element.Value),
+                            Fieldtype = GetTypeFromBsonValue(element.Value),
                             IsKey = element.Name.ToLower().Contains("_id"),
                             IsIdentity = element.Name.ToLower().Contains("_id"),
                             FieldIndex = fieldIndex++
@@ -1853,9 +1854,9 @@ namespace TheTechIdea.Beep.NOSQL
                 {
                     EntityField field = new EntityField
                     {
-                        fieldname = element.Name,
+                        FieldName = element.Name,
                         BaseColumnName = element.Name,
-                        fieldtype = GetTypeFromBsonValue(element.Value), // Convert BsonType to a .NET type string
+                        Fieldtype = GetTypeFromBsonValue(element.Value), // Convert BsonType to a .NET type string
                         IsKey = element.Name.ToLower().Contains("_id"), // Assume any field with "ID" in the name is a key
                         IsIdentity = element.Name.ToLower().Contains("_id"),
                         ValueRetrievedFromParent = false,
@@ -2115,7 +2116,7 @@ namespace TheTechIdea.Beep.NOSQL
             foreach (var property in properties)
             {
                 var name = property.Name;
-                var field = entityStructure.Fields.FirstOrDefault(f => f.fieldname.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+                var field = entityStructure.Fields.FirstOrDefault(f => f.FieldName.Equals(name, StringComparison.InvariantCultureIgnoreCase));
                 try
                 {
                     if (field != null)
@@ -2128,7 +2129,7 @@ namespace TheTechIdea.Beep.NOSQL
                         {
                             bsonValue = BsonNull.Value;
                         }
-                        else if (field.IsKey && field.fieldtype == "System.String")
+                        else if (field.IsKey && field.Fieldtype == "System.String")
                         {
 
                             // Handle ObjectId conversion for key fields
@@ -2146,7 +2147,7 @@ namespace TheTechIdea.Beep.NOSQL
                         else
                         {
                             // Get the MongoDB type from .NET type and convert the value to BsonValue
-                            var mongoType = GetMongoTypeFromNetType(field.fieldtype);
+                            var mongoType = GetMongoTypeFromNetType(field.Fieldtype);
                             bsonValue = ConvertToBsonValue(value, mongoType);
                         }
 

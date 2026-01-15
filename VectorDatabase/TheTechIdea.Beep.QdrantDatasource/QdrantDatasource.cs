@@ -366,8 +366,8 @@ namespace TheTechIdea.Beep.QdrantDatasource
             {
                 scripts.Add(new ETLScriptDet
                 {
-                    ddl = $"-- Create Qdrant collection: {entity.EntityName}",
-                    scriptType = DDLScriptType.CreateEntity
+                    Ddl = $"-- Create Qdrant collection: {entity.EntityName}",
+                   ScriptType= DDLScriptType.CreateEntity
                 });
             }
             return scripts;
@@ -750,27 +750,27 @@ namespace TheTechIdea.Beep.QdrantDatasource
                 case "collections":
                     entity.Fields.AddRange(new[]
                     {
-                        new EntityField { fieldname = "name", fieldtype = "System.String", IsKey = true },
-                        new EntityField { fieldname = "vectors_count", fieldtype = "System.Int64" },
-                        new EntityField { fieldname = "status", fieldtype = "System.String" },
-                        new EntityField { fieldname = "optimizer_status", fieldtype = "System.String" }
+                        new EntityField { FieldName = "name", Fieldtype = "System.String", IsKey = true },
+                        new EntityField { FieldName = "vectors_count", Fieldtype = "System.Int64" },
+                        new EntityField { FieldName = "status", Fieldtype = "System.String" },
+                        new EntityField { FieldName = "optimizer_status", Fieldtype = "System.String" }
                     });
                     break;
                 case "points":
                     entity.Fields.AddRange(new[]
                     {
-                        new EntityField { fieldname = "id", fieldtype = "System.String", IsKey = true },
-                        new EntityField { fieldname = "vector", fieldtype = "System.Single[]" },
-                        new EntityField { fieldname = "payload", fieldtype = "System.Object" },
-                        new EntityField { fieldname = "score", fieldtype = "System.Single" }
+                        new EntityField { FieldName = "id", Fieldtype = "System.String", IsKey = true },
+                        new EntityField { FieldName = "vector", Fieldtype = "System.Single[]" },
+                        new EntityField { FieldName = "payload", Fieldtype = "System.Object" },
+                        new EntityField { FieldName = "score", Fieldtype = "System.Single" }
                     });
                     break;
                 case "snapshots":
                     entity.Fields.AddRange(new[]
                     {
-                        new EntityField { fieldname = "name", fieldtype = "System.String", IsKey = true },
-                        new EntityField { fieldname = "creation_time", fieldtype = "System.DateTime" },
-                        new EntityField { fieldname = "size", fieldtype = "System.Int64" }
+                        new EntityField { FieldName = "name", Fieldtype = "System.String", IsKey = true },
+                        new EntityField { FieldName = "creation_time", Fieldtype = "System.DateTime" },
+                        new EntityField { FieldName = "size", Fieldtype = "System.Int64" }
                     });
                     break;
             }

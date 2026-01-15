@@ -319,7 +319,7 @@ namespace TheTechIdea.Beep.Composite
                         var script = new ETLScriptDet
                         {
                             EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
+                           ScriptType= "CREATE",
                             ScriptText = $"# Composite entity: {entity.EntityName}"
                         };
                         scripts.Add(script);

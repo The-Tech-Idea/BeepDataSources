@@ -587,9 +587,9 @@ namespace TheTechIdea.Beep.Cloud
                         {
                             retval.Fields.Add(new EntityField
                             {
-                                fieldname = kvp.Key,
+                                FieldName = kvp.Key,
                                 Originalfieldname = kvp.Key,
-                                fieldtype = GetFieldTypeFromValue(kvp.Value),
+                                Fieldtype = GetFieldTypeFromValue(kvp.Value),
                                 EntityName = EntityName,
                                 IsKey = kvp.Key == "id",
                                 AllowDBNull = true,
@@ -600,7 +600,7 @@ namespace TheTechIdea.Beep.Cloud
                     else
                     {
                         // Default fields if no documents exist
-                        retval.Fields.Add(new EntityField { fieldname = "id", fieldtype = "System.String", EntityName = EntityName, IsKey = true });
+                        retval.Fields.Add(new EntityField { FieldName = "id", Fieldtype = "System.String", EntityName = EntityName, IsKey = true });
                     }
 
                     // Add or update in Entities list
@@ -663,7 +663,7 @@ namespace TheTechIdea.Beep.Cloud
                     {
                         foreach (var field in entityStructure.Fields)
                         {
-                            dt.Columns.Add(field.fieldname, Type.GetType(field.fieldtype) ?? typeof(string));
+                            dt.Columns.Add(field.FieldName, Type.GetType(field.Fieldtype) ?? typeof(string));
                         }
 
                         foreach (var item in results)
@@ -899,7 +899,7 @@ namespace TheTechIdea.Beep.Cloud
                         var script = new ETLScriptDet
                         {
                             EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
+                           ScriptType= "CREATE",
                             ScriptText = $"# Cosmos DB container: {entity.EntityName}\n# Use Azure SDK or Portal to create containers"
                         };
                         scripts.Add(script);

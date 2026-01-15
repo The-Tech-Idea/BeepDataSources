@@ -171,7 +171,7 @@ namespace TheTechIdea.Beep.DataBase
                             object result = cmd.ExecuteScalar();
                             if (result != null)
                             {
-                                var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().fieldname);
+                                var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().FieldName);
                                 if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
                                 {
                                     var primaryKeyType = primaryKeyProperty.PropertyType;
@@ -411,7 +411,7 @@ namespace TheTechIdea.Beep.DataBase
                             object result = await ExecuteScalarAsync(cmd);
                             if (result != null)
                             {
-                                var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().fieldname);
+                                var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().FieldName);
                                 if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
                                 {
                                     var primaryKeyType = primaryKeyProperty.PropertyType;

@@ -19,6 +19,7 @@ using Google.Apis.Services;
 using System.Text;
 using System.IO;
 using System.Reflection;
+using System.Data;
 
 namespace TheTechIdea.Beep.Cloud.GoogleSheets
 {
@@ -297,9 +298,9 @@ namespace TheTechIdea.Beep.Cloud.GoogleSheets
                         {
                             entity.Fields.Add(new EntityField
                             {
-                                fieldname = CleanColumnName(header),
+                                FieldName = CleanColumnName(header),
                                 Originalfieldname = header,
-                                fieldtype = "System.String",
+                                Fieldtype = "System.String",
                                 EntityName = EntityName
                             });
                         }
@@ -442,9 +443,10 @@ namespace TheTechIdea.Beep.Cloud.GoogleSheets
                 {
                     scripts.Add(new ETLScriptDet
                     {
-                        EntityName = entity.EntityName,
-                        ScriptType = "CREATE",
-                        ScriptText = $"# Google Sheets entity: {entity.EntityName}"
+                        SourceDataSourceEntityName = entity.EntityName,
+                       ScriptType= DDLScriptType.CreateEntity,
+                        
+                       Ddl= $"# Google Sheets entity: {entity.EntityName}"
                     });
                 }
             }

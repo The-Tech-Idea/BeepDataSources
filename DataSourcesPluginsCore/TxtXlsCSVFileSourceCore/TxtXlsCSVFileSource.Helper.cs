@@ -55,23 +55,23 @@ namespace TheTechIdea.Beep.FileManager
                     {
                         if (dr.Table.Columns.Contains(fld.Originalfieldname))
                             val = dr[fld.Originalfieldname];
-                        else if (dr.Table.Columns.Contains(fld.fieldname))
-                            val = dr[fld.fieldname];
+                        else if (dr.Table.Columns.Contains(fld.FieldName))
+                            val = dr[fld.FieldName];
                     }
                     else if (obj is IDictionary<string, object> dict)
                     {
-                        if (dict.ContainsKey(fld.fieldname)) val = dict[fld.fieldname];
+                        if (dict.ContainsKey(fld.FieldName)) val = dict[fld.FieldName];
                         else if (dict.ContainsKey(fld.Originalfieldname)) val = dict[fld.Originalfieldname];
                     }
                     else
                     {
-                        var pi = obj.GetType().GetProperty(fld.fieldname) ?? obj.GetType().GetProperty(fld.Originalfieldname);
+                        var pi = obj.GetType().GetProperty(fld.FieldName) ?? obj.GetType().GetProperty(fld.Originalfieldname);
                         if (pi != null) val = pi.GetValue(obj);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger?.WriteLog($"Error serializing field '{fld.fieldname}': {ex.Message}");
+                    Logger?.WriteLog($"Error serializing field '{fld.FieldName}': {ex.Message}");
                 }
                 string sval = val?.ToString() ?? string.Empty;
                 parts.Add(EscapeCsvValue(sval, delimiter));
@@ -206,8 +206,8 @@ namespace TheTechIdea.Beep.FileManager
                 // Create columns with proper types
                 foreach (var field in entity.Fields)
                 {
-                    Type fieldType = Type.GetType(field.fieldtype) ?? typeof(string);
-                    target.Columns.Add(field.fieldname, fieldType);
+                    Type pFieldtype = Type.GetType(field.Fieldtype) ?? typeof(string);
+                    target.Columns.Add(field.FieldName, pFieldtype);
                 }
 
                 // Convert and copy rows
@@ -221,22 +221,22 @@ namespace TheTechIdea.Beep.FileManager
                             object srcVal = null;
                             if (source.Columns.Contains(field.Originalfieldname))
                                 srcVal = srcRow[field.Originalfieldname];
-                            else if (source.Columns.Contains(field.fieldname))
-                                srcVal = srcRow[field.fieldname];
+                            else if (source.Columns.Contains(field.FieldName))
+                                srcVal = srcRow[field.FieldName];
 
                             if (srcVal != null && srcVal != DBNull.Value)
                             {
                                 string strVal = srcVal.ToString().Trim();
                                 if (!string.IsNullOrEmpty(strVal))
                                 {
-                                    Type targetType = Type.GetType(field.fieldtype) ?? typeof(string);
-                                    tgtRow[field.fieldname] = Convert.ChangeType(strVal, targetType);
+                                    Type targetType = Type.GetType(field.Fieldtype) ?? typeof(string);
+                                    tgtRow[field.FieldName] = Convert.ChangeType(strVal, targetType);
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
-                            logger?.WriteLog($"Error converting field '{field.fieldname}': {ex.Message}");
+                            logger?.WriteLog($"Error converting field '{field.FieldName}': {ex.Message}");
                         }
                     }
                     target.Rows.Add(tgtRow);

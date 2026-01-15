@@ -227,14 +227,14 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
                         string metric = "cosine"; // Default metric
 
                         // Try to get dimension from entity properties if available
-                        var dimensionField = entity.Fields.FirstOrDefault(f => f.fieldname.Equals("dimension", StringComparison.OrdinalIgnoreCase));
+                        var dimensionField = entity.Fields.FirstOrDefault(f => f.FieldName.Equals("dimension", StringComparison.OrdinalIgnoreCase));
                         if (dimensionField != null && int.TryParse(dimensionField.DefaultValue, out int dim))
                         {
                             dimension = dim;
                         }
 
                         // Try to get metric from entity properties if available
-                        var metricField = entity.Fields.FirstOrDefault(f => f.fieldname.Equals("metric", StringComparison.OrdinalIgnoreCase));
+                        var metricField = entity.Fields.FirstOrDefault(f => f.FieldName.Equals("metric", StringComparison.OrdinalIgnoreCase));
                         if (metricField != null && !string.IsNullOrEmpty(metricField.DefaultValue))
                         {
                             metric = metricField.DefaultValue;
@@ -267,14 +267,14 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
                 string metric = "cosine"; // Default metric
 
                 // Try to get dimension from entity properties if available
-                var dimensionField = entity.Fields.FirstOrDefault(f => f.fieldname.Equals("dimension", StringComparison.OrdinalIgnoreCase));
+                var dimensionField = entity.Fields.FirstOrDefault(f => f.FieldName.Equals("dimension", StringComparison.OrdinalIgnoreCase));
                 if (dimensionField != null && int.TryParse(dimensionField.DefaultValue, out int dim))
                 {
                     dimension = dim;
                 }
 
                 // Try to get metric from entity properties if available
-                var metricField = entity.Fields.FirstOrDefault(f => f.fieldname.Equals("metric", StringComparison.OrdinalIgnoreCase));
+                var metricField = entity.Fields.FirstOrDefault(f => f.FieldName.Equals("metric", StringComparison.OrdinalIgnoreCase));
                 if (metricField != null && !string.IsNullOrEmpty(metricField.DefaultValue))
                 {
                     metric = metricField.DefaultValue;
@@ -470,22 +470,22 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
                     // Add standard fields for SharpVector index
                     entity.Fields.Add(new EntityField
                     {
-                        fieldname = "id",
-                        fieldtype = "System.String",
+                        FieldName = "id",
+                        Fieldtype = "System.String",
                         IsKey = true
                     });
 
                     entity.Fields.Add(new EntityField
                     {
-                        fieldname = "vector",
-                        fieldtype = "System.Single[]",
+                        FieldName = "vector",
+                        Fieldtype = "System.Single[]",
                         Description = "Vector values"
                     });
 
                     entity.Fields.Add(new EntityField
                     {
-                        fieldname = "metadata",
-                        fieldtype = "System.Object",
+                        FieldName = "metadata",
+                        Fieldtype = "System.Object",
                         Description = "Vector metadata"
                     });
 
@@ -494,8 +494,8 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
                     {
                         entity.Fields.Add(new EntityField
                         {
-                            fieldname = "dimension",
-                            fieldtype = "System.Int32",
+                            FieldName = "dimension",
+                            Fieldtype = "System.Int32",
                             DefaultValue = dimensionValue.ToString(),
                             Description = "Vector dimension"
                         });
@@ -505,8 +505,8 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
                     {
                         entity.Fields.Add(new EntityField
                         {
-                            fieldname = "metric",
-                            fieldtype = "System.String",
+                            FieldName = "metric",
+                            Fieldtype = "System.String",
                             DefaultValue = metricValue.ToString(),
                             Description = "Distance metric"
                         });

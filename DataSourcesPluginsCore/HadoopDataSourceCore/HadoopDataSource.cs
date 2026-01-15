@@ -20,10 +20,11 @@ using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.DriversConfigurations;
 using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.DataBase
 {
-    [AddinAttribute(Category = DatasourceCategory.FILESYSTEM, DatasourceType = DataSourceType.Hadoop)]
+    [AddinAttribute(Category = DatasourceCategory.WEBAPI, DatasourceType = DataSourceType.Hadoop)]
     public class HadoopDataSource : IDataSource
     {
         private bool disposedValue;
@@ -62,7 +63,7 @@ namespace TheTechIdea.Beep.DataBase
             ErrorObject = per;
             DMEEditor = pDMEEditor;
             DatasourceType = databasetype;
-            Category = DatasourceCategory.FILESYSTEM;
+            Category = DatasourceCategory.WEBAPI;
 
             EntitiesNames = new List<string>();
             Entities = new List<EntityStructure>();
@@ -87,11 +88,11 @@ namespace TheTechIdea.Beep.DataBase
                     DriverName = driversConfig?.PackageName ?? "",
                     DriverVersion = driversConfig?.version ?? "",
                     DatabaseType = DataSourceType.Hadoop,
-                    Category = DatasourceCategory.FILESYSTEM
+                    Category = DatasourceCategory.WEBAPI
                 };
             }
 
-            Dataconnection.ConnectionProp.Category = DatasourceCategory.FILESYSTEM;
+            Dataconnection.ConnectionProp.Category = DatasourceCategory.WEBAPI;
             Dataconnection.ConnectionProp.DatabaseType = DataSourceType.Hadoop;
             _webHdfsUrl = Dataconnection.ConnectionProp.ConnectionString ?? "http://localhost:9870";
             _basePath = Dataconnection.ConnectionProp.Database ?? "/";
@@ -309,9 +310,9 @@ namespace TheTechIdea.Beep.DataBase
                     {
                         var script = new ETLScriptDet
                         {
-                            EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
-                            ScriptText = $"# Hadoop entity: {entity.EntityName}\n# No DDL for HDFS - entities are directories/files"
+                            SourceDataSourceEntityName = entity.EntityName,
+                           ScriptType=  DDLScriptType.CreateEntity,
+                            Ddl = $"# Hadoop entity: {entity.EntityName}\n# No Ddl for HDFS - entities are directories/files"
                         };
                         scripts.Add(script);
                     }
@@ -530,7 +531,7 @@ namespace TheTechIdea.Beep.DataBase
                             DatasourceEntityName = path,
                             OriginalEntityName = EntityName,
                             Caption = Path.GetFileName(EntityName),
-                            Category = DatasourceCategory.FILESYSTEM,
+                            Category = DatasourceCategory.WEBAPI,
                             DatabaseType = DataSourceType.Hadoop,
                             DataSourceID = DatasourceName,
                             Fields = new List<EntityField>()
@@ -553,9 +554,9 @@ namespace TheTechIdea.Beep.DataBase
                             // For directories, add metadata fields
                             retval.Fields.Add(new EntityField
                             {
-                                fieldname = "Path",
+                                FieldName = "Path",
                                 Originalfieldname = "Path",
-                                fieldtype = "System.String",
+                                Fieldtype = "System.String",
                                 EntityName = EntityName,
                                 IsKey = true
                             });
@@ -810,9 +811,9 @@ namespace TheTechIdea.Beep.DataBase
                     {
                         fields.Add(new EntityField
                         {
-                            fieldname = $"Column{i + 1}",
+                            FieldName = $"Column{i + 1}",
                             Originalfieldname = $"Column{i + 1}",
-                            fieldtype = "System.String",
+                            Fieldtype = "System.String",
                             EntityName = entityName,
                             IsKey = i == 0,
                             AllowDBNull = true
@@ -825,9 +826,9 @@ namespace TheTechIdea.Beep.DataBase
             {
                 fields.Add(new EntityField
                 {
-                    fieldname = "Content",
+                    FieldName = "Content",
                     Originalfieldname = "Content",
-                    fieldtype = "System.String",
+                    Fieldtype = "System.String",
                     EntityName = entityName,
                     IsKey = false,
                     AllowDBNull = true
@@ -859,7 +860,7 @@ namespace TheTechIdea.Beep.DataBase
 
                 for (int i = 0; i < Math.Min(values.Length, entityStructure.Fields.Count); i++)
                 {
-                    dict[entityStructure.Fields[i].fieldname] = values[i];
+                    dict[entityStructure.Fields[i].FieldName] = values[i];
                 }
             }
             else

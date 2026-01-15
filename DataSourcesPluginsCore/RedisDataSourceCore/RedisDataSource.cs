@@ -17,6 +17,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using FreeRedis;
+using TheTechIdea.Beep.WebAPI;
 
 
 
@@ -456,8 +457,8 @@ namespace TheTechIdea.Beep.Redis
                         var script = new ETLScriptDet
                         {
                             EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
-                            ScriptText = $"# Redis entity: {entity.EntityName}\n# No DDL for Redis - entities are key patterns"
+                           ScriptType= "CREATE",
+                            ScriptText = $"# Redis entity: {entity.EntityName}\n# No Ddl for Redis - entities are key patterns"
                         };
                         scripts.Add(script);
                     }
@@ -1036,18 +1037,18 @@ namespace TheTechIdea.Beep.Redis
                     case "string":
                         entity.Fields.Add(new EntityField
                         {
-                            fieldname = "Value",
+                            FieldName = "Value",
                             Originalfieldname = "Value",
-                            fieldtype = "System.String",
+                            Fieldtype = "System.String",
                             EntityName = entityName,
                             IsKey = false,
                             AllowDBNull = true
                         });
                         entity.Fields.Add(new EntityField
                         {
-                            fieldname = "Key",
+                            FieldName = "Key",
                             Originalfieldname = "Key",
-                            fieldtype = "System.String",
+                            Fieldtype = "System.String",
                             EntityName = entityName,
                             IsKey = true,
                             AllowDBNull = false
@@ -1061,9 +1062,9 @@ namespace TheTechIdea.Beep.Redis
                         {
                             entity.Fields.Add(new EntityField
                             {
-                                fieldname = "Key",
+                                FieldName = "Key",
                                 Originalfieldname = "Key",
-                                fieldtype = "System.String",
+                                Fieldtype = "System.String",
                                 EntityName = entityName,
                                 IsKey = true,
                                 AllowDBNull = false
@@ -1076,9 +1077,9 @@ namespace TheTechIdea.Beep.Redis
 
                                 entity.Fields.Add(new EntityField
                                 {
-                                    fieldname = hashField,
+                                    FieldName = hashField,
                                     Originalfieldname = hashField,
-                                    fieldtype = inferredType,
+                                    Fieldtype = inferredType,
                                     EntityName = entityName,
                                     IsKey = false,
                                     AllowDBNull = true
@@ -1092,18 +1093,18 @@ namespace TheTechIdea.Beep.Redis
                     case "zset":
                         entity.Fields.Add(new EntityField
                         {
-                            fieldname = "Key",
+                            FieldName = "Key",
                             Originalfieldname = "Key",
-                            fieldtype = "System.String",
+                            Fieldtype = "System.String",
                             EntityName = entityName,
                             IsKey = true,
                             AllowDBNull = false
                         });
                         entity.Fields.Add(new EntityField
                         {
-                            fieldname = "Items",
+                            FieldName = "Items",
                             Originalfieldname = "Items",
-                            fieldtype = "System.String",
+                            Fieldtype = "System.String",
                             EntityName = entityName,
                             IsKey = false,
                             AllowDBNull = true

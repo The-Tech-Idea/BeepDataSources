@@ -174,7 +174,7 @@ namespace TheTechIdea.Beep.DataBase
                                     adp.SelectCommand.Parameters.Add(parameter1);
                                 }
 
-                                //  parameter.DbType = TypeToDbType(tb.Columns[item.fieldname].DataType);
+                                //  parameter.DbType = TypeToDbType(tb.Columns[item.FieldName].DataType);
                                 adp.SelectCommand.Parameters.Add(parameter);
 
                             }
@@ -223,19 +223,19 @@ namespace TheTechIdea.Beep.DataBase
             return uniqueParameterName;
         }
 
-        public virtual string GetFieldName(string fieldname)
+        public virtual string GetFieldName(string FieldName)
         {
-            string retval = fieldname;
-            if (fieldname.IndexOf(" ") != -1)
+            string retval = FieldName;
+            if (FieldName.IndexOf(" ") != -1)
             {
                 if (ColumnDelimiter.Length == 2) //(ColumnDelimiter.Contains("[") || ColumnDelimiter.Contains("]"))
                 {
 
-                    retval = $"{ColumnDelimiter[0]}{fieldname}{ColumnDelimiter[1]}";
+                    retval = $"{ColumnDelimiter[0]}{FieldName}{ColumnDelimiter[1]}";
                 }
                 else
                 {
-                    retval = $"{ColumnDelimiter}{fieldname}{ColumnDelimiter}";
+                    retval = $"{ColumnDelimiter}{FieldName}{ColumnDelimiter}";
                 }
 
             }

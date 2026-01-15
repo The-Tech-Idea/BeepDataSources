@@ -252,8 +252,8 @@ namespace TheTechIdea.Beep.FileManager
                         DatasourceEntityName = EntityName,
                         Fields = new List<EntityField>
                         {
-                            new EntityField { fieldname = "Name", fieldtype = "System.String", EntityName = EntityName },
-                            new EntityField { fieldname = "Type", fieldtype = "System.String", EntityName = EntityName }
+                            new EntityField { FieldName = "Name", Fieldtype = "System.String", EntityName = EntityName },
+                            new EntityField { FieldName = "Type", Fieldtype = "System.String", EntityName = EntityName }
                         }
                     };
 
@@ -385,9 +385,9 @@ namespace TheTechIdea.Beep.FileManager
                 {
                     scripts.Add(new ETLScriptDet
                     {
-                        EntityName = entity.EntityName,
-                        ScriptType = "CREATE",
-                        ScriptText = $"# Petastorm dataset: {entity.EntityName}"
+                        SourceDataSourceEntityName = entity.EntityName,
+                       ScriptType=  DDLScriptType.CreateEntity,
+                        Ddl = $"# Petastorm dataset: {entity.EntityName}"
                     });
                 }
             }

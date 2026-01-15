@@ -313,12 +313,12 @@ namespace TheTechIdea.Beep.Cloud
                             {
                                 request.AttributeDefinitions.Add(new AttributeDefinition
                                 {
-                                    AttributeName = keyField.fieldname,
-                                    AttributeType = GetDynamoDbAttributeType(keyField.fieldtype)
+                                    AttributeName = keyField.FieldName,
+                                    AttributeType = GetDynamoDbAttributeType(keyField.Fieldtype)
                                 });
                                 request.KeySchema.Add(new KeySchemaElement
                                 {
-                                    AttributeName = keyField.fieldname,
+                                    AttributeName = keyField.FieldName,
                                     KeyType = KeyType.HASH
                                 });
                             }
@@ -366,7 +366,7 @@ namespace TheTechIdea.Beep.Cloud
         private ScalarAttributeType GetDynamoDbAttributeType(string fieldType)
         {
             if (fieldType == null) return ScalarAttributeType.S;
-            fieldType = fieldType.ToLower();
+            Fieldtype = fieldType.ToLower();
             
             if (fieldType.Contains("string") || fieldType.Contains("char") || fieldType.Contains("guid"))
                 return ScalarAttributeType.S;
@@ -596,9 +596,9 @@ namespace TheTechIdea.Beep.Cloud
                     {
                         retval.Fields.Add(new EntityField
                         {
-                            fieldname = attrDef.AttributeName,
+                            FieldName = attrDef.AttributeName,
                             Originalfieldname = attrDef.AttributeName,
-                            fieldtype = GetFieldTypeFromDynamoDbType(attrDef.AttributeType),
+                            Fieldtype = GetFieldTypeFromDynamoDbType(attrDef.AttributeType),
                             EntityName = EntityName,
                             IsKey = describeResponse.Table.KeySchema.Any(k => k.AttributeName == attrDef.AttributeName),
                             AllowDBNull = true,
@@ -819,7 +819,7 @@ namespace TheTechIdea.Beep.Cloud
                         var script = new ETLScriptDet
                         {
                             EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
+                           ScriptType= "CREATE",
                             ScriptText = $"# DynamoDB table: {entity.EntityName}\n# Use AWS SDK or CLI to create tables"
                         };
                         scripts.Add(script);

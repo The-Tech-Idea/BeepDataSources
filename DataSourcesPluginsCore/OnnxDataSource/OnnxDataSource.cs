@@ -410,9 +410,9 @@ namespace TheTechIdea.Beep.FileManager
                         {
                             entity.Fields.Add(new EntityField
                             {
-                                fieldname = input.Key,
+                                FieldName = input.Key,
                                 Originalfieldname = input.Key,
-                                fieldtype = GetDotNetType(input.Value.ElementType),
+                                Fieldtype = GetDotNetType(input.Value.ElementType),
                                 EntityName = EntityName,
                                 FieldIndex = entity.Fields.Count
                             });
@@ -423,9 +423,9 @@ namespace TheTechIdea.Beep.FileManager
                         {
                             entity.Fields.Add(new EntityField
                             {
-                                fieldname = $"Output_{output.Key}",
+                                FieldName = $"Output_{output.Key}",
                                 Originalfieldname = output.Key,
-                                fieldtype = GetDotNetType(output.Value.ElementType),
+                                Fieldtype = GetDotNetType(output.Value.ElementType),
                                 EntityName = EntityName,
                                 FieldIndex = entity.Fields.Count
                             });
@@ -440,9 +440,9 @@ namespace TheTechIdea.Beep.FileManager
                             var input = _session.InputMetadata[inputName];
                             entity.Fields.Add(new EntityField
                             {
-                                fieldname = inputName,
+                                FieldName = inputName,
                                 Originalfieldname = inputName,
-                                fieldtype = GetDotNetType(input.ElementType),
+                                Fieldtype = GetDotNetType(input.ElementType),
                                 EntityName = EntityName
                             });
                         }
@@ -456,9 +456,9 @@ namespace TheTechIdea.Beep.FileManager
                             var output = _session.OutputMetadata[outputName];
                             entity.Fields.Add(new EntityField
                             {
-                                fieldname = outputName,
+                                FieldName = outputName,
                                 Originalfieldname = outputName,
-                                fieldtype = GetDotNetType(output.ElementType),
+                                Fieldtype = GetDotNetType(output.ElementType),
                                 EntityName = EntityName
                             });
                         }
@@ -621,7 +621,7 @@ namespace TheTechIdea.Beep.FileManager
                     scripts.Add(new ETLScriptDet
                     {
                         EntityName = entity.EntityName,
-                        ScriptType = "CREATE",
+                       ScriptType= "CREATE",
                         ScriptText = $"# ONNX model entity: {entity.EntityName}\n# Model inputs/outputs defined in ONNX file"
                     });
                 }

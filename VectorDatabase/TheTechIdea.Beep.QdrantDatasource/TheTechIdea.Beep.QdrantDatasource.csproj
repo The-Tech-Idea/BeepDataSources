@@ -19,8 +19,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.57" />
-		<PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.110" />
+		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.61" />
+		<PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.118" />
 		<PackageReference Include="Qdrant.Client" Version="1.16.1" />
 	</ItemGroup>
 

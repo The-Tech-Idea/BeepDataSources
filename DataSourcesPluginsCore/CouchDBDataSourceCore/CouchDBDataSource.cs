@@ -685,8 +685,8 @@ namespace TheTechIdea.Beep.NOSQL.CouchDB
                                 {
                                     var field = new EntityField
                                     {
-                                        fieldname = prop.Name,
-                                        fieldtype = GetFieldType(prop.Value),
+                                        FieldName = prop.Name,
+                                        Fieldtype = GetFieldType(prop.Value),
                                         primarykey = prop.Name == "_id",
                                         allowdbnull = prop.Value.Type == JTokenType.Null
                                     };
@@ -951,7 +951,7 @@ namespace TheTechIdea.Beep.NOSQL.CouchDB
             ErrorObject.Flag = Errors.Ok;
             try
             {
-                // CouchDB doesn't support DDL scripts in traditional sense
+                // CouchDB doesn't support Ddl scripts in traditional sense
                 // Could implement design document updates
                 ErrorObject.Message = "DDL scripts not fully supported for CouchDB";
                 DMEEditor?.AddLogMessage("Beep", "DDL scripts not fully supported for CouchDB", DateTime.Now, 0, null, Errors.Failed);
@@ -996,7 +996,7 @@ namespace TheTechIdea.Beep.NOSQL.CouchDB
                         var script = new ETLScriptDet
                         {
                             EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
+                           ScriptType= "CREATE",
                             ScriptText = $"# CouchDB entity: {entity.EntityName}\n# Create design document with views"
                         };
                         scripts.Add(script);
