@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -110,42 +110,10 @@ namespace TheTechIdea.Beep.Cloud
             }
             return DMEEditor.ErrorObject;
         }
-        public virtual Task<double> GetScalarAsync(string query)
-        {
-            return Task.Run(() => GetScalar(query));
-        }
-        public virtual double GetScalar(string query)
-        {
-            ErrorObject.Flag = Errors.Ok;
-
-            try
-            {
-                // Assuming you have a database connection and command objects.
-
-                //using (var command = GetDataCommand())
-                //{
-                //    command.CommandText = query;
-                //    var result = command.ExecuteScalar();
-
-                //    // Check if the result is not null and can be converted to a double.
-                //    if (result != null && double.TryParse(result.ToString(), out double value))
-                //    {
-                //        return value;
-                //    }
-                //}
-
-
-                // If the query executed successfully but didn't return a valid double, you can handle it here.
-                // You might want to log an error or throw an exception as needed.
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
-            }
-
-            // Return a default value or throw an exception if the query failed.
-            return 0.0; // You can change this default value as needed.
-        }
+         public virtual Task<double> GetScalarAsync(string query)
+         {
+             return Task.Run(() => GetScalar(query));
+         }
         public virtual IErrorsInfo EndTransaction(PassedArgs args)
         {
             ErrorObject.Flag = Errors.Ok;
@@ -568,13 +536,13 @@ namespace TheTechIdea.Beep.Cloud
                     {
                         EntityName = EntityName,
                         DatasourceEntityName = EntityName,
-                        OriginalEntityName = EntityName,
-                        Caption = EntityName,
-                        Category = DatasourceCategory.CLOUD,
-                        DatabaseType = DataSourceType.WebApi,
-                        DataSourceID = DatasourceName,
-                        Fields = new List<EntityField>()
-                    };
+                         OriginalEntityName = EntityName,
+                         Caption = EntityName,
+                         Category = DatasourceCategory.CLOUD.ToString(),
+                         DatabaseType = DataSourceType.WebApi,
+                         DataSourceID = DatasourceName,
+                         Fields = new List<EntityField>()
+                     };
 
                     if (response.Any())
                     {
@@ -742,11 +710,11 @@ namespace TheTechIdea.Beep.Cloud
                     else
                     {
                         var jsonItem = JsonConvert.SerializeObject(DeletedDataRow);
-                        var dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonItem);
-                        if (dict.ContainsKey("id"))
-                            itemId = dict["id"].ToString();
-                        else if (dict.ContainsKey("Id"))
-                            itemId = dict["Id"].ToString();
+                        var dict2 = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonItem);
+                        if (dict2.ContainsKey("id"))
+                            itemId = dict2["id"].ToString();
+                        else if (dict2.ContainsKey("Id"))
+                            itemId = dict2["Id"].ToString();
                     }
 
                     if (!string.IsNullOrEmpty(itemId))
@@ -776,7 +744,7 @@ namespace TheTechIdea.Beep.Cloud
                     {
                         UpdateEntity(EntityName, item);
                         count++;
-                        progress?.Report(new PassedArgs { Message = $"Updated {count} records" });
+                        progress?.Report(new PassedArgs { Messege = $"Updated {count} records" });
                     }
                 }
             }
@@ -850,9 +818,9 @@ namespace TheTechIdea.Beep.Cloud
             ErrorObject.Flag = Errors.Ok;
             try
             {
-                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.ScriptText))
+                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.Ddl))
                 {
-                    ExecuteSql(dDLScripts.ScriptText);
+                    ExecuteSql(dDLScripts.Ddl);
                 }
             }
             catch (Exception ex)
@@ -898,9 +866,11 @@ namespace TheTechIdea.Beep.Cloud
                     {
                         var script = new ETLScriptDet
                         {
-                            EntityName = entity.EntityName,
-                           ScriptType= "CREATE",
-                            ScriptText = $"# Cosmos DB container: {entity.EntityName}\n# Use Azure SDK or Portal to create containers"
+                            SourceEntityName = entity.EntityName,
+                            DestinationDataSourceName = DatasourceName,
+                            DestinationDataSourceEntityName = entity.EntityName,
+                            ScriptType = DDLScriptType.CreateEntity,
+                            Ddl = $"# Cosmos DB container: {entity.EntityName}\n# Use Azure SDK or Portal to create containers"
                         };
                         scripts.Add(script);
                     }

@@ -205,42 +205,42 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Etsy
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Listings", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyListing>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Listings", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyListing>")]
         public async Task<IEnumerable<EtsyListing>> GetListings(AppFilter filter)
         {
             var result = await GetEntityAsync("listings", new List<AppFilter> { filter });
             return result.Cast<EtsyListing>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Receipts", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyReceipt>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Receipts", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyReceipt>")]
         public async Task<IEnumerable<EtsyReceipt>> GetReceipts(AppFilter filter)
         {
             var result = await GetEntityAsync("receipts", new List<AppFilter> { filter });
             return result.Cast<EtsyReceipt>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Users", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyUser>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Users", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyUser>")]
         public async Task<IEnumerable<EtsyUser>> GetUsers(AppFilter filter)
         {
             var result = await GetEntityAsync("users", new List<AppFilter> { filter });
             return result.Cast<EtsyUser>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Shops", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyShop>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Shops", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyShop>")]
         public async Task<IEnumerable<EtsyShop>> GetShops(AppFilter filter)
         {
             var result = await GetEntityAsync("shops", new List<AppFilter> { filter });
             return result.Cast<EtsyShop>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Transactions", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyTransaction>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Transactions", ClassName = "EtsyDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EtsyTransaction>")]
         public async Task<IEnumerable<EtsyTransaction>> GetTransactions(AppFilter filter)
         {
             var result = await GetEntityAsync("transactions", new List<AppFilter> { filter });
             return result.Cast<EtsyTransaction>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Listings", Name = "CreateListing", Caption = "Create Etsy Listing", ClassType = "EtsyDataSource", Showin = ShowinType.Both, Order = 6, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyListing>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Listings", Name = "CreateListing", Caption = "Create Etsy Listing", ClassType ="EtsyDataSource", Showin = ShowinType.Both, Order = 6, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyListing>")]
         public async Task<IEnumerable<EtsyListing>> CreateListingAsync(EtsyListing listing)
         {
             try
@@ -260,7 +260,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Etsy
             return new List<EtsyListing>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Listings", Name = "UpdateListing", Caption = "Update Etsy Listing", ClassType = "EtsyDataSource", Showin = ShowinType.Both, Order = 7, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyListing>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Listings", Name = "UpdateListing", Caption = "Update Etsy Listing", ClassType ="EtsyDataSource", Showin = ShowinType.Both, Order = 7, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyListing>")]
         public async Task<IEnumerable<EtsyListing>> UpdateListingAsync(EtsyListing listing)
         {
             try
@@ -280,7 +280,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Etsy
             return new List<EtsyListing>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Receipts", Name = "CreateReceipt", Caption = "Create Etsy Receipt", ClassType = "EtsyDataSource", Showin = ShowinType.Both, Order = 8, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyReceipt>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Receipts", Name = "CreateReceipt", Caption = "Create Etsy Receipt", ClassType ="EtsyDataSource", Showin = ShowinType.Both, Order = 8, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyReceipt>")]
         public async Task<IEnumerable<EtsyReceipt>> CreateReceiptAsync(EtsyReceipt receipt)
         {
             try
@@ -300,7 +300,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Etsy
             return new List<EtsyReceipt>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Receipts", Name = "UpdateReceipt", Caption = "Update Etsy Receipt", ClassType = "EtsyDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyReceipt>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Receipts", Name = "UpdateReceipt", Caption = "Update Etsy Receipt", ClassType ="EtsyDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyReceipt>")]
         public async Task<IEnumerable<EtsyReceipt>> UpdateReceiptAsync(EtsyReceipt receipt)
         {
             try
@@ -320,7 +320,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Etsy
             return new List<EtsyReceipt>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Users", Name = "CreateUser", Caption = "Create Etsy User", ClassType = "EtsyDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyUser>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Users", Name = "CreateUser", Caption = "Create Etsy User", ClassType ="EtsyDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyUser>")]
         public async Task<IEnumerable<EtsyUser>> CreateUserAsync(EtsyUser user)
         {
             try
@@ -340,7 +340,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Etsy
             return new List<EtsyUser>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Users", Name = "UpdateUser", Caption = "Update Etsy User", ClassType = "EtsyDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyUser>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Users", Name = "UpdateUser", Caption = "Update Etsy User", ClassType ="EtsyDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyUser>")]
         public async Task<IEnumerable<EtsyUser>> UpdateUserAsync(EtsyUser user)
         {
             try
@@ -360,7 +360,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Etsy
             return new List<EtsyUser>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Shops", Name = "CreateShop", Caption = "Create Etsy Shop", ClassType = "EtsyDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyShop>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Shops", Name = "CreateShop", Caption = "Create Etsy Shop", ClassType ="EtsyDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyShop>")]
         public async Task<IEnumerable<EtsyShop>> CreateShopAsync(EtsyShop shop)
         {
             try
@@ -380,7 +380,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Etsy
             return new List<EtsyShop>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Shops", Name = "UpdateShop", Caption = "Update Etsy Shop", ClassType = "EtsyDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyShop>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Shops", Name = "UpdateShop", Caption = "Update Etsy Shop", ClassType ="EtsyDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyShop>")]
         public async Task<IEnumerable<EtsyShop>> UpdateShopAsync(EtsyShop shop)
         {
             try
@@ -400,7 +400,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Etsy
             return new List<EtsyShop>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Transactions", Name = "CreateTransaction", Caption = "Create Etsy Transaction", ClassType = "EtsyDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyTransaction>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Transactions", Name = "CreateTransaction", Caption = "Create Etsy Transaction", ClassType ="EtsyDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyTransaction>")]
         public async Task<IEnumerable<EtsyTransaction>> CreateTransactionAsync(EtsyTransaction transaction)
         {
             try
@@ -420,7 +420,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Etsy
             return new List<EtsyTransaction>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType = "Transactions", Name = "UpdateTransaction", Caption = "Update Etsy Transaction", ClassType = "EtsyDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyTransaction>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Etsy, PointType = EnumPointType.Function, ObjectType ="Transactions", Name = "UpdateTransaction", Caption = "Update Etsy Transaction", ClassType ="EtsyDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "etsy.png", misc = "ReturnType: IEnumerable<EtsyTransaction>")]
         public async Task<IEnumerable<EtsyTransaction>> UpdateTransactionAsync(EtsyTransaction transaction)
         {
             try

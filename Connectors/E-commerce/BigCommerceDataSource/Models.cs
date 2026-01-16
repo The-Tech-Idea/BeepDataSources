@@ -147,7 +147,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource.Models
         [JsonPropertyName("id")] public int? Id { get; set; }
         [JsonPropertyName("label")] public string? Label { get; set; }
         [JsonPropertyName("option_id")] public int? OptionId { get; set; }
-        [JsonPropertyName("option_display_name")] public string? OptionDisplayName { get; set; }
+        [JsonPropertyName("option_display_name")] public string? OptionCaption { get; set; }
     }
 
     public sealed class BigCommerceCustomField
@@ -400,9 +400,9 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource.Models
         [JsonPropertyName("option_id")] public int? OptionId { get; set; }
         [JsonPropertyName("order_product_id")] public int? OrderProductId { get; set; }
         [JsonPropertyName("product_option_id")] public int? ProductOptionId { get; set; }
-        [JsonPropertyName("display_name")] public string? DisplayName { get; set; }
-        [JsonPropertyName("display_name_customer")] public string? DisplayNameCustomer { get; set; }
-        [JsonPropertyName("display_name_merchant")] public string? DisplayNameMerchant { get; set; }
+        [JsonPropertyName("display_name")] public string? Caption { get; set; }
+        [JsonPropertyName("display_name_customer")] public string? CaptionCustomer { get; set; }
+        [JsonPropertyName("display_name_merchant")] public string? CaptionMerchant { get; set; }
         [JsonPropertyName("display_value")] public string? DisplayValue { get; set; }
         [JsonPropertyName("display_value_customer")] public string? DisplayValueCustomer { get; set; }
         [JsonPropertyName("display_value_merchant")] public string? DisplayValueMerchant { get; set; }

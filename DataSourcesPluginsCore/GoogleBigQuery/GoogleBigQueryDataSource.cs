@@ -187,16 +187,16 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
                     var query = BuildQuery(EntityName, filter);
                     var result = _client.ExecuteQuery(query, parameters: null);
                     
-                    foreach (var row in result)
-                    {
-                        var rowDict = new Dictionary<string, object>();
-                        foreach (var field in row.Schema.Fields)
-                        {
-                            rowDict[field.Name] = row[field.Name]?.Value;
-                        }
-                        results.Add(rowDict);
-                    }
-                }
+                     foreach (var row in result)
+                     {
+                         var rowDict = new Dictionary<string, object>();
+                         foreach (var field in row.Schema.Fields)
+                         {
+                            rowDict[field.Name] = row[field.Name];
+                         }
+                         results.Add(rowDict);
+                     }
+                 }
             }
             catch (Exception ex)
             {
@@ -261,11 +261,11 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
 
                     var countResult = _client.ExecuteQuery(countQuery, parameters: null);
                     int totalRecords = 0;
-                    foreach (var row in countResult)
-                    {
-                        totalRecords = Convert.ToInt32(row["total"]?.Value ?? 0);
+                     foreach (var row in countResult)
+                     {
+                        totalRecords = Convert.ToInt32(row["total"] ?? 0);
                         break;
-                    }
+                     }
 
                     // Build paginated query
                     int offset = (pageNumber - 1) * pageSize;
@@ -274,15 +274,15 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
 
                     var result = _client.ExecuteQuery(query, parameters: null);
                     List<object> results = new List<object>();
-                    foreach (var row in result)
-                    {
-                        var rowDict = new Dictionary<string, object>();
-                        foreach (var field in row.Schema.Fields)
-                        {
-                            rowDict[field.Name] = row[field.Name]?.Value;
-                        }
-                        results.Add(rowDict);
-                    }
+                     foreach (var row in result)
+                     {
+                         var rowDict = new Dictionary<string, object>();
+                         foreach (var field in row.Schema.Fields)
+                         {
+                            rowDict[field.Name] = row[field.Name];
+                         }
+                         results.Add(rowDict);
+                     }
 
                     pagedResult.Data = results;
                     pagedResult.TotalRecords = totalRecords;
@@ -352,7 +352,8 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
                             Originalfieldname = field.Name,
                             Fieldtype = GetDotNetType(field.Type),
                             EntityName = EntityName,
-                            AllowDBNull = field.Mode == "NULLABLE"
+                            AllowDBNull = string.Equals(field.Mode?.ToString(), "NULLABLE", StringComparison.OrdinalIgnoreCase) ||
+                                          string.Equals(field.Mode?.ToString(), "Nullable", StringComparison.OrdinalIgnoreCase)
                         });
                     }
 
@@ -403,6 +404,36 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
             }
         }
 
+        private string GetDotNetType(string type)
+        {
+            if (string.IsNullOrWhiteSpace(type))
+                return "System.String";
+
+            switch (type.Trim().ToUpperInvariant())
+            {
+                case "STRING":
+                    return "System.String";
+                case "INT64":
+                case "INTEGER":
+                    return "System.Int64";
+                case "FLOAT64":
+                case "FLOAT":
+                case "NUMERIC":
+                case "BIGNUMERIC":
+                    return "System.Double";
+                case "BOOL":
+                case "BOOLEAN":
+                    return "System.Boolean";
+                case "TIMESTAMP":
+                case "DATETIME":
+                    return "System.DateTime";
+                case "DATE":
+                    return "System.DateTime";
+                default:
+                    return "System.String";
+            }
+        }
+
         public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
         {
             return GetEntityStructure(fnd?.EntityName ?? "", refresh);
@@ -415,7 +446,8 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
                 var entity = GetEntityStructure(EntityName, false);
                 if (entity != null)
                 {
-                    return DMTypeBuilder.CreateTypeFromEntityStructure(entity, DMEEditor);
+                    DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, entity.Fields);
+                    return DMTypeBuilder.MyType ?? typeof(object);
                 }
             }
             catch (Exception ex)
@@ -461,17 +493,9 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
                     var schema = new TableSchemaBuilder();
                     foreach (var field in entity.Fields)
                     {
-                        schema.Add(field.FieldName, GetBigQueryType(field.Fieldtype), field.AllowDBNull ? "NULLABLE" : "REQUIRED");
+                        schema.Add(field.FieldName, GetBigQueryType(field.Fieldtype), field.AllowDBNull ? BigQueryFieldMode.Nullable : BigQueryFieldMode.Required);
                     }
-
-                    var tableRef = new TableReference
-                    {
-                        ProjectId = _projectId,
-                        DatasetId = _datasetId,
-                        TableId = entity.EntityName
-                    };
-
-                    _client.CreateTable(tableRef, schema.Build());
+                    _client.CreateTable(_datasetId, entity.EntityName, schema.Build());
                     
                     if (Entities == null)
                     {
@@ -562,7 +586,7 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
                         var rowDict = new Dictionary<string, object>();
                         foreach (var field in row.Schema.Fields)
                         {
-                            rowDict[field.Name] = row[field.Name]?.Value;
+                            rowDict[field.Name] = row[field.Name];
                         }
                         results.Add(rowDict);
                     }
@@ -594,7 +618,10 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
             ErrorObject.Flag = Errors.Ok;
             try
             {
-                ExecuteSql(dDLScripts.ScriptText);
+                if (dDLScripts != null && !string.IsNullOrWhiteSpace(dDLScripts.Ddl))
+                {
+                    ExecuteSql(dDLScripts.Ddl);
+                }
             }
             catch (Exception ex)
             {
@@ -635,9 +662,11 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
 
                     scripts.Add(new ETLScriptDet
                     {
-                        EntityName = entity.EntityName,
-                       ScriptType= "CREATE",
-                        ScriptText = sb.ToString()
+                        SourceEntityName = entity.EntityName,
+                        DestinationDataSourceName = DatasourceName,
+                        DestinationDataSourceEntityName = entity.EntityName,
+                        ScriptType = DDLScriptType.CreateEntity,
+                        Ddl = sb.ToString()
                     });
                 }
             }
@@ -686,7 +715,7 @@ namespace TheTechIdea.Beep.Cloud.GoogleBigQuery
                     var result = _client.ExecuteQuery(query, parameters: null);
                     foreach (var row in result)
                     {
-                        var firstValue = row[0]?.Value;
+                        var firstValue = row[0];
                         if (firstValue != null && double.TryParse(firstValue.ToString(), out double value))
                         {
                             return value;

@@ -479,7 +479,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
                     using (var session = Store.OpenSession(CurrentDatabase))
                     {
                         // Query documents from the collection (EntityName)
-                        var query = session.Query<BlittableJsonReaderObject>(collection: EntityName);
+                        IQueryable<BlittableJsonReaderObject> query = session.Query<BlittableJsonReaderObject>(collectionName: EntityName);
                         
                         // Apply filters if provided
                         if (filter != null && filter.Count > 0)
@@ -834,7 +834,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
                     using (var session = Store.OpenSession(CurrentDatabase))
                     {
                         // Get a sample document from the collection
-                        var sampleDoc = session.Query<BlittableJsonReaderObject>(collection: DocName).FirstOrDefault();
+                        var sampleDoc = session.Query<BlittableJsonReaderObject>(collectionName: DocName).FirstOrDefault();
                         
                         if (sampleDoc != null)
                         {
@@ -844,7 +844,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
                                 DatasourceEntityName = DocName,
                                 OriginalEntityName = DocName,
                                 Caption = DocName,
-                                Category = DatasourceCategory.NOSQL,
+                                Category = DatasourceCategory.NOSQL.ToString(),
                                 DatabaseType = DataSourceType.RavenDB,
                                 DataSourceID = DatasourceName,
                                 SchemaOrOwnerOrDatabase = CurrentDatabase,
@@ -858,7 +858,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
                                 if (propertyName != "@metadata")
                                 {
                                     sampleDoc.TryGet(propertyName, out object propValue);
-                                    var Fieldtype = InferTypeFromValue(propValue);
+                                    var fieldType = InferTypeFromValue(propValue);
 
                                     retval.Fields.Add(new EntityField
                                     {
@@ -1204,51 +1204,37 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
 
         public IErrorsInfo LoadData(Progress<PassedArgs> progress, CancellationToken token)
         {
-            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
-            return LoadData(progressWrapper, token);
+            return LoadData((IProgress<PassedArgs>)progress, token);
         }
 
         public IErrorsInfo SyncData(Progress<PassedArgs> progress, CancellationToken token)
         {
-            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
-            return SyncData(progressWrapper, token);
+            return SyncData((IProgress<PassedArgs>)progress, token);
         }
 
         public IErrorsInfo LoadStructure(Progress<PassedArgs> progress, CancellationToken token, bool copydata = false)
         {
-            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
-            return LoadStructure(progressWrapper, token, copydata);
+            return LoadStructure((IProgress<PassedArgs>)progress, token, copydata);
         }
 
         public IErrorsInfo CreateStructure(Progress<PassedArgs> progress, CancellationToken token)
         {
-            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
-            return CreateStructure(progressWrapper, token);
+            return CreateStructure((IProgress<PassedArgs>)progress, token);
         }
 
         public IErrorsInfo SyncData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
         {
-            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
-            return SyncData(entityname, progressWrapper, token);
+            return SyncData(entityname, (IProgress<PassedArgs>)progress, token);
         }
 
         public IErrorsInfo RefreshData(Progress<PassedArgs> progress, CancellationToken token)
         {
-            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
-            return RefreshData(progressWrapper, token);
+            return RefreshData((IProgress<PassedArgs>)progress, token);
         }
 
         public IErrorsInfo RefreshData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
         {
-            var progressWrapper = new ProgressWrapper<PassedArgs>(progress);
-            return RefreshData(entityname, progressWrapper, token);
-        }
-
-        private class ProgressWrapper<T> : IProgress<T>
-        {
-            private readonly Progress<T> _progress;
-            public ProgressWrapper(Progress<T> progress) => _progress = progress;
-            public void Report(T value) => _progress?.Report(value);
+            return RefreshData(entityname, (IProgress<PassedArgs>)progress, token);
         }
 
         public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
@@ -1267,7 +1253,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
                 {
                     using (var session = Store.OpenSession(CurrentDatabase))
                     {
-                        var query = session.Query<BlittableJsonReaderObject>(collection: EntityName);
+                        IQueryable<BlittableJsonReaderObject> query = session.Query<BlittableJsonReaderObject>(collectionName: EntityName);
                         
                         if (filter != null && filter.Count > 0)
                         {

@@ -16,6 +16,12 @@ namespace TheTechIdea.Beep.HootsuiteDataSource
         /// </summary>
         [JsonIgnore]
         public IDataSource DataSource { get; set; }
+
+        public T Attach<T>(IDataSource dataSource) where T : HootsuiteEntityBase
+        {
+            DataSource = dataSource;
+            return (T)this;
+        }
     }
 
     /// <summary>

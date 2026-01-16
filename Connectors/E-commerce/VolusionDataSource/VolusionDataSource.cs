@@ -70,28 +70,28 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Volusion
 
         // -------------------- CommandAttribute Methods --------------------
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "VolusionDataSource", Showin = ShowinType.Both, misc = "IEnumerable<VProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType ="Products", ClassName = "VolusionDataSource", Showin = ShowinType.Both, misc = "IEnumerable<VProduct>")]
         public async Task<IEnumerable<Models.VProduct>> GetProducts(AppFilter filter)
         {
             var result = await GetEntityAsync("Products", new List<AppFilter> { filter });
             return result.Cast<Models.VProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Orders", ClassName = "VolusionDataSource", Showin = ShowinType.Both, misc = "IEnumerable<VOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType ="Orders", ClassName = "VolusionDataSource", Showin = ShowinType.Both, misc = "IEnumerable<VOrder>")]
         public async Task<IEnumerable<Models.VOrder>> GetOrders(AppFilter filter)
         {
             var result = await GetEntityAsync("Orders", new List<AppFilter> { filter });
             return result.Cast<Models.VOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Categories", ClassName = "VolusionDataSource", Showin = ShowinType.Both, misc = "IEnumerable<VCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType ="Categories", ClassName = "VolusionDataSource", Showin = ShowinType.Both, misc = "IEnumerable<VCategory>")]
         public async Task<IEnumerable<Models.VCategory>> GetCategories(AppFilter filter)
         {
             var result = await GetEntityAsync("Categories", new List<AppFilter> { filter });
             return result.Cast<Models.VCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Products", Name = "CreateProduct", Caption = "Create Volusion Product", ClassType = "VolusionDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType ="Products", Name = "CreateProduct", Caption = "Create Volusion Product", ClassType ="VolusionDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VProduct>")]
         public async Task<IEnumerable<Models.VProduct>> CreateProductAsync(Models.VProduct product)
         {
             try
@@ -111,7 +111,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Volusion
             return new List<Models.VProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Products", Name = "UpdateProduct", Caption = "Update Volusion Product", ClassType = "VolusionDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType ="Products", Name = "UpdateProduct", Caption = "Update Volusion Product", ClassType ="VolusionDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VProduct>")]
         public async Task<IEnumerable<Models.VProduct>> UpdateProductAsync(Models.VProduct product)
         {
             try
@@ -131,7 +131,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Volusion
             return new List<Models.VProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "CreateOrder", Caption = "Create Volusion Order", ClassType = "VolusionDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType ="Orders", Name = "CreateOrder", Caption = "Create Volusion Order", ClassType ="VolusionDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VOrder>")]
         public async Task<IEnumerable<Models.VOrder>> CreateOrderAsync(Models.VOrder order)
         {
             try
@@ -151,7 +151,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Volusion
             return new List<Models.VOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "UpdateOrder", Caption = "Update Volusion Order", ClassType = "VolusionDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType ="Orders", Name = "UpdateOrder", Caption = "Update Volusion Order", ClassType ="VolusionDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VOrder>")]
         public async Task<IEnumerable<Models.VOrder>> UpdateOrderAsync(Models.VOrder order)
         {
             try
@@ -171,7 +171,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Volusion
             return new List<Models.VOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "CreateCategory", Caption = "Create Volusion Category", ClassType = "VolusionDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType ="Categories", Name = "CreateCategory", Caption = "Create Volusion Category", ClassType ="VolusionDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VCategory>")]
         public async Task<IEnumerable<Models.VCategory>> CreateCategoryAsync(Models.VCategory category)
         {
             try
@@ -191,7 +191,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Volusion
             return new List<Models.VCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "UpdateCategory", Caption = "Update Volusion Category", ClassType = "VolusionDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Volusion, PointType = EnumPointType.Function, ObjectType ="Categories", Name = "UpdateCategory", Caption = "Update Volusion Category", ClassType ="VolusionDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "volusion.png", misc = "ReturnType: IEnumerable<VCategory>")]
         public async Task<IEnumerable<Models.VCategory>> UpdateCategoryAsync(Models.VCategory category)
         {
             try

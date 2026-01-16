@@ -166,21 +166,21 @@ namespace TheTechIdea.Beep.Connectors.Freshsales
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Leads", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesLead>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType ="Leads", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesLead>")]
         public IEnumerable<FreshsalesLead> GetLeads(List<AppFilter> filter) => GetEntity("leads", filter).Cast<FreshsalesLead>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesContact>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType ="Contacts", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesContact>")]
         public IEnumerable<FreshsalesContact> GetContacts(List<AppFilter> filter) => GetEntity("contacts", filter).Cast<FreshsalesContact>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesAccount>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType ="Accounts", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesAccount>")]
         public IEnumerable<FreshsalesAccount> GetAccounts(List<AppFilter> filter) => GetEntity("accounts", filter).Cast<FreshsalesAccount>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Deals", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesDeal>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType ="Deals", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FreshsalesDeal>")]
         public IEnumerable<FreshsalesDeal> GetDeals(List<AppFilter> filter) => GetEntity("deals", filter).Cast<FreshsalesDeal>();
 
         // -------------------- Create / Update (POST/PUT) methods --------------------
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesLead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType ="Lead", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesLead")]
         public async Task<IEnumerable<FreshsalesLead>> CreateLeadAsync(FreshsalesLead lead)
         {
             if (lead == null) return Array.Empty<FreshsalesLead>();
@@ -199,7 +199,7 @@ namespace TheTechIdea.Beep.Connectors.Freshsales
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesLead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType ="Lead", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesLead")]
         public async Task<IEnumerable<FreshsalesLead>> UpdateLeadAsync(string leadId, FreshsalesLead lead)
         {
             if (string.IsNullOrWhiteSpace(leadId) || lead == null) return Array.Empty<FreshsalesLead>();
@@ -219,7 +219,7 @@ namespace TheTechIdea.Beep.Connectors.Freshsales
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesContact")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType ="Contact", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesContact")]
         public async Task<IEnumerable<FreshsalesContact>> CreateContactAsync(FreshsalesContact contact)
         {
             if (contact == null) return Array.Empty<FreshsalesContact>();
@@ -238,7 +238,7 @@ namespace TheTechIdea.Beep.Connectors.Freshsales
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesContact")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType ="Contact", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesContact")]
         public async Task<IEnumerable<FreshsalesContact>> UpdateContactAsync(string contactId, FreshsalesContact contact)
         {
             if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<FreshsalesContact>();
@@ -258,7 +258,7 @@ namespace TheTechIdea.Beep.Connectors.Freshsales
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesAccount")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType ="Account", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesAccount")]
         public async Task<IEnumerable<FreshsalesAccount>> CreateAccountAsync(FreshsalesAccount account)
         {
             if (account == null) return Array.Empty<FreshsalesAccount>();
@@ -277,7 +277,7 @@ namespace TheTechIdea.Beep.Connectors.Freshsales
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesAccount")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType ="Account", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesAccount")]
         public async Task<IEnumerable<FreshsalesAccount>> UpdateAccountAsync(string accountId, FreshsalesAccount account)
         {
             if (string.IsNullOrWhiteSpace(accountId) || account == null) return Array.Empty<FreshsalesAccount>();
@@ -297,7 +297,7 @@ namespace TheTechIdea.Beep.Connectors.Freshsales
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Deal", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesDeal")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType ="Deal", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesDeal")]
         public async Task<IEnumerable<FreshsalesDeal>> CreateDealAsync(FreshsalesDeal deal)
         {
             if (deal == null) return Array.Empty<FreshsalesDeal>();
@@ -316,7 +316,7 @@ namespace TheTechIdea.Beep.Connectors.Freshsales
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType = "Deal", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesDeal")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Freshsales, PointType = EnumPointType.Function, ObjectType ="Deal", ClassName = "FreshsalesDataSource", Showin = ShowinType.Both, misc = "FreshsalesDeal")]
         public async Task<IEnumerable<FreshsalesDeal>> UpdateDealAsync(string dealId, FreshsalesDeal deal)
         {
             if (string.IsNullOrWhiteSpace(dealId) || deal == null) return Array.Empty<FreshsalesDeal>();

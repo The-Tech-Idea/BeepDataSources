@@ -38,8 +38,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat.Models
         [JsonPropertyName("type")]
         public string? Type { get; set; }
 
-        [JsonPropertyName("displayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
 
         [JsonPropertyName("spaceDetails")]
         public GoogleChatSpaceDetails? SpaceDetails { get; set; }
@@ -128,8 +128,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat.Models
         [JsonPropertyName("name")]
         public string? Name { get; set; }
 
-        [JsonPropertyName("displayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
 
         [JsonPropertyName("domainId")]
         public string? DomainId { get; set; }
@@ -197,8 +197,8 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat.Models
         [JsonPropertyName("type")]
         public string? Type { get; set; }
 
-        [JsonPropertyName("displayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
 
         [JsonPropertyName("spaceDetails")]
         public GoogleChatSpaceDetails? SpaceDetails { get; set; }

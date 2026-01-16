@@ -271,7 +271,7 @@ namespace TheTechIdea.Beep.Connectors.Instagram
         /// <summary>
         /// Gets the media for a user
         /// </summary>
-        [CommandAttribute(ObjectType = "IgMedia", PointType = EnumPointType.Function, Name = "GetUserMedia", Caption = "Get Instagram User Media", ClassName = "InstagramDataSource", misc = "ReturnType: IEnumerable<IgMedia>")]
+        [CommandAttribute(ObjectType ="IgMedia", PointType = EnumPointType.Function, Name = "GetUserMedia", Caption = "Get Instagram User Media", ClassName = "InstagramDataSource", misc = "ReturnType: IEnumerable<IgMedia>")]
         public async Task<IEnumerable<IgMedia>> GetUserMedia(string userId, int limit = 10)
         {
             var filters = new List<AppFilter>
@@ -287,7 +287,7 @@ namespace TheTechIdea.Beep.Connectors.Instagram
         /// <summary>
         /// Gets user profile information
         /// </summary>
-        [CommandAttribute(ObjectType = "IgUser", PointType = EnumPointType.Function, Name = "GetUserProfile", Caption = "Get Instagram User Profile", ClassName = "InstagramDataSource", misc = "ReturnType: IEnumerable<IgUser>")]
+        [CommandAttribute(ObjectType ="IgUser", PointType = EnumPointType.Function, Name = "GetUserProfile", Caption = "Get Instagram User Profile", ClassName = "InstagramDataSource", misc = "ReturnType: IEnumerable<IgUser>")]
         public async Task<IEnumerable<IgUser>> GetUserProfile(string userId)
         {
             var filters = new List<AppFilter>
@@ -302,7 +302,7 @@ namespace TheTechIdea.Beep.Connectors.Instagram
         /// <summary>
         /// Gets comments for a media item
         /// </summary>
-        [CommandAttribute(ObjectType = "IgComment", PointType = EnumPointType.Function, Name = "GetMediaComments", Caption = "Get Instagram Media Comments", ClassName = "InstagramDataSource", misc = "ReturnType: IEnumerable<IgComment>")]
+        [CommandAttribute(ObjectType ="IgComment", PointType = EnumPointType.Function, Name = "GetMediaComments", Caption = "Get Instagram Media Comments", ClassName = "InstagramDataSource", misc = "ReturnType: IEnumerable<IgComment>")]
         public async Task<IEnumerable<IgComment>> GetMediaComments(string mediaId, int limit = 10)
         {
             var filters = new List<AppFilter>
@@ -318,7 +318,7 @@ namespace TheTechIdea.Beep.Connectors.Instagram
         /// <summary>
         /// Gets insights for a media item
         /// </summary>
-        [CommandAttribute(ObjectType = "IgInsight", PointType = EnumPointType.Function, Name = "GetMediaInsights", Caption = "Get Instagram Media Insights", ClassName = "InstagramDataSource", misc = "ReturnType: IEnumerable<IgInsight>")]
+        [CommandAttribute(ObjectType ="IgInsight", PointType = EnumPointType.Function, Name = "GetMediaInsights", Caption = "Get Instagram Media Insights", ClassName = "InstagramDataSource", misc = "ReturnType: IEnumerable<IgInsight>")]
         public async Task<IEnumerable<IgInsight>> GetMediaInsights(string mediaId, string metric = "engagement,impressions,reach,saved", string period = "lifetime")
         {
             var filters = new List<AppFilter>
@@ -332,7 +332,7 @@ namespace TheTechIdea.Beep.Connectors.Instagram
         }
 
         // POST methods for creating entities
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Instagram, PointType = EnumPointType.Function, ObjectType = "IgMedia", Name = "CreateMedia", Caption = "Create Instagram Media", ClassType = "InstagramDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "instagram.png", misc = "ReturnType: IEnumerable<IgMedia>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Instagram, PointType = EnumPointType.Function, ObjectType ="IgMedia", Name = "CreateMedia", Caption = "Create Instagram Media", ClassType ="InstagramDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "instagram.png", misc = "ReturnType: IEnumerable<IgMedia>")]
         public async Task<IEnumerable<IgMedia>> CreateMediaAsync(IgMedia media)
         {
             try
@@ -353,7 +353,7 @@ namespace TheTechIdea.Beep.Connectors.Instagram
         }
 
         // PUT methods for updating entities
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Instagram, PointType = EnumPointType.Function, ObjectType = "IgMedia", Name = "UpdateMedia", Caption = "Update Instagram Media", ClassType = "InstagramDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "instagram.png", misc = "ReturnType: IEnumerable<IgMedia>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Instagram, PointType = EnumPointType.Function, ObjectType ="IgMedia", Name = "UpdateMedia", Caption = "Update Instagram Media", ClassType ="InstagramDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "instagram.png", misc = "ReturnType: IEnumerable<IgMedia>")]
         public async Task<IEnumerable<IgMedia>> UpdateMediaAsync(IgMedia media)
         {
             try

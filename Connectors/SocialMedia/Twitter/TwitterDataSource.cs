@@ -152,13 +152,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         /// Search for recent tweets based on a query
         /// </summary>
         [CommandAttribute(
-            Name = "GetTweets",
+           Name = "GetTweets",
             Caption = "Search Tweets",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterTweet",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterTweet",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 1,
             iconimage = "twitter.png",
@@ -185,13 +185,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         /// Get tweets from a specific user's timeline
         /// </summary>
         [CommandAttribute(
-            Name = "GetUserTimeline",
+           Name = "GetUserTimeline",
             Caption = "Get User Timeline",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterTweet",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterTweet",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 2,
             iconimage = "timeline.png",
@@ -218,13 +218,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         /// Get user information by username
         /// </summary>
         [CommandAttribute(
-            Name = "GetUserByUsername",
+           Name = "GetUserByUsername",
             Caption = "Get User by Username",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterUser",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterUser",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 3,
             iconimage = "user.png",
@@ -245,13 +245,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         /// Get user information by user ID
         /// </summary>
         [CommandAttribute(
-            Name = "GetUserById",
+           Name = "GetUserById",
             Caption = "Get User by ID",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterUser",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterUser",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 4,
             iconimage = "user_id.png",
@@ -272,13 +272,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         /// Get followers of a specific user
         /// </summary>
         [CommandAttribute(
-            Name = "GetFollowers",
+           Name = "GetFollowers",
             Caption = "Get Followers",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterUser",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterUser",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "followers.png",
@@ -305,13 +305,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         /// Get users that a specific user is following
         /// </summary>
         [CommandAttribute(
-            Name = "GetFollowing",
+           Name = "GetFollowing",
             Caption = "Get Following",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterUser",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterUser",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "following.png",
@@ -338,13 +338,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         /// Get tweets from a specific list
         /// </summary>
         [CommandAttribute(
-            Name = "GetListTweets",
+           Name = "GetListTweets",
             Caption = "Get List Tweets",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterTweet",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterTweet",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 7,
             iconimage = "list.png",
@@ -371,13 +371,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         /// Search for Twitter Spaces
         /// </summary>
         [CommandAttribute(
-            Name = "SearchSpaces",
+           Name = "SearchSpaces",
             Caption = "Search Spaces",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterSpace",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterSpace",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 8,
             iconimage = "spaces.png",
@@ -500,13 +500,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
 
         // POST/PUT methods for creating and updating entities
         [CommandAttribute(
-            Name = "CreateTweet",
+           Name = "CreateTweet",
             Caption = "Create Tweet",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterTweet",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterTweet",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 9,
             iconimage = "tweet.png",
@@ -525,13 +525,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         }
 
         [CommandAttribute(
-            Name = "DeleteTweet",
+           Name = "DeleteTweet",
             Caption = "Delete Tweet",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterTweet",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterTweet",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 10,
             iconimage = "delete.png",
@@ -551,13 +551,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         }
 
         [CommandAttribute(
-            Name = "LikeTweet",
+           Name = "LikeTweet",
             Caption = "Like Tweet",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterTweet",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterTweet",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 11,
             iconimage = "like.png",
@@ -578,13 +578,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
         }
 
         [CommandAttribute(
-            Name = "Retweet",
+           Name = "Retweet",
             Caption = "Retweet",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterTweet",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterTweet",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 12,
             iconimage = "retweet.png",
@@ -606,13 +606,13 @@ namespace TheTechIdea.Beep.Connectors.Twitter
 
         // PUT methods for updating entities
         [CommandAttribute(
-            Name = "UpdateTweet",
+           Name = "UpdateTweet",
             Caption = "Update Tweet",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twitter,
             PointType = EnumPointType.Function,
-            ObjectType = "TwitterTweet",
-            ClassType = "TwitterDataSource",
+            ObjectType ="TwitterTweet",
+            ClassType ="TwitterDataSource",
             Showin = ShowinType.Both,
             Order = 13,
             iconimage = "update.png",

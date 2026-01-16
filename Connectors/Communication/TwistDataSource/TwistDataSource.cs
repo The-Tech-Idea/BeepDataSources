@@ -210,9 +210,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
         /// </summary>
         /// <returns>Enumerable of TwistWorkspace objects</returns>
         [CommandAttribute(
-            ObjectType = "TwistWorkspace",
+            ObjectType ="TwistWorkspace",
             PointType = EnumPointType.Function,
-            Name = "GetWorkspaces",
+           Name = "GetWorkspaces",
             Caption = "Get Workspaces",
             ClassName = "TwistDataSource",
             Category = DatasourceCategory.Connector,
@@ -236,9 +236,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
         /// <param name="workspaceId">The workspace ID</param>
         /// <returns>TwistWorkspace object</returns>
         [CommandAttribute(
-            ObjectType = "TwistWorkspace",
+            ObjectType ="TwistWorkspace",
             PointType = EnumPointType.Function,
-            Name = "GetWorkspace",
+           Name = "GetWorkspace",
             Caption = "Get Workspace",
             ClassName = "TwistDataSource",
             Category = DatasourceCategory.Connector,
@@ -262,9 +262,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
         /// </summary>
         /// <returns>Enumerable of TwistChannel objects</returns>
         [CommandAttribute(
-            ObjectType = "TwistChannel",
+            ObjectType ="TwistChannel",
             PointType = EnumPointType.Function,
-            Name = "GetChannels",
+           Name = "GetChannels",
             Caption = "Get Channels",
             ClassName = "TwistDataSource",
             Category = DatasourceCategory.Connector,
@@ -288,9 +288,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
         /// <param name="channelId">The channel ID</param>
         /// <returns>TwistChannel object</returns>
         [CommandAttribute(
-            ObjectType = "TwistChannel",
+            ObjectType ="TwistChannel",
             PointType = EnumPointType.Function,
-            Name = "GetChannel",
+           Name = "GetChannel",
             Caption = "Get Channel",
             ClassName = "TwistDataSource",
             Category = DatasourceCategory.Connector,
@@ -314,9 +314,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
         /// </summary>
         /// <returns>Enumerable of TwistThread objects</returns>
         [CommandAttribute(
-            ObjectType = "TwistThread",
+            ObjectType ="TwistThread",
             PointType = EnumPointType.Function,
-            Name = "GetThreads",
+           Name = "GetThreads",
             Caption = "Get Threads",
             ClassName = "TwistDataSource",
             Category = DatasourceCategory.Connector,
@@ -339,9 +339,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
         /// </summary>
         /// <returns>Enumerable of TwistMessage objects</returns>
         [CommandAttribute(
-            ObjectType = "TwistMessage",
+            ObjectType ="TwistMessage",
             PointType = EnumPointType.Function,
-            Name = "GetMessages",
+           Name = "GetMessages",
             Caption = "Get Messages",
             ClassName = "TwistDataSource",
             Category = DatasourceCategory.Connector,
@@ -364,9 +364,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
         /// </summary>
         /// <returns>Enumerable of TwistUser objects</returns>
         [CommandAttribute(
-            ObjectType = "TwistUser",
+            ObjectType ="TwistUser",
             PointType = EnumPointType.Function,
-            Name = "GetUsers",
+           Name = "GetUsers",
             Caption = "Get Users",
             ClassName = "TwistDataSource",
             Category = DatasourceCategory.Connector,
@@ -390,9 +390,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
         /// <param name="userId">The user ID</param>
         /// <returns>TwistUser object</returns>
         [CommandAttribute(
-            ObjectType = "TwistUser",
+            ObjectType ="TwistUser",
             PointType = EnumPointType.Function,
-            Name = "GetUser",
+           Name = "GetUser",
             Caption = "Get User",
             ClassName = "TwistDataSource",
             Category = DatasourceCategory.Connector,
@@ -415,13 +415,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
         /// Creates a message in a Twist thread
         /// </summary>
         [CommandAttribute(
-            Name = "CreateMessageAsync",
+           Name = "CreateMessageAsync",
             Caption = "Create Twist Message",
-            ObjectType = "TwistMessage",
+            ObjectType ="TwistMessage",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twist,
-            ClassType = "TwistDataSource",
+            ClassType ="TwistDataSource",
             Showin = ShowinType.Both,
             Order = 9,
             iconimage = "createmessage.png",
@@ -454,13 +454,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
         /// Creates a channel in a Twist workspace
         /// </summary>
         [CommandAttribute(
-            Name = "CreateChannelAsync",
+           Name = "CreateChannelAsync",
             Caption = "Create Twist Channel",
-            ObjectType = "TwistChannel",
+            ObjectType ="TwistChannel",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twist,
-            ClassType = "TwistDataSource",
+            ClassType ="TwistDataSource",
             Showin = ShowinType.Both,
             Order = 10,
             iconimage = "createchannel.png",
@@ -493,13 +493,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
         /// Updates a message in a Twist thread
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateMessageAsync",
+           Name = "UpdateMessageAsync",
             Caption = "Update Twist Message",
-            ObjectType = "TwistMessage",
+            ObjectType ="TwistMessage",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twist,
-            ClassType = "TwistDataSource",
+            ClassType ="TwistDataSource",
             Showin = ShowinType.Both,
             Order = 11,
             iconimage = "updatemessage.png",
@@ -532,13 +532,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Twist
         /// Updates a channel in a Twist workspace
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateChannelAsync",
+           Name = "UpdateChannelAsync",
             Caption = "Update Twist Channel",
-            ObjectType = "TwistChannel",
+            ObjectType ="TwistChannel",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Twist,
-            ClassType = "TwistDataSource",
+            ClassType ="TwistDataSource",
             Showin = ShowinType.Both,
             Order = 12,
             iconimage = "updatechannel.png",

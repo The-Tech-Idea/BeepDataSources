@@ -334,7 +334,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Slack.Models
     }
 
     // Simplified supporting classes
-    public class SlackUserProfile { public string? AvatarHash { get; set; } public string? StatusText { get; set; } public string? StatusEmoji { get; set; } public string? RealName { get; set; } public string? DisplayName { get; set; } public string? RealNameNormalized { get; set; } public string? DisplayNameNormalized { get; set; } public string? Email { get; set; } public string? TeamId { get; set; } }
+    public class SlackUserProfile { public string? AvatarHash { get; set; } public string? StatusText { get; set; } public string? StatusEmoji { get; set; } public string? RealName { get; set; } public string? Caption { get; set; } public string? RealNameNormalized { get; set; } public string? CaptionNormalized { get; set; } public string? Email { get; set; } public string? TeamId { get; set; } }
     public class SlackChannelTopic { public string? Value { get; set; } public string? Creator { get; set; } public DateTime? LastSet { get; set; } }
     public class SlackChannelPurpose { public string? Value { get; set; } public string? Creator { get; set; } public DateTime? LastSet { get; set; } }
     public class SlackAttachmentField { public string? Title { get; set; } public string? Value { get; set; } public bool? Short { get; set; } }

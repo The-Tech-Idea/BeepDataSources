@@ -308,7 +308,7 @@ namespace TheTechIdea.Beep.HootsuiteDataSource
         /// <summary>
         /// Get all posts from Hootsuite
         /// </summary>
-        [CommandAttribute(Name = "GetPosts", Caption = "Get Hootsuite Posts", ClassName = "HootsuiteDataSource", ObjectType = "HootsuitePost", PointType = EnumPointType.Function, misc = "HootsuiteResponse<HootsuitePost>")]
+        [CommandAttribute(Name = "GetPosts", Caption = "Get Hootsuite Posts", ClassName = "HootsuiteDataSource", ObjectType ="HootsuitePost", PointType = EnumPointType.Function, misc = "HootsuiteResponse<HootsuitePost>")]
         public async Task<HootsuiteResponse<HootsuitePost>> GetPosts()
         {
             var response = await GetAsync("v1/posts");
@@ -328,7 +328,7 @@ namespace TheTechIdea.Beep.HootsuiteDataSource
         /// <summary>
         /// Get scheduled posts from Hootsuite
         /// </summary>
-        [CommandAttribute(Name = "GetScheduledPosts", Caption = "Get Scheduled Hootsuite Posts", ClassName = "HootsuiteDataSource", ObjectType = "HootsuitePost", PointType = EnumPointType.Function, misc = "HootsuiteResponse<HootsuitePost>")]
+        [CommandAttribute(Name = "GetScheduledPosts", Caption = "Get Scheduled Hootsuite Posts", ClassName = "HootsuiteDataSource", ObjectType ="HootsuitePost", PointType = EnumPointType.Function, misc = "HootsuiteResponse<HootsuitePost>")]
         public async Task<HootsuiteResponse<HootsuitePost>> GetScheduledPosts()
         {
             var response = await GetAsync("v1/posts?state=SCHEDULED");
@@ -348,7 +348,7 @@ namespace TheTechIdea.Beep.HootsuiteDataSource
         /// <summary>
         /// Get social profiles from Hootsuite
         /// </summary>
-        [CommandAttribute(Name = "GetSocialProfiles", Caption = "Get Hootsuite Social Profiles", ClassName = "HootsuiteDataSource", ObjectType = "HootsuiteSocialProfile", PointType = EnumPointType.Function, misc = "HootsuiteResponse<HootsuiteSocialProfile>")]
+        [CommandAttribute(Name = "GetSocialProfiles", Caption = "Get Hootsuite Social Profiles", ClassName = "HootsuiteDataSource", ObjectType ="HootsuiteSocialProfile", PointType = EnumPointType.Function, misc = "HootsuiteResponse<HootsuiteSocialProfile>")]
         public async Task<HootsuiteResponse<HootsuiteSocialProfile>> GetSocialProfiles()
         {
             var response = await GetAsync("v1/socialProfiles");
@@ -368,7 +368,7 @@ namespace TheTechIdea.Beep.HootsuiteDataSource
         /// <summary>
         /// Get organizations from Hootsuite
         /// </summary>
-        [CommandAttribute(Name = "GetOrganizations", Caption = "Get Hootsuite Organizations", ClassName = "HootsuiteDataSource", ObjectType = "HootsuiteOrganization", PointType = EnumPointType.Function, misc = "HootsuiteResponse<HootsuiteOrganization>")]
+        [CommandAttribute(Name = "GetOrganizations", Caption = "Get Hootsuite Organizations", ClassName = "HootsuiteDataSource", ObjectType ="HootsuiteOrganization", PointType = EnumPointType.Function, misc = "HootsuiteResponse<HootsuiteOrganization>")]
         public async Task<HootsuiteResponse<HootsuiteOrganization>> GetOrganizations()
         {
             var response = await GetAsync("v1/organizations");
@@ -388,7 +388,7 @@ namespace TheTechIdea.Beep.HootsuiteDataSource
         /// <summary>
         /// Get teams from Hootsuite
         /// </summary>
-        [CommandAttribute(Name = "GetTeams", Caption = "Get Hootsuite Teams", ClassName = "HootsuiteDataSource", ObjectType = "HootsuiteTeam", PointType = EnumPointType.Function, misc = "HootsuiteResponse<HootsuiteTeam>")]
+        [CommandAttribute(Name = "GetTeams", Caption = "Get Hootsuite Teams", ClassName = "HootsuiteDataSource", ObjectType ="HootsuiteTeam", PointType = EnumPointType.Function, misc = "HootsuiteResponse<HootsuiteTeam>")]
         public async Task<HootsuiteResponse<HootsuiteTeam>> GetTeams()
         {
             var response = await GetAsync("v1/teams");
@@ -408,7 +408,7 @@ namespace TheTechIdea.Beep.HootsuiteDataSource
         /// <summary>
         /// Get analytics data from Hootsuite
         /// </summary>
-        [CommandAttribute(Name = "GetAnalytics", Caption = "Get Hootsuite Analytics", ClassName = "HootsuiteDataSource", ObjectType = "HootsuiteAnalytics", PointType = EnumPointType.Function, misc = "HootsuiteResponse<HootsuiteAnalytics>")]
+        [CommandAttribute(Name = "GetAnalytics", Caption = "Get Hootsuite Analytics", ClassName = "HootsuiteDataSource", ObjectType ="HootsuiteAnalytics", PointType = EnumPointType.Function, misc = "HootsuiteResponse<HootsuiteAnalytics>")]
         public async Task<HootsuiteResponse<HootsuiteAnalytics>> GetAnalytics()
         {
             var response = await GetAsync("v1/analytics");
@@ -425,7 +425,7 @@ namespace TheTechIdea.Beep.HootsuiteDataSource
             return JsonSerializer.Deserialize<HootsuiteResponse<HootsuiteAnalytics>>(json, options);
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Hootsuite, PointType = EnumPointType.Function, ObjectType = "HootsuitePost", Name = "CreatePost", Caption = "Create Hootsuite Post", ClassType = "HootsuiteDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "hootsuite.png", misc = "ReturnType: IEnumerable<HootsuitePost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Hootsuite, PointType = EnumPointType.Function, ObjectType ="HootsuitePost", Name = "CreatePost", Caption = "Create Hootsuite Post", ClassType ="HootsuiteDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "hootsuite.png", misc = "ReturnType: IEnumerable<HootsuitePost>")]
         public async Task<IEnumerable<HootsuitePost>> CreatePostAsync(HootsuitePost post)
         {
             try

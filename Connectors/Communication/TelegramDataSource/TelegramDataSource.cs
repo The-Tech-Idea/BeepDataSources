@@ -258,9 +258,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
         // ------------ CommandAttribute Methods ------------
 
     [CommandAttribute(Name = "GetUpdates", Caption = "Get Telegram Updates",
-        ObjectType = "TgUpdate", PointType = EnumPointType.Function,
+        ObjectType ="TgUpdate", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Telegram,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 1,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 1,
         iconimage = "telegram.png", misc = "Optional: offset, limit, timeout, allowed_updates")]
     public async Task<IEnumerable<TgUpdate>> GetUpdates(List<AppFilter> filters = null)
     {
@@ -269,9 +269,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(Name = "GetMe", Caption = "Get Telegram Bot Info",
-        ObjectType = "TgUser", PointType = EnumPointType.Function,
+        ObjectType ="TgUser", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Telegram,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 2,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 2,
         iconimage = "telegram.png", misc = "Get current bot information")]
     public async Task<IEnumerable<TgUser>> GetMe(List<AppFilter> filters = null)
     {
@@ -280,9 +280,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(Name = "GetChat", Caption = "Get Telegram Chat Info",
-        ObjectType = "TgChat", PointType = EnumPointType.Function,
+        ObjectType ="TgChat", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Telegram,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 3,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 3,
         iconimage = "telegram.png", misc = "Requires chat_id filter")]
     public async Task<IEnumerable<TgChat>> GetChat(List<AppFilter> filters = null)
     {
@@ -291,9 +291,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(Name = "GetChatMember", Caption = "Get Telegram Chat Member",
-        ObjectType = "TgChatMember", PointType = EnumPointType.Function,
+        ObjectType ="TgChatMember", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Telegram,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 4,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 4,
         iconimage = "telegram.png", misc = "Requires chat_id and user_id filters")]
     public async Task<IEnumerable<TgChatMember>> GetChatMember(List<AppFilter> filters = null)
     {
@@ -302,9 +302,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(Name = "GetChatAdministrators", Caption = "Get Telegram Chat Administrators",
-        ObjectType = "TgChatMember", PointType = EnumPointType.Function,
+        ObjectType ="TgChatMember", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Telegram,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 5,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 5,
         iconimage = "telegram.png", misc = "Requires chat_id filter")]
     public async Task<IEnumerable<TgChatMember>> GetChatAdministrators(List<AppFilter> filters = null)
     {
@@ -313,9 +313,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(Name = "GetUserProfilePhotos", Caption = "Get Telegram User Profile Photos",
-        ObjectType = "TgUserProfilePhotos", PointType = EnumPointType.Function,
+        ObjectType ="TgUserProfilePhotos", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Telegram,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 6,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 6,
         iconimage = "telegram.png", misc = "Requires user_id filter, optional: offset, limit")]
     public async Task<IEnumerable<TgUserProfilePhotos>> GetUserProfilePhotos(List<AppFilter> filters = null)
     {
@@ -324,9 +324,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(Name = "GetFile", Caption = "Get Telegram File Info",
-        ObjectType = "TgFile", PointType = EnumPointType.Function,
+        ObjectType ="TgFile", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Telegram,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 7,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 7,
         iconimage = "telegram.png", misc = "Requires file_id filter")]
     public async Task<IEnumerable<TgFile>> GetFile(List<AppFilter> filters = null)
     {
@@ -335,9 +335,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(Name = "GetWebhookInfo", Caption = "Get Telegram Webhook Info",
-        ObjectType = "TgWebhookInfo", PointType = EnumPointType.Function,
+        ObjectType ="TgWebhookInfo", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Telegram,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 8,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 8,
         iconimage = "telegram.png", misc = "Get current webhook information")]
     public async Task<IEnumerable<TgWebhookInfo>> GetWebhookInfo(List<AppFilter> filters = null)
     {
@@ -346,9 +346,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(Name = "GetMyCommands", Caption = "Get Telegram Bot Commands",
-        ObjectType = "TgBotCommand", PointType = EnumPointType.Function,
+        ObjectType ="TgBotCommand", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Telegram,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 9,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 9,
         iconimage = "telegram.png", misc = "Get current bot commands")]
     public async Task<IEnumerable<TgBotCommand>> GetMyCommands(List<AppFilter> filters = null)
     {
@@ -357,13 +357,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(
-        Name = "SendMessageAsync",
+       FieldName = "SendMessageAsync",
         Caption = "Send Telegram Message",
-        ObjectType = "TgMessage",
+        ObjectType ="TgMessage",
         PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector,
         DatasourceType = DataSourceType.Telegram,
-        ClassType = "TelegramDataSource",
+        ClassType ="TelegramDataSource",
         Showin = ShowinType.Both,
         Order = 10,
         iconimage = "sendmessage.png",
@@ -393,13 +393,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(
-        Name = "SendPhotoAsync",
+       FieldName = "SendPhotoAsync",
         Caption = "Send Telegram Photo",
-        ObjectType = "TgMessage",
+        ObjectType ="TgMessage",
         PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector,
         DatasourceType = DataSourceType.Telegram,
-        ClassType = "TelegramDataSource",
+        ClassType ="TelegramDataSource",
         Showin = ShowinType.Both,
         Order = 11,
         iconimage = "sendphoto.png",
@@ -429,13 +429,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(
-        Name = "SendDocumentAsync",
+       FieldName = "SendDocumentAsync",
         Caption = "Send Telegram Document",
-        ObjectType = "TgMessage",
+        ObjectType ="TgMessage",
         PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector,
         DatasourceType = DataSourceType.Telegram,
-        ClassType = "TelegramDataSource",
+        ClassType ="TelegramDataSource",
         Showin = ShowinType.Both,
         Order = 12,
         iconimage = "senddocument.png",
@@ -465,13 +465,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(
-        Name = "UpdateMessageAsync",
+       FieldName = "UpdateMessageAsync",
         Caption = "Update Telegram Message",
-        ObjectType = "TgMessage",
+        ObjectType ="TgMessage",
         PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector,
         DatasourceType = DataSourceType.Telegram,
-        ClassType = "TelegramDataSource",
+        ClassType ="TelegramDataSource",
         Showin = ShowinType.Both,
         Order = 13,
         iconimage = "updatemessage.png",

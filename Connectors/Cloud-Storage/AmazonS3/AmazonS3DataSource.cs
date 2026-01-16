@@ -334,9 +334,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         // -------------------- CommandAttribute Methods --------------------
 
         [CommandAttribute(
-            ObjectType = "AmazonS3Bucket",
+            ObjectType ="AmazonS3Bucket",
             PointType = EnumPointType.Function,
-            Name = "GetBuckets",
+           Name = "GetBuckets",
             Caption = "Get All Buckets",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3Bucket>"
@@ -347,9 +347,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3Bucket",
+            ObjectType ="AmazonS3Bucket",
             PointType = EnumPointType.Function,
-            Name = "GetBucket",
+           Name = "GetBucket",
             Caption = "Get Bucket Details",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3Bucket>"
@@ -360,9 +360,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3Object",
+            ObjectType ="AmazonS3Object",
             PointType = EnumPointType.Function,
-            Name = "GetObjects",
+           Name = "GetObjects",
             Caption = "Get Objects in Bucket",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3Object>"
@@ -373,9 +373,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3Object",
+            ObjectType ="AmazonS3Object",
             PointType = EnumPointType.Function,
-            Name = "GetObject",
+           Name = "GetObject",
             Caption = "Get Object Details",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3Object>"
@@ -386,9 +386,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3ObjectVersion",
+            ObjectType ="AmazonS3ObjectVersion",
             PointType = EnumPointType.Function,
-            Name = "GetObjectVersions",
+           Name = "GetObjectVersions",
             Caption = "Get Object Versions",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3ObjectVersion>"
@@ -399,9 +399,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3MultipartUpload",
+            ObjectType ="AmazonS3MultipartUpload",
             PointType = EnumPointType.Function,
-            Name = "GetMultipartUploads",
+           Name = "GetMultipartUploads",
             Caption = "Get Multipart Uploads",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3MultipartUpload>"
@@ -412,9 +412,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3BucketPolicy",
+            ObjectType ="AmazonS3BucketPolicy",
             PointType = EnumPointType.Function,
-            Name = "GetBucketPolicy",
+           Name = "GetBucketPolicy",
             Caption = "Get Bucket Policy",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3BucketPolicy>"
@@ -425,9 +425,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3BucketEncryption",
+            ObjectType ="AmazonS3BucketEncryption",
             PointType = EnumPointType.Function,
-            Name = "GetBucketEncryption",
+           Name = "GetBucketEncryption",
             Caption = "Get Bucket Encryption",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3BucketEncryption>"
@@ -438,9 +438,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3CorsConfiguration",
+            ObjectType ="AmazonS3CorsConfiguration",
             PointType = EnumPointType.Function,
-            Name = "GetBucketCors",
+           Name = "GetBucketCors",
             Caption = "Get Bucket CORS Configuration",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3CorsConfiguration>"
@@ -451,9 +451,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3LifecycleConfiguration",
+            ObjectType ="AmazonS3LifecycleConfiguration",
             PointType = EnumPointType.Function,
-            Name = "GetBucketLifecycle",
+           Name = "GetBucketLifecycle",
             Caption = "Get Bucket Lifecycle Configuration",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3LifecycleConfiguration>"
@@ -464,9 +464,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3Tagging",
+            ObjectType ="AmazonS3Tagging",
             PointType = EnumPointType.Function,
-            Name = "GetBucketTags",
+           Name = "GetBucketTags",
             Caption = "Get Bucket Tags",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3Tagging>"
@@ -477,9 +477,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3AccessControlList",
+            ObjectType ="AmazonS3AccessControlList",
             PointType = EnumPointType.Function,
-            Name = "GetObjectAcl",
+           Name = "GetObjectAcl",
             Caption = "Get Object ACL",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3AccessControlList>"
@@ -490,9 +490,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3Tagging",
+            ObjectType ="AmazonS3Tagging",
             PointType = EnumPointType.Function,
-            Name = "GetObjectTags",
+           Name = "GetObjectTags",
             Caption = "Get Object Tags",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3Tagging>"
@@ -503,9 +503,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3ObjectMetadata",
+            ObjectType ="AmazonS3ObjectMetadata",
             PointType = EnumPointType.Function,
-            Name = "GetObjectMetadata",
+           Name = "GetObjectMetadata",
             Caption = "Get Object Metadata",
             ClassName = "AmazonS3DataSource",
             misc = "ReturnType: IEnumerable<AmazonS3ObjectMetadata>"
@@ -516,9 +516,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3Bucket",
+            ObjectType ="AmazonS3Bucket",
             PointType = EnumPointType.Function,
-            Name = "CreateBucketAsync",
+           Name = "CreateBucketAsync",
             Caption = "Create Amazon S3 Bucket",
             ClassName = "AmazonS3DataSource",
             Category = DatasourceCategory.Connector,
@@ -551,9 +551,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3Object",
+            ObjectType ="AmazonS3Object",
             PointType = EnumPointType.Function,
-            Name = "UploadObjectAsync",
+           Name = "UploadObjectAsync",
             Caption = "Upload Amazon S3 Object",
             ClassName = "AmazonS3DataSource",
             Category = DatasourceCategory.Connector,
@@ -586,9 +586,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3Bucket",
+            ObjectType ="AmazonS3Bucket",
             PointType = EnumPointType.Function,
-            Name = "UpdateBucketAsync",
+           Name = "UpdateBucketAsync",
             Caption = "Update Amazon S3 Bucket",
             ClassName = "AmazonS3DataSource",
             Category = DatasourceCategory.Connector,
@@ -621,9 +621,9 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3
         }
 
         [CommandAttribute(
-            ObjectType = "AmazonS3Object",
+            ObjectType ="AmazonS3Object",
             PointType = EnumPointType.Function,
-            Name = "UpdateObjectAsync",
+           Name = "UpdateObjectAsync",
             Caption = "Update Amazon S3 Object",
             ClassName = "AmazonS3DataSource",
             Category = DatasourceCategory.Connector,

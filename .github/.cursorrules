@@ -1,0 +1,138 @@
+# Cursor Rules for BeepDataSources
+
+## Project Context
+BeepDataSources is a C# datasource implementation library supporting 287+ data source types (RDBMS, NoSQL, APIs, Vector DBs, etc.) for the BeepDM framework.
+
+## Code Style & Conventions
+
+### Naming
+- Classes: PascalCase (e.g., `TwitterDataSource`, `QdrantDatasource`)
+- Methods: PascalCase (e.g., `GetEntity`, `InsertEntity`)
+- Properties: PascalCase (e.g., `DatasourceName`, `ConnectionStatus`)
+- Private fields: _camelCase or camelCase (e.g., `_entityEndpoints`)
+- Constants: UPPER_SNAKE_CASE
+
+### Class Organization
+- Properties first
+- Constructors second
+- Public methods third
+- Private/internal methods last
+- Use #region directives for logical grouping (e.g., "IDataSource PROPERTIES", "IDataSource METHODS")
+
+### Interface Implementation
+- Always implement `IDataSource` or `IDataSourceHelper` explicitly
+- Decorate with `[AddinAttribute]` for assembly discovery
+- Implement all required interface methods (no partial implementations)
+
+## Architecture Rules
+
+### For WebAPI Connectors (Connectors/)
+1. Create `Models.cs` with sealed POCOs at project root
+2. Add `[JsonPropertyName(...)]` to all properties matching API response
+3. Create base entity class: `{ServiceName}EntityBase` with `Attach<T>()` method
+4. Inherit `WebAPIDataSource` in `{ServiceName}DataSource.cs`
+5. Define static dicts: `EntityEndpoints`, `RequiredFilters`
+6. Override: `GetEntity()`, `GetEntityAsync()`, optionally paged variant
+7. Add `[CommandAttribute]` to strongly-typed methods for UI discovery
+8. ObjectType in CommandAttribute MUST match POCO class name exactly
+
+### For Direct IDataSource Implementations
+1. Implement all ~40 methods from `IDataSource` interface
+2. Use `[AddinAttribute]` for discovery
+3. Initialize `Entities` list in `Openconnection()`
+4. Always populate `ErrorObject` on failure
+5. Support both sync and async variants where applicable
+
+## Error Handling
+- Never throw exceptions for expected failures; use `IErrorsInfo` or return empty collections
+- Always set `ErrorObject.Flag` (Ok/Failed) and `ErrorObject.Message`
+- Log via `Logger.WriteLog(message)` for diagnostics
+- Raise `PassEvent?.Invoke(this, args)` to notify parent of state changes
+
+## Async Patterns
+- Use async/await consistently (no blocking calls like `.Result`)
+- Provide async variants: `GetEntityAsync()`, `GetScalarAsync()`
+- Use `.ConfigureAwait(false)` in library code to avoid UI deadlocks
+- Handle `CancellationToken` where appropriate
+
+## Testing
+- Create unit tests in `tests/` folder matching project structure
+- Test CRUD operations, connection lifecycle, error handling
+- For connectors, use mock HTTP responses (no live API calls in CI/CD)
+- Verify `[AddinAttribute]` and `[CommandAttribute]` attributes exist
+
+## Common Patterns
+
+### Connection Initialization (Connectors)
+```csharp
+if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
+    if (Dataconnection != null)
+        Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+
+EntitiesNames = EntityEndpoints.Keys.ToList();
+Entities = EntitiesNames
+    .Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n })
+    .ToList();
+```
+
+### Filter Handling (Connectors)
+```csharp
+public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+{
+    if (!EntityEndpoints.TryGetValue(EntityName, out var endpoint))
+        throw new InvalidOperationException($"Unknown entity '{EntityName}'.");
+    
+    var q = FiltersToQuery(Filter);
+    RequireFilters(EntityName, q, RequiredFilters.GetValueOrDefault(EntityName, Array.Empty<string>()));
+    
+    var resolvedEndpoint = ResolveEndpoint(endpoint, q);
+    using var resp = await GetAsync(resolvedEndpoint, q).ConfigureAwait(false);
+    
+    return resp?.IsSuccessStatusCode == true ? ExtractArray(resp, "data") : Array.Empty<object>();
+}
+```
+
+### Command Attribute (Connectors)
+```csharp
+[CommandAttribute(
+    Name = "GetUserByUsername",
+    Caption = "Get User by Username",
+    Category = DatasourceCategory.Connector,
+    DatasourceType = DataSourceType.Twitter,
+    PointType = EnumPointType.Function,
+    ObjectType = "TwitterUser",  // MUST match POCO class name
+    ClassType = "TwitterDataSource",
+    Showin = ShowinType.Both,
+    Order = 1,
+    iconimage = "user.png",
+    misc = "ReturnType: IEnumerable<TwitterUser>"
+)]
+public async Task<IEnumerable<TwitterUser>> GetUserByUsername(string username) { }
+```
+
+## Performance Considerations
+- Use `sealed` classes for POCOs (JIT optimization)
+- Cache `EntityEndpoints` and `RequiredFilters` as static readonly
+- Avoid repeated assembly reflection; use `[AddinAttribute]` for discovery
+- Use `.ConfigureAwait(false)` in async methods to avoid unnecessary context switching
+- Reuse HTTP clients; don't create new ones per request (in WebAPIDataSource)
+
+## Documentation
+- Add XML doc comments to public methods and properties
+- Include examples in docstrings for complex methods
+- Document required authentication (Bearer token, OAuth, API key)
+- Document entity names and required filter parameters
+
+## Files to Review Before Coding
+- `DataManagementModelsStandard/IDataSource.cs` (BeepDM) — Interface contract
+- `DataManagementEngineStandard/WebAPI/WebAPIDataSource.cs` (BeepDM) — Base class helpers
+- `Connectors/SocialMedia/Twitter/` — Reference implementation
+- `.github/copilot-instructions.md` — Detailed architecture guide
+- `idatasourceimplementationplan.md` (BeepDM) — IDataSourceHelper patterns
+
+## Build Commands
+```bash
+dotnet build DataSourcePluginSolution.sln
+dotnet build Connectors.sln (for Connectors only)
+dotnet test
+```

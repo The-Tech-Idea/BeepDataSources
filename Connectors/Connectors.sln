@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.5.2.0
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11408.102 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SalesforceDataSource", "CRM\SalesforceDataSource\SalesforceDataSource.csproj", "{2E07A71E-068F-7FDD-292A-3B015C1E2F38}"
 EndProject
@@ -384,6 +384,10 @@ Global
 		{C0000001-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0000001-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0000001-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0000002-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000002-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000002-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0000002-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C0000003-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C0000003-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0000003-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU

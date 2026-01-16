@@ -50,7 +50,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
         public class ZohoEntity
         {
             public string EntityName { get; set; } = string.Empty;
-            public string DisplayName { get; set; } = string.Empty;
+            public string Caption { get; set; } = string.Empty;
             public string ApiEndpoint { get; set; } = string.Empty;
             public Dictionary<string, string> Fields { get; set; } = new();
         }
@@ -240,7 +240,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
                     var structure = new EntityStructure
                     {
                         EntityName = entity.EntityName,
-                        Caption = entity.DisplayName,
+                        Caption = entity.Caption,
                         Fields = new List<EntityField>()
                     };
 
@@ -248,8 +248,8 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
                     {
                         structure.Fields.Add(new EntityField
                         {
-                            fieldname = field.Key,
-                            fieldtype = field.Value
+                            FieldName = field.Key,
+                            Fieldtype = field.Value
                         });
                     }
 
@@ -552,7 +552,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
                 new ZohoEntity
                 {
                     EntityName = "Leads",
-                    DisplayName = "Leads",
+                    Caption = "Leads",
                     ApiEndpoint = "Leads",
                     Fields = new Dictionary<string, string>
                     {
@@ -571,7 +571,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
                 new ZohoEntity
                 {
                     EntityName = "Contacts",
-                    DisplayName = "Contacts",
+                    Caption = "Contacts",
                     ApiEndpoint = "Contacts",
                     Fields = new Dictionary<string, string>
                     {
@@ -589,7 +589,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
                 new ZohoEntity
                 {
                     EntityName = "Accounts",
-                    DisplayName = "Accounts",
+                    Caption = "Accounts",
                     ApiEndpoint = "Accounts",
                     Fields = new Dictionary<string, string>
                     {
@@ -608,7 +608,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
                 new ZohoEntity
                 {
                     EntityName = "Deals",
-                    DisplayName = "Deals",
+                    Caption = "Deals",
                     ApiEndpoint = "Deals",
                     Fields = new Dictionary<string, string>
                     {
@@ -746,98 +746,98 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Leads", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoLead>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Leads", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoLead>")]
         public async Task<IEnumerable<ZohoLead>> GetLeads(AppFilter filter)
         {
             var result = await GetEntityAsync("Leads", new List<AppFilter> { filter });
             return result.Cast<ZohoLead>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoContact>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Contacts", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoContact>")]
         public async Task<IEnumerable<ZohoContact>> GetContacts(AppFilter filter)
         {
             var result = await GetEntityAsync("Contacts", new List<AppFilter> { filter });
             return result.Cast<ZohoContact>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoAccount>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Accounts", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoAccount>")]
         public async Task<IEnumerable<ZohoAccount>> GetAccounts(AppFilter filter)
         {
             var result = await GetEntityAsync("Accounts", new List<AppFilter> { filter });
             return result.Cast<ZohoAccount>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Deals", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoDeal>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Deals", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoDeal>")]
         public async Task<IEnumerable<ZohoDeal>> GetDeals(AppFilter filter)
         {
             var result = await GetEntityAsync("Deals", new List<AppFilter> { filter });
             return result.Cast<ZohoDeal>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Campaigns", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoCampaign>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Campaigns", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoCampaign>")]
         public async Task<IEnumerable<ZohoCampaign>> GetCampaigns(AppFilter filter)
         {
             var result = await GetEntityAsync("Campaigns", new List<AppFilter> { filter });
             return result.Cast<ZohoCampaign>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Tasks", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoTask>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Tasks", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoTask>")]
         public async Task<IEnumerable<ZohoTask>> GetTasks(AppFilter filter)
         {
             var result = await GetEntityAsync("Tasks", new List<AppFilter> { filter });
             return result.Cast<ZohoTask>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Events", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoEvent>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Events", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoEvent>")]
         public async Task<IEnumerable<ZohoEvent>> GetEvents(AppFilter filter)
         {
             var result = await GetEntityAsync("Events", new List<AppFilter> { filter });
             return result.Cast<ZohoEvent>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Calls", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoCall>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Calls", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoCall>")]
         public async Task<IEnumerable<ZohoCall>> GetCalls(AppFilter filter)
         {
             var result = await GetEntityAsync("Calls", new List<AppFilter> { filter });
             return result.Cast<ZohoCall>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Notes", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoNote>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Notes", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoNote>")]
         public async Task<IEnumerable<ZohoNote>> GetNotes(AppFilter filter)
         {
             var result = await GetEntityAsync("Notes", new List<AppFilter> { filter });
             return result.Cast<ZohoNote>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Products", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoProduct>")]
         public async Task<IEnumerable<ZohoProduct>> GetProducts(AppFilter filter)
         {
             var result = await GetEntityAsync("Products", new List<AppFilter> { filter });
             return result.Cast<ZohoProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Quotes", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoQuote>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Quotes", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoQuote>")]
         public async Task<IEnumerable<ZohoQuote>> GetQuotes(AppFilter filter)
         {
             var result = await GetEntityAsync("Quotes", new List<AppFilter> { filter });
             return result.Cast<ZohoQuote>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Invoices", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoInvoice>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Invoices", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoInvoice>")]
         public async Task<IEnumerable<ZohoInvoice>> GetInvoices(AppFilter filter)
         {
             var result = await GetEntityAsync("Invoices", new List<AppFilter> { filter });
             return result.Cast<ZohoInvoice>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Vendors", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoVendor>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Vendors", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoVendor>")]
         public async Task<IEnumerable<ZohoVendor>> GetVendors(AppFilter filter)
         {
             var result = await GetEntityAsync("Vendors", new List<AppFilter> { filter });
             return result.Cast<ZohoVendor>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Users", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoUser>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Users", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<ZohoUser>")]
         public async Task<IEnumerable<ZohoUser>> GetUsers(AppFilter filter)
         {
             var result = await GetEntityAsync("Users", new List<AppFilter> { filter });
@@ -846,7 +846,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
 
         // -------------------- Create / Update (POST/PUT) methods --------------------
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoLead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Lead", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoLead")]
         public async Task<IEnumerable<ZohoLead>> CreateLeadAsync(ZohoLead lead)
         {
             if (lead == null) return Array.Empty<ZohoLead>();
@@ -855,7 +855,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
             return success ? new[] { lead } : Array.Empty<ZohoLead>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoLead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Lead", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoLead")]
         public async Task<IEnumerable<ZohoLead>> UpdateLeadAsync(string leadId, ZohoLead lead)
         {
             if (string.IsNullOrWhiteSpace(leadId) || lead == null) return Array.Empty<ZohoLead>();
@@ -864,7 +864,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
             return success ? new[] { lead } : Array.Empty<ZohoLead>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoContact")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Contact", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoContact")]
         public async Task<IEnumerable<ZohoContact>> CreateContactAsync(ZohoContact contact)
         {
             if (contact == null) return Array.Empty<ZohoContact>();
@@ -873,7 +873,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
             return success ? new[] { contact } : Array.Empty<ZohoContact>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoContact")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Contact", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoContact")]
         public async Task<IEnumerable<ZohoContact>> UpdateContactAsync(string contactId, ZohoContact contact)
         {
             if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<ZohoContact>();
@@ -882,7 +882,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
             return success ? new[] { contact } : Array.Empty<ZohoContact>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoAccount")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Account", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoAccount")]
         public async Task<IEnumerable<ZohoAccount>> CreateAccountAsync(ZohoAccount account)
         {
             if (account == null) return Array.Empty<ZohoAccount>();
@@ -891,7 +891,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
             return success ? new[] { account } : Array.Empty<ZohoAccount>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoAccount")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Account", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoAccount")]
         public async Task<IEnumerable<ZohoAccount>> UpdateAccountAsync(string accountId, ZohoAccount account)
         {
             if (string.IsNullOrWhiteSpace(accountId) || account == null) return Array.Empty<ZohoAccount>();
@@ -900,7 +900,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
             return success ? new[] { account } : Array.Empty<ZohoAccount>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Deal", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoDeal")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Deal", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoDeal")]
         public async Task<IEnumerable<ZohoDeal>> CreateDealAsync(ZohoDeal deal)
         {
             if (deal == null) return Array.Empty<ZohoDeal>();
@@ -909,7 +909,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
             return success ? new[] { deal } : Array.Empty<ZohoDeal>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Deal", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoDeal")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Deal", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoDeal")]
         public async Task<IEnumerable<ZohoDeal>> UpdateDealAsync(string dealId, ZohoDeal deal)
         {
             if (string.IsNullOrWhiteSpace(dealId) || deal == null) return Array.Empty<ZohoDeal>();
@@ -918,7 +918,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
             return success ? new[] { deal } : Array.Empty<ZohoDeal>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Product", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoProduct")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Product", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoProduct")]
         public async Task<IEnumerable<ZohoProduct>> CreateProductAsync(ZohoProduct product)
         {
             if (product == null) return Array.Empty<ZohoProduct>();
@@ -927,7 +927,7 @@ namespace TheTechIdea.Beep.Connectors.ZohoDataSource
             return success ? new[] { product } : Array.Empty<ZohoProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType = "Product", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoProduct")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoho, PointType = EnumPointType.Function, ObjectType ="Product", ClassName = "ZohoDataSource", Showin = ShowinType.Both, misc = "ZohoProduct")]
         public async Task<IEnumerable<ZohoProduct>> UpdateProductAsync(string productId, ZohoProduct product)
         {
             if (string.IsNullOrWhiteSpace(productId) || product == null) return Array.Empty<ZohoProduct>();

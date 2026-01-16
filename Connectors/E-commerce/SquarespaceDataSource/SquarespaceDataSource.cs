@@ -206,70 +206,70 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Products", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceProduct>")]
         public async Task<IEnumerable<SquarespaceProduct>> GetProducts(AppFilter filter)
         {
             var result = await GetEntityAsync("products", new List<AppFilter> { filter });
             return result.Cast<SquarespaceProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Orders", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Orders", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceOrder>")]
         public async Task<IEnumerable<SquarespaceOrder>> GetOrders(AppFilter filter)
         {
             var result = await GetEntityAsync("orders", new List<AppFilter> { filter });
             return result.Cast<SquarespaceOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Profiles", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceProfile>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Profiles", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceProfile>")]
         public async Task<IEnumerable<SquarespaceProfile>> GetProfiles(AppFilter filter)
         {
             var result = await GetEntityAsync("profiles", new List<AppFilter> { filter });
             return result.Cast<SquarespaceProfile>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Pages", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespacePage>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Pages", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespacePage>")]
         public async Task<IEnumerable<SquarespacePage>> GetPages(AppFilter filter)
         {
             var result = await GetEntityAsync("pages", new List<AppFilter> { filter });
             return result.Cast<SquarespacePage>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Blogs", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceBlog>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Blogs", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceBlog>")]
         public async Task<IEnumerable<SquarespaceBlog>> GetBlogs(AppFilter filter)
         {
             var result = await GetEntityAsync("blogs", new List<AppFilter> { filter });
             return result.Cast<SquarespaceBlog>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Events", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceEvent>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Events", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceEvent>")]
         public async Task<IEnumerable<SquarespaceEvent>> GetEvents(AppFilter filter)
         {
             var result = await GetEntityAsync("events", new List<AppFilter> { filter });
             return result.Cast<SquarespaceEvent>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Galleries", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceGallery>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Galleries", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceGallery>")]
         public async Task<IEnumerable<SquarespaceGallery>> GetGalleries(AppFilter filter)
         {
             var result = await GetEntityAsync("galleries", new List<AppFilter> { filter });
             return result.Cast<SquarespaceGallery>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Categories", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Categories", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceCategory>")]
         public async Task<IEnumerable<SquarespaceCategory>> GetCategories(AppFilter filter)
         {
             var result = await GetEntityAsync("categories", new List<AppFilter> { filter });
             return result.Cast<SquarespaceCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Inventory", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceInventory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Inventory", ClassName = "SquarespaceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<SquarespaceInventory>")]
         public async Task<IEnumerable<SquarespaceInventory>> GetInventory(AppFilter filter)
         {
             var result = await GetEntityAsync("inventory", new List<AppFilter> { filter });
             return result.Cast<SquarespaceInventory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Products", Name = "CreateProduct", Caption = "Create Squarespace Product", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Products", Name = "CreateProduct", Caption = "Create Squarespace Product", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceProduct>")]
         public async Task<IEnumerable<SquarespaceProduct>> CreateProductAsync(SquarespaceProduct product)
         {
             try
@@ -289,7 +289,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Products", Name = "UpdateProduct", Caption = "Update Squarespace Product", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Products", Name = "UpdateProduct", Caption = "Update Squarespace Product", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceProduct>")]
         public async Task<IEnumerable<SquarespaceProduct>> UpdateProductAsync(SquarespaceProduct product)
         {
             try
@@ -309,7 +309,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "CreateOrder", Caption = "Create Squarespace Order", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Orders", Name = "CreateOrder", Caption = "Create Squarespace Order", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceOrder>")]
         public async Task<IEnumerable<SquarespaceOrder>> CreateOrderAsync(SquarespaceOrder order)
         {
             try
@@ -329,7 +329,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "UpdateOrder", Caption = "Update Squarespace Order", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Orders", Name = "UpdateOrder", Caption = "Update Squarespace Order", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceOrder>")]
         public async Task<IEnumerable<SquarespaceOrder>> UpdateOrderAsync(SquarespaceOrder order)
         {
             try
@@ -349,7 +349,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Profiles", Name = "CreateProfile", Caption = "Create Squarespace Profile", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceProfile>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Profiles", Name = "CreateProfile", Caption = "Create Squarespace Profile", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceProfile>")]
         public async Task<IEnumerable<SquarespaceProfile>> CreateProfileAsync(SquarespaceProfile profile)
         {
             try
@@ -369,7 +369,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceProfile>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Profiles", Name = "UpdateProfile", Caption = "Update Squarespace Profile", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceProfile>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Profiles", Name = "UpdateProfile", Caption = "Update Squarespace Profile", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceProfile>")]
         public async Task<IEnumerable<SquarespaceProfile>> UpdateProfileAsync(SquarespaceProfile profile)
         {
             try
@@ -389,7 +389,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceProfile>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Pages", Name = "CreatePage", Caption = "Create Squarespace Page", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespacePage>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Pages", Name = "CreatePage", Caption = "Create Squarespace Page", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespacePage>")]
         public async Task<IEnumerable<SquarespacePage>> CreatePageAsync(SquarespacePage page)
         {
             try
@@ -409,7 +409,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespacePage>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Pages", Name = "UpdatePage", Caption = "Update Squarespace Page", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespacePage>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Pages", Name = "UpdatePage", Caption = "Update Squarespace Page", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespacePage>")]
         public async Task<IEnumerable<SquarespacePage>> UpdatePageAsync(SquarespacePage page)
         {
             try
@@ -429,7 +429,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespacePage>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Blogs", Name = "CreateBlog", Caption = "Create Squarespace Blog", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceBlog>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Blogs", Name = "CreateBlog", Caption = "Create Squarespace Blog", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceBlog>")]
         public async Task<IEnumerable<SquarespaceBlog>> CreateBlogAsync(SquarespaceBlog blog)
         {
             try
@@ -449,7 +449,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceBlog>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Blogs", Name = "UpdateBlog", Caption = "Update Squarespace Blog", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceBlog>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Blogs", Name = "UpdateBlog", Caption = "Update Squarespace Blog", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceBlog>")]
         public async Task<IEnumerable<SquarespaceBlog>> UpdateBlogAsync(SquarespaceBlog blog)
         {
             try
@@ -469,7 +469,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceBlog>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Events", Name = "CreateEvent", Caption = "Create Squarespace Event", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceEvent>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Events", Name = "CreateEvent", Caption = "Create Squarespace Event", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceEvent>")]
         public async Task<IEnumerable<SquarespaceEvent>> CreateEventAsync(SquarespaceEvent @event)
         {
             try
@@ -489,7 +489,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceEvent>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Events", Name = "UpdateEvent", Caption = "Update Squarespace Event", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceEvent>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Events", Name = "UpdateEvent", Caption = "Update Squarespace Event", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceEvent>")]
         public async Task<IEnumerable<SquarespaceEvent>> UpdateEventAsync(SquarespaceEvent @event)
         {
             try
@@ -509,7 +509,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceEvent>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Galleries", Name = "CreateGallery", Caption = "Create Squarespace Gallery", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 22, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceGallery>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Galleries", Name = "CreateGallery", Caption = "Create Squarespace Gallery", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 22, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceGallery>")]
         public async Task<IEnumerable<SquarespaceGallery>> CreateGalleryAsync(SquarespaceGallery gallery)
         {
             try
@@ -529,7 +529,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceGallery>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Galleries", Name = "UpdateGallery", Caption = "Update Squarespace Gallery", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 23, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceGallery>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Galleries", Name = "UpdateGallery", Caption = "Update Squarespace Gallery", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 23, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceGallery>")]
         public async Task<IEnumerable<SquarespaceGallery>> UpdateGalleryAsync(SquarespaceGallery gallery)
         {
             try
@@ -549,7 +549,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceGallery>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "CreateCategory", Caption = "Create Squarespace Category", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 24, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Categories", Name = "CreateCategory", Caption = "Create Squarespace Category", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 24, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceCategory>")]
         public async Task<IEnumerable<SquarespaceCategory>> CreateCategoryAsync(SquarespaceCategory category)
         {
             try
@@ -569,7 +569,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "UpdateCategory", Caption = "Update Squarespace Category", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 25, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Categories", Name = "UpdateCategory", Caption = "Update Squarespace Category", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 25, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceCategory>")]
         public async Task<IEnumerable<SquarespaceCategory>> UpdateCategoryAsync(SquarespaceCategory category)
         {
             try
@@ -589,7 +589,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Inventory", Name = "CreateInventory", Caption = "Create Squarespace Inventory", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 26, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceInventory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Inventory", Name = "CreateInventory", Caption = "Create Squarespace Inventory", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 26, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceInventory>")]
         public async Task<IEnumerable<SquarespaceInventory>> CreateInventoryAsync(SquarespaceInventory inventory)
         {
             try
@@ -609,7 +609,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Squarespace
             return new List<SquarespaceInventory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType = "Inventory", Name = "UpdateInventory", Caption = "Update Squarespace Inventory", ClassType = "SquarespaceDataSource", Showin = ShowinType.Both, Order = 27, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceInventory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Squarespace, PointType = EnumPointType.Function, ObjectType ="Inventory", Name = "UpdateInventory", Caption = "Update Squarespace Inventory", ClassType ="SquarespaceDataSource", Showin = ShowinType.Both, Order = 27, iconimage = "squarespace.png", misc = "ReturnType: IEnumerable<SquarespaceInventory>")]
         public async Task<IEnumerable<SquarespaceInventory>> UpdateInventoryAsync(SquarespaceInventory inventory)
         {
             try

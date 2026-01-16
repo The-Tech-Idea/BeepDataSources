@@ -170,56 +170,56 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
         }
 
         // COMMAND ATTRIBUTE METHODS - Strongly typed Shopify operations
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Product", Name = "GetProducts", Caption = "Get Shopify Products", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 1, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Product>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="Product", Name = "GetProducts", Caption = "Get Shopify Products", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 1, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Product>")]
         public async Task<IEnumerable<Product>> GetProducts(List<AppFilter>? filters = null)
         {
             var result = await GetEntityAsync("products", filters ?? new List<AppFilter>());
             return result.Cast<Product>().Select(p => p.Attach<Product>(this));
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Order", Name = "GetOrders", Caption = "Get Shopify Orders", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 2, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Order>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="Order", Name = "GetOrders", Caption = "Get Shopify Orders", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 2, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Order>")]
         public async Task<IEnumerable<Order>> GetOrders(List<AppFilter>? filters = null)
         {
             var result = await GetEntityAsync("orders", filters ?? new List<AppFilter>());
             return result.Cast<Order>().Select(o => o.Attach<Order>(this));
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Customer", Name = "GetCustomers", Caption = "Get Shopify Customers", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 3, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Customer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="Customer", Name = "GetCustomers", Caption = "Get Shopify Customers", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 3, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Customer>")]
         public async Task<IEnumerable<Customer>> GetCustomers(List<AppFilter>? filters = null)
         {
             var result = await GetEntityAsync("customers", filters ?? new List<AppFilter>());
             return result.Cast<Customer>().Select(c => c.Attach<Customer>(this));
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "InventoryItem", Name = "GetInventoryItems", Caption = "Get Shopify Inventory Items", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 4, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="InventoryItem", Name = "GetInventoryItems", Caption = "Get Shopify Inventory Items", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 4, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
         public async Task<IEnumerable<InventoryItem>> GetInventoryItems(List<AppFilter>? filters = null)
         {
             var result = await GetEntityAsync("inventory_items", filters ?? new List<AppFilter>());
             return result.Cast<InventoryItem>().Select(i => i.Attach(this));
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Location", Name = "GetLocations", Caption = "Get Shopify Locations", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 5, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Location>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="Location", Name = "GetLocations", Caption = "Get Shopify Locations", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 5, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Location>")]
         public async Task<IEnumerable<Location>> GetLocations(List<AppFilter>? filters = null)
         {
             var result = await GetEntityAsync("locations", filters ?? new List<AppFilter>());
             return result.Cast<Location>().Select(l => l.Attach(this));
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "CustomCollection", Name = "GetCustomCollections", Caption = "Get Shopify Custom Collections", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 6, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<CustomCollection>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="CustomCollection", Name = "GetCustomCollections", Caption = "Get Shopify Custom Collections", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 6, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<CustomCollection>")]
         public async Task<IEnumerable<CustomCollection>> GetCustomCollections(List<AppFilter>? filters = null)
         {
             var result = await GetEntityAsync("custom_collections", filters ?? new List<AppFilter>());
             return result.Cast<CustomCollection>().Select(c => c.Attach<CustomCollection>(this));
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "SmartCollection", Name = "GetSmartCollections", Caption = "Get Shopify Smart Collections", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 7, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<SmartCollection>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="SmartCollection", Name = "GetSmartCollections", Caption = "Get Shopify Smart Collections", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 7, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<SmartCollection>")]
         public async Task<IEnumerable<SmartCollection>> GetSmartCollections(List<AppFilter>? filters = null)
         {
             var result = await GetEntityAsync("smart_collections", filters ?? new List<AppFilter>());
             return result.Cast<SmartCollection>().Select(s => s.Attach<SmartCollection>(this));
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Product", Name = "CreateProduct", Caption = "Create Shopify Product", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 8, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Product>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="Product", Name = "CreateProduct", Caption = "Create Shopify Product", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 8, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Product>")]
         public async Task<IEnumerable<Product>> CreateProductAsync(Product product)
         {
             try
@@ -239,7 +239,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<Product>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Product", Name = "UpdateProduct", Caption = "Update Shopify Product", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Product>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="Product", Name = "UpdateProduct", Caption = "Update Shopify Product", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Product>")]
         public async Task<IEnumerable<Product>> UpdateProductAsync(Product product)
         {
             try
@@ -259,7 +259,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<Product>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Order", Name = "CreateOrder", Caption = "Create Shopify Order", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Order>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="Order", Name = "CreateOrder", Caption = "Create Shopify Order", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Order>")]
         public async Task<IEnumerable<Order>> CreateOrderAsync(Order order)
         {
             try
@@ -279,7 +279,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<Order>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Order", Name = "UpdateOrder", Caption = "Update Shopify Order", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Order>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="Order", Name = "UpdateOrder", Caption = "Update Shopify Order", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Order>")]
         public async Task<IEnumerable<Order>> UpdateOrderAsync(Order order)
         {
             try
@@ -299,7 +299,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<Order>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Customer", Name = "CreateCustomer", Caption = "Create Shopify Customer", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Customer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="Customer", Name = "CreateCustomer", Caption = "Create Shopify Customer", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Customer>")]
         public async Task<IEnumerable<Customer>> CreateCustomerAsync(Customer customer)
         {
             try
@@ -319,7 +319,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<Customer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Customer", Name = "UpdateCustomer", Caption = "Update Shopify Customer", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Customer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="Customer", Name = "UpdateCustomer", Caption = "Update Shopify Customer", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Customer>")]
         public async Task<IEnumerable<Customer>> UpdateCustomerAsync(Customer customer)
         {
             try
@@ -339,7 +339,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<Customer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "InventoryItem", Name = "CreateInventoryItem", Caption = "Create Shopify Inventory Item", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="InventoryItem", Name = "CreateInventoryItem", Caption = "Create Shopify Inventory Item", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
         public async Task<IEnumerable<InventoryItem>> CreateInventoryItemAsync(InventoryItem inventoryItem)
         {
             try
@@ -359,7 +359,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<InventoryItem>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "InventoryItem", Name = "UpdateInventoryItem", Caption = "Update Shopify Inventory Item", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="InventoryItem", Name = "UpdateInventoryItem", Caption = "Update Shopify Inventory Item", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
         public async Task<IEnumerable<InventoryItem>> UpdateInventoryItemAsync(InventoryItem inventoryItem)
         {
             try
@@ -379,7 +379,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<InventoryItem>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Location", Name = "CreateLocation", Caption = "Create Shopify Location", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Location>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="Location", Name = "CreateLocation", Caption = "Create Shopify Location", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Location>")]
         public async Task<IEnumerable<Location>> CreateLocationAsync(Location location)
         {
             try
@@ -399,7 +399,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<Location>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "Location", Name = "UpdateLocation", Caption = "Update Shopify Location", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Location>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="Location", Name = "UpdateLocation", Caption = "Update Shopify Location", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<Location>")]
         public async Task<IEnumerable<Location>> UpdateLocationAsync(Location location)
         {
             try
@@ -419,7 +419,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<Location>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "CustomCollection", Name = "CreateCustomCollection", Caption = "Create Shopify Custom Collection", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<CustomCollection>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="CustomCollection", Name = "CreateCustomCollection", Caption = "Create Shopify Custom Collection", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<CustomCollection>")]
         public async Task<IEnumerable<CustomCollection>> CreateCustomCollectionAsync(CustomCollection customCollection)
         {
             try
@@ -439,7 +439,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<CustomCollection>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "CustomCollection", Name = "UpdateCustomCollection", Caption = "Update Shopify Custom Collection", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<CustomCollection>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="CustomCollection", Name = "UpdateCustomCollection", Caption = "Update Shopify Custom Collection", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<CustomCollection>")]
         public async Task<IEnumerable<CustomCollection>> UpdateCustomCollectionAsync(CustomCollection customCollection)
         {
             try
@@ -459,7 +459,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<CustomCollection>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "SmartCollection", Name = "CreateSmartCollection", Caption = "Create Shopify Smart Collection", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<SmartCollection>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="SmartCollection", Name = "CreateSmartCollection", Caption = "Create Shopify Smart Collection", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<SmartCollection>")]
         public async Task<IEnumerable<SmartCollection>> CreateSmartCollectionAsync(SmartCollection smartCollection)
         {
             try
@@ -479,7 +479,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Shopify
             return new List<SmartCollection>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType = "SmartCollection", Name = "UpdateSmartCollection", Caption = "Update Shopify Smart Collection", ClassType = "ShopifyDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<SmartCollection>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Shopify, PointType = EnumPointType.Function, ObjectType ="SmartCollection", Name = "UpdateSmartCollection", Caption = "Update Shopify Smart Collection", ClassType ="ShopifyDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "shopify.png", misc = "ReturnType: IEnumerable<SmartCollection>")]
         public async Task<IEnumerable<SmartCollection>> UpdateSmartCollectionAsync(SmartCollection smartCollection)
         {
             try

@@ -166,56 +166,56 @@ namespace TheTechIdea.Beep.Connectors.Kudosity
             }
         }
 
-        [CommandAttribute(ObjectType = "KudosityMessageHistory", PointType = EnumPointType.Function, Name = "GetMessageHistory", Caption = "Get Message History", ClassName = "KudosityDataSource")]
+        [CommandAttribute(ObjectType ="KudosityMessageHistory", PointType = EnumPointType.Function, Name = "GetMessageHistory", Caption = "Get Message History", ClassName = "KudosityDataSource")]
         public async Task<List<KudosityMessageHistory>> GetMessageHistory()
         {
             var result = await GetEntityAsync("messagehistory", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<KudosityMessageHistory>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<KudosityMessageHistory>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "KudosityCampaign", PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "KudosityDataSource")]
+        [CommandAttribute(ObjectType ="KudosityCampaign", PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "KudosityDataSource")]
         public async Task<List<KudosityCampaign>> GetCampaigns()
         {
             var result = await GetEntityAsync("campaigns", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<KudosityCampaign>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<KudosityCampaign>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "KudosityContact", PointType = EnumPointType.Function, Name = "GetContacts", Caption = "Get Contacts", ClassName = "KudosityDataSource")]
+        [CommandAttribute(ObjectType ="KudosityContact", PointType = EnumPointType.Function, Name = "GetContacts", Caption = "Get Contacts", ClassName = "KudosityDataSource")]
         public async Task<List<KudosityContact>> GetContacts()
         {
             var result = await GetEntityAsync("contacts", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<KudosityContact>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<KudosityContact>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "KudosityContactList", PointType = EnumPointType.Function, Name = "GetContactLists", Caption = "Get Contact Lists", ClassName = "KudosityDataSource")]
+        [CommandAttribute(ObjectType ="KudosityContactList", PointType = EnumPointType.Function, Name = "GetContactLists", Caption = "Get Contact Lists", ClassName = "KudosityDataSource")]
         public async Task<List<KudosityContactList>> GetContactLists()
         {
             var result = await GetEntityAsync("contactlists", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<KudosityContactList>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<KudosityContactList>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "KudosityAccount", PointType = EnumPointType.Function, Name = "GetAccount", Caption = "Get Account", ClassName = "KudosityDataSource")]
+        [CommandAttribute(ObjectType ="KudosityAccount", PointType = EnumPointType.Function, Name = "GetAccount", Caption = "Get Account", ClassName = "KudosityDataSource")]
         public async Task<KudosityAccount> GetAccount()
         {
             var result = await GetEntityAsync("account", new List<AppFilter>());
             return result.FirstOrDefault() as KudosityAccount;
         }
 
-        [CommandAttribute(ObjectType = "KudosityWebhook", PointType = EnumPointType.Function, Name = "GetWebhooks", Caption = "Get Webhooks", ClassName = "KudosityDataSource")]
+        [CommandAttribute(ObjectType ="KudosityWebhook", PointType = EnumPointType.Function, Name = "GetWebhooks", Caption = "Get Webhooks", ClassName = "KudosityDataSource")]
         public async Task<List<KudosityWebhook>> GetWebhooks()
         {
             var result = await GetEntityAsync("webhooks", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<KudosityWebhook>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<KudosityWebhook>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "KudosityTemplate", PointType = EnumPointType.Function, Name = "GetTemplates", Caption = "Get Templates", ClassName = "KudosityDataSource")]
+        [CommandAttribute(ObjectType ="KudosityTemplate", PointType = EnumPointType.Function, Name = "GetTemplates", Caption = "Get Templates", ClassName = "KudosityDataSource")]
         public async Task<List<KudosityTemplate>> GetTemplates()
         {
             var result = await GetEntityAsync("templates", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<KudosityTemplate>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<KudosityTemplate>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "KudositySMS", PointType = EnumPointType.Function, Name = "SendSMS", Caption = "Send SMS Message", ClassName = "KudosityDataSource", misc = "ReturnType: IEnumerable<KudositySMSResponse>")]
+        [CommandAttribute(ObjectType ="KudositySMS", PointType = EnumPointType.Function, Name = "SendSMS", Caption = "Send SMS Message", ClassName = "KudosityDataSource", misc = "ReturnType: IEnumerable<KudositySMSResponse>")]
         public async Task<IEnumerable<KudositySMSResponse>> SendSMSAsync(KudositySMS sms)
         {
             try
@@ -247,7 +247,7 @@ namespace TheTechIdea.Beep.Connectors.Kudosity
             return Array.Empty<KudositySMSResponse>();
         }
 
-        [CommandAttribute(ObjectType = "KudosityContact", PointType = EnumPointType.Function, Name = "CreateContact", Caption = "Create Contact", ClassName = "KudosityDataSource", misc = "ReturnType: IEnumerable<KudosityContact>")]
+        [CommandAttribute(ObjectType ="KudosityContact", PointType = EnumPointType.Function, Name = "CreateContact", Caption = "Create Contact", ClassName = "KudosityDataSource", misc = "ReturnType: IEnumerable<KudosityContact>")]
         public async Task<IEnumerable<KudosityContact>> CreateContactAsync(KudosityContact contact)
         {
             try
@@ -279,7 +279,7 @@ namespace TheTechIdea.Beep.Connectors.Kudosity
             return Array.Empty<KudosityContact>();
         }
 
-        [CommandAttribute(ObjectType = "KudosityCampaign", PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "KudosityDataSource", misc = "ReturnType: IEnumerable<KudosityCampaign>")]
+        [CommandAttribute(ObjectType ="KudosityCampaign", PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "KudosityDataSource", misc = "ReturnType: IEnumerable<KudosityCampaign>")]
         public async Task<IEnumerable<KudosityCampaign>> CreateCampaignAsync(KudosityCampaign campaign)
         {
             try

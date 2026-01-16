@@ -563,7 +563,7 @@ namespace TheTechIdea.Beep.Connectors.YouTube.Models
 
     public sealed class YouTubeCommentSnippet
     {
-        [JsonPropertyName("authorDisplayName")] public string AuthorDisplayName { get; set; }
+        [JsonPropertyName("authorCaption")] public string AuthorCaption { get; set; }
         [JsonPropertyName("authorProfileImageUrl")] public string AuthorProfileImageUrl { get; set; }
         [JsonPropertyName("authorChannelUrl")] public string AuthorChannelUrl { get; set; }
         [JsonPropertyName("authorChannelId")] public YouTubeCommentAuthorChannelId AuthorChannelId { get; set; }

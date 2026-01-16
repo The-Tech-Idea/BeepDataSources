@@ -1,9 +1,16 @@
 using System.Text.Json.Serialization;
+using TheTechIdea.Beep.DataBase;
 
 namespace TheTechIdea.Beep.Connectors.Typeform.Models
 {
     // Typeform API Models
-    public class TypeformForm
+    public abstract class TypeformEntityBase
+    {
+        [JsonIgnore] public IDataSource? DataSource { get; private set; }
+        public T Attach<T>(IDataSource dataSource) where T : TypeformEntityBase { DataSource = dataSource; return (T)this; }
+    }
+
+    public class TypeformForm : TypeformEntityBase
     {
         [JsonPropertyName("id")]
         public string Id { get; set; }
@@ -262,7 +269,7 @@ namespace TheTechIdea.Beep.Connectors.Typeform.Models
         public List<TypeformForm> Items { get; set; }
     }
 
-    public class TypeformResponse
+    public class TypeformResponse : TypeformEntityBase
     {
         [JsonPropertyName("response_id")]
         public string ResponseId { get; set; }

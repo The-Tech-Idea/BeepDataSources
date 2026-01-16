@@ -862,8 +862,8 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile.Models
         /// <summary>
         /// The display name of this version
         /// </summary>
-        [JsonPropertyName("DisplayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
 
         /// <summary>
         /// The size of this version

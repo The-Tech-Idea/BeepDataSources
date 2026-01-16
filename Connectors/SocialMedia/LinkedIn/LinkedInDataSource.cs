@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using TheTechIdea.Beep.Addin;
@@ -18,6 +18,27 @@ using TheTechIdea.Beep.Connectors.LinkedIn.Models;
 
 namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
 {
+    /// <summary>
+    /// Entity metadata for LinkedIn entities
+    /// </summary>
+    public class EntityMetadata
+    {
+        /// <summary>
+        /// Name of the entity
+        /// </summary>
+        public string EntityName { get; set; }
+
+        /// <summary>
+        /// Display caption for the entity
+        /// </summary>
+        public string Caption { get; set; }
+
+        /// <summary>
+        /// List of fields in the entity
+        /// </summary>
+        public List<EntityField> Fields { get; set; } = new List<EntityField>();
+    }
+
     /// <summary>
     /// Configuration class for LinkedIn data source
     /// </summary>
@@ -100,22 +121,72 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
         /// </summary>
         private void InitializeEntities()
         {
-            foreach (var kvp in _entityMetadata)
-            {
-                var entityStructure = new EntityStructure
+            EntitiesNames = _entityMetadata.Keys.ToList();
+            Entities = EntitiesNames
+                .Select(n => new EntityStructure
                 {
-                    EntityName = kvp.Value.EntityName,
-                    ViewID = kvp.Value.EntityName,
+                    EntityName = n,
+                    DatasourceEntityName = n,
                     DataSourceID = DatasourceName,
-                    ViewName = kvp.Value.DisplayName,
-                    Fields = kvp.Value.Fields,
-                    Methods = new List<EntityMethod>(),
+                    Caption = _entityMetadata[n].Caption,
+                    Fields = _entityMetadata[n].Fields,
                     Viewtype = ViewType.Table
-                };
+                })
+                .ToList();
+        }
 
-                Entities[kvp.Value.EntityName] = entityStructure;
-                EntitiesNames.Add(kvp.Value.EntityName);
+        private string GetBearerToken()
+        {
+            if (!string.IsNullOrWhiteSpace(_config.AccessToken))
+                return _config.AccessToken;
+
+            if (Dataconnection?.ConnectionProp is WebAPIConnectionProperties webApiProps)
+            {
+                return webApiProps.AccessToken
+                       ?? webApiProps.BearerToken
+                       ?? webApiProps.OAuthAccessToken
+                       ?? string.Empty;
             }
+
+            return string.Empty;
+        }
+
+        private Dictionary<string, string> BuildAuthHeaders()
+        {
+            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["X-Restli-Protocol-Version"] = "2.0.0"
+            };
+
+            var token = GetBearerToken();
+            if (!string.IsNullOrWhiteSpace(token))
+                headers["Authorization"] = $"Bearer {token}";
+
+            return headers;
+        }
+
+        private void HydrateConfigFromConnectionProperties()
+        {
+            if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties webApiProps)
+                return;
+
+            _config.AccessToken = webApiProps.AccessToken
+                                  ?? webApiProps.BearerToken
+                                  ?? webApiProps.OAuthAccessToken
+                                  ?? _config.AccessToken;
+
+            _config.ClientId = webApiProps.ClientId ?? _config.ClientId;
+            _config.ClientSecret = webApiProps.ClientSecret ?? _config.ClientSecret;
+            _config.ApiVersion = webApiProps.ApiVersion ?? _config.ApiVersion;
+
+            if (webApiProps.TimeoutMs > 0)
+                _config.TimeoutSeconds = Math.Max(1, webApiProps.TimeoutMs / 1000);
+
+            if (webApiProps.MaxRetries > 0)
+                _config.MaxRetries = webApiProps.MaxRetries;
+
+            if (webApiProps.RetryDelayMs > 0)
+                _config.RateLimitDelayMs = webApiProps.RetryDelayMs;
         }
 
         /// <summary>
@@ -129,16 +200,16 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
             metadata["profile"] = new EntityMetadata
             {
                 EntityName = "profile",
-                DisplayName = "User Profile",
+                Caption = "User Profile",
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Profile ID" },
-                    new EntityField { Name = "localizedFirstName", Type = "string", DisplayName = "First Name" },
-                    new EntityField { Name = "localizedLastName", Type = "string", DisplayName = "Last Name" },
-                    new EntityField { Name = "vanityName", Type = "string", DisplayName = "Vanity Name" },
-                    new EntityField { Name = "profilePicture", Type = "string", DisplayName = "Profile Picture URL" },
-                    new EntityField { Name = "headline", Type = "string", DisplayName = "Headline" },
-                    new EntityField { Name = "publicProfileUrl", Type = "string", DisplayName = "Public Profile URL" }
+                    new EntityField {FieldName = "id", Fieldtype ="string", IsKey = true, Caption = "Profile ID" },
+                    new EntityField {FieldName = "localizedFirstName", Fieldtype ="string", Caption = "First Name" },
+                    new EntityField {FieldName = "localizedLastName", Fieldtype ="string", Caption = "Last Name" },
+                    new EntityField {FieldName = "vanityName", Fieldtype ="string", Caption = "Vanity Name" },
+                    new EntityField {FieldName = "profilePicture", Fieldtype ="string", Caption = "Profile Picture URL" },
+                    new EntityField {FieldName = "headline", Fieldtype ="string", Caption = "Headline" },
+                    new EntityField {FieldName = "publicProfileUrl", Fieldtype ="string", Caption = "Public Profile URL" }
                 }
             };
 
@@ -146,17 +217,17 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
             metadata["posts"] = new EntityMetadata
             {
                 EntityName = "posts",
-                DisplayName = "Posts",
+                Caption = "Posts",
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Post ID" },
-                    new EntityField { Name = "author", Type = "string", DisplayName = "Author URN" },
-                    new EntityField { Name = "lifecycleState", Type = "string", DisplayName = "Lifecycle State" },
-                    new EntityField { Name = "visibility", Type = "string", DisplayName = "Visibility" },
-                    new EntityField { Name = "createdAt", Type = "datetime", DisplayName = "Created At" },
-                    new EntityField { Name = "lastModifiedAt", Type = "datetime", DisplayName = "Last Modified At" },
-                    new EntityField { Name = "text", Type = "string", DisplayName = "Post Text" },
-                    new EntityField { Name = "commentary", Type = "string", DisplayName = "Commentary" }
+                    new EntityField {FieldName = "id", Fieldtype ="string", IsKey = true, Caption = "Post ID" },
+                    new EntityField {FieldName = "author", Fieldtype ="string", Caption = "Author URN" },
+                    new EntityField {FieldName = "lifecycleState", Fieldtype ="string", Caption = "Lifecycle State" },
+                    new EntityField {FieldName = "visibility", Fieldtype ="string", Caption = "Visibility" },
+                    new EntityField {FieldName = "createdAt", Fieldtype ="datetime", Caption = "Created At" },
+                    new EntityField {FieldName = "lastModifiedAt", Fieldtype ="datetime", Caption = "Last Modified At" },
+                    new EntityField {FieldName = "text", Fieldtype ="string", Caption = "Post Text" },
+                    new EntityField {FieldName = "commentary", Fieldtype ="string", Caption = "Commentary" }
                 }
             };
 
@@ -164,16 +235,16 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
             metadata["organizations"] = new EntityMetadata
             {
                 EntityName = "organizations",
-                DisplayName = "Organizations",
+                Caption = "Organizations",
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Organization ID" },
-                    new EntityField { Name = "localizedName", Type = "string", DisplayName = "Organization Name" },
-                    new EntityField { Name = "vanityName", Type = "string", DisplayName = "Vanity Name" },
-                    new EntityField { Name = "logoV2", Type = "string", DisplayName = "Logo URL" },
-                    new EntityField { Name = "description", Type = "string", DisplayName = "Description" },
-                    new EntityField { Name = "website", Type = "string", DisplayName = "Website" },
-                    new EntityField { Name = "locations", Type = "string", DisplayName = "Locations" }
+                    new EntityField {FieldName = "id", Fieldtype ="string", IsKey = true, Caption = "Organization ID" },
+                    new EntityField {FieldName = "localizedName", Fieldtype ="string", Caption = "Organization Name" },
+                    new EntityField {FieldName = "vanityName", Fieldtype ="string", Caption = "Vanity Name" },
+                    new EntityField {FieldName = "logoV2", Fieldtype ="string", Caption = "Logo URL" },
+                    new EntityField {FieldName = "description", Fieldtype ="string", Caption = "Description" },
+                    new EntityField {FieldName = "website", Fieldtype ="string", Caption = "Website" },
+                    new EntityField {FieldName = "locations", Fieldtype ="string", Caption = "Locations" }
                 }
             };
 
@@ -181,12 +252,12 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
             metadata["followers"] = new EntityMetadata
             {
                 EntityName = "followers",
-                DisplayName = "Followers",
+                Caption = "Followers",
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "follower", Type = "string", IsPrimaryKey = true, DisplayName = "Follower URN" },
-                    new EntityField { Name = "followedAt", Type = "datetime", DisplayName = "Followed At" },
-                    new EntityField { Name = "organization", Type = "string", DisplayName = "Organization URN" }
+                    new EntityField {FieldName = "follower", Fieldtype ="string", IsKey = true, Caption = "Follower URN" },
+                    new EntityField {FieldName = "followedAt", Fieldtype ="datetime", Caption = "Followed At" },
+                    new EntityField {FieldName = "organization", Fieldtype ="string", Caption = "Organization URN" }
                 }
             };
 
@@ -194,17 +265,17 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
             metadata["analytics"] = new EntityMetadata
             {
                 EntityName = "analytics",
-                DisplayName = "Analytics",
+                Caption = "Analytics",
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "organizationalEntity", Type = "string", IsPrimaryKey = true, DisplayName = "Organization URN" },
-                    new EntityField { Name = "timeRange", Type = "string", IsPrimaryKey = true, DisplayName = "Time Range" },
-                    new EntityField { Name = "followerGains", Type = "integer", DisplayName = "Follower Gains" },
-                    new EntityField { Name = "impressions", Type = "integer", DisplayName = "Impressions" },
-                    new EntityField { Name = "clicks", Type = "integer", DisplayName = "Clicks" },
-                    new EntityField { Name = "likes", Type = "integer", DisplayName = "Likes" },
-                    new EntityField { Name = "comments", Type = "integer", DisplayName = "Comments" },
-                    new EntityField { Name = "shares", Type = "integer", DisplayName = "Shares" }
+                    new EntityField {FieldName = "organizationalEntity", Fieldtype ="string", IsKey = true, Caption = "Organization URN" },
+                    new EntityField {FieldName = "timeRange", Fieldtype ="string", IsKey = true, Caption = "Time Range" },
+                    new EntityField {FieldName = "followerGains", Fieldtype ="integer", Caption = "Follower Gains" },
+                    new EntityField {FieldName = "impressions", Fieldtype ="integer", Caption = "Impressions" },
+                    new EntityField {FieldName = "clicks", Fieldtype ="integer", Caption = "Clicks" },
+                    new EntityField {FieldName = "likes", Fieldtype ="integer", Caption = "Likes" },
+                    new EntityField {FieldName = "comments", Fieldtype ="integer", Caption = "Comments" },
+                    new EntityField {FieldName = "shares", Fieldtype ="integer", Caption = "Shares" }
                 }
             };
 
@@ -212,16 +283,16 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
             metadata["campaigns"] = new EntityMetadata
             {
                 EntityName = "campaigns",
-                DisplayName = "Campaigns",
+                Caption = "Campaigns",
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true, DisplayName = "Campaign ID" },
-                    new EntityField { Name = "account", Type = "string", DisplayName = "Account URN" },
-                    new EntityField { Name = "name", Type = "string", DisplayName = "Campaign Name" },
-                    new EntityField { Name = "status", Type = "string", DisplayName = "Status" },
-                    new EntityField { Name = "objectiveType", Type = "string", DisplayName = "Objective Type" },
-                    new EntityField { Name = "budget", Type = "decimal", DisplayName = "Budget" },
-                    new EntityField { Name = "runSchedule", Type = "string", DisplayName = "Run Schedule" }
+                    new EntityField {FieldName = "id", Fieldtype ="string", IsKey = true, Caption = "Campaign ID" },
+                    new EntityField {FieldName = "account", Fieldtype ="string", Caption = "Account URN" },
+                    new EntityField {FieldName = "name", Fieldtype ="string", Caption = "Campaign Name" },
+                    new EntityField {FieldName = "status", Fieldtype ="string", Caption = "Status" },
+                    new EntityField {FieldName = "objectiveType", Fieldtype ="string", Caption = "Objective Type" },
+                    new EntityField {FieldName = "budget", Fieldtype ="decimal", Caption = "Budget" },
+                    new EntityField {FieldName = "runSchedule", Fieldtype ="string", Caption = "Run Schedule" }
                 }
             };
 
@@ -229,45 +300,37 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
         }
 
         /// <summary>
-        /// Connect to LinkedIn API
+        /// Connect to LinkedIn API (convenience; Beep uses Openconnection/Closeconnection)
         /// </summary>
-        public override async Task<bool> ConnectAsync()
+        public async Task<bool> ConnectAsync()
         {
             try
             {
-                if (string.IsNullOrEmpty(_config.AccessToken))
+                HydrateConfigFromConnectionProperties();
+
+                if (string.IsNullOrEmpty(GetBearerToken()))
                 {
                     ErrorObject.Flag = Errors.Failed;
                     ErrorObject.Message = "Access token is required for LinkedIn connection";
                     return false;
                 }
 
-                // Initialize HTTP client
-                var handler = new HttpClientHandler();
-                HttpClient = new HttpClient(handler)
-                {
-                    Timeout = TimeSpan.FromSeconds(_config.TimeoutSeconds)
-                };
-
-                // Add authorization header
-                HttpClient.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.AccessToken);
-
                 // Test connection by getting user profile
                 var testUrl = $"{_config.BaseUrl}/people/~";
-                var response = await HttpClient.GetAsync(testUrl);
+                using var response = await GetAsync(testUrl, null, BuildAuthHeaders(), default).ConfigureAwait(false);
 
-                if (response.IsSuccessStatusCode)
+                if (response is not null && response.IsSuccessStatusCode)
                 {
                     ErrorObject.Flag = Errors.Ok;
                     ErrorObject.Message = "Successfully connected to LinkedIn API";
+                    ConnectionStatus = ConnectionState.Open;
                     return true;
                 }
                 else
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
+                    var errorContent = response != null ? await response.Content.ReadAsStringAsync().ConfigureAwait(false) : "No response";
                     ErrorObject.Flag = Errors.Failed;
-                    ErrorObject.Message = $"LinkedIn API connection failed: {response.StatusCode} - {errorContent}";
+                    ErrorObject.Message = $"LinkedIn API connection failed: {response?.StatusCode} - {errorContent}";
                     return false;
                 }
             }
@@ -280,25 +343,31 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
         }
 
         /// <summary>
-        /// Disconnect from LinkedIn API
+        /// Disconnect from LinkedIn API (convenience; Beep uses Openconnection/Closeconnection)
         /// </summary>
-        public override async Task<bool> DisconnectAsync()
+        public Task<bool> DisconnectAsync()
         {
-            if (HttpClient != null)
+            try
             {
-                HttpClient.Dispose();
-                HttpClient = null;
+                Closeconnection();
+                ErrorObject.Flag = Errors.Ok;
+                ErrorObject.Message = "Successfully disconnected from LinkedIn API";
+                return Task.FromResult(true);
             }
-            ErrorObject.Flag = Errors.Ok;
-            ErrorObject.Message = "Successfully disconnected from LinkedIn API";
-            return true;
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Failed to disconnect from LinkedIn API: {ex.Message}";
+                return Task.FromResult(false);
+            }
         }
 
         /// <summary>
-        /// Get data from LinkedIn API
+        /// Get data from LinkedIn API as a DataTable
         /// </summary>
-        public override async Task<DataTable> GetEntityAsync(string entityName, Dictionary<string, object> parameters = null)
+        public async Task<DataTable?> GetEntityDataTableAsync(string entityName, Dictionary<string, object>? parameters = null)
         {
+            HydrateConfigFromConnectionProperties();
             parameters ??= new Dictionary<string, object>();
 
             try
@@ -357,13 +426,13 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
                     await Task.Delay(_config.RateLimitDelayMs);
                 }
 
-                var response = await HttpClient.GetAsync(url);
-                var jsonContent = await response.Content.ReadAsStringAsync();
+                using var response = await GetAsync(url, null, BuildAuthHeaders(), default).ConfigureAwait(false);
+                var jsonContent = response != null ? await response.Content.ReadAsStringAsync().ConfigureAwait(false) : string.Empty;
 
-                if (!response.IsSuccessStatusCode)
+                if (response is null || !response.IsSuccessStatusCode)
                 {
                     ErrorObject.Flag = Errors.Failed;
-                    ErrorObject.Message = $"LinkedIn API request failed: {response.StatusCode} - {jsonContent}";
+                    ErrorObject.Message = $"LinkedIn API request failed: {response?.StatusCode} - {jsonContent}";
                     return null;
                 }
 
@@ -377,6 +446,35 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
                 ErrorObject.Message = $"Failed to get {entityName} data: {ex.Message}";
                 return null;
             }
+        }
+
+        public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+        {
+            HydrateConfigFromConnectionProperties();
+
+            var parameters = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            if (Filter != null)
+            {
+                foreach (var f in Filter)
+                {
+                    if (!string.IsNullOrWhiteSpace(f?.FieldName))
+                        parameters[f.FieldName] = f.FilterValue ?? string.Empty;
+                }
+            }
+
+            var dt = await GetEntityDataTableAsync(EntityName, parameters).ConfigureAwait(false);
+            if (dt == null) return Array.Empty<object>();
+
+            var result = new List<object>(dt.Rows.Count);
+            foreach (DataRow row in dt.Rows)
+            {
+                var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                foreach (DataColumn col in dt.Columns)
+                    dict[col.ColumnName] = row[col];
+                result.Add(dict);
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -409,7 +507,7 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
                 {
                     foreach (var field in metadata.Fields)
                     {
-                        dataTable.Columns.Add(field.Name, GetFieldType(field.Type));
+                        dataTable.Columns.Add(field.FieldName, GetFieldtype(field.Fieldtype));
                     }
                 }
                 else if (dataElement.ValueKind == JsonValueKind.Object)
@@ -468,9 +566,9 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
         /// <summary>
         /// Get .NET type from field type string
         /// </summary>
-        private Type GetFieldType(string fieldType)
+        private Type GetFieldtype(string Fieldtype)
         {
-            return fieldType.ToLower() switch
+            return Fieldtype.ToLower() switch
             {
                 "string" => typeof(string),
                 "integer" => typeof(int),
@@ -498,33 +596,18 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
             };
         }
 
-        /// <summary>
-        /// Get value from JSON element
-        /// </summary>
-        private object GetJsonValue(JsonElement element)
-        {
-            return element.ValueKind switch
-            {
-                JsonValueKind.String => element.GetString(),
-                JsonValueKind.Number => element.TryGetInt32(out var intValue) ? intValue : element.GetDouble(),
-                JsonValueKind.True => true,
-                JsonValueKind.False => false,
-                JsonValueKind.Null => null,
-                _ => element.GetRawText()
-            };
-        }
-
         // ---------------- Specific LinkedIn Methods ----------------
 
         /// <summary>
         /// Gets posts from LinkedIn
         /// </summary>
-        [CommandAttribute(ObjectType = "LinkedInPost", PointType = EnumPointType.Function, Name = "GetPosts", Caption = "Get LinkedIn Posts", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInPost>")]
+        [CommandAttribute(ObjectType ="LinkedInPost", PointType = EnumPointType.Function,Name = "GetPosts", Caption = "Get LinkedIn Posts", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInPost>")]
         public async Task<IEnumerable<LinkedInPost>> GetPosts(string authorUrn, int count = 10)
         {
             string endpoint = $"ugcPosts?q=authors&authors=List({authorUrn})&count={count}";
-            var response = await GetAsync(endpoint);
-            string json = await response.Content.ReadAsStringAsync();
+            using var response = await GetAsync($"{_config.BaseUrl}/{endpoint}", null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            if (response is null || !response.IsSuccessStatusCode) return new List<LinkedInPost>();
+            string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var data = JsonSerializer.Deserialize<LinkedInResponse<LinkedInPost>>(json);
             return data?.Elements ?? new List<LinkedInPost>();
         }
@@ -532,12 +615,13 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
         /// <summary>
         /// Gets user profile information
         /// </summary>
-        [CommandAttribute(ObjectType = "LinkedInPerson", PointType = EnumPointType.Function, Name = "GetProfile", Caption = "Get LinkedIn Profile", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInPerson>")]
+        [CommandAttribute(ObjectType ="LinkedInPerson", PointType = EnumPointType.Function,Name = "GetProfile", Caption = "Get LinkedIn Profile", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInPerson>")]
         public async Task<IEnumerable<LinkedInPerson>> GetProfile(string personId)
         {
             string endpoint = $"people/{personId}";
-            var response = await GetAsync(endpoint);
-            string json = await response.Content.ReadAsStringAsync();
+            using var response = await GetAsync($"{_config.BaseUrl}/{endpoint}", null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            if (response is null || !response.IsSuccessStatusCode) return new List<LinkedInPerson>();
+            string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var profile = JsonSerializer.Deserialize<LinkedInPerson>(json);
             return profile != null ? new List<LinkedInPerson> { profile } : new List<LinkedInPerson>();
         }
@@ -545,12 +629,13 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
         /// <summary>
         /// Gets company information
         /// </summary>
-        [CommandAttribute(ObjectType = "LinkedInCompany", PointType = EnumPointType.Function, Name = "GetCompany", Caption = "Get LinkedIn Company", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInCompany>")]
+        [CommandAttribute(ObjectType ="LinkedInCompany", PointType = EnumPointType.Function,Name = "GetCompany", Caption = "Get LinkedIn Company", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInCompany>")]
         public async Task<IEnumerable<LinkedInCompany>> GetCompany(string companyId)
         {
             string endpoint = $"organizations/{companyId}";
-            var response = await GetAsync(endpoint);
-            string json = await response.Content.ReadAsStringAsync();
+            using var response = await GetAsync($"{_config.BaseUrl}/{endpoint}", null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            if (response is null || !response.IsSuccessStatusCode) return new List<LinkedInCompany>();
+            string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var company = JsonSerializer.Deserialize<LinkedInCompany>(json);
             return company != null ? new List<LinkedInCompany> { company } : new List<LinkedInCompany>();
         }
@@ -558,12 +643,13 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
         /// <summary>
         /// Gets company posts
         /// </summary>
-        [CommandAttribute(ObjectType = "LinkedInPost", PointType = EnumPointType.Function, Name = "GetCompanyPosts", Caption = "Get LinkedIn Company Posts", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInPost>")]
+        [CommandAttribute(ObjectType ="LinkedInPost", PointType = EnumPointType.Function,Name = "GetCompanyPosts", Caption = "Get LinkedIn Company Posts", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInPost>")]
         public async Task<IEnumerable<LinkedInPost>> GetCompanyPosts(string companyId, int count = 10)
         {
             string endpoint = $"ugcPosts?q=authors&authors=List(urn%3Ali%3Aorganization%3A{companyId})&count={count}";
-            var response = await GetAsync(endpoint);
-            string json = await response.Content.ReadAsStringAsync();
+            using var response = await GetAsync($"{_config.BaseUrl}/{endpoint}", null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            if (response is null || !response.IsSuccessStatusCode) return new List<LinkedInPost>();
+            string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var data = JsonSerializer.Deserialize<LinkedInResponse<LinkedInPost>>(json);
             return data?.Elements ?? new List<LinkedInPost>();
         }
@@ -571,26 +657,27 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
         /// <summary>
         /// Gets user connections/following
         /// </summary>
-        [CommandAttribute(ObjectType = "LinkedInFollowing", PointType = EnumPointType.Function, Name = "GetFollowing", Caption = "Get LinkedIn Following", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInFollowing>")]
+        [CommandAttribute(ObjectType ="LinkedInFollowing", PointType = EnumPointType.Function,Name = "GetFollowing", Caption = "Get LinkedIn Following", ClassName = "LinkedInDataSource", misc = "ReturnType: IEnumerable<LinkedInFollowing>")]
         public async Task<IEnumerable<LinkedInFollowing>> GetFollowing(string personId, int count = 10)
         {
             string endpoint = $"people/{personId}/following?count={count}";
-            var response = await GetAsync(endpoint);
-            string json = await response.Content.ReadAsStringAsync();
+            using var response = await GetAsync($"{_config.BaseUrl}/{endpoint}", null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            if (response is null || !response.IsSuccessStatusCode) return new List<LinkedInFollowing>();
+            string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var data = JsonSerializer.Deserialize<LinkedInResponse<LinkedInFollowing>>(json);
             return data?.Elements ?? new List<LinkedInFollowing>();
         }
 
         // POST methods for creating entities
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LinkedIn, PointType = EnumPointType.Function, ObjectType = "LinkedInPost", Name = "CreatePost", Caption = "Create LinkedIn Post", ClassType = "LinkedInDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "linkedin.png", misc = "ReturnType: IEnumerable<LinkedInPost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LinkedIn, PointType = EnumPointType.Function, ObjectType ="LinkedInPost",Name = "CreatePost", Caption = "Create LinkedIn Post", ClassType ="LinkedInDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "linkedin.png", misc = "ReturnType: IEnumerable<LinkedInPost>")]
         public async Task<IEnumerable<LinkedInPost>> CreatePostAsync(LinkedInPost post)
         {
             try
             {
-                var result = await PostAsync("posts", post);
+                using var result = await PostAsync($"{_config.BaseUrl}/posts", post, null, BuildAuthHeaders(), default).ConfigureAwait(false);
                 if (result.IsSuccessStatusCode)
                 {
-                    var content = await result.Content.ReadAsStringAsync();
+                    var content = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
                     var createdPost = JsonSerializer.Deserialize<LinkedInPost>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     return new List<LinkedInPost> { createdPost }.Select(p => p.Attach<LinkedInPost>(this));
                 }
@@ -603,15 +690,15 @@ namespace BeepDataSources.Connectors.SocialMedia.LinkedIn
         }
 
         // PUT methods for updating entities
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LinkedIn, PointType = EnumPointType.Function, ObjectType = "LinkedInPost", Name = "UpdatePost", Caption = "Update LinkedIn Post", ClassType = "LinkedInDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "linkedin.png", misc = "ReturnType: IEnumerable<LinkedInPost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.LinkedIn, PointType = EnumPointType.Function, ObjectType ="LinkedInPost",Name = "UpdatePost", Caption = "Update LinkedIn Post", ClassType ="LinkedInDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "linkedin.png", misc = "ReturnType: IEnumerable<LinkedInPost>")]
         public async Task<IEnumerable<LinkedInPost>> UpdatePostAsync(LinkedInPost post)
         {
             try
             {
-                var result = await PutAsync($"posts/{post.Id}", post);
+                using var result = await PutAsync($"{_config.BaseUrl}/posts/{post.Id}", post, null, BuildAuthHeaders(), default).ConfigureAwait(false);
                 if (result.IsSuccessStatusCode)
                 {
-                    var content = await result.Content.ReadAsStringAsync();
+                    var content = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
                     var updatedPost = JsonSerializer.Deserialize<LinkedInPost>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     return new List<LinkedInPost> { updatedPost }.Select(p => p.Attach<LinkedInPost>(this));
                 }

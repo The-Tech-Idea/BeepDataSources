@@ -307,91 +307,91 @@ namespace TheTechIdea.Beep.Connectors.WordPress
 
         // -------------------- CommandAttribute Methods --------------------
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressPost", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressPost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressPost", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressPost>")]
         public List<WordPressPost> GetPosts()
         {
             return GetEntity("posts", new List<AppFilter>()).Cast<WordPressPost>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressPost", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressPost")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressPost", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressPost")]
         public WordPressPost GetPost(int id)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
             return GetEntity("posts.get", filters).Cast<WordPressPost>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressPage", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressPage>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressPage", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressPage>")]
         public List<WordPressPage> GetPages()
         {
             return GetEntity("pages", new List<AppFilter>()).Cast<WordPressPage>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressPage", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressPage")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressPage", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressPage")]
         public WordPressPage GetPage(int id)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
             return GetEntity("pages.get", filters).Cast<WordPressPage>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressUser", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressUser>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressUser", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressUser>")]
         public List<WordPressUser> GetUsers()
         {
             return GetEntity("users", new List<AppFilter>()).Cast<WordPressUser>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressUser", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressUser")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressUser", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressUser")]
         public WordPressUser GetUser(int id)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
             return GetEntity("users.get", filters).Cast<WordPressUser>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressComment", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressComment>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressComment", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressComment>")]
         public List<WordPressComment> GetComments()
         {
             return GetEntity("comments", new List<AppFilter>()).Cast<WordPressComment>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressComment", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressComment")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressComment", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressComment")]
         public WordPressComment GetComment(int id)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
             return GetEntity("comments.get", filters).Cast<WordPressComment>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressCategory", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressCategory", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressCategory>")]
         public List<WordPressCategory> GetCategories()
         {
             return GetEntity("categories", new List<AppFilter>()).Cast<WordPressCategory>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressCategory", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressCategory")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressCategory", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressCategory")]
         public WordPressCategory GetCategory(int id)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
             return GetEntity("categories.get", filters).Cast<WordPressCategory>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressTag", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressTag>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressTag", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressTag>")]
         public List<WordPressTag> GetTags()
         {
             return GetEntity("tags", new List<AppFilter>()).Cast<WordPressTag>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressTag", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressTag")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressTag", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressTag")]
         public WordPressTag GetTag(int id)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
             return GetEntity("tags.get", filters).Cast<WordPressTag>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressMedia", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressMedia>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressMedia", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "List<WordPressMedia>")]
         public List<WordPressMedia> GetMedia()
         {
             return GetEntity("media", new List<AppFilter>()).Cast<WordPressMedia>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType = "WordPressMedia", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressMedia")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WordPress, PointType = EnumPointType.Function, ObjectType ="WordPressMedia", ClassName = "WordPressDataSource", Showin = ShowinType.Both, misc = "WordPressMedia")]
         public WordPressMedia GetMediaItem(int id)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };

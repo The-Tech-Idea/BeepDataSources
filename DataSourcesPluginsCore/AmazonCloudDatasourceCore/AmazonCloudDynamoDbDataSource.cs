@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Dynamic;
@@ -69,12 +69,12 @@ namespace TheTechIdea.Beep.Cloud
             
             Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
             
-            if (Dataconnection.ConnectionProp != null)
-            {
-                _region = Dataconnection.ConnectionProp.Region ?? "us-east-1";
-                _dynamoDbConfig = new AmazonDynamoDBConfig { RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(_region) };
-                
-                // Initialize DynamoDB client
+             if (Dataconnection.ConnectionProp != null)
+             {
+                 _region = string.IsNullOrWhiteSpace(Dataconnection.ConnectionProp.SchemaName) ? "us-east-1" : Dataconnection.ConnectionProp.SchemaName;
+                 _dynamoDbConfig = new AmazonDynamoDBConfig { RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(_region) };
+                 
+                 // Initialize DynamoDB client
                 if (!string.IsNullOrEmpty(Dataconnection.ConnectionProp.UserID) && !string.IsNullOrEmpty(Dataconnection.ConnectionProp.Password))
                 {
                     var credentials = new BasicAWSCredentials(Dataconnection.ConnectionProp.UserID, Dataconnection.ConnectionProp.Password);
@@ -108,42 +108,10 @@ namespace TheTechIdea.Beep.Cloud
             }
             return DMEEditor.ErrorObject;
         }
-        public virtual Task<double> GetScalarAsync(string query)
-        {
-            return Task.Run(() => GetScalar(query));
-        }
-        public virtual double GetScalar(string query)
-        {
-            ErrorObject.Flag = Errors.Ok;
-
-            try
-            {
-                // Assuming you have a database connection and command objects.
-
-                //using (var command = GetDataCommand())
-                //{
-                //    command.CommandText = query;
-                //    var result = command.ExecuteScalar();
-
-                //    // Check if the result is not null and can be converted to a double.
-                //    if (result != null && double.TryParse(result.ToString(), out double value))
-                //    {
-                //        return value;
-                //    }
-                //}
-
-
-                // If the query executed successfully but didn't return a valid double, you can handle it here.
-                // You might want to log an error or throw an exception as needed.
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
-            }
-
-            // Return a default value or throw an exception if the query failed.
-            return 0.0; // You can change this default value as needed.
-        }
+         public virtual Task<double> GetScalarAsync(string query)
+         {
+             return Task.Run(() => GetScalar(query));
+         }
         public virtual IErrorsInfo EndTransaction(PassedArgs args)
         {
             ErrorObject.Flag = Errors.Ok;
@@ -192,12 +160,12 @@ namespace TheTechIdea.Beep.Cloud
             {
                 if (_dynamoDbClient == null)
                 {
-                    if (Dataconnection.ConnectionProp != null)
-                    {
-                        _region = Dataconnection.ConnectionProp.Region ?? "us-east-1";
-                        _dynamoDbConfig = new AmazonDynamoDBConfig { RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(_region) };
-                        
-                        if (!string.IsNullOrEmpty(Dataconnection.ConnectionProp.UserID) && !string.IsNullOrEmpty(Dataconnection.ConnectionProp.Password))
+                     if (Dataconnection.ConnectionProp != null)
+                     {
+                         _region = string.IsNullOrWhiteSpace(Dataconnection.ConnectionProp.SchemaName) ? "us-east-1" : Dataconnection.ConnectionProp.SchemaName;
+                         _dynamoDbConfig = new AmazonDynamoDBConfig { RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(_region) };
+                         
+                         if (!string.IsNullOrEmpty(Dataconnection.ConnectionProp.UserID) && !string.IsNullOrEmpty(Dataconnection.ConnectionProp.Password))
                         {
                             var credentials = new BasicAWSCredentials(Dataconnection.ConnectionProp.UserID, Dataconnection.ConnectionProp.Password);
                             _dynamoDbClient = new AmazonDynamoDBClient(credentials, _dynamoDbConfig);
@@ -366,7 +334,7 @@ namespace TheTechIdea.Beep.Cloud
         private ScalarAttributeType GetDynamoDbAttributeType(string fieldType)
         {
             if (fieldType == null) return ScalarAttributeType.S;
-            Fieldtype = fieldType.ToLower();
+            fieldType = fieldType.ToLower();
             
             if (fieldType.Contains("string") || fieldType.Contains("char") || fieldType.Contains("guid"))
                 return ScalarAttributeType.S;
@@ -480,16 +448,20 @@ namespace TheTechIdea.Beep.Cloud
                                 scanFilter.AddCondition(appFilter.FieldName, ScanOperator.Equal, appFilter.FilterValue);
                             }
                         }
-                    }
-
-                    var scanResult = table.Scan(scanFilter);
-                    foreach (var document in scanResult)
-                    {
-                        results.Add(ConvertDocumentToDictionary(document));
-                    }
-                }
-            }
-            catch (Exception ex)
+                     }
+ 
+                     var scanResult = table.Scan(scanFilter);
+                     do
+                     {
+                         var documents = scanResult.GetNextSetAsync().GetAwaiter().GetResult();
+                         foreach (var document in documents)
+                         {
+                             results.Add(ConvertDocumentToDictionary(document));
+                         }
+                     } while (!scanResult.IsDone);
+                 }
+             }
+             catch (Exception ex)
             {
                 ErrorObject.Flag = Errors.Failed;
                 ErrorObject.Message = ex.Message;
@@ -585,11 +557,11 @@ namespace TheTechIdea.Beep.Cloud
                         DatasourceEntityName = EntityName,
                         OriginalEntityName = EntityName,
                         Caption = EntityName,
-                        Category = DatasourceCategory.CLOUD,
-                        DatabaseType = DataSourceType.WebApi,
-                        DataSourceID = DatasourceName,
-                        Fields = new List<EntityField>()
-                    };
+                         Category = DatasourceCategory.CLOUD.ToString(),
+                         DatabaseType = DataSourceType.WebApi,
+                         DataSourceID = DatasourceName,
+                         Fields = new List<EntityField>()
+                     };
 
                     int fieldIndex = 0;
                     foreach (var attrDef in describeResponse.Table.AttributeDefinitions)
@@ -628,20 +600,17 @@ namespace TheTechIdea.Beep.Cloud
             return retval;
         }
 
-        private string GetFieldTypeFromDynamoDbType(ScalarAttributeType attributeType)
-        {
-            switch (attributeType)
-            {
-                case ScalarAttributeType.S:
-                    return "System.String";
-                case ScalarAttributeType.N:
-                    return "System.Decimal";
-                case ScalarAttributeType.B:
-                    return "System.Byte[]";
-                default:
-                    return "System.String";
-            }
-        }
+         private static string GetFieldTypeFromDynamoDbType(ScalarAttributeType attributeType)
+         {
+             var dynamoType = attributeType?.Value ?? attributeType?.ToString();
+             return dynamoType switch
+             {
+                 "S" => "System.String",
+                 "N" => "System.Decimal",
+                 "B" => "System.Byte[]",
+                 _ => "System.String"
+             };
+         }
 
         public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
         {
@@ -713,11 +682,11 @@ namespace TheTechIdea.Beep.Cloud
                                 key = new Primitive(keyValue.ToString(), true);
                             }
                             
-                            table.DeleteItem(key);
-                        }
-                    }
-                }
-            }
+                             table.DeleteItemAsync(key).GetAwaiter().GetResult();
+                         }
+                     }
+                 }
+             }
             catch (Exception ex)
             {
                 ErrorObject.Flag = Errors.Failed;
@@ -739,10 +708,10 @@ namespace TheTechIdea.Beep.Cloud
                     {
                         UpdateEntity(EntityName, item);
                         count++;
-                        progress?.Report(new PassedArgs { Message = $"Updated {count} records" });
-                    }
-                }
-            }
+                         progress?.Report(new PassedArgs { Messege = $"Updated {count} records" });
+                     }
+                 }
+             }
             catch (Exception ex)
             {
                 ErrorObject.Flag = Errors.Failed;
@@ -814,17 +783,20 @@ namespace TheTechIdea.Beep.Cloud
                 var entitiesToScript = entities ?? Entities;
                 if (entitiesToScript != null && entitiesToScript.Count > 0)
                 {
-                    foreach (var entity in entitiesToScript)
-                    {
-                        var script = new ETLScriptDet
-                        {
-                            EntityName = entity.EntityName,
-                           ScriptType= "CREATE",
-                            ScriptText = $"# DynamoDB table: {entity.EntityName}\n# Use AWS SDK or CLI to create tables"
-                        };
-                        scripts.Add(script);
-                    }
-                }
+                     foreach (var entity in entitiesToScript)
+                     {
+                         var script = new ETLScriptDet
+                         {
+                             SourceEntityName = entity.EntityName,
+                             DestinationEntityName = entity.EntityName,
+                             SourceDataSourceEntityName = entity.DatasourceEntityName ?? entity.EntityName,
+                             DestinationDataSourceEntityName = entity.DatasourceEntityName ?? entity.EntityName,
+                             ScriptType = DDLScriptType.CreateEntity,
+                             Ddl = $"# DynamoDB table: {entity.EntityName}\n# Use AWS SDK or CLI to create tables"
+                         };
+                         scripts.Add(script);
+                     }
+                 }
             }
             catch (Exception ex)
             {
@@ -866,11 +838,11 @@ namespace TheTechIdea.Beep.Cloud
                         }
                     }
 
-                    table.PutItem(document);
-                }
-            }
-            catch (Exception ex)
-            {
+                     table.PutItemAsync(document).GetAwaiter().GetResult();
+                 }
+             }
+             catch (Exception ex)
+             {
                 ErrorObject.Flag = Errors.Failed;
                 ErrorObject.Message = ex.Message;
                 DMEEditor?.AddLogMessage("Beep", $"Error in InsertEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);

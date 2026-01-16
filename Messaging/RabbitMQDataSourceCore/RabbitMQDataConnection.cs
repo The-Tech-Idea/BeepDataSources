@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using RabbitMQ.Client;                  // <-- Make sure to add this
 using TheTechIdea.Beep.ConfigUtil;
@@ -152,7 +152,7 @@ namespace RabbitMQDataSourceCore
                     Uri = new Uri(connectionstring)
                 };
 
-                _connection = (IConnection)factory.CreateConnectionAsync();
+                _connection = factory.CreateConnectionAsync().Result;
                 ConnectionStatus = ConnectionState.Open;
                 Logger?.WriteLog("[OpenConnection connectionString] Connection opened via URI.");
             }

@@ -53,9 +53,8 @@ namespace TheTechIdea.Beep.PinterestDataSource
             InitializeEntities();
         }
 
-        public override string ColumnDelimiter { get => ","; set => base.ColumnDelimiter = value; }
-        public override string ParameterDelimiter { get => ":"; set => base.ParameterDelimiter = value; }
-        public override string RowDelimiter { get => Environment.NewLine; set => base.RowDelimiter = value; }
+        public new string ColumnDelimiter { get => ","; set => base.ColumnDelimiter = value; }
+        public new string ParameterDelimiter { get => ":"; set => base.ParameterDelimiter = value; }
 
         // Register entities
         private void InitializeEntities()
@@ -123,7 +122,7 @@ namespace TheTechIdea.Beep.PinterestDataSource
         }
 
         // POST methods for creating entities
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pinterest, PointType = EnumPointType.Function, ObjectType = "PinterestPin", Name = "CreatePin", Caption = "Create Pinterest Pin", ClassType = "PinterestDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "pinterest.png", misc = "ReturnType: IEnumerable<PinterestPin>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pinterest, PointType = EnumPointType.Function, ObjectType ="PinterestPin", Name = "CreatePin", Caption = "Create Pinterest Pin", ClassType ="PinterestDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "pinterest.png", misc = "ReturnType: IEnumerable<PinterestPin>")]
         public async Task<IEnumerable<PinterestPin>> CreatePinAsync(PinterestPin pin)
         {
             try
@@ -143,7 +142,7 @@ namespace TheTechIdea.Beep.PinterestDataSource
             return new List<PinterestPin>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pinterest, PointType = EnumPointType.Function, ObjectType = "PinterestBoard", Name = "CreateBoard", Caption = "Create Pinterest Board", ClassType = "PinterestDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "pinterest.png", misc = "ReturnType: IEnumerable<PinterestBoard>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pinterest, PointType = EnumPointType.Function, ObjectType ="PinterestBoard", Name = "CreateBoard", Caption = "Create Pinterest Board", ClassType ="PinterestDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "pinterest.png", misc = "ReturnType: IEnumerable<PinterestBoard>")]
         public async Task<IEnumerable<PinterestBoard>> CreateBoardAsync(PinterestBoard board)
         {
             try

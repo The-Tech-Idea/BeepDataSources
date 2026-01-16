@@ -195,16 +195,16 @@ namespace TheTechIdea.Beep.Connectors.SugarCRM
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SugarCRM, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "SugarCRMDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Contact>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SugarCRM, PointType = EnumPointType.Function, ObjectType ="Contacts", ClassName = "SugarCRMDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Contact>")]
         public IEnumerable<Contact> GetContacts(List<AppFilter> filter) => GetEntity("contacts", filter).Cast<Contact>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SugarCRM, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "SugarCRMDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Account>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SugarCRM, PointType = EnumPointType.Function, ObjectType ="Accounts", ClassName = "SugarCRMDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Account>")]
         public IEnumerable<Account> GetAccounts(List<AppFilter> filter) => GetEntity("accounts", filter).Cast<Account>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SugarCRM, PointType = EnumPointType.Function, ObjectType = "Leads", ClassName = "SugarCRMDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Lead>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SugarCRM, PointType = EnumPointType.Function, ObjectType ="Leads", ClassName = "SugarCRMDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Lead>")]
         public IEnumerable<Lead> GetLeads(List<AppFilter> filter) => GetEntity("leads", filter).Cast<Lead>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SugarCRM, PointType = EnumPointType.Function, ObjectType = "Opportunities", ClassName = "SugarCRMDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Opportunity>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SugarCRM, PointType = EnumPointType.Function, ObjectType ="Opportunities", ClassName = "SugarCRMDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Opportunity>")]
         public IEnumerable<Opportunity> GetOpportunities(List<AppFilter> filter) => GetEntity("opportunities", filter).Cast<Opportunity>();
 
         #endregion

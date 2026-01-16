@@ -186,9 +186,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         // ---------------- CommandAttribute methods ----------------
 
         [CommandAttribute(
-            ObjectType = "ChantyUser",
+            ObjectType ="ChantyUser",
             PointType = EnumPointType.Function,
-            Name = "GetUsers",
+           Name = "GetUsers",
             Caption = "Get Users",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -204,9 +204,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyUser",
+            ObjectType ="ChantyUser",
             PointType = EnumPointType.Function,
-            Name = "GetUser",
+           Name = "GetUser",
             Caption = "Get User",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -222,9 +222,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyTeam",
+            ObjectType ="ChantyTeam",
             PointType = EnumPointType.Function,
-            Name = "GetTeams",
+           Name = "GetTeams",
             Caption = "Get Teams",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -240,9 +240,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyTeam",
+            ObjectType ="ChantyTeam",
             PointType = EnumPointType.Function,
-            Name = "GetTeam",
+           Name = "GetTeam",
             Caption = "Get Team",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -258,9 +258,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyTeamMember",
+            ObjectType ="ChantyTeamMember",
             PointType = EnumPointType.Function,
-            Name = "GetTeamMembers",
+           Name = "GetTeamMembers",
             Caption = "Get Team Members",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -276,9 +276,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyChannel",
+            ObjectType ="ChantyChannel",
             PointType = EnumPointType.Function,
-            Name = "GetChannels",
+           Name = "GetChannels",
             Caption = "Get Channels",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -294,9 +294,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyChannel",
+            ObjectType ="ChantyChannel",
             PointType = EnumPointType.Function,
-            Name = "GetChannel",
+           Name = "GetChannel",
             Caption = "Get Channel",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -312,9 +312,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyChannelMember",
+            ObjectType ="ChantyChannelMember",
             PointType = EnumPointType.Function,
-            Name = "GetChannelMembers",
+           Name = "GetChannelMembers",
             Caption = "Get Channel Members",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -330,9 +330,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyMessage",
+            ObjectType ="ChantyMessage",
             PointType = EnumPointType.Function,
-            Name = "GetMessages",
+           Name = "GetMessages",
             Caption = "Get Messages",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -348,9 +348,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyMessage",
+            ObjectType ="ChantyMessage",
             PointType = EnumPointType.Function,
-            Name = "GetMessage",
+           Name = "GetMessage",
             Caption = "Get Message",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -366,9 +366,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyReaction",
+            ObjectType ="ChantyReaction",
             PointType = EnumPointType.Function,
-            Name = "GetMessageReactions",
+           Name = "GetMessageReactions",
             Caption = "Get Message Reactions",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -384,9 +384,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyMessageReply",
+            ObjectType ="ChantyMessageReply",
             PointType = EnumPointType.Function,
-            Name = "GetMessageReplies",
+           Name = "GetMessageReplies",
             Caption = "Get Message Replies",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -402,9 +402,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyFile",
+            ObjectType ="ChantyFile",
             PointType = EnumPointType.Function,
-            Name = "GetFiles",
+           Name = "GetFiles",
             Caption = "Get Files",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -420,9 +420,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyFile",
+            ObjectType ="ChantyFile",
             PointType = EnumPointType.Function,
-            Name = "GetFile",
+           Name = "GetFile",
             Caption = "Get File",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -438,9 +438,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyNotification",
+            ObjectType ="ChantyNotification",
             PointType = EnumPointType.Function,
-            Name = "GetNotifications",
+           Name = "GetNotifications",
             Caption = "Get Notifications",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -456,9 +456,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyUserSettings",
+            ObjectType ="ChantyUserSettings",
             PointType = EnumPointType.Function,
-            Name = "GetUserSettings",
+           Name = "GetUserSettings",
             Caption = "Get User Settings",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -474,9 +474,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyTeamSettings",
+            ObjectType ="ChantyTeamSettings",
             PointType = EnumPointType.Function,
-            Name = "GetTeamSettings",
+           Name = "GetTeamSettings",
             Caption = "Get Team Settings",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -492,9 +492,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyIntegration",
+            ObjectType ="ChantyIntegration",
             PointType = EnumPointType.Function,
-            Name = "GetIntegrations",
+           Name = "GetIntegrations",
             Caption = "Get Integrations",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -510,9 +510,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyWebhook",
+            ObjectType ="ChantyWebhook",
             PointType = EnumPointType.Function,
-            Name = "GetWebhooks",
+           Name = "GetWebhooks",
             Caption = "Get Webhooks",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -528,9 +528,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            ObjectType = "ChantyAuditLog",
+            ObjectType ="ChantyAuditLog",
             PointType = EnumPointType.Function,
-            Name = "GetAuditLogs",
+           Name = "GetAuditLogs",
             Caption = "Get Audit Logs",
             ClassName = "ChantyDataSource",
             Category = DatasourceCategory.Connector,
@@ -546,13 +546,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            Name = "CreateMessageAsync",
+           Name = "CreateMessageAsync",
             Caption = "Create Chanty Message",
-            ObjectType = "ChantyMessage",
+            ObjectType ="ChantyMessage",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Chanty,
-            ClassType = "ChantyDataSource",
+            ClassType ="ChantyDataSource",
             Showin = ShowinType.Both,
             Order = 21,
             iconimage = "createmessage.png",
@@ -582,13 +582,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            Name = "CreateChannelAsync",
+           Name = "CreateChannelAsync",
             Caption = "Create Chanty Channel",
-            ObjectType = "ChantyChannel",
+            ObjectType ="ChantyChannel",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Chanty,
-            ClassType = "ChantyDataSource",
+            ClassType ="ChantyDataSource",
             Showin = ShowinType.Both,
             Order = 22,
             iconimage = "createchannel.png",
@@ -618,13 +618,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            Name = "UpdateMessageAsync",
+           Name = "UpdateMessageAsync",
             Caption = "Update Chanty Message",
-            ObjectType = "ChantyMessage",
+            ObjectType ="ChantyMessage",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Chanty,
-            ClassType = "ChantyDataSource",
+            ClassType ="ChantyDataSource",
             Showin = ShowinType.Both,
             Order = 23,
             iconimage = "updatemessage.png",
@@ -654,13 +654,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Chanty
         }
 
         [CommandAttribute(
-            Name = "UpdateChannelAsync",
+           Name = "UpdateChannelAsync",
             Caption = "Update Chanty Channel",
-            ObjectType = "ChantyChannel",
+            ObjectType ="ChantyChannel",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Chanty,
-            ClassType = "ChantyDataSource",
+            ClassType ="ChantyDataSource",
             Showin = ShowinType.Both,
             Order = 24,
             iconimage = "updatechannel.png",

@@ -295,7 +295,7 @@ namespace TheTechIdea.Beep.Redis
                 if (ConnectionStatus == ConnectionState.Open && _redisClient != null)
                 {
                     // Check if exact key exists
-                    if (_redisClient.Exists(EntityName) > 0)
+                    if (_redisClient.Exists(EntityName))
                     {
                         retval = true;
                     }
@@ -303,7 +303,7 @@ namespace TheTechIdea.Beep.Redis
                     {
                         // Check if any keys match the pattern
                         var pattern = EntityName.EndsWith("*") ? EntityName : EntityName + "*";
-                        var scanResult = _redisClient.Scan(0, pattern, 1);
+                        var scanResult = _redisClient.Scan(0, pattern, 1, null);
                         retval = scanResult.items != null && scanResult.items.Length > 0;
                     }
                 }
@@ -387,7 +387,7 @@ namespace TheTechIdea.Beep.Redis
                     long scanCursor = 0;
                     do
                     {
-                        var scanResult = _redisClient.Scan(scanCursor, pattern, 1000);
+                        var scanResult = _redisClient.Scan(scanCursor, pattern, 1000, null);
                         if (scanResult.items != null)
                         {
                             keys.AddRange(scanResult.items);
@@ -424,7 +424,7 @@ namespace TheTechIdea.Beep.Redis
                 {
                     // Redis doesn't have SQL, but we can execute Redis commands
                     // This is a simple implementation that tries to execute as Redis command
-                    var result = _redisClient.Execute(sql);
+                    _redisClient.Call(sql);
                     DMEEditor?.AddLogMessage("Beep", $"Executed Redis command: {sql}", DateTime.Now, -1, null, Errors.Ok);
                 }
             }
@@ -456,9 +456,10 @@ namespace TheTechIdea.Beep.Redis
                     {
                         var script = new ETLScriptDet
                         {
-                            EntityName = entity.EntityName,
-                           ScriptType= "CREATE",
-                            ScriptText = $"# Redis entity: {entity.EntityName}\n# No Ddl for Redis - entities are key patterns"
+                            SourceDataSourceName = DatasourceName,
+                            SourceEntityName = entity.EntityName,
+                            ScriptType = DDLScriptType.CreateEntity,
+                            Ddl = $"# Redis entity: {entity.EntityName}\n# No DDL for Redis - entities are key patterns"
                         };
                         scripts.Add(script);
                     }
@@ -493,7 +494,7 @@ namespace TheTechIdea.Beep.Redis
 
                     do
                     {
-                        var result = _redisClient.Scan(cursor, "*", count);
+                        var result = _redisClient.Scan(cursor, "*", count, null);
                         if (result != null && result.items != null)
                         {
                             allKeys.AddRange(result.items);
@@ -573,7 +574,7 @@ namespace TheTechIdea.Beep.Redis
                     long scanCursor = 0;
                     do
                     {
-                        var scanResult = _redisClient.Scan(scanCursor, pattern, 1000);
+                        var scanResult = _redisClient.Scan(scanCursor, pattern, 1000, null);
                         if (scanResult.items != null)
                         {
                             keys.AddRange(scanResult.items);
@@ -667,7 +668,7 @@ namespace TheTechIdea.Beep.Redis
                     long scanCursor = 0;
                     do
                     {
-                        var scanResult = _redisClient.Scan(scanCursor, pattern, 100);
+                        var scanResult = _redisClient.Scan(scanCursor, pattern, 100, null);
                         if (scanResult.items != null)
                         {
                             allMatchingKeys.AddRange(scanResult.items);
@@ -676,11 +677,11 @@ namespace TheTechIdea.Beep.Redis
                     } while (scanCursor != 0 && allMatchingKeys.Count < 10);
 
                     var sampleKeys = allMatchingKeys.Take(10).ToList();
-
+                    
                     if (sampleKeys.Count == 0)
                     {
                         // Try exact match
-                        if (_redisClient.Exists(EntityName) > 0)
+                        if (_redisClient.Exists(EntityName))
                         {
                             sampleKeys.Add(EntityName);
                         }
@@ -825,7 +826,7 @@ namespace TheTechIdea.Beep.Redis
                 if (ConnectionStatus == ConnectionState.Open && _redisClient != null && !string.IsNullOrEmpty(qrystr))
                 {
                     // Execute Redis command and return result
-                    var result = _redisClient.Execute(qrystr);
+                    var result = _redisClient.Call(qrystr);
                     if (result != null)
                     {
                         results.Add(result);
@@ -844,9 +845,9 @@ namespace TheTechIdea.Beep.Redis
             ErrorObject.Flag = Errors.Ok;
             try
             {
-                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.ScriptText))
+                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.Ddl))
                 {
-                    ExecuteSql(dDLScripts.ScriptText);
+                    ExecuteSql(dDLScripts.Ddl);
                 }
             }
             catch (Exception ex)
@@ -870,7 +871,7 @@ namespace TheTechIdea.Beep.Redis
                     {
                         UpdateEntity(EntityName, item);
                         count++;
-                        progress?.Report(new PassedArgs { Message = $"Updated {count} records" });
+                        progress?.Report(new PassedArgs { Messege = $"Updated {count} records" });
                     }
                 }
             }
@@ -899,7 +900,7 @@ namespace TheTechIdea.Beep.Redis
                     if (UploadDataRow is Dictionary<string, object> dict)
                     {
                         string key = dict.ContainsKey("Key") ? dict["Key"].ToString() : null;
-                        if (!string.IsNullOrEmpty(key) && _redisClient.Exists(key) > 0)
+                        if (!string.IsNullOrEmpty(key) && _redisClient.Exists(key))
                         {
                             dict.Remove("Key");
                             var hashFields = new Dictionary<string, string>();
@@ -1016,7 +1017,7 @@ namespace TheTechIdea.Beep.Redis
                 DatasourceEntityName = entityName,
                 OriginalEntityName = entityName,
                 Caption = entityName,
-                Category = DatasourceCategory.NOSQL,
+                Category = DatasourceCategory.NOSQL.ToString(),
                 DatabaseType = DataSourceType.Redis,
                 DataSourceID = DatasourceName,
                 Fields = new List<EntityField>()
@@ -1029,12 +1030,12 @@ namespace TheTechIdea.Beep.Redis
             {
                         // Check data type of first key
                         var firstKey = sampleKeys.First();
-                        var dataType = _redisClient.Type(firstKey).ToString();
+                        var dataType = _redisClient.Type(firstKey);
 
                 // Build fields based on Redis data type
-                switch (dataType.ToLower())
+                switch (dataType)
                 {
-                    case "string":
+                    case KeyType.@string:
                         entity.Fields.Add(new EntityField
                         {
                             FieldName = "Value",
@@ -1055,7 +1056,7 @@ namespace TheTechIdea.Beep.Redis
                         });
                         break;
 
-                    case "hash":
+                    case KeyType.hash:
                         // Get all fields from a sample hash
                         var hashFields = _redisClient.HGetAll(firstKey);
                         if (hashFields != null && hashFields.Count > 0)
@@ -1088,9 +1089,9 @@ namespace TheTechIdea.Beep.Redis
                         }
                         break;
 
-                    case "list":
-                    case "set":
-                    case "zset":
+                    case KeyType.list:
+                    case KeyType.@set:
+                    case KeyType.zset:
                         entity.Fields.Add(new EntityField
                         {
                             FieldName = "Key",
@@ -1227,13 +1228,13 @@ namespace TheTechIdea.Beep.Redis
                 Dictionary<string, object> dataObject = new Dictionary<string, object>();
                 dataObject["Key"] = key;
 
-                switch (dataType.ToLower())
+                switch (dataType)
                 {
-                    case "string":
+                    case KeyType.@string:
                         dataObject["Value"] = _redisClient.Get(key);
                         break;
 
-                    case "hash":
+                    case KeyType.hash:
                         var hashData = _redisClient.HGetAll(key);
                         foreach (var kvp in hashData)
                         {
@@ -1241,18 +1242,17 @@ namespace TheTechIdea.Beep.Redis
                         }
                         break;
 
-                    case "list":
+                    case KeyType.list:
                         var listData = _redisClient.LRange(key, 0, -1);
                         dataObject["Items"] = listData != null ? string.Join(",", listData) : "";
                         break;
 
-                    case "set":
+                    case KeyType.@set:
                         var setData = _redisClient.SMembers(key);
                         dataObject["Items"] = setData != null ? string.Join(",", setData) : "";
                         break;
 
-                    case "zset":
-                    case "sortedset":
+                    case KeyType.zset:
                         var zsetData = _redisClient.ZRange(key, 0, -1);
                         dataObject["Items"] = zsetData != null ? string.Join(",", zsetData) : "";
                         break;
@@ -1489,7 +1489,7 @@ namespace TheTechIdea.Beep.Redis
                     long scanCursor = 0;
                     do
                     {
-                        var scanResult = _redisClient.Scan(scanCursor, pattern, 1000);
+                        var scanResult = _redisClient.Scan(scanCursor, pattern, 1000, null);
                         if (scanResult.items != null)
                         {
                             allKeys.AddRange(scanResult.items);

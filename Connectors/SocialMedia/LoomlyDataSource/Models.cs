@@ -80,7 +80,7 @@ namespace TheTechIdea.Beep.Connectors.Loomly.Models
         public string Username { get; set; }
 
         [JsonPropertyName("display_name")]
-        public string DisplayName { get; set; }
+        public string Caption { get; set; }
 
         [JsonPropertyName("profile_picture")]
         public string ProfilePicture { get; set; }
@@ -304,7 +304,7 @@ namespace TheTechIdea.Beep.Connectors.Loomly.Models
         public string Username { get; set; }
 
         [JsonPropertyName("display_name")]
-        public string DisplayName { get; set; }
+        public string Caption { get; set; }
 
         [JsonPropertyName("avatar")]
         public string Avatar { get; set; }

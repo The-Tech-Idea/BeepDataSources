@@ -123,8 +123,8 @@ namespace TheTechIdea.Beep.ZendeskDataSource
 
             foreach (var field in fields)
             {
-                Type columnType = GetTypeFromFieldType(field.fieldtype);
-                dataTable.Columns.Add(field.fieldname, columnType);
+                Type columnType = GetTypeFromFieldtype(field.Fieldtype);
+                dataTable.Columns.Add(field.FieldName, columnType);
             }
         }
 
@@ -184,9 +184,9 @@ namespace TheTechIdea.Beep.ZendeskDataSource
         /// <summary>
         /// Gets .NET type from field type string
         /// </summary>
-        private static Type GetTypeFromFieldType(string fieldType)
+        private static Type GetTypeFromFieldtype(string Fieldtype)
         {
-            return fieldType?.ToLower() switch
+            return Fieldtype?.ToLower() switch
             {
                 "string" => typeof(string),
                 "int" or "integer" => typeof(int),
@@ -207,104 +207,104 @@ namespace TheTechIdea.Beep.ZendeskDataSource
             {
                 "tickets" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "long" },
-                    new EntityField { fieldname = "url", fieldtype = "string" },
-                    new EntityField { fieldname = "external_id", fieldtype = "string" },
-                    new EntityField { fieldname = "type", fieldtype = "string" },
-                    new EntityField { fieldname = "subject", fieldtype = "string" },
-                    new EntityField { fieldname = "raw_subject", fieldtype = "string" },
-                    new EntityField { fieldname = "description", fieldtype = "string" },
-                    new EntityField { fieldname = "priority", fieldtype = "string" },
-                    new EntityField { fieldname = "status", fieldtype = "string" },
-                    new EntityField { fieldname = "recipient", fieldtype = "string" },
-                    new EntityField { fieldname = "requester_id", fieldtype = "long" },
-                    new EntityField { fieldname = "submitter_id", fieldtype = "long" },
-                    new EntityField { fieldname = "assignee_id", fieldtype = "long" },
-                    new EntityField { fieldname = "organization_id", fieldtype = "long" },
-                    new EntityField { fieldname = "group_id", fieldtype = "long" },
-                    new EntityField { fieldname = "has_incidents", fieldtype = "bool" },
-                    new EntityField { fieldname = "is_public", fieldtype = "bool" },
-                    new EntityField { fieldname = "due_at", fieldtype = "datetime" },
-                    new EntityField { fieldname = "created_at", fieldtype = "datetime" },
-                    new EntityField { fieldname = "updated_at", fieldtype = "datetime" }
+                    new EntityField { FieldName = "id", Fieldtype ="long" },
+                    new EntityField { FieldName = "url", Fieldtype ="string" },
+                    new EntityField { FieldName = "external_id", Fieldtype ="string" },
+                    new EntityField { FieldName = "type", Fieldtype ="string" },
+                    new EntityField { FieldName = "subject", Fieldtype ="string" },
+                    new EntityField { FieldName = "raw_subject", Fieldtype ="string" },
+                    new EntityField { FieldName = "description", Fieldtype ="string" },
+                    new EntityField { FieldName = "priority", Fieldtype ="string" },
+                    new EntityField { FieldName = "status", Fieldtype ="string" },
+                    new EntityField { FieldName = "recipient", Fieldtype ="string" },
+                    new EntityField { FieldName = "requester_id", Fieldtype ="long" },
+                    new EntityField { FieldName = "submitter_id", Fieldtype ="long" },
+                    new EntityField { FieldName = "assignee_id", Fieldtype ="long" },
+                    new EntityField { FieldName = "organization_id", Fieldtype ="long" },
+                    new EntityField { FieldName = "group_id", Fieldtype ="long" },
+                    new EntityField { FieldName = "has_incidents", Fieldtype ="bool" },
+                    new EntityField { FieldName = "is_public", Fieldtype ="bool" },
+                    new EntityField { FieldName = "due_at", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "created_at", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "updated_at", Fieldtype ="datetime" }
                 },
                 "users" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "long" },
-                    new EntityField { fieldname = "url", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "email", fieldtype = "string" },
-                    new EntityField { fieldname = "created_at", fieldtype = "datetime" },
-                    new EntityField { fieldname = "updated_at", fieldtype = "datetime" },
-                    new EntityField { fieldname = "time_zone", fieldtype = "string" },
-                    new EntityField { fieldname = "phone", fieldtype = "string" },
-                    new EntityField { fieldname = "locale_id", fieldtype = "int" },
-                    new EntityField { fieldname = "locale", fieldtype = "string" },
-                    new EntityField { fieldname = "organization_id", fieldtype = "long" },
-                    new EntityField { fieldname = "role", fieldtype = "string" },
-                    new EntityField { fieldname = "verified", fieldtype = "bool" },
-                    new EntityField { fieldname = "external_id", fieldtype = "string" },
-                    new EntityField { fieldname = "alias", fieldtype = "string" },
-                    new EntityField { fieldname = "active", fieldtype = "bool" },
-                    new EntityField { fieldname = "shared", fieldtype = "bool" },
-                    new EntityField { fieldname = "last_login_at", fieldtype = "datetime" },
-                    new EntityField { fieldname = "suspended", fieldtype = "bool" }
+                    new EntityField { FieldName = "id", Fieldtype ="long" },
+                    new EntityField { FieldName = "url", Fieldtype ="string" },
+                    new EntityField { FieldName = "name", Fieldtype ="string" },
+                    new EntityField { FieldName = "email", Fieldtype ="string" },
+                    new EntityField { FieldName = "created_at", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "updated_at", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "time_zone", Fieldtype ="string" },
+                    new EntityField { FieldName = "phone", Fieldtype ="string" },
+                    new EntityField { FieldName = "locale_id", Fieldtype ="int" },
+                    new EntityField { FieldName = "locale", Fieldtype ="string" },
+                    new EntityField { FieldName = "organization_id", Fieldtype ="long" },
+                    new EntityField { FieldName = "role", Fieldtype ="string" },
+                    new EntityField { FieldName = "verified", Fieldtype ="bool" },
+                    new EntityField { FieldName = "external_id", Fieldtype ="string" },
+                    new EntityField { FieldName = "alias", Fieldtype ="string" },
+                    new EntityField { FieldName = "active", Fieldtype ="bool" },
+                    new EntityField { FieldName = "shared", Fieldtype ="bool" },
+                    new EntityField { FieldName = "last_login_at", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "suspended", Fieldtype ="bool" }
                 },
                 "organizations" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "long" },
-                    new EntityField { fieldname = "url", fieldtype = "string" },
-                    new EntityField { fieldname = "external_id", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "created_at", fieldtype = "datetime" },
-                    new EntityField { fieldname = "updated_at", fieldtype = "datetime" },
-                    new EntityField { fieldname = "details", fieldtype = "string" },
-                    new EntityField { fieldname = "notes", fieldtype = "string" },
-                    new EntityField { fieldname = "group_id", fieldtype = "long" },
-                    new EntityField { fieldname = "shared_tickets", fieldtype = "bool" },
-                    new EntityField { fieldname = "shared_comments", fieldtype = "bool" }
+                    new EntityField { FieldName = "id", Fieldtype ="long" },
+                    new EntityField { FieldName = "url", Fieldtype ="string" },
+                    new EntityField { FieldName = "external_id", Fieldtype ="string" },
+                    new EntityField { FieldName = "name", Fieldtype ="string" },
+                    new EntityField { FieldName = "created_at", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "updated_at", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "details", Fieldtype ="string" },
+                    new EntityField { FieldName = "notes", Fieldtype ="string" },
+                    new EntityField { FieldName = "group_id", Fieldtype ="long" },
+                    new EntityField { FieldName = "shared_tickets", Fieldtype ="bool" },
+                    new EntityField { FieldName = "shared_comments", Fieldtype ="bool" }
                 },
                 "groups" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "long" },
-                    new EntityField { fieldname = "url", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "description", fieldtype = "string" },
-                    new EntityField { fieldname = "default", fieldtype = "bool" },
-                    new EntityField { fieldname = "deleted", fieldtype = "bool" },
-                    new EntityField { fieldname = "created_at", fieldtype = "datetime" },
-                    new EntityField { fieldname = "updated_at", fieldtype = "datetime" }
+                    new EntityField { FieldName = "id", Fieldtype ="long" },
+                    new EntityField { FieldName = "url", Fieldtype ="string" },
+                    new EntityField { FieldName = "name", Fieldtype ="string" },
+                    new EntityField { FieldName = "description", Fieldtype ="string" },
+                    new EntityField { FieldName = "default", Fieldtype ="bool" },
+                    new EntityField { FieldName = "deleted", Fieldtype ="bool" },
+                    new EntityField { FieldName = "created_at", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "updated_at", Fieldtype ="datetime" }
                 },
                 "comments" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "long" },
-                    new EntityField { fieldname = "type", fieldtype = "string" },
-                    new EntityField { fieldname = "author_id", fieldtype = "long" },
-                    new EntityField { fieldname = "body", fieldtype = "string" },
-                    new EntityField { fieldname = "html_body", fieldtype = "string" },
-                    new EntityField { fieldname = "plain_body", fieldtype = "string" },
-                    new EntityField { fieldname = "public", fieldtype = "bool" },
-                    new EntityField { fieldname = "audit_id", fieldtype = "long" },
-                    new EntityField { fieldname = "created_at", fieldtype = "datetime" }
+                    new EntityField { FieldName = "id", Fieldtype ="long" },
+                    new EntityField { FieldName = "type", Fieldtype ="string" },
+                    new EntityField { FieldName = "author_id", Fieldtype ="long" },
+                    new EntityField { FieldName = "body", Fieldtype ="string" },
+                    new EntityField { FieldName = "html_body", Fieldtype ="string" },
+                    new EntityField { FieldName = "plain_body", Fieldtype ="string" },
+                    new EntityField { FieldName = "public", Fieldtype ="bool" },
+                    new EntityField { FieldName = "audit_id", Fieldtype ="long" },
+                    new EntityField { FieldName = "created_at", Fieldtype ="datetime" }
                 },
                 "macros" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "long" },
-                    new EntityField { fieldname = "title", fieldtype = "string" },
-                    new EntityField { fieldname = "active", fieldtype = "bool" },
-                    new EntityField { fieldname = "updated_at", fieldtype = "datetime" },
-                    new EntityField { fieldname = "created_at", fieldtype = "datetime" },
-                    new EntityField { fieldname = "description", fieldtype = "string" }
+                    new EntityField { FieldName = "id", Fieldtype ="long" },
+                    new EntityField { FieldName = "title", Fieldtype ="string" },
+                    new EntityField { FieldName = "active", Fieldtype ="bool" },
+                    new EntityField { FieldName = "updated_at", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "created_at", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "description", Fieldtype ="string" }
                 },
                 "views" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "long" },
-                    new EntityField { fieldname = "title", fieldtype = "string" },
-                    new EntityField { fieldname = "active", fieldtype = "bool" },
-                    new EntityField { fieldname = "updated_at", fieldtype = "datetime" },
-                    new EntityField { fieldname = "created_at", fieldtype = "datetime" },
-                    new EntityField { fieldname = "position", fieldtype = "int" },
-                    new EntityField { fieldname = "watchable", fieldtype = "bool" }
+                    new EntityField { FieldName = "id", Fieldtype ="long" },
+                    new EntityField { FieldName = "title", Fieldtype ="string" },
+                    new EntityField { FieldName = "active", Fieldtype ="bool" },
+                    new EntityField { FieldName = "updated_at", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "created_at", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "position", Fieldtype ="int" },
+                    new EntityField { FieldName = "watchable", Fieldtype ="bool" }
                 },
                 _ => new List<EntityField>()
             };

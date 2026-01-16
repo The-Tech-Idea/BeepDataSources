@@ -287,35 +287,35 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
         }
 
         // CommandAttribute methods for Salesforce API
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Account>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Accounts", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Account>")]
         public async Task<IEnumerable<Account>> GetAccounts(AppFilter filter)
         {
             var result = await GetEntityAsync("Account", new List<AppFilter> { filter });
             return result.Cast<Account>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Contact>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Contacts", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Contact>")]
         public async Task<IEnumerable<Contact>> GetContacts(AppFilter filter)
         {
             var result = await GetEntityAsync("Contact", new List<AppFilter> { filter });
             return result.Cast<Contact>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Leads", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Lead>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Leads", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Lead>")]
         public async Task<IEnumerable<Lead>> GetLeads(AppFilter filter)
         {
             var result = await GetEntityAsync("Lead", new List<AppFilter> { filter });
             return result.Cast<Lead>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Opportunities", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Opportunity>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Opportunities", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Opportunity>")]
         public async Task<IEnumerable<Opportunity>> GetOpportunities(AppFilter filter)
         {
             var result = await GetEntityAsync("Opportunity", new List<AppFilter> { filter });
             return result.Cast<Opportunity>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Users", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<User>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Users", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<User>")]
         public async Task<IEnumerable<User>> GetUsers(AppFilter filter)
         {
             var result = await GetEntityAsync("User", new List<AppFilter> { filter });
@@ -324,7 +324,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
 
         // -------------------- Create / Update (POST/PATCH) methods --------------------
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Account")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Account", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Account")]
         public async Task<IEnumerable<Account>> CreateAccountAsync(Account account)
         {
             if (account == null) return Array.Empty<Account>();
@@ -343,7 +343,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Account")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Account", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Account")]
         public async Task<IEnumerable<Account>> UpdateAccountAsync(string accountId, Account account)
         {
             if (string.IsNullOrWhiteSpace(accountId) || account == null) return Array.Empty<Account>();
@@ -363,7 +363,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Contact")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Contact", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Contact")]
         public async Task<IEnumerable<Contact>> CreateContactAsync(Contact contact)
         {
             if (contact == null) return Array.Empty<Contact>();
@@ -382,7 +382,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Contact")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Contact", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Contact")]
         public async Task<IEnumerable<Contact>> UpdateContactAsync(string contactId, Contact contact)
         {
             if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<Contact>();
@@ -402,7 +402,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Lead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Lead", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Lead")]
         public async Task<IEnumerable<Lead>> CreateLeadAsync(Lead lead)
         {
             if (lead == null) return Array.Empty<Lead>();
@@ -421,7 +421,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Lead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Lead", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Lead")]
         public async Task<IEnumerable<Lead>> UpdateLeadAsync(string leadId, Lead lead)
         {
             if (string.IsNullOrWhiteSpace(leadId) || lead == null) return Array.Empty<Lead>();
@@ -441,7 +441,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Opportunity", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
         public async Task<IEnumerable<Opportunity>> CreateOpportunityAsync(Opportunity opportunity)
         {
             if (opportunity == null) return Array.Empty<Opportunity>();
@@ -460,7 +460,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Opportunity", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
         public async Task<IEnumerable<Opportunity>> UpdateOpportunityAsync(string opportunityId, Opportunity opportunity)
         {
             if (string.IsNullOrWhiteSpace(opportunityId) || opportunity == null) return Array.Empty<Opportunity>();
@@ -480,7 +480,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Case", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Case")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Case", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Case")]
         public async Task<IEnumerable<Case>> CreateCaseAsync(Case caseRecord)
         {
             if (caseRecord == null) return Array.Empty<Case>();
@@ -499,7 +499,7 @@ namespace TheTechIdea.Beep.Connectors.Salesforce
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType = "Case", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Case")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Salesforce, PointType = EnumPointType.Function, ObjectType ="Case", ClassName = "SalesforceDataSource", Showin = ShowinType.Both, misc = "Case")]
         public async Task<IEnumerable<Case>> UpdateCaseAsync(string caseId, Case caseRecord)
         {
             if (string.IsNullOrWhiteSpace(caseId) || caseRecord == null) return Array.Empty<Case>();

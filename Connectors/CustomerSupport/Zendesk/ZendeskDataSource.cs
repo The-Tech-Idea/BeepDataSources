@@ -224,84 +224,84 @@ namespace TheTechIdea.Beep.Connectors.Zendesk
 
         // -------------------- CommandAttribute Methods --------------------
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskTicket", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskTicket>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskTicket", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskTicket>")]
         public List<ZendeskTicket> GetTickets()
         {
             return GetEntity("tickets", new List<AppFilter>()).Cast<ZendeskTicket>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskTicket", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "ZendeskTicket")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskTicket", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "ZendeskTicket")]
         public ZendeskTicket GetTicket(long id)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
             return GetEntity("tickets", filters).Cast<ZendeskTicket>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskComment", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskComment>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskComment", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskComment>")]
         public List<ZendeskComment> GetTicketComments(long ticketId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "ticket_id", FilterValue = ticketId.ToString(), Operator = "=" } };
             return GetEntity("ticket_comments", filters).Cast<ZendeskComment>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskUser", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskUser>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskUser", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskUser>")]
         public List<ZendeskUser> GetUsers()
         {
             return GetEntity("users", new List<AppFilter>()).Cast<ZendeskUser>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskUser", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "ZendeskUser")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskUser", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "ZendeskUser")]
         public ZendeskUser GetUser(long id)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
             return GetEntity("users", filters).Cast<ZendeskUser>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskOrganization", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskOrganization>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskOrganization", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskOrganization>")]
         public List<ZendeskOrganization> GetOrganizations()
         {
             return GetEntity("organizations", new List<AppFilter>()).Cast<ZendeskOrganization>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskOrganization", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "ZendeskOrganization")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskOrganization", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "ZendeskOrganization")]
         public ZendeskOrganization GetOrganization(long id)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
             return GetEntity("organizations", filters).Cast<ZendeskOrganization>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskGroup", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskGroup>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskGroup", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskGroup>")]
         public List<ZendeskGroup> GetGroups()
         {
             return GetEntity("groups", new List<AppFilter>()).Cast<ZendeskGroup>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskGroup", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "ZendeskGroup")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskGroup", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "ZendeskGroup")]
         public ZendeskGroup GetGroup(long id)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "id", FilterValue = id.ToString(), Operator = "=" } };
             return GetEntity("groups", filters).Cast<ZendeskGroup>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskMacro", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskMacro>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskMacro", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskMacro>")]
         public List<ZendeskMacro> GetMacros()
         {
             return GetEntity("macros", new List<AppFilter>()).Cast<ZendeskMacro>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskView", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskView>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskView", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskView>")]
         public List<ZendeskView> GetViews()
         {
             return GetEntity("views", new List<AppFilter>()).Cast<ZendeskView>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskSatisfactionRating", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskSatisfactionRating>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskSatisfactionRating", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskSatisfactionRating>")]
         public List<ZendeskSatisfactionRating> GetSatisfactionRatings()
         {
             return GetEntity("satisfaction_ratings", new List<AppFilter>()).Cast<ZendeskSatisfactionRating>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskTicket", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskTicket>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskTicket", ClassName = "ZendeskDataSource", Showin = ShowinType.Both, misc = "List<ZendeskTicket>")]
         public List<ZendeskTicket> SearchTickets(string query)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "query", FilterValue = query, Operator = "=" } };
@@ -309,7 +309,7 @@ namespace TheTechIdea.Beep.Connectors.Zendesk
         }
 
         // POST methods for creating entities
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskTicket", Name = "CreateTicket", Caption = "Create Zendesk Ticket", ClassType = "ZendeskDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "zendesk.png", misc = "ReturnType: IEnumerable<ZendeskTicket>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskTicket", Name = "CreateTicket", Caption = "Create Zendesk Ticket", ClassType ="ZendeskDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "zendesk.png", misc = "ReturnType: IEnumerable<ZendeskTicket>")]
         public async Task<IEnumerable<ZendeskTicket>> CreateTicketAsync(ZendeskTicket ticket)
         {
             try
@@ -329,7 +329,7 @@ namespace TheTechIdea.Beep.Connectors.Zendesk
             return new List<ZendeskTicket>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType = "ZendeskTicket", Name = "UpdateTicket", Caption = "Update Zendesk Ticket", ClassType = "ZendeskDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "zendesk.png", misc = "ReturnType: IEnumerable<ZendeskTicket>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zendesk, PointType = EnumPointType.Function, ObjectType ="ZendeskTicket", Name = "UpdateTicket", Caption = "Update Zendesk Ticket", ClassType ="ZendeskDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "zendesk.png", misc = "ReturnType: IEnumerable<ZendeskTicket>")]
         public async Task<IEnumerable<ZendeskTicket>> UpdateTicketAsync(ZendeskTicket ticket)
         {
             try

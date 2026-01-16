@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -1249,7 +1249,7 @@ namespace TheTechIdea.Beep.NOSQL
             ErrorsInfo retval = new ErrorsInfo();
             retval.Flag = Errors.Ok;
             retval.Message = "Entities Created Successfully";
-            object result = null;
+            List<object> result = new List<object>();
             List<BsonDocument> results = new List<BsonDocument>();
             try
             {
@@ -1265,7 +1265,7 @@ namespace TheTechIdea.Beep.NOSQL
                     if (parts.Length != 2)
                     {
                         DMEEditor.AddLogMessage("Beep", $"Query string is not in the expected format 'collectionName|{qrystr}", DateTime.Now, -1, null, Errors.Failed);
-                        return null;
+                        return new List<object>();
                     }
                     var collectionName = parts[0].Trim();
                     var query = BsonDocument.Parse(parts[1].Trim());
@@ -1275,7 +1275,7 @@ namespace TheTechIdea.Beep.NOSQL
                     results = collection.Find(filter).ToList();
 
                     // Convert BSON documents to a more generic or user-friendly format if necessary
-                    result = results.Select(doc => doc.ToDictionary()).ToList(); // Converts to List<Dictionary<string, object>>
+                    result = results.Select(doc => (object)doc.ToDictionary()).ToList(); // Converts to List<object>
                 }
 
             }

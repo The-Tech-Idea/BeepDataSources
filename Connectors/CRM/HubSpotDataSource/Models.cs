@@ -198,7 +198,7 @@ namespace TheTechIdea.Beep.Connectors.HubSpot.Models
         [JsonPropertyName("description")] public string Description { get; set; }
         [JsonPropertyName("groupName")] public string GroupName { get; set; }
         [JsonPropertyName("type")] public string Type { get; set; }
-        [JsonPropertyName("fieldType")] public string FieldType { get; set; }
+        [JsonPropertyName("Fieldtype")] public string Fieldtype { get; set; }
         [JsonPropertyName("options")] public List<HubSpotPropertyOption> Options { get; set; } = new();
         [JsonPropertyName("calculated")] public bool Calculated { get; set; }
         [JsonPropertyName("externalOptions")] public bool ExternalOptions { get; set; }

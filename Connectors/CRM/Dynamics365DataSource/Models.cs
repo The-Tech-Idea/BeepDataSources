@@ -214,7 +214,7 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365.Models
     public class Dynamics365EntityMetadata
     {
         [JsonPropertyName("LogicalName")] public string? LogicalName { get; set; }
-        [JsonPropertyName("DisplayName")] public Dynamics365LocalizedLabel? DisplayName { get; set; }
+        [JsonPropertyName("Caption")] public Dynamics365LocalizedLabel? Caption { get; set; }
         [JsonPropertyName("SchemaName")] public string? SchemaName { get; set; }
         [JsonPropertyName("EntityTypeName")] public string? EntityTypeName { get; set; }
         [JsonPropertyName("PrimaryIdAttribute")] public string? PrimaryIdAttribute { get; set; }
@@ -245,7 +245,7 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365.Models
     {
         [JsonPropertyName("LogicalName")] public string? LogicalName { get; set; }
         [JsonPropertyName("SchemaName")] public string? SchemaName { get; set; }
-        [JsonPropertyName("DisplayName")] public Dynamics365LocalizedLabel? DisplayName { get; set; }
+        [JsonPropertyName("Caption")] public Dynamics365LocalizedLabel? Caption { get; set; }
         [JsonPropertyName("AttributeType")] public string? AttributeType { get; set; }
         [JsonPropertyName("AttributeTypeName")] public Dynamics365AttributeTypeName? AttributeTypeName { get; set; }
         [JsonPropertyName("IsPrimaryId")] public bool IsPrimaryId { get; set; }

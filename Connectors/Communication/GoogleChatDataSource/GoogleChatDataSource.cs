@@ -219,9 +219,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
         /// </summary>
         /// <returns>Enumerable of GoogleChatSpace objects</returns>
         [CommandAttribute(
-            ObjectType = "GoogleChatSpace",
+            ObjectType ="GoogleChatSpace",
             PointType = EnumPointType.Function,
-            Name = "GetSpaces",
+           Name = "GetSpaces",
             Caption = "Get Spaces",
             ClassName = "GoogleChatDataSource",
             Category = DatasourceCategory.Connector,
@@ -245,9 +245,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
         /// <param name="spaceName">The space name</param>
         /// <returns>GoogleChatSpace object</returns>
         [CommandAttribute(
-            ObjectType = "GoogleChatSpace",
+            ObjectType ="GoogleChatSpace",
             PointType = EnumPointType.Function,
-            Name = "GetSpace",
+           Name = "GetSpace",
             Caption = "Get Space",
             ClassName = "GoogleChatDataSource",
             Category = DatasourceCategory.Connector,
@@ -272,9 +272,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
         /// <param name="spaceName">The space name</param>
         /// <returns>Enumerable of GoogleChatMessage objects</returns>
         [CommandAttribute(
-            ObjectType = "GoogleChatMessage",
+            ObjectType ="GoogleChatMessage",
             PointType = EnumPointType.Function,
-            Name = "GetSpaceMessages",
+           Name = "GetSpaceMessages",
             Caption = "Get Space Messages",
             ClassName = "GoogleChatDataSource",
             Category = DatasourceCategory.Connector,
@@ -300,9 +300,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
         /// <param name="messageName">The message name</param>
         /// <returns>GoogleChatMessage object</returns>
         [CommandAttribute(
-            ObjectType = "GoogleChatMessage",
+            ObjectType ="GoogleChatMessage",
             PointType = EnumPointType.Function,
-            Name = "GetMessage",
+           Name = "GetMessage",
             Caption = "Get Message",
             ClassName = "GoogleChatDataSource",
             Category = DatasourceCategory.Connector,
@@ -331,9 +331,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
         /// <param name="spaceName">The space name</param>
         /// <returns>Enumerable of GoogleChatMember objects</returns>
         [CommandAttribute(
-            ObjectType = "GoogleChatMember",
+            ObjectType ="GoogleChatMember",
             PointType = EnumPointType.Function,
-            Name = "GetSpaceMembers",
+           Name = "GetSpaceMembers",
             Caption = "Get Space Members",
             ClassName = "GoogleChatDataSource",
             Category = DatasourceCategory.Connector,
@@ -357,9 +357,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
         /// </summary>
         /// <returns>Enumerable of GoogleChatUserSpace objects</returns>
         [CommandAttribute(
-            ObjectType = "GoogleChatUserSpace",
+            ObjectType ="GoogleChatUserSpace",
             PointType = EnumPointType.Function,
-            Name = "GetUserSpaces",
+           Name = "GetUserSpaces",
             Caption = "Get User Spaces",
             ClassName = "GoogleChatDataSource",
             Category = DatasourceCategory.Connector,
@@ -383,9 +383,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
         /// <param name="userName">The user name</param>
         /// <returns>Enumerable of GoogleChatUserMembership objects</returns>
         [CommandAttribute(
-            ObjectType = "GoogleChatUserMembership",
+            ObjectType ="GoogleChatUserMembership",
             PointType = EnumPointType.Function,
-            Name = "GetUserMemberships",
+           Name = "GetUserMemberships",
             Caption = "Get User Memberships",
             ClassName = "GoogleChatDataSource",
             Category = DatasourceCategory.Connector,
@@ -408,13 +408,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
         /// Creates a message in a Google Chat space
         /// </summary>
         [CommandAttribute(
-            Name = "CreateMessageAsync",
+           Name = "CreateMessageAsync",
             Caption = "Create Google Chat Message",
-            ObjectType = "GoogleChatMessage",
+            ObjectType ="GoogleChatMessage",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.GoogleChat,
-            ClassType = "GoogleChatDataSource",
+            ClassType ="GoogleChatDataSource",
             Showin = ShowinType.Both,
             Order = 8,
             iconimage = "createmessage.png",
@@ -447,13 +447,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
         /// Creates a space in Google Chat
         /// </summary>
         [CommandAttribute(
-            Name = "CreateSpaceAsync",
+           Name = "CreateSpaceAsync",
             Caption = "Create Google Chat Space",
-            ObjectType = "GoogleChatSpace",
+            ObjectType ="GoogleChatSpace",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.GoogleChat,
-            ClassType = "GoogleChatDataSource",
+            ClassType ="GoogleChatDataSource",
             Showin = ShowinType.Both,
             Order = 9,
             iconimage = "createspace.png",
@@ -486,13 +486,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
         /// Updates a message in a Google Chat space
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateMessageAsync",
+           Name = "UpdateMessageAsync",
             Caption = "Update Google Chat Message",
-            ObjectType = "GoogleChatMessage",
+            ObjectType ="GoogleChatMessage",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.GoogleChat,
-            ClassType = "GoogleChatDataSource",
+            ClassType ="GoogleChatDataSource",
             Showin = ShowinType.Both,
             Order = 10,
             iconimage = "updatemessage.png",
@@ -525,13 +525,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.GoogleChat
         /// Updates a space in Google Chat
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateSpaceAsync",
+           Name = "UpdateSpaceAsync",
             Caption = "Update Google Chat Space",
-            ObjectType = "GoogleChatSpace",
+            ObjectType ="GoogleChatSpace",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.GoogleChat,
-            ClassType = "GoogleChatDataSource",
+            ClassType ="GoogleChatDataSource",
             Showin = ShowinType.Both,
             Order = 11,
             iconimage = "updatespace.png",

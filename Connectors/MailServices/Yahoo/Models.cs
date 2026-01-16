@@ -101,7 +101,7 @@ namespace TheTechIdea.Beep.Connectors.Yahoo.Models
         [JsonPropertyName("familyName")] public string FamilyName { get; set; }
         [JsonPropertyName("prefix")] public string Prefix { get; set; }
         [JsonPropertyName("suffix")] public string Suffix { get; set; }
-        [JsonPropertyName("displayName")] public string DisplayName { get; set; }
+        [JsonPropertyName("Caption")] public string Caption { get; set; }
     }
 
     public sealed class YahooContactEmail

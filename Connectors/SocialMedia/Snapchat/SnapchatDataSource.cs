@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
@@ -12,9 +12,12 @@ using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Report;
+using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
+using TheTechIdea.Beep.WebAPI;
+using TheTechIdea.Beep.Connectors.Snapchat.Models;
 
-namespace BeepDataSources.Connectors.SocialMedia.Snapchat
+namespace TheTechIdea.Beep.Connectors.Snapchat
 {
     /// <summary>
     /// Snapchat configuration class
@@ -84,6 +87,64 @@ namespace BeepDataSources.Connectors.SocialMedia.Snapchat
     [AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Snapchat)]
     public class SnapchatDataSource : WebAPIDataSource
     {
+        protected WebAPIConnectionProperties? ConnectionProperties => Dataconnection?.ConnectionProp as WebAPIConnectionProperties;
+
+        private readonly SnapchatConfig _config = new();
+        private readonly Dictionary<string, EntityStructure> _entities = new(StringComparer.OrdinalIgnoreCase);
+
+        private string ApiBaseUrl
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(ConnectionProperties?.Url))
+                    return ConnectionProperties.Url!.TrimEnd('/');
+
+                return $"{_config.BaseUrl.TrimEnd('/')}/{_config.ApiVersion}".TrimEnd('/');
+            }
+        }
+
+        private void HydrateConfigFromConnectionProperties()
+        {
+            if (ConnectionProperties is null) return;
+
+            _config.AccessToken = ConnectionProperties.AccessToken
+                                  ?? ConnectionProperties.BearerToken
+                                  ?? ConnectionProperties.OAuthAccessToken
+                                  ?? _config.AccessToken;
+
+            _config.ClientId = ConnectionProperties.ClientId ?? _config.ClientId;
+            _config.ClientSecret = ConnectionProperties.ClientSecret ?? _config.ClientSecret;
+            _config.ApiVersion = ConnectionProperties.ApiVersion ?? _config.ApiVersion;
+
+            if (ConnectionProperties.TimeoutMs > 0)
+                _config.TimeoutSeconds = Math.Max(1, ConnectionProperties.TimeoutMs / 1000);
+
+            if (ConnectionProperties.MaxRetries > 0)
+                _config.MaxRetries = ConnectionProperties.MaxRetries;
+
+            if (ConnectionProperties.RetryDelayMs > 0)
+                _config.RateLimitDelayMs = ConnectionProperties.RetryDelayMs;
+
+            if (ConnectionProperties.ParameterList != null)
+            {
+                if (ConnectionProperties.ParameterList.TryGetValue("OrganizationId", out var orgId))
+                    _config.OrganizationId = orgId ?? _config.OrganizationId;
+                if (ConnectionProperties.ParameterList.TryGetValue("AdAccountId", out var adAccountId))
+                    _config.AdAccountId = adAccountId ?? _config.AdAccountId;
+            }
+        }
+
+        private Dictionary<string, string> BuildAuthHeaders()
+        {
+            HydrateConfigFromConnectionProperties();
+
+            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (!string.IsNullOrWhiteSpace(_config.AccessToken))
+                headers["Authorization"] = $"Bearer {_config.AccessToken}";
+
+            return headers;
+        }
+
 
     /// <summary>
     /// Constructor for SnapchatDataSource
@@ -100,299 +161,329 @@ namespace BeepDataSources.Connectors.SocialMedia.Snapchat
     private void InitializeEntities()
     {
         // Organizations
-        Entities["organizations"] = new EntityStructure
+        _entities["organizations"] = new EntityStructure
         {
             EntityName = "organizations",
             ViewID = 1,
             Fields = new List<EntityField>
             {
-                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
-                new EntityField { fieldname = "name", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "type", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "country", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "timezone", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "created_at", fieldtype = "datetime", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "updated_at", fieldtype = "datetime", ValueRetrievedFromParent = false }
+                new EntityField { FieldName = "id", Fieldtype ="string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { FieldName = "name", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "type", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "country", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "timezone", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "created_at", Fieldtype ="datetime", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "updated_at", Fieldtype ="datetime", ValueRetrievedFromParent = false }
             }
         };
 
         // Ad Accounts
-        Entities["adaccounts"] = new EntityStructure
+        _entities["adaccounts"] = new EntityStructure
         {
             EntityName = "adaccounts",
             ViewID = 2,
             Fields = new List<EntityField>
             {
-                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
-                new EntityField { fieldname = "name", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "organization_id", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "currency", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "timezone", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "status", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "created_at", fieldtype = "datetime", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "updated_at", fieldtype = "datetime", ValueRetrievedFromParent = false }
+                new EntityField { FieldName = "id", Fieldtype ="string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { FieldName = "name", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "organization_id", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "currency", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "timezone", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "status", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "created_at", Fieldtype ="datetime", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "updated_at", Fieldtype ="datetime", ValueRetrievedFromParent = false }
             }
         };
 
         // Campaigns
-        Entities["campaigns"] = new EntityStructure
+        _entities["campaigns"] = new EntityStructure
         {
             EntityName = "campaigns",
             ViewID = 3,
             Fields = new List<EntityField>
             {
-                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
-                new EntityField { fieldname = "name", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "ad_account_id", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "status", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "objective", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "start_time", fieldtype = "datetime", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "end_time", fieldtype = "datetime", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "budget_micro", fieldtype = "long", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "created_at", fieldtype = "datetime", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "updated_at", fieldtype = "datetime", ValueRetrievedFromParent = false }
+                new EntityField { FieldName = "id", Fieldtype ="string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { FieldName = "name", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "ad_account_id", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "status", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "objective", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "start_time", Fieldtype ="datetime", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "end_time", Fieldtype ="datetime", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "budget_micro", Fieldtype ="long", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "created_at", Fieldtype ="datetime", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "updated_at", Fieldtype ="datetime", ValueRetrievedFromParent = false }
             }
         };
 
         // Ads
-        Entities["ads"] = new EntityStructure
+        _entities["ads"] = new EntityStructure
         {
             EntityName = "ads",
             ViewID = 4,
             Fields = new List<EntityField>
             {
-                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
-                new EntityField { fieldname = "name", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "campaign_id", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "ad_squad_id", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "status", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "type", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "creative_id", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "created_at", fieldtype = "datetime", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "updated_at", fieldtype = "datetime", ValueRetrievedFromParent = false }
+                new EntityField { FieldName = "id", Fieldtype ="string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { FieldName = "name", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "campaign_id", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "ad_squad_id", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "status", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "type", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "creative_id", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "created_at", Fieldtype ="datetime", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "updated_at", Fieldtype ="datetime", ValueRetrievedFromParent = false }
             }
         };
 
         // Ad Squads
-        Entities["adsquads"] = new EntityStructure
+        _entities["adsquads"] = new EntityStructure
         {
             EntityName = "adsquads",
             ViewID = 5,
             Fields = new List<EntityField>
             {
-                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
-                new EntityField { fieldname = "name", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "campaign_id", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "status", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "targeting", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "billing_event", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "bid_micro", fieldtype = "long", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "created_at", fieldtype = "datetime", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "updated_at", fieldtype = "datetime", ValueRetrievedFromParent = false }
+                new EntityField { FieldName = "id", Fieldtype ="string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { FieldName = "name", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "campaign_id", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "status", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "targeting", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "billing_event", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "bid_micro", Fieldtype ="long", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "created_at", Fieldtype ="datetime", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "updated_at", Fieldtype ="datetime", ValueRetrievedFromParent = false }
             }
         };
 
         // Creatives
-        Entities["creatives"] = new EntityStructure
+        _entities["creatives"] = new EntityStructure
         {
             EntityName = "creatives",
             ViewID = 6,
             Fields = new List<EntityField>
             {
-                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
-                new EntityField { fieldname = "name", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "ad_account_id", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "type", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "headline", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "call_to_action", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "media", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "created_at", fieldtype = "datetime", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "updated_at", fieldtype = "datetime", ValueRetrievedFromParent = false }
+                new EntityField { FieldName = "id", Fieldtype ="string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { FieldName = "name", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "ad_account_id", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "type", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "headline", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "call_to_action", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "media", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "created_at", Fieldtype ="datetime", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "updated_at", Fieldtype ="datetime", ValueRetrievedFromParent = false }
             }
         };
 
         // Analytics
-        Entities["analytics"] = new EntityStructure
+        _entities["analytics"] = new EntityStructure
         {
             EntityName = "analytics",
             ViewID = 7,
             Fields = new List<EntityField>
             {
-                new EntityField { fieldname = "date", fieldtype = "datetime", ValueRetrievedFromParent = false, IsKey = true },
-                new EntityField { fieldname = "campaign_id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
-                new EntityField { fieldname = "impressions", fieldtype = "integer", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "swipes", fieldtype = "integer", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "spend", fieldtype = "decimal", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "clicks", fieldtype = "integer", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "conversions", fieldtype = "integer", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "frequency", fieldtype = "decimal", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "reach", fieldtype = "integer", ValueRetrievedFromParent = false }
+                new EntityField { FieldName = "date", Fieldtype ="datetime", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { FieldName = "campaign_id", Fieldtype ="string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { FieldName = "impressions", Fieldtype ="integer", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "swipes", Fieldtype ="integer", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "spend", Fieldtype ="decimal", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "clicks", Fieldtype ="integer", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "conversions", Fieldtype ="integer", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "frequency", Fieldtype ="decimal", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "reach", Fieldtype ="integer", ValueRetrievedFromParent = false }
             }
         };
 
         // Audiences
-        Entities["audiences"] = new EntityStructure
+        _entities["audiences"] = new EntityStructure
         {
             EntityName = "audiences",
             ViewID = 8,
             Fields = new List<EntityField>
             {
-                new EntityField { fieldname = "id", fieldtype = "string", ValueRetrievedFromParent = false, IsKey = true },
-                new EntityField { fieldname = "name", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "ad_account_id", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "size", fieldtype = "integer", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "status", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "type", fieldtype = "string", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "created_at", fieldtype = "datetime", ValueRetrievedFromParent = false },
-                new EntityField { fieldname = "updated_at", fieldtype = "datetime", ValueRetrievedFromParent = false }
+                new EntityField { FieldName = "id", Fieldtype ="string", ValueRetrievedFromParent = false, IsKey = true },
+                new EntityField { FieldName = "name", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "ad_account_id", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "size", Fieldtype ="integer", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "status", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "type", Fieldtype ="string", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "created_at", Fieldtype ="datetime", ValueRetrievedFromParent = false },
+                new EntityField { FieldName = "updated_at", Fieldtype ="datetime", ValueRetrievedFromParent = false }
             }
         };
 
-        // Update EntitiesNames collection
-        EntitiesNames.AddRange(Entities.Keys);
-    }    /// <summary>
-    /// Connect to Snapchat API
-    /// </summary>
-    public override async Task<IErrorsInfo> ConnectAsync(WebAPIConnectionProperties properties)
+        EntitiesNames = _entities.Keys.ToList();
+        Entities = EntitiesNames.Select(k =>
+        {
+            var entity = _entities[k];
+            entity.DatasourceEntityName = k;
+            return entity;
+        }).ToList();
+    }
+
+    public async Task<bool> ConnectAsync()
     {
         try
         {
-            if (string.IsNullOrEmpty(properties.AccessToken))
+            HydrateConfigFromConnectionProperties();
+            if (string.IsNullOrEmpty(_config.AccessToken))
             {
                 ErrorObject.Flag = Errors.Failed;
                 ErrorObject.Message = "Access token is required for Snapchat connection";
-                return ErrorObject;
+                return false;
             }
 
-            // Test connection by getting organizations
-            var testUrl = $"{properties.BaseUrl}/organizations";
-            var response = await HttpClient.GetAsync(testUrl);
+            using var response = await GetAsync($"{ApiBaseUrl}/organizations", null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            var content = response != null ? await response.Content.ReadAsStringAsync().ConfigureAwait(false) : "No response";
 
-            if (response.IsSuccessStatusCode)
+            if (response is not null && response.IsSuccessStatusCode)
             {
                 ErrorObject.Flag = Errors.Ok;
                 ErrorObject.Message = "Successfully connected to Snapchat API";
-                return ErrorObject;
+                ConnectionStatus = ConnectionState.Open;
+                return true;
             }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Snapchat API connection failed: {response.StatusCode} - {errorContent}";
-                return ErrorObject;
-            }
+
+            ErrorObject.Flag = Errors.Failed;
+            ErrorObject.Message = $"Snapchat API connection failed: {response?.StatusCode} - {content}";
+            return false;
         }
         catch (Exception ex)
         {
             ErrorObject.Flag = Errors.Failed;
             ErrorObject.Message = $"Failed to connect to Snapchat API: {ex.Message}";
-            return ErrorObject;
+            return false;
         }
     }
 
-    /// <summary>
-    /// Disconnect from Snapchat API
-    /// </summary>
-    public override async Task<IErrorsInfo> DisconnectAsync()
-    {
-        ErrorObject.Flag = Errors.Ok;
-        ErrorObject.Message = "Successfully disconnected from Snapchat API";
-        return ErrorObject;
-    }
-
-    /// <summary>
-    /// Get data from Snapchat API
-    /// </summary>
-    public override async Task<IErrorsInfo> GetEntityAsync(string entityName, List<AppFilter> filters = null)
+    public Task<bool> DisconnectAsync()
     {
         try
         {
+            Closeconnection();
+            ConnectionStatus = ConnectionState.Closed;
+            return Task.FromResult(true);
+        }
+        catch
+        {
+            return Task.FromResult(false);
+        }
+    }
+
+    public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+    {
+        var dt = await GetEntityDataTableAsync(EntityName, Filter).ConfigureAwait(false);
+        if (dt == null) return Array.Empty<object>();
+
+        var result = new List<object>(dt.Rows.Count);
+        foreach (DataRow row in dt.Rows)
+        {
+            var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (DataColumn col in dt.Columns)
+                dict[col.ColumnName] = row[col];
+            result.Add(dict);
+        }
+
+        return result;
+    }
+
+    private async Task<DataTable?> GetEntityDataTableAsync(string entityName, List<AppFilter>? filters)
+    {
+        try
+        {
+            HydrateConfigFromConnectionProperties();
             filters ??= new List<AppFilter>();
 
             string url;
-
-            switch (entityName.ToLower())
+            switch (entityName.ToLowerInvariant())
             {
                 case "organizations":
-                    url = $"{ConnectionProperties.BaseUrl}/organizations";
+                    url = $"{ApiBaseUrl}/organizations";
                     break;
 
                 case "adaccounts":
-                    var orgId = filters.FirstOrDefault(f => f.FieldName == "organization_id")?.FieldValue?.ToString() ?? ConnectionProperties.GetPropertyValue("OrganizationId")?.ToString();
-                    url = $"{ConnectionProperties.BaseUrl}/organizations/{orgId}/adaccounts";
+                {
+                    var orgId = filters.FirstOrDefault(f => f.FieldName == "organization_id")?.FilterValue?.ToString()
+                                ?? _config.OrganizationId;
+                    url = $"{ApiBaseUrl}/organizations/{orgId}/adaccounts";
                     break;
+                }
 
                 case "campaigns":
-                    var adAccountId = filters.FirstOrDefault(f => f.FieldName == "ad_account_id")?.FieldValue?.ToString() ?? ConnectionProperties.GetPropertyValue("AdAccountId")?.ToString();
-                    url = $"{ConnectionProperties.BaseUrl}/adaccounts/{adAccountId}/campaigns";
+                {
+                    var adAccountId = filters.FirstOrDefault(f => f.FieldName == "ad_account_id")?.FilterValue?.ToString()
+                                      ?? _config.AdAccountId;
+                    url = $"{ApiBaseUrl}/adaccounts/{adAccountId}/campaigns";
                     break;
+                }
 
                 case "ads":
-                    var campaignId = filters.FirstOrDefault(f => f.FieldName == "campaign_id")?.FieldValue?.ToString() ?? "";
-                    url = $"{ConnectionProperties.BaseUrl}/campaigns/{campaignId}/ads";
+                {
+                    var campaignId = filters.FirstOrDefault(f => f.FieldName == "campaign_id")?.FilterValue?.ToString() ?? "";
+                    url = $"{ApiBaseUrl}/campaigns/{campaignId}/ads";
                     break;
+                }
 
                 case "adsquads":
-                    var adsquadCampaignId = filters.FirstOrDefault(f => f.FieldName == "campaign_id")?.FieldValue?.ToString() ?? "";
-                    url = $"{ConnectionProperties.BaseUrl}/campaigns/{adsquadCampaignId}/adsquads";
+                {
+                    var campaignId = filters.FirstOrDefault(f => f.FieldName == "campaign_id")?.FilterValue?.ToString() ?? "";
+                    url = $"{ApiBaseUrl}/campaigns/{campaignId}/adsquads";
                     break;
+                }
 
                 case "creatives":
-                    var creativeAdAccountId = filters.FirstOrDefault(f => f.FieldName == "ad_account_id")?.FieldValue?.ToString() ?? ConnectionProperties.GetPropertyValue("AdAccountId")?.ToString();
-                    url = $"{ConnectionProperties.BaseUrl}/adaccounts/{creativeAdAccountId}/creatives";
+                {
+                    var adAccountId = filters.FirstOrDefault(f => f.FieldName == "ad_account_id")?.FilterValue?.ToString()
+                                      ?? _config.AdAccountId;
+                    url = $"{ApiBaseUrl}/adaccounts/{adAccountId}/creatives";
                     break;
+                }
 
                 case "analytics":
-                    var analyticsAdAccountId = filters.FirstOrDefault(f => f.FieldName == "ad_account_id")?.FieldValue?.ToString() ?? ConnectionProperties.GetPropertyValue("AdAccountId")?.ToString();
-                    var startTime = filters.FirstOrDefault(f => f.FieldName == "start_time")?.FieldValue?.ToString() ?? DateTime.Now.AddDays(-30).ToString("yyyy-MM-ddTHH:mm:ssZ");
-                    var endTime = filters.FirstOrDefault(f => f.FieldName == "end_time")?.FieldValue?.ToString() ?? DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
-                    url = $"{ConnectionProperties.BaseUrl}/adaccounts/{analyticsAdAccountId}/stats?start_time={startTime}&end_time={endTime}";
+                {
+                    var adAccountId = filters.FirstOrDefault(f => f.FieldName == "ad_account_id")?.FilterValue?.ToString()
+                                      ?? _config.AdAccountId;
+                    var startTime = filters.FirstOrDefault(f => f.FieldName == "start_time")?.FilterValue?.ToString()
+                                    ?? DateTime.UtcNow.AddDays(-30).ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    var endTime = filters.FirstOrDefault(f => f.FieldName == "end_time")?.FilterValue?.ToString()
+                                  ?? DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    url = $"{ApiBaseUrl}/adaccounts/{adAccountId}/stats?start_time={startTime}&end_time={endTime}";
                     break;
+                }
 
                 case "audiences":
-                    var audienceAdAccountId = filters.FirstOrDefault(f => f.FieldName == "ad_account_id")?.FieldValue?.ToString() ?? ConnectionProperties.GetPropertyValue("AdAccountId")?.ToString();
-                    url = $"{ConnectionProperties.BaseUrl}/adaccounts/{audienceAdAccountId}/audiences";
+                {
+                    var adAccountId = filters.FirstOrDefault(f => f.FieldName == "ad_account_id")?.FilterValue?.ToString()
+                                      ?? _config.AdAccountId;
+                    url = $"{ApiBaseUrl}/adaccounts/{adAccountId}/audiences";
                     break;
+                }
 
                 default:
                     ErrorObject.Flag = Errors.Failed;
                     ErrorObject.Message = $"Unsupported entity: {entityName}";
-                    return ErrorObject;
+                    return null;
             }
 
-            // Rate limiting delay
-            var rateLimitDelay = ConnectionProperties.GetPropertyValue("RateLimitDelayMs");
-            if (rateLimitDelay != null && int.TryParse(rateLimitDelay.ToString(), out var delay) && delay > 0)
-            {
-                await Task.Delay(delay);
-            }
+            if (_config.RateLimitDelayMs > 0)
+                await Task.Delay(_config.RateLimitDelayMs).ConfigureAwait(false);
 
-            var response = await HttpClient.GetAsync(url);
-            var jsonContent = await response.Content.ReadAsStringAsync();
+            using var response = await GetAsync(url, null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            var jsonContent = response != null ? await response.Content.ReadAsStringAsync().ConfigureAwait(false) : string.Empty;
 
-            if (!response.IsSuccessStatusCode)
+            if (response is null || !response.IsSuccessStatusCode)
             {
                 ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = $"Snapchat API request failed: {response.StatusCode} - {jsonContent}";
-                return ErrorObject;
-            }
-
-            // Parse and store the data
-            var dataTable = ParseJsonToDataTable(jsonContent, entityName);
-            if (Entities.ContainsKey(entityName))
-            {
-                Entities[entityName].EntityData = dataTable;
+                ErrorObject.Message = $"Snapchat API request failed: {response?.StatusCode} - {jsonContent}";
+                return null;
             }
 
             ErrorObject.Flag = Errors.Ok;
             ErrorObject.Message = $"Successfully retrieved {entityName} data";
-            return ErrorObject;
+            return ParseJsonToDataTable(jsonContent, entityName);
         }
         catch (Exception ex)
         {
             ErrorObject.Flag = Errors.Failed;
             ErrorObject.Message = $"Failed to get {entityName} data: {ex.Message}";
-            return ErrorObject;
+            return null;
         }
     }
 
@@ -402,7 +493,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Snapchat
         private DataTable ParseJsonToDataTable(string jsonContent, string entityName)
         {
             var dataTable = new DataTable(entityName);
-            var entityStructure = Entities.ContainsKey(entityName.ToLower()) ? Entities[entityName.ToLower()] : null;
+            var entityStructure = _entities.ContainsKey(entityName.ToLowerInvariant()) ? _entities[entityName.ToLowerInvariant()] : null;
 
             try
             {
@@ -454,7 +545,7 @@ namespace BeepDataSources.Connectors.SocialMedia.Snapchat
                 {
                     foreach (var field in entityStructure.Fields)
                     {
-                        dataTable.Columns.Add(field.fieldname, GetFieldType(field.fieldtype));
+                        dataTable.Columns.Add(field.FieldName, GetFieldtype(field.Fieldtype));
                     }
                 }
                 else if (dataElement.ValueKind == JsonValueKind.Object)
@@ -513,9 +604,9 @@ namespace BeepDataSources.Connectors.SocialMedia.Snapchat
         /// <summary>
         /// Get .NET type from field type string
         /// </summary>
-        private Type GetFieldType(string fieldType)
+        private Type GetFieldtype(string Fieldtype)
         {
-            return fieldType.ToLower() switch
+            return Fieldtype.ToLower() switch
             {
                 "string" => typeof(string),
                 "integer" => typeof(int),
@@ -543,70 +634,70 @@ namespace BeepDataSources.Connectors.SocialMedia.Snapchat
             };
         }
 
-        [CommandAttribute(ObjectType = "SnapchatOrganization", PointType = EnumPointType.Function, Name = "GetOrganizations", Caption = "Get Snapchat Organizations", ClassName = "SnapchatDataSource")]
+        [CommandAttribute(ObjectType ="SnapchatOrganization", PointType = EnumPointType.Function,Name = "GetOrganizations", Caption = "Get Snapchat Organizations", ClassName = "SnapchatDataSource")]
         public async Task<SnapchatResponse<SnapchatOrganization>> GetOrganizations()
         {
-            var url = $"{ConnectionProperties.BaseUrl}/organizations";
-            var response = await GetAsync(url);
-            string json = await response.Content.ReadAsStringAsync();
+            var url = $"{ApiBaseUrl}/organizations";
+            using var response = await GetAsync(url, null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            string json = response != null ? await response.Content.ReadAsStringAsync().ConfigureAwait(false) : string.Empty;
             return JsonSerializer.Deserialize<SnapchatResponse<SnapchatOrganization>>(json);
         }
 
-        [CommandAttribute(ObjectType = "SnapchatAdAccount", PointType = EnumPointType.Function, Name = "GetAdAccounts", Caption = "Get Snapchat Ad Accounts", ClassName = "SnapchatDataSource")]
+        [CommandAttribute(ObjectType ="SnapchatAdAccount", PointType = EnumPointType.Function,Name = "GetAdAccounts", Caption = "Get Snapchat Ad Accounts", ClassName = "SnapchatDataSource")]
         public async Task<SnapchatResponse<SnapchatAdAccount>> GetAdAccounts(string organizationId = null)
         {
             var orgParam = string.IsNullOrEmpty(organizationId) ? "" : $"?organization_id={organizationId}";
-            var url = $"{ConnectionProperties.BaseUrl}/adaccounts{orgParam}";
-            var response = await GetAsync(url);
-            string json = await response.Content.ReadAsStringAsync();
+            var url = $"{ApiBaseUrl}/adaccounts{orgParam}";
+            using var response = await GetAsync(url, null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            string json = response != null ? await response.Content.ReadAsStringAsync().ConfigureAwait(false) : string.Empty;
             return JsonSerializer.Deserialize<SnapchatResponse<SnapchatAdAccount>>(json);
         }
 
-        [CommandAttribute(ObjectType = "SnapchatCampaign", PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Snapchat Campaigns", ClassName = "SnapchatDataSource")]
+        [CommandAttribute(ObjectType ="SnapchatCampaign", PointType = EnumPointType.Function,Name = "GetCampaigns", Caption = "Get Snapchat Campaigns", ClassName = "SnapchatDataSource")]
         public async Task<SnapchatResponse<SnapchatCampaign>> GetCampaigns(string adAccountId)
         {
-            var url = $"{ConnectionProperties.BaseUrl}/campaigns?ad_account_id={adAccountId}";
-            var response = await GetAsync(url);
-            string json = await response.Content.ReadAsStringAsync();
+            var url = $"{ApiBaseUrl}/campaigns?ad_account_id={adAccountId}";
+            using var response = await GetAsync(url, null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            string json = response != null ? await response.Content.ReadAsStringAsync().ConfigureAwait(false) : string.Empty;
             return JsonSerializer.Deserialize<SnapchatResponse<SnapchatCampaign>>(json);
         }
 
-        [CommandAttribute(ObjectType = "SnapchatAdSquad", PointType = EnumPointType.Function, Name = "GetAdSquads", Caption = "Get Snapchat Ad Squads", ClassName = "SnapchatDataSource")]
+        [CommandAttribute(ObjectType ="SnapchatAdSquad", PointType = EnumPointType.Function,Name = "GetAdSquads", Caption = "Get Snapchat Ad Squads", ClassName = "SnapchatDataSource")]
         public async Task<SnapchatResponse<SnapchatAdSquad>> GetAdSquads(string campaignId)
         {
-            var url = $"{ConnectionProperties.BaseUrl}/adsquads?campaign_id={campaignId}";
-            var response = await GetAsync(url);
-            string json = await response.Content.ReadAsStringAsync();
+            var url = $"{ApiBaseUrl}/adsquads?campaign_id={campaignId}";
+            using var response = await GetAsync(url, null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            string json = response != null ? await response.Content.ReadAsStringAsync().ConfigureAwait(false) : string.Empty;
             return JsonSerializer.Deserialize<SnapchatResponse<SnapchatAdSquad>>(json);
         }
 
-        [CommandAttribute(ObjectType = "SnapchatAd", PointType = EnumPointType.Function, Name = "GetAds", Caption = "Get Snapchat Ads", ClassName = "SnapchatDataSource")]
+        [CommandAttribute(ObjectType ="SnapchatAd", PointType = EnumPointType.Function,Name = "GetAds", Caption = "Get Snapchat Ads", ClassName = "SnapchatDataSource")]
         public async Task<SnapchatResponse<SnapchatAd>> GetAds(string adSquadId)
         {
-            var url = $"{ConnectionProperties.BaseUrl}/ads?ad_squad_id={adSquadId}";
-            var response = await GetAsync(url);
-            string json = await response.Content.ReadAsStringAsync();
+            var url = $"{ApiBaseUrl}/ads?ad_squad_id={adSquadId}";
+            using var response = await GetAsync(url, null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            string json = response != null ? await response.Content.ReadAsStringAsync().ConfigureAwait(false) : string.Empty;
             return JsonSerializer.Deserialize<SnapchatResponse<SnapchatAd>>(json);
         }
 
-        [CommandAttribute(ObjectType = "SnapchatCreative", PointType = EnumPointType.Function, Name = "GetCreatives", Caption = "Get Snapchat Creatives", ClassName = "SnapchatDataSource")]
+        [CommandAttribute(ObjectType ="SnapchatCreative", PointType = EnumPointType.Function,Name = "GetCreatives", Caption = "Get Snapchat Creatives", ClassName = "SnapchatDataSource")]
         public async Task<SnapchatResponse<SnapchatCreative>> GetCreatives(string adAccountId)
         {
-            var url = $"{ConnectionProperties.BaseUrl}/creatives?ad_account_id={adAccountId}";
-            var response = await GetAsync(url);
-            string json = await response.Content.ReadAsStringAsync();
+            var url = $"{ApiBaseUrl}/creatives?ad_account_id={adAccountId}";
+            using var response = await GetAsync(url, null, BuildAuthHeaders(), default).ConfigureAwait(false);
+            string json = response != null ? await response.Content.ReadAsStringAsync().ConfigureAwait(false) : string.Empty;
             return JsonSerializer.Deserialize<SnapchatResponse<SnapchatCreative>>(json);
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Snapchat, PointType = EnumPointType.Function, ObjectType = "SnapchatCampaign", Name = "CreateCampaign", Caption = "Create Snapchat Campaign", ClassType = "SnapchatDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "snapchat.png", misc = "ReturnType: IEnumerable<SnapchatCampaign>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Snapchat, PointType = EnumPointType.Function, ObjectType ="SnapchatCampaign",Name = "CreateCampaign", Caption = "Create Snapchat Campaign", ClassType ="SnapchatDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "snapchat.png", misc = "ReturnType: IEnumerable<SnapchatCampaign>")]
         public async Task<IEnumerable<SnapchatCampaign>> CreateCampaignAsync(SnapchatCampaign campaign)
         {
             try
             {
-                var result = await PostAsync($"{ConnectionProperties.BaseUrl}/campaigns", campaign);
+                using var result = await PostAsync($"{ApiBaseUrl}/campaigns", campaign, null, BuildAuthHeaders(), default).ConfigureAwait(false);
                 if (result.IsSuccessStatusCode)
                 {
-                    var content = await result.Content.ReadAsStringAsync();
+                    var content = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
                     var response = JsonSerializer.Deserialize<SnapchatResponse<SnapchatCampaign>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     var createdCampaign = response?.Campaigns?.FirstOrDefault();
                     if (createdCampaign != null)
@@ -622,15 +713,15 @@ namespace BeepDataSources.Connectors.SocialMedia.Snapchat
             return new List<SnapchatCampaign>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Snapchat, PointType = EnumPointType.Function, ObjectType = "SnapchatCampaign", Name = "UpdateCampaign", Caption = "Update Snapchat Campaign", ClassType = "SnapchatDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "snapchat.png", misc = "ReturnType: IEnumerable<SnapchatCampaign>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Snapchat, PointType = EnumPointType.Function, ObjectType ="SnapchatCampaign",Name = "UpdateCampaign", Caption = "Update Snapchat Campaign", ClassType ="SnapchatDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "snapchat.png", misc = "ReturnType: IEnumerable<SnapchatCampaign>")]
         public async Task<IEnumerable<SnapchatCampaign>> UpdateCampaignAsync(SnapchatCampaign campaign)
         {
             try
             {
-                var result = await PutAsync($"{ConnectionProperties.BaseUrl}/campaigns/{campaign.Id}", campaign);
+                using var result = await PutAsync($"{ApiBaseUrl}/campaigns/{campaign.Id}", campaign, null, BuildAuthHeaders(), default).ConfigureAwait(false);
                 if (result.IsSuccessStatusCode)
                 {
-                    var content = await result.Content.ReadAsStringAsync();
+                    var content = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
                     var response = JsonSerializer.Deserialize<SnapchatResponse<SnapchatCampaign>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     var updatedCampaign = response?.Campaigns?.FirstOrDefault();
                     if (updatedCampaign != null)

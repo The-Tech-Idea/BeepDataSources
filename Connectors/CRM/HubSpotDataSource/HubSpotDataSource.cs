@@ -217,56 +217,56 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
         // COMMAND ATTRIBUTE METHODS - Strongly typed HubSpot CRM operations
         // ------------------------------------------------------------------
 
-        [CommandAttribute(Name = "GetContacts", Caption = "Get HubSpot Contacts", ObjectType = "Contact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Contact", Showin = ShowinType.Both, Order = 1, iconimage = "contact.png")]
+        [CommandAttribute(Name = "GetContacts", Caption = "Get HubSpot Contacts", ObjectType ="Contact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Contact", Showin = ShowinType.Both, Order = 1, iconimage = "contact.png")]
         public async Task<IEnumerable<Contact>> GetContacts(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("contacts", filters ?? new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<Contact>(JsonSerializer.Serialize(item))).Where(contact => contact != null).Cast<Contact>();
         }
 
-        [CommandAttribute(Name = "GetCompanies", Caption = "Get HubSpot Companies", ObjectType = "Company", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Company", Showin = ShowinType.Both, Order = 2, iconimage = "company.png")]
+        [CommandAttribute(Name = "GetCompanies", Caption = "Get HubSpot Companies", ObjectType ="Company", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Company", Showin = ShowinType.Both, Order = 2, iconimage = "company.png")]
         public async Task<IEnumerable<Company>> GetCompanies(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("companies", filters ?? new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<Company>(JsonSerializer.Serialize(item))).Where(company => company != null).Cast<Company>();
         }
 
-        [CommandAttribute(Name = "GetDeals", Caption = "Get HubSpot Deals", ObjectType = "Deal", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Deal", Showin = ShowinType.Both, Order = 3, iconimage = "deal.png")]
+        [CommandAttribute(Name = "GetDeals", Caption = "Get HubSpot Deals", ObjectType ="Deal", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Deal", Showin = ShowinType.Both, Order = 3, iconimage = "deal.png")]
         public async Task<IEnumerable<Deal>> GetDeals(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("deals", filters ?? new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<Deal>(JsonSerializer.Serialize(item))).Where(deal => deal != null).Cast<Deal>();
         }
 
-        [CommandAttribute(Name = "GetTickets", Caption = "Get HubSpot Tickets", ObjectType = "Ticket", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Ticket", Showin = ShowinType.Both, Order = 4, iconimage = "ticket.png")]
+        [CommandAttribute(Name = "GetTickets", Caption = "Get HubSpot Tickets", ObjectType ="Ticket", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Ticket", Showin = ShowinType.Both, Order = 4, iconimage = "ticket.png")]
         public async Task<IEnumerable<Ticket>> GetTickets(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("tickets", filters ?? new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<Ticket>(JsonSerializer.Serialize(item))).Where(ticket => ticket != null).Cast<Ticket>();
         }
 
-        [CommandAttribute(Name = "GetProducts", Caption = "Get HubSpot Products", ObjectType = "Product", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Product", Showin = ShowinType.Both, Order = 5, iconimage = "product.png")]
+        [CommandAttribute(Name = "GetProducts", Caption = "Get HubSpot Products", ObjectType ="Product", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Product", Showin = ShowinType.Both, Order = 5, iconimage = "product.png")]
         public async Task<IEnumerable<Product>> GetProducts(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("products", filters ?? new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<Product>(JsonSerializer.Serialize(item))).Where(product => product != null).Cast<Product>();
         }
 
-        [CommandAttribute(Name = "GetLineItems", Caption = "Get HubSpot Line Items", ObjectType = "LineItem", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "LineItem", Showin = ShowinType.Both, Order = 6, iconimage = "lineitem.png")]
+        [CommandAttribute(Name = "GetLineItems", Caption = "Get HubSpot Line Items", ObjectType ="LineItem", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="LineItem", Showin = ShowinType.Both, Order = 6, iconimage = "lineitem.png")]
         public async Task<IEnumerable<LineItem>> GetLineItems(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("line_items", filters ?? new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<LineItem>(JsonSerializer.Serialize(item))).Where(lineItem => lineItem != null).Cast<LineItem>();
         }
 
-        [CommandAttribute(Name = "GetQuotes", Caption = "Get HubSpot Quotes", ObjectType = "Quote", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Quote", Showin = ShowinType.Both, Order = 7, iconimage = "quote.png")]
+        [CommandAttribute(Name = "GetQuotes", Caption = "Get HubSpot Quotes", ObjectType ="Quote", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Quote", Showin = ShowinType.Both, Order = 7, iconimage = "quote.png")]
         public async Task<IEnumerable<Quote>> GetQuotes(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("quotes", filters ?? new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<Quote>(JsonSerializer.Serialize(item))).Where(quote => quote != null).Cast<Quote>();
         }
 
-        [CommandAttribute(Name = "GetOwners", Caption = "Get HubSpot Owners", ObjectType = "Owner", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Owner", Showin = ShowinType.Both, Order = 8, iconimage = "owner.png")]
+        [CommandAttribute(Name = "GetOwners", Caption = "Get HubSpot Owners", ObjectType ="Owner", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Owner", Showin = ShowinType.Both, Order = 8, iconimage = "owner.png")]
         public async Task<IEnumerable<Owner>> GetOwners(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("owners", filters ?? new List<AppFilter>());
@@ -275,7 +275,7 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
 
         // -------------------- Create / Update (POST/PATCH) methods --------------------
 
-        [CommandAttribute(Name = "CreateContact", Caption = "Create HubSpot Contact", ObjectType = "Contact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Contact", Showin = ShowinType.Both, Order = 9, iconimage = "contact.png", misc = "Contact")]
+        [CommandAttribute(Name = "CreateContact", Caption = "Create HubSpot Contact", ObjectType ="Contact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Contact", Showin = ShowinType.Both, Order = 9, iconimage = "contact.png", misc = "Contact")]
         public async Task<IEnumerable<Contact>> CreateContactAsync(Contact contact)
         {
             if (contact == null) return Array.Empty<Contact>();
@@ -294,7 +294,7 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
             }
         }
 
-        [CommandAttribute(Name = "UpdateContact", Caption = "Update HubSpot Contact", ObjectType = "Contact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Contact", Showin = ShowinType.Both, Order = 10, iconimage = "contact.png", misc = "Contact")]
+        [CommandAttribute(Name = "UpdateContact", Caption = "Update HubSpot Contact", ObjectType ="Contact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Contact", Showin = ShowinType.Both, Order = 10, iconimage = "contact.png", misc = "Contact")]
         public async Task<IEnumerable<Contact>> UpdateContactAsync(string contactId, Contact contact)
         {
             if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<Contact>();
@@ -314,7 +314,7 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
             }
         }
 
-        [CommandAttribute(Name = "CreateCompany", Caption = "Create HubSpot Company", ObjectType = "Company", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Company", Showin = ShowinType.Both, Order = 11, iconimage = "company.png", misc = "Company")]
+        [CommandAttribute(Name = "CreateCompany", Caption = "Create HubSpot Company", ObjectType ="Company", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Company", Showin = ShowinType.Both, Order = 11, iconimage = "company.png", misc = "Company")]
         public async Task<IEnumerable<Company>> CreateCompanyAsync(Company company)
         {
             if (company == null) return Array.Empty<Company>();
@@ -333,7 +333,7 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
             }
         }
 
-        [CommandAttribute(Name = "UpdateCompany", Caption = "Update HubSpot Company", ObjectType = "Company", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Company", Showin = ShowinType.Both, Order = 12, iconimage = "company.png", misc = "Company")]
+        [CommandAttribute(Name = "UpdateCompany", Caption = "Update HubSpot Company", ObjectType ="Company", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Company", Showin = ShowinType.Both, Order = 12, iconimage = "company.png", misc = "Company")]
         public async Task<IEnumerable<Company>> UpdateCompanyAsync(string companyId, Company company)
         {
             if (string.IsNullOrWhiteSpace(companyId) || company == null) return Array.Empty<Company>();
@@ -353,7 +353,7 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
             }
         }
 
-        [CommandAttribute(Name = "CreateDeal", Caption = "Create HubSpot Deal", ObjectType = "Deal", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Deal", Showin = ShowinType.Both, Order = 13, iconimage = "deal.png", misc = "Deal")]
+        [CommandAttribute(Name = "CreateDeal", Caption = "Create HubSpot Deal", ObjectType ="Deal", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Deal", Showin = ShowinType.Both, Order = 13, iconimage = "deal.png", misc = "Deal")]
         public async Task<IEnumerable<Deal>> CreateDealAsync(Deal deal)
         {
             if (deal == null) return Array.Empty<Deal>();
@@ -372,7 +372,7 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
             }
         }
 
-        [CommandAttribute(Name = "UpdateDeal", Caption = "Update HubSpot Deal", ObjectType = "Deal", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Deal", Showin = ShowinType.Both, Order = 14, iconimage = "deal.png", misc = "Deal")]
+        [CommandAttribute(Name = "UpdateDeal", Caption = "Update HubSpot Deal", ObjectType ="Deal", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Deal", Showin = ShowinType.Both, Order = 14, iconimage = "deal.png", misc = "Deal")]
         public async Task<IEnumerable<Deal>> UpdateDealAsync(string dealId, Deal deal)
         {
             if (string.IsNullOrWhiteSpace(dealId) || deal == null) return Array.Empty<Deal>();
@@ -392,7 +392,7 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
             }
         }
 
-        [CommandAttribute(Name = "CreateTicket", Caption = "Create HubSpot Ticket", ObjectType = "Ticket", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Ticket", Showin = ShowinType.Both, Order = 15, iconimage = "ticket.png", misc = "Ticket")]
+        [CommandAttribute(Name = "CreateTicket", Caption = "Create HubSpot Ticket", ObjectType ="Ticket", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Ticket", Showin = ShowinType.Both, Order = 15, iconimage = "ticket.png", misc = "Ticket")]
         public async Task<IEnumerable<Ticket>> CreateTicketAsync(Ticket ticket)
         {
             if (ticket == null) return Array.Empty<Ticket>();
@@ -411,7 +411,7 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
             }
         }
 
-        [CommandAttribute(Name = "UpdateTicket", Caption = "Update HubSpot Ticket", ObjectType = "Ticket", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Ticket", Showin = ShowinType.Both, Order = 16, iconimage = "ticket.png", misc = "Ticket")]
+        [CommandAttribute(Name = "UpdateTicket", Caption = "Update HubSpot Ticket", ObjectType ="Ticket", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Ticket", Showin = ShowinType.Both, Order = 16, iconimage = "ticket.png", misc = "Ticket")]
         public async Task<IEnumerable<Ticket>> UpdateTicketAsync(string ticketId, Ticket ticket)
         {
             if (string.IsNullOrWhiteSpace(ticketId) || ticket == null) return Array.Empty<Ticket>();
@@ -431,7 +431,7 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
             }
         }
 
-        [CommandAttribute(Name = "CreateProduct", Caption = "Create HubSpot Product", ObjectType = "Product", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Product", Showin = ShowinType.Both, Order = 17, iconimage = "product.png", misc = "Product")]
+        [CommandAttribute(Name = "CreateProduct", Caption = "Create HubSpot Product", ObjectType ="Product", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Product", Showin = ShowinType.Both, Order = 17, iconimage = "product.png", misc = "Product")]
         public async Task<IEnumerable<Product>> CreateProductAsync(Product product)
         {
             if (product == null) return Array.Empty<Product>();
@@ -450,7 +450,7 @@ namespace TheTechIdea.Beep.Connectors.HubSpot
             }
         }
 
-        [CommandAttribute(Name = "UpdateProduct", Caption = "Update HubSpot Product", ObjectType = "Product", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType = "Product", Showin = ShowinType.Both, Order = 18, iconimage = "product.png", misc = "Product")]
+        [CommandAttribute(Name = "UpdateProduct", Caption = "Update HubSpot Product", ObjectType ="Product", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.HubSpot, ClassType ="Product", Showin = ShowinType.Both, Order = 18, iconimage = "product.png", misc = "Product")]
         public async Task<IEnumerable<Product>> UpdateProductAsync(string productId, Product product)
         {
             if (string.IsNullOrWhiteSpace(productId) || product == null) return Array.Empty<Product>();

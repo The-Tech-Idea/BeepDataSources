@@ -86,7 +86,7 @@ namespace TheTechIdea.Beep.Connectors.Slack.Models
 
     public sealed class SlackUserProfile
     {
-        [JsonPropertyName("display_name")] public string DisplayName { get; set; }
+        [JsonPropertyName("display_name")] public string Caption { get; set; }
         [JsonPropertyName("real_name")] public string RealName { get; set; }
         [JsonPropertyName("email")] public string Email { get; set; }
         [JsonPropertyName("image_72")] public string Image72 { get; set; }

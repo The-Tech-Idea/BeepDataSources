@@ -1016,7 +1016,7 @@ namespace TheTechIdea.Beep.Connectors.Box.Models
         /// The uploader display name
         /// </summary>
         [JsonPropertyName("uploader_display_name")]
-        public string? UploaderDisplayName { get; set; }
+        public string? UploaderCaption { get; set; }
 
         /// <summary>
         /// The version number

@@ -202,35 +202,35 @@ namespace TheTechIdea.Beep.Connectors.Communication.Discord
         }
 
         // CommandAttribute methods for Discord API
-        [CommandAttribute(Name = "GetGuilds", Caption = "Get Discord Guilds", ObjectType = "DiscordGuild", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Discord, ClassType = "DiscordGuild", Showin = ShowinType.Both, Order = 1, iconimage = "guild.png")]
+        [CommandAttribute(Name = "GetGuilds", Caption = "Get Discord Guilds", ObjectType ="DiscordGuild", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Discord, ClassType ="DiscordGuild", Showin = ShowinType.Both, Order = 1, iconimage = "guild.png")]
         public async Task<IEnumerable<DiscordGuild>> GetGuilds(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("guilds", filters);
             return result.Cast<DiscordGuild>();
         }
 
-        [CommandAttribute(Name = "GetChannels", Caption = "Get Discord Channels", ObjectType = "DiscordChannel", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Discord, ClassType = "DiscordChannel", Showin = ShowinType.Both, Order = 2, iconimage = "channel.png")]
+        [CommandAttribute(Name = "GetChannels", Caption = "Get Discord Channels", ObjectType ="DiscordChannel", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Discord, ClassType ="DiscordChannel", Showin = ShowinType.Both, Order = 2, iconimage = "channel.png")]
         public async Task<IEnumerable<DiscordChannel>> GetChannels(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("channels", filters);
             return result.Cast<DiscordChannel>();
         }
 
-        [CommandAttribute(Name = "GetMessages", Caption = "Get Discord Messages", ObjectType = "DiscordMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Discord, ClassType = "DiscordMessage", Showin = ShowinType.Both, Order = 3, iconimage = "message.png")]
+        [CommandAttribute(Name = "GetMessages", Caption = "Get Discord Messages", ObjectType ="DiscordMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Discord, ClassType ="DiscordMessage", Showin = ShowinType.Both, Order = 3, iconimage = "message.png")]
         public async Task<IEnumerable<DiscordMessage>> GetMessages(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("messages", filters);
             return result.Cast<DiscordMessage>();
         }
 
-        [CommandAttribute(Name = "GetUsers", Caption = "Get Discord Users", ObjectType = "DiscordUser", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Discord, ClassType = "DiscordUser", Showin = ShowinType.Both, Order = 4, iconimage = "user.png")]
+        [CommandAttribute(Name = "GetUsers", Caption = "Get Discord Users", ObjectType ="DiscordUser", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Discord, ClassType ="DiscordUser", Showin = ShowinType.Both, Order = 4, iconimage = "user.png")]
         public async Task<IEnumerable<DiscordUser>> GetUsers(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("users", filters);
             return result.Cast<DiscordUser>();
         }
 
-        [CommandAttribute(Name = "GetGuildMembers", Caption = "Get Discord Guild Members", ObjectType = "DiscordGuildMember", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Discord, ClassType = "DiscordGuildMember", Showin = ShowinType.Both, Order = 5, iconimage = "member.png")]
+        [CommandAttribute(Name = "GetGuildMembers", Caption = "Get Discord Guild Members", ObjectType ="DiscordGuildMember", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Discord, ClassType ="DiscordGuildMember", Showin = ShowinType.Both, Order = 5, iconimage = "member.png")]
         public async Task<IEnumerable<DiscordGuildMember>> GetGuildMembers(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("guild_members", filters);
@@ -241,13 +241,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Discord
         /// Creates a message in a Discord channel
         /// </summary>
         [CommandAttribute(
-            Name = "CreateMessage",
+           Name = "CreateMessage",
             Caption = "Create Discord Message",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Discord,
             PointType = EnumPointType.Function,
-            ObjectType = "DiscordMessage",
-            ClassType = "DiscordDataSource",
+            ObjectType ="DiscordMessage",
+            ClassType ="DiscordDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "message.png",
@@ -278,13 +278,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Discord
         /// Creates a channel in a Discord guild
         /// </summary>
         [CommandAttribute(
-            Name = "CreateChannel",
+           Name = "CreateChannel",
             Caption = "Create Discord Channel",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Discord,
             PointType = EnumPointType.Function,
-            ObjectType = "DiscordChannel",
-            ClassType = "DiscordDataSource",
+            ObjectType ="DiscordChannel",
+            ClassType ="DiscordDataSource",
             Showin = ShowinType.Both,
             Order = 7,
             iconimage = "channel.png",
@@ -315,13 +315,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Discord
         /// Creates a role in a Discord guild
         /// </summary>
         [CommandAttribute(
-            Name = "CreateRole",
+           Name = "CreateRole",
             Caption = "Create Discord Role",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Discord,
             PointType = EnumPointType.Function,
-            ObjectType = "DiscordRole",
-            ClassType = "DiscordDataSource",
+            ObjectType ="DiscordRole",
+            ClassType ="DiscordDataSource",
             Showin = ShowinType.Both,
             Order = 8,
             iconimage = "role.png",
@@ -352,13 +352,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Discord
         /// Updates a role in a Discord guild
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateRole",
+           Name = "UpdateRole",
             Caption = "Update Discord Role",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Discord,
             PointType = EnumPointType.Function,
-            ObjectType = "DiscordRole",
-            ClassType = "DiscordDataSource",
+            ObjectType ="DiscordRole",
+            ClassType ="DiscordDataSource",
             Showin = ShowinType.Both,
             Order = 9,
             iconimage = "role.png",
@@ -389,13 +389,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Discord
         /// Updates a channel in a Discord guild
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateChannel",
+           Name = "UpdateChannel",
             Caption = "Update Discord Channel",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Discord,
             PointType = EnumPointType.Function,
-            ObjectType = "DiscordChannel",
-            ClassType = "DiscordDataSource",
+            ObjectType ="DiscordChannel",
+            ClassType ="DiscordDataSource",
             Showin = ShowinType.Both,
             Order = 10,
             iconimage = "updatechannel.png",
@@ -426,13 +426,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Discord
         /// Updates a message in a Discord channel
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateMessage",
+           Name = "UpdateMessage",
             Caption = "Update Discord Message",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Discord,
             PointType = EnumPointType.Function,
-            ObjectType = "DiscordMessage",
-            ClassType = "DiscordDataSource",
+            ObjectType ="DiscordMessage",
+            ClassType ="DiscordDataSource",
             Showin = ShowinType.Both,
             Order = 11,
             iconimage = "updatemessage.png",

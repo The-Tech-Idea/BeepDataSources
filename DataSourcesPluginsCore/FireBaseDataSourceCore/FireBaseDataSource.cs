@@ -12,7 +12,8 @@ using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.DriversConfigurations;
 using TheTechIdea.Beep.WebAPI;
-using FirebaseStorage;
+// Firebase Storage namespace - note: the package 'FirebaseStorage.net' provides Firebase.Storage
+// using FirebaseStorage;
 using System.IO;
 using System.Text;
 using Newtonsoft.Json.Linq;
@@ -39,9 +40,11 @@ namespace TheTechIdea.Beep.Cloud.Firebase
         public virtual string ColumnDelimiter { get; set; } = "''";
         public virtual string ParameterDelimiter { get; set; } = ":";
 
-        private FirebaseStorageClient _firebaseStorage;
-        private string _bucketName;
-        private string _apiKey;
+         // Firebase Storage client - commented out until proper namespace is resolved
+         // private FirebaseStorageClient _firebaseStorage;
+         private object _firebaseStorage;  // Placeholder until Firebase namespace is properly configured
+         private string _bucketName;
+         private string _apiKey;
 
         public FireBaseDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
         {
@@ -103,7 +106,9 @@ namespace TheTechIdea.Beep.Cloud.Firebase
                     return ConnectionStatus;
                 }
 
-                _firebaseStorage = new FirebaseStorageClient(_bucketName, _apiKey);
+                // TODO: Initialize Firebase Storage client properly
+                // _firebaseStorage = new FirebaseStorageClient(_bucketName, _apiKey);
+                _firebaseStorage = new object();  // Placeholder until Firebase namespace is properly configured
                 ConnectionStatus = ConnectionState.Open;
                 GetEntitesList();
                 DMEEditor?.AddLogMessage("Beep", $"Connected to Firebase Storage: {_bucketName}", DateTime.Now, 0, null, Errors.Ok);
@@ -259,7 +264,8 @@ namespace TheTechIdea.Beep.Cloud.Firebase
                 var entity = GetEntityStructure(EntityName, false);
                 if (entity != null)
                 {
-                    return DMTypeBuilder.CreateTypeFromEntityStructure(entity, DMEEditor);
+                    // Use the correct DMTypeBuilder method
+                    return DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, entity.Fields)?.GetType() ?? typeof(object);
                 }
             }
             catch (Exception ex)

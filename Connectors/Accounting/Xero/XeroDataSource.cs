@@ -249,25 +249,25 @@ namespace TheTechIdea.Beep.Connectors.Xero
         }
 
         // CommandAttribute methods for framework integration
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Contact>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType ="Contacts", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Contact>")]
         public IEnumerable<Contact> GetContacts(List<AppFilter> filter) => GetEntity("contacts", filter).Cast<Contact>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType = "Invoices", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Invoice>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType ="Invoices", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Invoice>")]
         public IEnumerable<Invoice> GetInvoices(List<AppFilter> filter) => GetEntity("invoices", filter).Cast<Invoice>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Account>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType ="Accounts", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Account>")]
         public IEnumerable<Account> GetAccounts(List<AppFilter> filter) => GetEntity("accounts", filter).Cast<Account>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType = "Items", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Item>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType ="Items", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Item>")]
         public IEnumerable<Item> GetItems(List<AppFilter> filter) => GetEntity("items", filter).Cast<Item>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType = "Employees", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Employee>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType ="Employees", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Employee>")]
         public IEnumerable<Employee> GetEmployees(List<AppFilter> filter) => GetEntity("employees", filter).Cast<Employee>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType = "Payments", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Payment>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType ="Payments", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Payment>")]
         public IEnumerable<Payment> GetPayments(List<AppFilter> filter) => GetEntity("payments", filter).Cast<Payment>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType = "BankTransactions", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<BankTransaction>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Xero, PointType = EnumPointType.Function, ObjectType ="BankTransactions", ClassName = "XeroDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<BankTransaction>")]
         public IEnumerable<BankTransaction> GetBankTransactions(List<AppFilter> filter) => GetEntity("banktransactions", filter).Cast<BankTransaction>();
     }
 }

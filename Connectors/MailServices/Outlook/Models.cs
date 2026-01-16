@@ -96,7 +96,7 @@ namespace TheTechIdea.Beep.Connectors.Outlook.Models
     {
         [JsonPropertyName("@odata.etag")] public string OdataEtag { get; set; }
         [JsonPropertyName("id")] public string Id { get; set; }
-        [JsonPropertyName("displayName")] public string DisplayName { get; set; }
+        [JsonPropertyName("Caption")] public string Caption { get; set; }
         [JsonPropertyName("parentFolderId")] public string ParentFolderId { get; set; }
         [JsonPropertyName("childFolderCount")] public int ChildFolderCount { get; set; }
         [JsonPropertyName("unreadItemCount")] public int UnreadItemCount { get; set; }
@@ -118,7 +118,7 @@ namespace TheTechIdea.Beep.Connectors.Outlook.Models
         [JsonPropertyName("parentFolderId")] public string ParentFolderId { get; set; }
         [JsonPropertyName("birthday")] public DateTimeOffset? Birthday { get; set; }
         [JsonPropertyName("fileAs")] public string FileAs { get; set; }
-        [JsonPropertyName("displayName")] public string DisplayName { get; set; }
+        [JsonPropertyName("Caption")] public string Caption { get; set; }
         [JsonPropertyName("givenName")] public string GivenName { get; set; }
         [JsonPropertyName("initials")] public string Initials { get; set; }
         [JsonPropertyName("middleName")] public string MiddleName { get; set; }
@@ -155,7 +155,7 @@ namespace TheTechIdea.Beep.Connectors.Outlook.Models
     {
         [JsonPropertyName("type")] public string Type { get; set; }
         [JsonPropertyName("address")] public string Address { get; set; }
-        [JsonPropertyName("displayName")] public string DisplayName { get; set; }
+        [JsonPropertyName("Caption")] public string Caption { get; set; }
     }
 
     public sealed class OutlookPhysicalAddress
@@ -229,7 +229,7 @@ namespace TheTechIdea.Beep.Connectors.Outlook.Models
 
     public sealed class OutlookLocation
     {
-        [JsonPropertyName("displayName")] public string DisplayName { get; set; }
+        [JsonPropertyName("Caption")] public string Caption { get; set; }
         [JsonPropertyName("locationEmailAddress")] public string LocationEmailAddress { get; set; }
         [JsonPropertyName("locationUri")] public string LocationUri { get; set; }
         [JsonPropertyName("locationType")] public string LocationType { get; set; }

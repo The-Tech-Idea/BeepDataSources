@@ -47,8 +47,8 @@ namespace TheTechIdea.Beep.Connectors.QuickBooksOnline
         [JsonPropertyName("FamilyName")]
         public string? FamilyName { get; set; }
 
-        [JsonPropertyName("DisplayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
 
         [JsonPropertyName("PrintOnCheckName")]
         public string? PrintOnCheckName { get; set; }
@@ -445,8 +445,8 @@ namespace TheTechIdea.Beep.Connectors.QuickBooksOnline
         [JsonPropertyName("FamilyName")]
         public string? FamilyName { get; set; }
 
-        [JsonPropertyName("DisplayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
 
         [JsonPropertyName("PrintOnCheckName")]
         public string? PrintOnCheckName { get; set; }
@@ -503,8 +503,8 @@ namespace TheTechIdea.Beep.Connectors.QuickBooksOnline
         [JsonPropertyName("FamilyName")]
         public string? FamilyName { get; set; }
 
-        [JsonPropertyName("DisplayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
 
         [JsonPropertyName("PrintOnCheckName")]
         public string? PrintOnCheckName { get; set; }

@@ -290,42 +290,42 @@ namespace TheTechIdea.Beep.Connectors.Communication.Slack
         }
 
         // CommandAttribute methods for Slack API
-        [CommandAttribute(Name = "GetChannels", Caption = "Get Slack Channels", ObjectType = "SlackChannel", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack, ClassType = "SlackChannel", Showin = ShowinType.Both, Order = 1, iconimage = "channel.png")]
+        [CommandAttribute(Name = "GetChannels", Caption = "Get Slack Channels", ObjectType ="SlackChannel", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack, ClassType ="SlackChannel", Showin = ShowinType.Both, Order = 1, iconimage = "channel.png")]
         public async Task<IEnumerable<SlackChannel>> GetChannels(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("channels", filters);
             return result.Cast<SlackChannel>();
         }
 
-        [CommandAttribute(Name = "GetMessages", Caption = "Get Slack Messages", ObjectType = "SlackMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack, ClassType = "SlackMessage", Showin = ShowinType.Both, Order = 2, iconimage = "message.png")]
+        [CommandAttribute(Name = "GetMessages", Caption = "Get Slack Messages", ObjectType ="SlackMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack, ClassType ="SlackMessage", Showin = ShowinType.Both, Order = 2, iconimage = "message.png")]
         public async Task<IEnumerable<SlackMessage>> GetMessages(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("messages", filters);
             return result.Cast<SlackMessage>();
         }
 
-        [CommandAttribute(Name = "GetUsers", Caption = "Get Slack Users", ObjectType = "SlackUser", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack, ClassType = "SlackUser", Showin = ShowinType.Both, Order = 3, iconimage = "user.png")]
+        [CommandAttribute(Name = "GetUsers", Caption = "Get Slack Users", ObjectType ="SlackUser", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack, ClassType ="SlackUser", Showin = ShowinType.Both, Order = 3, iconimage = "user.png")]
         public async Task<IEnumerable<SlackUser>> GetUsers(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("users", filters);
             return result.Cast<SlackUser>();
         }
 
-        [CommandAttribute(Name = "GetFiles", Caption = "Get Slack Files", ObjectType = "SlackFile", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack, ClassType = "SlackFile", Showin = ShowinType.Both, Order = 4, iconimage = "file.png")]
+        [CommandAttribute(Name = "GetFiles", Caption = "Get Slack Files", ObjectType ="SlackFile", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack, ClassType ="SlackFile", Showin = ShowinType.Both, Order = 4, iconimage = "file.png")]
         public async Task<IEnumerable<SlackFile>> GetFiles(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("files", filters);
             return result.Cast<SlackFile>();
         }
 
-        [CommandAttribute(Name = "GetTeam", Caption = "Get Slack Team Info", ObjectType = "SlackTeam", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack, ClassType = "SlackTeam", Showin = ShowinType.Both, Order = 5, iconimage = "team.png")]
+        [CommandAttribute(Name = "GetTeam", Caption = "Get Slack Team Info", ObjectType ="SlackTeam", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack, ClassType ="SlackTeam", Showin = ShowinType.Both, Order = 5, iconimage = "team.png")]
         public async Task<IEnumerable<SlackTeam>> GetTeam(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("team", filters);
             return result.Cast<SlackTeam>();
         }
 
-        [CommandAttribute(Name = "GetUserGroups", Caption = "Get Slack User Groups", ObjectType = "SlackUserGroup", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack, ClassType = "SlackUserGroup", Showin = ShowinType.Both, Order = 6, iconimage = "group.png")]
+        [CommandAttribute(Name = "GetUserGroups", Caption = "Get Slack User Groups", ObjectType ="SlackUserGroup", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Slack, ClassType ="SlackUserGroup", Showin = ShowinType.Both, Order = 6, iconimage = "group.png")]
         public async Task<IEnumerable<SlackUserGroup>> GetUserGroups(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("usergroups", filters);
@@ -336,13 +336,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Slack
         /// Posts a message to a Slack channel
         /// </summary>
         [CommandAttribute(
-            Name = "PostMessage",
+           Name = "PostMessage",
             Caption = "Post Slack Message",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Slack,
             PointType = EnumPointType.Function,
-            ObjectType = "SlackMessage",
-            ClassType = "SlackDataSource",
+            ObjectType ="SlackMessage",
+            ClassType ="SlackDataSource",
             Showin = ShowinType.Both,
             Order = 7,
             iconimage = "message.png",
@@ -372,13 +372,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Slack
         /// Creates a Slack channel
         /// </summary>
         [CommandAttribute(
-            Name = "CreateChannel",
+           Name = "CreateChannel",
             Caption = "Create Slack Channel",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Slack,
             PointType = EnumPointType.Function,
-            ObjectType = "SlackChannel",
-            ClassType = "SlackDataSource",
+            ObjectType ="SlackChannel",
+            ClassType ="SlackDataSource",
             Showin = ShowinType.Both,
             Order = 8,
             iconimage = "channel.png",
@@ -408,13 +408,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Slack
         /// Creates a Slack user group
         /// </summary>
         [CommandAttribute(
-            Name = "CreateUserGroup",
+           Name = "CreateUserGroup",
             Caption = "Create Slack User Group",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Slack,
             PointType = EnumPointType.Function,
-            ObjectType = "SlackUserGroup",
-            ClassType = "SlackDataSource",
+            ObjectType ="SlackUserGroup",
+            ClassType ="SlackDataSource",
             Showin = ShowinType.Both,
             Order = 9,
             iconimage = "group.png",
@@ -444,13 +444,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Slack
         /// Updates a Slack user group
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateUserGroup",
+           Name = "UpdateUserGroup",
             Caption = "Update Slack User Group",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Slack,
             PointType = EnumPointType.Function,
-            ObjectType = "SlackUserGroup",
-            ClassType = "SlackDataSource",
+            ObjectType ="SlackUserGroup",
+            ClassType ="SlackDataSource",
             Showin = ShowinType.Both,
             Order = 10,
             iconimage = "slack.png",
@@ -461,7 +461,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Slack
             try
             {
                 var url = $"https://slack.com/api/usergroups.update";
-                var payload = new { usergroup = userGroup.Id, name = userGroup.Name, description = userGroup.Description };
+                var payload = new { usergroup = userGroup.Id,FieldName = userGroup.Name, description = userGroup.Description };
                 var result = await PostAsync(url, payload);
                 if (result.IsSuccessStatusCode)
                 {

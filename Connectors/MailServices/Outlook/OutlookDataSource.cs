@@ -14,6 +14,7 @@ using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
 using TheTechIdea.Beep.Connectors.Outlook.Models;
+using System.Text.Json.Serialization;
 
 namespace TheTechIdea.Beep.Connectors.Outlook
 {
@@ -148,7 +149,7 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         private IEnumerable<object> ParseMessages(string json)
         {
             var response = JsonSerializer.Deserialize<OutlookMessagesResponse>(json);
-            return response?.Value ?? Array.Empty<OutlookMessage>();
+            return response?.Value?.Cast<object>() ?? Enumerable.Empty<object>();
         }
 
         private IEnumerable<object> ParseMessage(string json)
@@ -160,7 +161,7 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         private IEnumerable<object> ParseMailFolders(string json)
         {
             var response = JsonSerializer.Deserialize<OutlookMailFoldersResponse>(json);
-            return response?.Value ?? Array.Empty<OutlookMailFolder>();
+            return response?.Value?.Cast<object>() ?? Enumerable.Empty<object>();
         }
 
         private IEnumerable<object> ParseMailFolder(string json)
@@ -172,7 +173,7 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         private IEnumerable<object> ParseContacts(string json)
         {
             var response = JsonSerializer.Deserialize<OutlookContactsResponse>(json);
-            return response?.Value ?? Array.Empty<OutlookContact>();
+            return response?.Value?.Cast<object>() ?? Enumerable.Empty<object>();
         }
 
         private IEnumerable<object> ParseContact(string json)
@@ -184,7 +185,7 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         private IEnumerable<object> ParseEvents(string json)
         {
             var response = JsonSerializer.Deserialize<OutlookEventsResponse>(json);
-            return response?.Value ?? Array.Empty<OutlookEvent>();
+            return response?.Value?.Cast<object>() ?? Enumerable.Empty<object>();
         }
 
         private IEnumerable<object> ParseEvent(string json)
@@ -196,7 +197,7 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         private IEnumerable<object> ParseCalendars(string json)
         {
             var response = JsonSerializer.Deserialize<OutlookCalendarsResponse>(json);
-            return response?.Value ?? Array.Empty<OutlookCalendar>();
+            return response?.Value?.Cast<object>() ?? Enumerable.Empty<object>();
         }
 
         private IEnumerable<object> ParseCalendar(string json)
@@ -303,7 +304,7 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         }
 
         // Calendar model (simplified)
-        private class OutlookCalendar
+        public sealed class OutlookCalendar
         {
             [JsonPropertyName("@odata.etag")] public string OdataEtag { get; set; }
             [JsonPropertyName("id")] public string Id { get; set; }
@@ -317,42 +318,42 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         }
 
         // CommandAttribute methods for Outlook API
-        [CommandAttribute(Name = "GetMessages", Caption = "Get Outlook Messages", ObjectType = "OutlookMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType = "OutlookMessage", Showin = ShowinType.Grid, Order = 1, iconimage = "mail.png")]
+        [CommandAttribute(Name = "GetMessages", Caption = "Get Outlook Messages", ObjectType ="OutlookMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType ="OutlookMessage", Showin = ShowinType.Both, Order = 1, iconimage = "mail.png")]
         public async Task<IEnumerable<OutlookMessage>> GetMessages(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("messages", filters);
             return result.Cast<OutlookMessage>();
         }
 
-        [CommandAttribute(Name = "GetMessage", Caption = "Get Outlook Message", ObjectType = "OutlookMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType = "OutlookMessage", Showin = ShowinType.Grid, Order = 2, iconimage = "mail.png")]
+        [CommandAttribute(Name = "GetMessage", Caption = "Get Outlook Message", ObjectType ="OutlookMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType ="OutlookMessage", Showin = ShowinType.Both, Order = 2, iconimage = "mail.png")]
         public async Task<IEnumerable<OutlookMessage>> GetMessage(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("messages.get", filters);
             return result.Cast<OutlookMessage>();
         }
 
-        [CommandAttribute(Name = "GetMailFolders", Caption = "Get Outlook Mail Folders", ObjectType = "OutlookMailFolder", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType = "OutlookMailFolder", Showin = ShowinType.Grid, Order = 3, iconimage = "folder.png")]
+        [CommandAttribute(Name = "GetMailFolders", Caption = "Get Outlook Mail Folders", ObjectType ="OutlookMailFolder", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType ="OutlookMailFolder", Showin = ShowinType.Both, Order = 3, iconimage = "folder.png")]
         public async Task<IEnumerable<OutlookMailFolder>> GetMailFolders(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("mailFolders", filters);
             return result.Cast<OutlookMailFolder>();
         }
 
-        [CommandAttribute(Name = "GetContacts", Caption = "Get Outlook Contacts", ObjectType = "OutlookContact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType = "OutlookContact", Showin = ShowinType.Grid, Order = 4, iconimage = "contact.png")]
+        [CommandAttribute(Name = "GetContacts", Caption = "Get Outlook Contacts", ObjectType ="OutlookContact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType ="OutlookContact", Showin = ShowinType.Both, Order = 4, iconimage = "contact.png")]
         public async Task<IEnumerable<OutlookContact>> GetContacts(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("contacts", filters);
             return result.Cast<OutlookContact>();
         }
 
-        [CommandAttribute(Name = "GetEvents", Caption = "Get Outlook Events", ObjectType = "OutlookEvent", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType = "OutlookEvent", Showin = ShowinType.Grid, Order = 5, iconimage = "calendar.png")]
+        [CommandAttribute(Name = "GetEvents", Caption = "Get Outlook Events", ObjectType ="OutlookEvent", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType ="OutlookEvent", Showin = ShowinType.Both, Order = 5, iconimage = "calendar.png")]
         public async Task<IEnumerable<OutlookEvent>> GetEvents(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("events", filters);
             return result.Cast<OutlookEvent>();
         }
 
-        [CommandAttribute(Name = "GetCalendars", Caption = "Get Outlook Calendars", ObjectType = "OutlookCalendar", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType = "OutlookCalendar", Showin = ShowinType.Grid, Order = 6, iconimage = "calendar.png")]
+        [CommandAttribute(Name = "GetCalendars", Caption = "Get Outlook Calendars", ObjectType ="OutlookCalendar", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Outlook, ClassType ="OutlookCalendar", Showin = ShowinType.Both, Order = 6, iconimage = "calendar.png")]
         public async Task<IEnumerable<OutlookCalendar>> GetCalendars(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("calendars", filters);
@@ -368,8 +369,8 @@ namespace TheTechIdea.Beep.Connectors.Outlook
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Outlook,
             PointType = EnumPointType.Function,
-            ObjectType = "OutlookMessage",
-            ClassType = "OutlookDataSource",
+            ObjectType ="OutlookMessage",
+            ClassType ="OutlookDataSource",
             Showin = ShowinType.Both,
             Order = 7,
             iconimage = "mail.png",
@@ -387,13 +388,13 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         /// Creates an Outlook mail folder
         /// </summary>
         [CommandAttribute(
-            Name = "CreateMailFolder",
+           Name = "CreateMailFolder",
             Caption = "Create Outlook Mail Folder",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Outlook,
             PointType = EnumPointType.Function,
-            ObjectType = "OutlookMailFolder",
-            ClassType = "OutlookDataSource",
+            ObjectType ="OutlookMailFolder",
+            ClassType ="OutlookDataSource",
             Showin = ShowinType.Both,
             Order = 8,
             iconimage = "folder.png",
@@ -412,13 +413,13 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         /// Updates an Outlook mail folder
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateMailFolder",
+           Name = "UpdateMailFolder",
             Caption = "Update Outlook Mail Folder",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Outlook,
             PointType = EnumPointType.Function,
-            ObjectType = "OutlookMailFolder",
-            ClassType = "OutlookDataSource",
+            ObjectType ="OutlookMailFolder",
+            ClassType ="OutlookDataSource",
             Showin = ShowinType.Both,
             Order = 9,
             iconimage = "folder.png",
@@ -437,13 +438,13 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         /// Creates an Outlook contact
         /// </summary>
         [CommandAttribute(
-            Name = "CreateContact",
+           Name = "CreateContact",
             Caption = "Create Outlook Contact",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Outlook,
             PointType = EnumPointType.Function,
-            ObjectType = "OutlookContact",
-            ClassType = "OutlookDataSource",
+            ObjectType ="OutlookContact",
+            ClassType ="OutlookDataSource",
             Showin = ShowinType.Both,
             Order = 10,
             iconimage = "contact.png",
@@ -462,13 +463,13 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         /// Updates an Outlook contact
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateContact",
+           Name = "UpdateContact",
             Caption = "Update Outlook Contact",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Outlook,
             PointType = EnumPointType.Function,
-            ObjectType = "OutlookContact",
-            ClassType = "OutlookDataSource",
+            ObjectType ="OutlookContact",
+            ClassType ="OutlookDataSource",
             Showin = ShowinType.Both,
             Order = 11,
             iconimage = "contact.png",
@@ -487,13 +488,13 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         /// Creates an Outlook event
         /// </summary>
         [CommandAttribute(
-            Name = "CreateEvent",
+           Name = "CreateEvent",
             Caption = "Create Outlook Event",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Outlook,
             PointType = EnumPointType.Function,
-            ObjectType = "OutlookEvent",
-            ClassType = "OutlookDataSource",
+            ObjectType ="OutlookEvent",
+            ClassType ="OutlookDataSource",
             Showin = ShowinType.Both,
             Order = 12,
             iconimage = "calendar.png",
@@ -512,13 +513,13 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         /// Updates an Outlook event
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateEvent",
+           Name = "UpdateEvent",
             Caption = "Update Outlook Event",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Outlook,
             PointType = EnumPointType.Function,
-            ObjectType = "OutlookEvent",
-            ClassType = "OutlookDataSource",
+            ObjectType ="OutlookEvent",
+            ClassType ="OutlookDataSource",
             Showin = ShowinType.Both,
             Order = 13,
             iconimage = "calendar.png",
@@ -537,13 +538,13 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         /// Creates an Outlook calendar
         /// </summary>
         [CommandAttribute(
-            Name = "CreateCalendar",
+           Name = "CreateCalendar",
             Caption = "Create Outlook Calendar",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Outlook,
             PointType = EnumPointType.Function,
-            ObjectType = "OutlookCalendar",
-            ClassType = "OutlookDataSource",
+            ObjectType ="OutlookCalendar",
+            ClassType ="OutlookDataSource",
             Showin = ShowinType.Both,
             Order = 14,
             iconimage = "calendar.png",
@@ -562,13 +563,13 @@ namespace TheTechIdea.Beep.Connectors.Outlook
         /// Updates an Outlook calendar
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateCalendar",
+           Name = "UpdateCalendar",
             Caption = "Update Outlook Calendar",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Outlook,
             PointType = EnumPointType.Function,
-            ObjectType = "OutlookCalendar",
-            ClassType = "OutlookDataSource",
+            ObjectType ="OutlookCalendar",
+            ClassType ="OutlookDataSource",
             Showin = ShowinType.Both,
             Order = 15,
             iconimage = "calendar.png",

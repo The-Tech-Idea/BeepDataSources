@@ -26,7 +26,7 @@ namespace TheTechIdea.Beep.Connectors.TikTok.Models
         [JsonPropertyName("avatar_url")] public string AvatarUrl { get; set; }
         [JsonPropertyName("avatar_url_100")] public string AvatarUrl100 { get; set; }
         [JsonPropertyName("avatar_large_url")] public string AvatarLargeUrl { get; set; }
-        [JsonPropertyName("display_name")] public string DisplayName { get; set; }
+        [JsonPropertyName("display_name")] public string Caption { get; set; }
         [JsonPropertyName("bio_description")] public string BioDescription { get; set; }
         [JsonPropertyName("profile_deep_link")] public string ProfileDeepLink { get; set; }
         [JsonPropertyName("is_verified")] public bool? IsVerified { get; set; }
@@ -254,7 +254,7 @@ namespace TheTechIdea.Beep.Connectors.TikTok.Models
         [JsonPropertyName("open_id")] public string OpenId { get; set; }
         [JsonPropertyName("union_id")] public string UnionId { get; set; }
         [JsonPropertyName("avatar_url")] public string AvatarUrl { get; set; }
-        [JsonPropertyName("display_name")] public string DisplayName { get; set; }
+        [JsonPropertyName("display_name")] public string Caption { get; set; }
         [JsonPropertyName("bio_description")] public string BioDescription { get; set; }
         [JsonPropertyName("follower_count")] public long? FollowerCount { get; set; }
         [JsonPropertyName("following_count")] public long? FollowingCount { get; set; }

@@ -295,54 +295,54 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType = "MediaFireItem", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "List<MediaFireItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType ="MediaFireItem", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "List<MediaFireItem>")]
         public List<MediaFireItem> GetFiles(string folderKey = "myfiles")
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "folder_key", FilterValue = folderKey } };
             return GetEntity("files", filters).Cast<MediaFireItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType = "MediaFireItem", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "List<MediaFireItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType ="MediaFireItem", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "List<MediaFireItem>")]
         public List<MediaFireItem> GetFolders(string folderKey = "myfiles")
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "folder_key", FilterValue = folderKey } };
             return GetEntity("folders", filters).Cast<MediaFireItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType = "MediaFireItem", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "MediaFireItem")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType ="MediaFireItem", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "MediaFireItem")]
         public MediaFireItem? GetFileInfo(string quickKey)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "quickkey", FilterValue = quickKey } };
             return GetEntity("fileinfo", filters).Cast<MediaFireItem>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType = "MediaFireUser", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "MediaFireUser")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType ="MediaFireUser", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "MediaFireUser")]
         public MediaFireUser? GetUserInfo()
         {
             return GetEntity("userinfo", new List<AppFilter>()).Cast<MediaFireUser>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType = "MediaFireUser", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "MediaFireUser")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType ="MediaFireUser", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "MediaFireUser")]
         public MediaFireUser? GetAccountInfo()
         {
             return GetEntity("accountinfo", new List<AppFilter>()).Cast<MediaFireUser>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType = "MediaFireItem", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "List<MediaFireItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType ="MediaFireItem", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "List<MediaFireItem>")]
         public List<MediaFireItem> Search(string searchText)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "search_text", FilterValue = searchText } };
             return GetEntity("search", filters).Cast<MediaFireItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType = "MediaFireShare", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "MediaFireShare")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType ="MediaFireShare", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "MediaFireShare")]
         public MediaFireShare? ShareFile(string quickKey)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "quickkey", FilterValue = quickKey } };
             return GetEntity("share", filters).Cast<MediaFireShare>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType = "MediaFireShare", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "MediaFireShare")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MediaFire, PointType = EnumPointType.Function, ObjectType ="MediaFireShare", ClassName = "MediaFireDataSource", Showin = ShowinType.Both, misc = "MediaFireShare")]
         public MediaFireShare? ShareFolder(string folderKey)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "folder_key", FilterValue = folderKey } };
@@ -350,13 +350,13 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
         }
 
         [CommandAttribute(
-            Name = "UploadFileAsync",
+           Name = "UploadFileAsync",
             Caption = "Upload MediaFire File",
-            ObjectType = "MediaFireItem",
+            ObjectType ="MediaFireItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MediaFire,
-            ClassType = "MediaFireDataSource",
+            ClassType ="MediaFireDataSource",
             Showin = ShowinType.Both,
             Order = 1,
             iconimage = "uploadfile.png",
@@ -387,13 +387,13 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
         }
 
         [CommandAttribute(
-            Name = "CreateFolderAsync",
+           Name = "CreateFolderAsync",
             Caption = "Create MediaFire Folder",
-            ObjectType = "MediaFireItem",
+            ObjectType ="MediaFireItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MediaFire,
-            ClassType = "MediaFireDataSource",
+            ClassType ="MediaFireDataSource",
             Showin = ShowinType.Both,
             Order = 2,
             iconimage = "createfolder.png",
@@ -424,13 +424,13 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
         }
 
         [CommandAttribute(
-            Name = "CopyFileAsync",
+           Name = "CopyFileAsync",
             Caption = "Copy MediaFire File",
-            ObjectType = "MediaFireItem",
+            ObjectType ="MediaFireItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MediaFire,
-            ClassType = "MediaFireDataSource",
+            ClassType ="MediaFireDataSource",
             Showin = ShowinType.Both,
             Order = 3,
             iconimage = "copyfile.png",
@@ -461,13 +461,13 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
         }
 
         [CommandAttribute(
-            Name = "UpdateFileAsync",
+           Name = "UpdateFileAsync",
             Caption = "Update MediaFire File",
-            ObjectType = "MediaFireItem",
+            ObjectType ="MediaFireItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MediaFire,
-            ClassType = "MediaFireDataSource",
+            ClassType ="MediaFireDataSource",
             Showin = ShowinType.Both,
             Order = 4,
             iconimage = "updatefile.png",
@@ -498,13 +498,13 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
         }
 
         [CommandAttribute(
-            Name = "UpdateFolderAsync",
+           Name = "UpdateFolderAsync",
             Caption = "Update MediaFire Folder",
-            ObjectType = "MediaFireItem",
+            ObjectType ="MediaFireItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MediaFire,
-            ClassType = "MediaFireDataSource",
+            ClassType ="MediaFireDataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "updatefolder.png",
@@ -535,13 +535,13 @@ namespace TheTechIdea.Beep.Connectors.MediaFire
         }
 
         [CommandAttribute(
-            Name = "UpdateCopyAsync",
+           Name = "UpdateCopyAsync",
             Caption = "Update MediaFire Copy",
-            ObjectType = "MediaFireItem",
+            ObjectType ="MediaFireItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MediaFire,
-            ClassType = "MediaFireDataSource",
+            ClassType ="MediaFireDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "updatecopy.png",

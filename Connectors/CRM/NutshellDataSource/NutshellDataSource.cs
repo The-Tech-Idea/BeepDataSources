@@ -51,7 +51,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
         public class NutshellEntity
         {
             public string EntityName { get; set; } = string.Empty;
-            public string DisplayName { get; set; } = string.Empty;
+            public string Caption { get; set; } = string.Empty;
             public string ApiEndpoint { get; set; } = string.Empty;
             public Dictionary<string, string> Fields { get; set; } = new();
         }
@@ -219,7 +219,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                     var structure = new EntityStructure
                     {
                         EntityName = entity.EntityName,
-                        Caption = entity.DisplayName,
+                        Caption = entity.Caption,
                         Fields = new List<EntityField>()
                     };
 
@@ -227,8 +227,8 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                     {
                         structure.Fields.Add(new EntityField
                         {
-                            fieldname = field.Key,
-                            fieldtype = field.Value
+                            FieldName = field.Key,
+                            Fieldtype = field.Value
                         });
                     }
 
@@ -446,7 +446,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                 new NutshellEntity
                 {
                     EntityName = "Contacts",
-                    DisplayName = "Contacts",
+                    Caption = "Contacts",
                     ApiEndpoint = "Contacts",
                     Fields = new Dictionary<string, string>
                     {
@@ -465,7 +465,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                 new NutshellEntity
                 {
                     EntityName = "Accounts",
-                    DisplayName = "Accounts",
+                    Caption = "Accounts",
                     ApiEndpoint = "Accounts",
                     Fields = new Dictionary<string, string>
                     {
@@ -483,7 +483,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                 new NutshellEntity
                 {
                     EntityName = "Leads",
-                    DisplayName = "Leads",
+                    Caption = "Leads",
                     ApiEndpoint = "Leads",
                     Fields = new Dictionary<string, string>
                     {
@@ -502,7 +502,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
                 new NutshellEntity
                 {
                     EntityName = "Opportunities",
-                    DisplayName = "Opportunities",
+                    Caption = "Opportunities",
                     ApiEndpoint = "Opportunities",
                     Fields = new Dictionary<string, string>
                     {
@@ -599,35 +599,35 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Contact>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType ="Contacts", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Contact>")]
         public async Task<IEnumerable<Contact>> GetContacts(AppFilter filter)
         {
             var result = await GetEntityAsync("contacts", new List<AppFilter> { filter });
             return result.Cast<Contact>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Account>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType ="Accounts", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Account>")]
         public async Task<IEnumerable<Account>> GetAccounts(AppFilter filter)
         {
             var result = await GetEntityAsync("accounts", new List<AppFilter> { filter });
             return result.Cast<Account>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Leads", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Lead>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType ="Leads", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Lead>")]
         public async Task<IEnumerable<Lead>> GetLeads(AppFilter filter)
         {
             var result = await GetEntityAsync("leads", new List<AppFilter> { filter });
             return result.Cast<Lead>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Opportunities", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Opportunity>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType ="Opportunities", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Opportunity>")]
         public async Task<IEnumerable<Opportunity>> GetOpportunities(AppFilter filter)
         {
             var result = await GetEntityAsync("opportunities", new List<AppFilter> { filter });
             return result.Cast<Opportunity>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Contact")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType ="Contact", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Contact")]
         public async Task<IEnumerable<Contact>> CreateContactAsync(Contact contact)
         {
             if (contact == null) return Array.Empty<Contact>();
@@ -646,7 +646,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Contact")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType ="Contact", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Contact")]
         public async Task<IEnumerable<Contact>> UpdateContactAsync(string contactId, Contact contact)
         {
             if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<Contact>();
@@ -666,7 +666,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Account")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType ="Account", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Account")]
         public async Task<IEnumerable<Account>> CreateAccountAsync(Account account)
         {
             if (account == null) return Array.Empty<Account>();
@@ -685,7 +685,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Account", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Account")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType ="Account", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Account")]
         public async Task<IEnumerable<Account>> UpdateAccountAsync(string accountId, Account account)
         {
             if (string.IsNullOrWhiteSpace(accountId) || account == null) return Array.Empty<Account>();
@@ -705,7 +705,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Lead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType ="Lead", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Lead")]
         public async Task<IEnumerable<Lead>> CreateLeadAsync(Lead lead)
         {
             if (lead == null) return Array.Empty<Lead>();
@@ -724,7 +724,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Lead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType ="Lead", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Lead")]
         public async Task<IEnumerable<Lead>> UpdateLeadAsync(string leadId, Lead lead)
         {
             if (string.IsNullOrWhiteSpace(leadId) || lead == null) return Array.Empty<Lead>();
@@ -744,7 +744,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType ="Opportunity", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
         public async Task<IEnumerable<Opportunity>> CreateOpportunityAsync(Opportunity opportunity)
         {
             if (opportunity == null) return Array.Empty<Opportunity>();
@@ -763,7 +763,7 @@ namespace TheTechIdea.Beep.Connectors.NutshellDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Nutshell, PointType = EnumPointType.Function, ObjectType ="Opportunity", ClassName = "NutshellDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
         public async Task<IEnumerable<Opportunity>> UpdateOpportunityAsync(string opportunityId, Opportunity opportunity)
         {
             if (string.IsNullOrWhiteSpace(opportunityId) || opportunity == null) return Array.Empty<Opportunity>();

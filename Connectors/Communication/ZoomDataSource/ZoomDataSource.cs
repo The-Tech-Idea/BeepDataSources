@@ -202,9 +202,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         // -------------------------- Command Methods --------------------------
 
         [CommandAttribute(Name = "GetUsers", Caption = "Get Zoom Users",
-            ObjectType = "ZoomUser", PointType = EnumPointType.Function,
+            ObjectType ="ZoomUser", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 1,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 1,
             iconimage = "zoom.png", misc = "Get list of users")]
         public async Task<IEnumerable<ZoomUser>> GetUsers(List<AppFilter> filters = null)
         {
@@ -213,9 +213,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetMeetings", Caption = "Get Zoom Meetings",
-            ObjectType = "ZoomMeeting", PointType = EnumPointType.Function,
+            ObjectType ="ZoomMeeting", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 2,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 2,
             iconimage = "zoom.png", misc = "Get meetings for a user (requires user_id)")]
         public async Task<IEnumerable<ZoomMeeting>> GetMeetings(List<AppFilter> filters = null)
         {
@@ -224,9 +224,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetMeeting", Caption = "Get Zoom Meeting Details",
-            ObjectType = "ZoomMeeting", PointType = EnumPointType.Function,
+            ObjectType ="ZoomMeeting", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 3,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 3,
             iconimage = "zoom.png", misc = "Get specific meeting details (requires meeting_id)")]
         public async Task<IEnumerable<ZoomMeeting>> GetMeeting(List<AppFilter> filters = null)
         {
@@ -235,9 +235,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetMeetingParticipants", Caption = "Get Zoom Meeting Participants",
-            ObjectType = "ZoomMeetingParticipant", PointType = EnumPointType.Function,
+            ObjectType ="ZoomMeetingParticipant", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 4,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 4,
             iconimage = "zoom.png", misc = "Get meeting participants report (requires meeting_id)")]
         public async Task<IEnumerable<ZoomMeetingParticipant>> GetMeetingParticipants(List<AppFilter> filters = null)
         {
@@ -246,9 +246,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetMeetingRecordings", Caption = "Get Zoom Meeting Recordings",
-            ObjectType = "ZoomMeetingRecording", PointType = EnumPointType.Function,
+            ObjectType ="ZoomMeetingRecording", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 5,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 5,
             iconimage = "zoom.png", misc = "Get meeting recordings (requires meeting_id)")]
         public async Task<IEnumerable<ZoomMeetingRecording>> GetMeetingRecordings(List<AppFilter> filters = null)
         {
@@ -257,9 +257,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetWebinars", Caption = "Get Zoom Webinars",
-            ObjectType = "ZoomWebinar", PointType = EnumPointType.Function,
+            ObjectType ="ZoomWebinar", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 6,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 6,
             iconimage = "zoom.png", misc = "Get webinars for a user (requires user_id)")]
         public async Task<IEnumerable<ZoomWebinar>> GetWebinars(List<AppFilter> filters = null)
         {
@@ -268,9 +268,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetWebinar", Caption = "Get Zoom Webinar Details",
-            ObjectType = "ZoomWebinar", PointType = EnumPointType.Function,
+            ObjectType ="ZoomWebinar", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 7,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 7,
             iconimage = "zoom.png", misc = "Get specific webinar details (requires webinar_id)")]
         public async Task<IEnumerable<ZoomWebinar>> GetWebinar(List<AppFilter> filters = null)
         {
@@ -279,9 +279,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetWebinarParticipants", Caption = "Get Zoom Webinar Participants",
-            ObjectType = "ZoomWebinarParticipant", PointType = EnumPointType.Function,
+            ObjectType ="ZoomWebinarParticipant", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 8,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 8,
             iconimage = "zoom.png", misc = "Get webinar participants report (requires webinar_id)")]
         public async Task<IEnumerable<ZoomWebinarParticipant>> GetWebinarParticipants(List<AppFilter> filters = null)
         {
@@ -290,9 +290,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetWebinarRecordings", Caption = "Get Zoom Webinar Recordings",
-            ObjectType = "ZoomWebinarRecording", PointType = EnumPointType.Function,
+            ObjectType ="ZoomWebinarRecording", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 9,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 9,
             iconimage = "zoom.png", misc = "Get webinar recordings (requires webinar_id)")]
         public async Task<IEnumerable<ZoomWebinarRecording>> GetWebinarRecordings(List<AppFilter> filters = null)
         {
@@ -301,9 +301,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetGroups", Caption = "Get Zoom Groups",
-            ObjectType = "ZoomGroup", PointType = EnumPointType.Function,
+            ObjectType ="ZoomGroup", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 10,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 10,
             iconimage = "zoom.png", misc = "Get list of groups")]
         public async Task<IEnumerable<ZoomGroup>> GetGroups(List<AppFilter> filters = null)
         {
@@ -312,9 +312,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetGroupMembers", Caption = "Get Zoom Group Members",
-            ObjectType = "ZoomGroupMember", PointType = EnumPointType.Function,
+            ObjectType ="ZoomGroupMember", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 11,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 11,
             iconimage = "zoom.png", misc = "Get group members (requires group_id)")]
         public async Task<IEnumerable<ZoomGroupMember>> GetGroupMembers(List<AppFilter> filters = null)
         {
@@ -323,9 +323,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetChannels", Caption = "Get Zoom Channels",
-            ObjectType = "ZoomChannel", PointType = EnumPointType.Function,
+            ObjectType ="ZoomChannel", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 12,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 12,
             iconimage = "zoom.png", misc = "Get chat channels for a user (requires user_id)")]
         public async Task<IEnumerable<ZoomChannel>> GetChannels(List<AppFilter> filters = null)
         {
@@ -334,9 +334,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetChannelMessages", Caption = "Get Zoom Channel Messages",
-            ObjectType = "ZoomChannelMessage", PointType = EnumPointType.Function,
+            ObjectType ="ZoomChannelMessage", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 13,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 13,
             iconimage = "zoom.png", misc = "Get channel messages (requires channel_id)")]
         public async Task<IEnumerable<ZoomChannelMessage>> GetChannelMessages(List<AppFilter> filters = null)
         {
@@ -345,9 +345,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetAccountSettings", Caption = "Get Zoom Account Settings",
-            ObjectType = "ZoomAccountSettings", PointType = EnumPointType.Function,
+            ObjectType ="ZoomAccountSettings", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 14,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 14,
             iconimage = "zoom.png", misc = "Get account settings (requires account_id)")]
         public async Task<IEnumerable<ZoomAccountSettings>> GetAccountSettings(List<AppFilter> filters = null)
         {
@@ -356,9 +356,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(Name = "GetUserSettings", Caption = "Get Zoom User Settings",
-            ObjectType = "ZoomUserSettings", PointType = EnumPointType.Function,
+            ObjectType ="ZoomUserSettings", PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Zoom,
-            ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 15,
+            ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 15,
             iconimage = "zoom.png", misc = "Get user settings (requires user_id)")]
         public async Task<IEnumerable<ZoomUserSettings>> GetUserSettings(List<AppFilter> filters = null)
         {
@@ -367,13 +367,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(
-            Name = "CreateMeetingAsync",
+           Name = "CreateMeetingAsync",
             Caption = "Create Zoom Meeting",
-            ObjectType = "ZoomMeeting",
+            ObjectType ="ZoomMeeting",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Zoom,
-            ClassType = "ZoomDataSource",
+            ClassType ="ZoomDataSource",
             Showin = ShowinType.Both,
             Order = 16,
             iconimage = "createmeeting.png",
@@ -402,13 +402,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(
-            Name = "CreateWebinarAsync",
+           Name = "CreateWebinarAsync",
             Caption = "Create Zoom Webinar",
-            ObjectType = "ZoomWebinar",
+            ObjectType ="ZoomWebinar",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Zoom,
-            ClassType = "ZoomDataSource",
+            ClassType ="ZoomDataSource",
             Showin = ShowinType.Both,
             Order = 17,
             iconimage = "createwebinar.png",
@@ -437,13 +437,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(
-            Name = "CreateChannelAsync",
+           Name = "CreateChannelAsync",
             Caption = "Create Zoom Channel",
-            ObjectType = "ZoomChannel",
+            ObjectType ="ZoomChannel",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Zoom,
-            ClassType = "ZoomDataSource",
+            ClassType ="ZoomDataSource",
             Showin = ShowinType.Both,
             Order = 18,
             iconimage = "createchannel.png",
@@ -472,13 +472,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(
-            Name = "SendChannelMessageAsync",
+           Name = "SendChannelMessageAsync",
             Caption = "Send Zoom Channel Message",
-            ObjectType = "ZoomChannelMessage",
+            ObjectType ="ZoomChannelMessage",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Zoom,
-            ClassType = "ZoomDataSource",
+            ClassType ="ZoomDataSource",
             Showin = ShowinType.Both,
             Order = 19,
             iconimage = "sendmessage.png",
@@ -507,13 +507,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(
-            Name = "UpdateMeetingAsync",
+           Name = "UpdateMeetingAsync",
             Caption = "Update Zoom Meeting",
-            ObjectType = "ZoomMeeting",
+            ObjectType ="ZoomMeeting",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Zoom,
-            ClassType = "ZoomDataSource",
+            ClassType ="ZoomDataSource",
             Showin = ShowinType.Both,
             Order = 20,
             iconimage = "updatemeeting.png",
@@ -542,13 +542,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.Zoom
         }
 
         [CommandAttribute(
-            Name = "UpdateWebinarAsync",
+           Name = "UpdateWebinarAsync",
             Caption = "Update Zoom Webinar",
-            ObjectType = "ZoomWebinar",
+            ObjectType ="ZoomWebinar",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Zoom,
-            ClassType = "ZoomDataSource",
+            ClassType ="ZoomDataSource",
             Showin = ShowinType.Both,
             Order = 21,
             iconimage = "updatewebinar.png",

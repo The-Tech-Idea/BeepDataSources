@@ -114,8 +114,8 @@ namespace TheTechIdea.Beep.FacebookDataSource
 
             foreach (var field in fields)
             {
-                Type columnType = GetTypeFromFieldType(field.fieldtype);
-                dataTable.Columns.Add(field.fieldname, columnType);
+                Type columnType = GetTypeFromFieldtype(field.Fieldtype);
+                dataTable.Columns.Add(field.FieldName, columnType);
             }
         }
 
@@ -175,9 +175,9 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Gets .NET type from field type string
         /// </summary>
-        private static Type GetTypeFromFieldType(string fieldType)
+        private static Type GetTypeFromFieldtype(string Fieldtype)
         {
-            return fieldType?.ToLower() switch
+            return Fieldtype?.ToLower() switch
             {
                 "string" => typeof(string),
                 "int" or "integer" => typeof(int),
@@ -198,56 +198,56 @@ namespace TheTechIdea.Beep.FacebookDataSource
             {
                 "posts" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "string" },
-                    new EntityField { fieldname = "message", fieldtype = "string" },
-                    new EntityField { fieldname = "created_time", fieldtype = "datetime" },
-                    new EntityField { fieldname = "updated_time", fieldtype = "datetime" },
-                    new EntityField { fieldname = "likes_count", fieldtype = "int" },
-                    new EntityField { fieldname = "comments_count", fieldtype = "int" }
+                    new EntityField { FieldName = "id", Fieldtype ="string" },
+                    new EntityField { FieldName = "message", Fieldtype ="string" },
+                    new EntityField { FieldName = "created_time", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "updated_time", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "likes_count", Fieldtype ="int" },
+                    new EntityField { FieldName = "comments_count", Fieldtype ="int" }
                 },
                 "pages" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "category", fieldtype = "string" },
-                    new EntityField { fieldname = "description", fieldtype = "string" },
-                    new EntityField { fieldname = "website", fieldtype = "string" },
-                    new EntityField { fieldname = "phone", fieldtype = "string" }
+                    new EntityField { FieldName = "id", Fieldtype ="string" },
+                    new EntityField { FieldName = "name", Fieldtype ="string" },
+                    new EntityField { FieldName = "category", Fieldtype ="string" },
+                    new EntityField { FieldName = "description", Fieldtype ="string" },
+                    new EntityField { FieldName = "website", Fieldtype ="string" },
+                    new EntityField { FieldName = "phone", Fieldtype ="string" }
                 },
                 "groups" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "description", fieldtype = "string" },
-                    new EntityField { fieldname = "privacy", fieldtype = "string" },
-                    new EntityField { fieldname = "updated_time", fieldtype = "datetime" }
+                    new EntityField { FieldName = "id", Fieldtype ="string" },
+                    new EntityField { FieldName = "name", Fieldtype ="string" },
+                    new EntityField { FieldName = "description", Fieldtype ="string" },
+                    new EntityField { FieldName = "privacy", Fieldtype ="string" },
+                    new EntityField { FieldName = "updated_time", Fieldtype ="datetime" }
                 },
                 "events" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "description", fieldtype = "string" },
-                    new EntityField { fieldname = "start_time", fieldtype = "datetime" },
-                    new EntityField { fieldname = "end_time", fieldtype = "datetime" },
-                    new EntityField { fieldname = "attending_count", fieldtype = "int" },
-                    new EntityField { fieldname = "interested_count", fieldtype = "int" }
+                    new EntityField { FieldName = "id", Fieldtype ="string" },
+                    new EntityField { FieldName = "name", Fieldtype ="string" },
+                    new EntityField { FieldName = "description", Fieldtype ="string" },
+                    new EntityField { FieldName = "start_time", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "end_time", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "attending_count", Fieldtype ="int" },
+                    new EntityField { FieldName = "interested_count", Fieldtype ="int" }
                 },
                 "ads" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "status", fieldtype = "string" },
-                    new EntityField { fieldname = "created_time", fieldtype = "datetime" },
-                    new EntityField { fieldname = "updated_time", fieldtype = "datetime" }
+                    new EntityField { FieldName = "id", Fieldtype ="string" },
+                    new EntityField { FieldName = "name", Fieldtype ="string" },
+                    new EntityField { FieldName = "status", Fieldtype ="string" },
+                    new EntityField { FieldName = "created_time", Fieldtype ="datetime" },
+                    new EntityField { FieldName = "updated_time", Fieldtype ="datetime" }
                 },
                 "insights" => new List<EntityField>
                 {
-                    new EntityField { fieldname = "id", fieldtype = "string" },
-                    new EntityField { fieldname = "name", fieldtype = "string" },
-                    new EntityField { fieldname = "period", fieldtype = "string" },
-                    new EntityField { fieldname = "values", fieldtype = "string" },
-                    new EntityField { fieldname = "title", fieldtype = "string" },
-                    new EntityField { fieldname = "description", fieldtype = "string" }
+                    new EntityField { FieldName = "id", Fieldtype ="string" },
+                    new EntityField { FieldName = "name", Fieldtype ="string" },
+                    new EntityField { FieldName = "period", Fieldtype ="string" },
+                    new EntityField { FieldName = "values", Fieldtype ="string" },
+                    new EntityField { FieldName = "title", Fieldtype ="string" },
+                    new EntityField { FieldName = "description", Fieldtype ="string" }
                 },
                 _ => new List<EntityField>()
             };

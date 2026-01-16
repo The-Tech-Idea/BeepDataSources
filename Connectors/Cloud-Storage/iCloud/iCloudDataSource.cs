@@ -210,7 +210,7 @@ namespace TheTechIdea.Beep.Connectors.iCloud
                         var icloudFile = new iCloudFile
                         {
                             Id = file.GetProperty("id").GetString(),
-                            Name = file.GetProperty("name").GetString(),
+                           FieldName = file.GetProperty("name").GetString(),
                             Type = file.GetProperty("type").GetString(),
                             Size = file.GetProperty("size").GetInt64(),
                             DateCreated = file.GetProperty("dateCreated").GetDateTime(),
@@ -244,7 +244,7 @@ namespace TheTechIdea.Beep.Connectors.iCloud
                         var icloudFolder = new iCloudFolder
                         {
                             Id = folder.GetProperty("id").GetString(),
-                            Name = folder.GetProperty("name").GetString(),
+                           FieldName = folder.GetProperty("name").GetString(),
                             Type = folder.GetProperty("type").GetString(),
                             DateCreated = folder.GetProperty("dateCreated").GetDateTime(),
                             DateModified = folder.GetProperty("dateModified").GetDateTime(),
@@ -277,7 +277,7 @@ namespace TheTechIdea.Beep.Connectors.iCloud
                         var icloudShare = new iCloudShare
                         {
                             Id = share.GetProperty("id").GetString(),
-                            Name = share.GetProperty("name").GetString(),
+                           FieldName = share.GetProperty("name").GetString(),
                             Url = share.GetProperty("url").GetString(),
                             Owner = share.GetProperty("owner").GetString(),
                             Permissions = share.GetProperty("permissions").GetString(),
@@ -310,7 +310,7 @@ namespace TheTechIdea.Beep.Connectors.iCloud
                         var icloudDevice = new iCloudDevice
                         {
                             Id = device.GetProperty("id").GetString(),
-                            Name = device.GetProperty("name").GetString(),
+                           FieldName = device.GetProperty("name").GetString(),
                             Model = device.GetProperty("model").GetString(),
                             OsVersion = device.GetProperty("osVersion").GetString(),
                             LastSeen = device.GetProperty("lastSeen").GetDateTime(),
@@ -345,9 +345,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         // -------------------- CommandAttribute Methods --------------------
 
         [CommandAttribute(
-            ObjectType = "iCloudFile",
+            ObjectType ="iCloudFile",
             PointType = EnumPointType.Function,
-            Name = "GetFiles",
+           Name = "GetFiles",
             Caption = "Get All Files",
             ClassName = "iCloudDataSource",
             misc = "ReturnType: IEnumerable<iCloudFile>"
@@ -358,9 +358,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            ObjectType = "iCloudFile",
+            ObjectType ="iCloudFile",
             PointType = EnumPointType.Function,
-            Name = "GetFile",
+           Name = "GetFile",
             Caption = "Get File Details",
             ClassName = "iCloudDataSource",
             misc = "ReturnType: IEnumerable<iCloudFile>"
@@ -371,9 +371,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            ObjectType = "iCloudFolder",
+            ObjectType ="iCloudFolder",
             PointType = EnumPointType.Function,
-            Name = "GetFolders",
+           Name = "GetFolders",
             Caption = "Get All Folders",
             ClassName = "iCloudDataSource",
             misc = "ReturnType: IEnumerable<iCloudFolder>"
@@ -384,9 +384,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            ObjectType = "iCloudFolder",
+            ObjectType ="iCloudFolder",
             PointType = EnumPointType.Function,
-            Name = "GetFolder",
+           Name = "GetFolder",
             Caption = "Get Folder Details",
             ClassName = "iCloudDataSource",
             misc = "ReturnType: IEnumerable<iCloudFolder>"
@@ -397,9 +397,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            ObjectType = "iCloudFolder",
+            ObjectType ="iCloudFolder",
             PointType = EnumPointType.Function,
-            Name = "GetFolderChildren",
+           Name = "GetFolderChildren",
             Caption = "Get Folder Children",
             ClassName = "iCloudDataSource",
             misc = "ReturnType: IEnumerable<iCloudFile>"
@@ -410,9 +410,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            ObjectType = "iCloudShare",
+            ObjectType ="iCloudShare",
             PointType = EnumPointType.Function,
-            Name = "GetShares",
+           Name = "GetShares",
             Caption = "Get All Shares",
             ClassName = "iCloudDataSource",
             misc = "ReturnType: IEnumerable<iCloudShare>"
@@ -423,9 +423,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            ObjectType = "iCloudShare",
+            ObjectType ="iCloudShare",
             PointType = EnumPointType.Function,
-            Name = "GetShare",
+           Name = "GetShare",
             Caption = "Get Share Details",
             ClassName = "iCloudDataSource",
             misc = "ReturnType: IEnumerable<iCloudShare>"
@@ -436,9 +436,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            ObjectType = "iCloudDevice",
+            ObjectType ="iCloudDevice",
             PointType = EnumPointType.Function,
-            Name = "GetDevices",
+           Name = "GetDevices",
             Caption = "Get All Devices",
             ClassName = "iCloudDataSource",
             misc = "ReturnType: IEnumerable<iCloudDevice>"
@@ -449,9 +449,9 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            ObjectType = "iCloudDevice",
+            ObjectType ="iCloudDevice",
             PointType = EnumPointType.Function,
-            Name = "GetDevice",
+           Name = "GetDevice",
             Caption = "Get Device Details",
             ClassName = "iCloudDataSource",
             misc = "ReturnType: IEnumerable<iCloudDevice>"
@@ -462,13 +462,13 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            Name = "UploadFileAsync",
+           Name = "UploadFileAsync",
             Caption = "Upload iCloud File",
-            ObjectType = "iCloudFile",
+            ObjectType ="iCloudFile",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.iCloud,
-            ClassType = "iCloudDataSource",
+            ClassType ="iCloudDataSource",
             Showin = ShowinType.Both,
             Order = 1,
             iconimage = "uploadfile.png",
@@ -499,13 +499,13 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            Name = "CreateFolderAsync",
+           Name = "CreateFolderAsync",
             Caption = "Create iCloud Folder",
-            ObjectType = "iCloudFolder",
+            ObjectType ="iCloudFolder",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.iCloud,
-            ClassType = "iCloudDataSource",
+            ClassType ="iCloudDataSource",
             Showin = ShowinType.Both,
             Order = 2,
             iconimage = "createfolder.png",
@@ -536,13 +536,13 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            Name = "CreateShareAsync",
+           Name = "CreateShareAsync",
             Caption = "Create iCloud Share",
-            ObjectType = "iCloudShare",
+            ObjectType ="iCloudShare",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.iCloud,
-            ClassType = "iCloudDataSource",
+            ClassType ="iCloudDataSource",
             Showin = ShowinType.Both,
             Order = 3,
             iconimage = "createshare.png",
@@ -573,13 +573,13 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            Name = "UpdateFileAsync",
+           Name = "UpdateFileAsync",
             Caption = "Update iCloud File",
-            ObjectType = "iCloudFile",
+            ObjectType ="iCloudFile",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.iCloud,
-            ClassType = "iCloudDataSource",
+            ClassType ="iCloudDataSource",
             Showin = ShowinType.Both,
             Order = 4,
             iconimage = "updatefile.png",
@@ -610,13 +610,13 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            Name = "UpdateFolderAsync",
+           Name = "UpdateFolderAsync",
             Caption = "Update iCloud Folder",
-            ObjectType = "iCloudFolder",
+            ObjectType ="iCloudFolder",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.iCloud,
-            ClassType = "iCloudDataSource",
+            ClassType ="iCloudDataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "updatefolder.png",
@@ -647,13 +647,13 @@ namespace TheTechIdea.Beep.Connectors.iCloud
         }
 
         [CommandAttribute(
-            Name = "UpdateShareAsync",
+           Name = "UpdateShareAsync",
             Caption = "Update iCloud Share",
-            ObjectType = "iCloudShare",
+            ObjectType ="iCloudShare",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.iCloud,
-            ClassType = "iCloudDataSource",
+            ClassType ="iCloudDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "updateshare.png",

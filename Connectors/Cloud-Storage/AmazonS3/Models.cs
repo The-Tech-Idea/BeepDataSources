@@ -59,7 +59,7 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     public sealed class AmazonS3Owner : AmazonS3EntityBase
     {
         [JsonPropertyName("ID")] public string? Id { get; set; }
-        [JsonPropertyName("DisplayName")] public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")] public string? Caption { get; set; }
     }
 
     // -------------------------------------------------------
@@ -268,7 +268,7 @@ namespace TheTechIdea.Beep.Connectors.AmazonS3.Models
     {
         [JsonPropertyName("Type")] public string? Type { get; set; }
         [JsonPropertyName("ID")] public string? Id { get; set; }
-        [JsonPropertyName("DisplayName")] public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")] public string? Caption { get; set; }
         [JsonPropertyName("URI")] public string? URI { get; set; }
         [JsonPropertyName("EmailAddress")] public string? EmailAddress { get; set; }
     }

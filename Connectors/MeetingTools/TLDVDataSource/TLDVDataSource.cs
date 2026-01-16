@@ -227,14 +227,14 @@ namespace TheTechIdea.Beep.Connectors.TLDV
             return string.Join("&", query);
         }
 
-        [CommandAttribute(ObjectType = "TLDVMeeting", PointType = EnumPointType.Function, Name = "GetMeetings", Caption = "Get Meetings", ClassName = "TLDVDataSource")]
+        [CommandAttribute(ObjectType ="TLDVMeeting", PointType = EnumPointType.Function, Name = "GetMeetings", Caption = "Get Meetings", ClassName = "TLDVDataSource")]
         public async Task<List<TLDVMeeting>> GetMeetings()
         {
             var result = await GetEntityAsync("meetings", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<TLDVMeeting>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<TLDVMeeting>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "TLDVTranscription", PointType = EnumPointType.Function, Name = "GetTranscriptions", Caption = "Get Transcriptions", ClassName = "TLDVDataSource")]
+        [CommandAttribute(ObjectType ="TLDVTranscription", PointType = EnumPointType.Function, Name = "GetTranscriptions", Caption = "Get Transcriptions", ClassName = "TLDVDataSource")]
         public async Task<List<TLDVTranscription>> GetTranscriptions(string meetingId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "meeting_id", FilterValue = meetingId, Operator = "=" } };
@@ -242,7 +242,7 @@ namespace TheTechIdea.Beep.Connectors.TLDV
             return result.Select(item => JsonSerializer.Deserialize<TLDVTranscription>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<TLDVTranscription>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "TLDVChapter", PointType = EnumPointType.Function, Name = "GetChapters", Caption = "Get Chapters", ClassName = "TLDVDataSource")]
+        [CommandAttribute(ObjectType ="TLDVChapter", PointType = EnumPointType.Function, Name = "GetChapters", Caption = "Get Chapters", ClassName = "TLDVDataSource")]
         public async Task<List<TLDVChapter>> GetChapters(string meetingId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "meeting_id", FilterValue = meetingId, Operator = "=" } };
@@ -250,7 +250,7 @@ namespace TheTechIdea.Beep.Connectors.TLDV
             return result.Select(item => JsonSerializer.Deserialize<TLDVChapter>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<TLDVChapter>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "TLDVHighlight", PointType = EnumPointType.Function, Name = "GetHighlights", Caption = "Get Highlights", ClassName = "TLDVDataSource")]
+        [CommandAttribute(ObjectType ="TLDVHighlight", PointType = EnumPointType.Function, Name = "GetHighlights", Caption = "Get Highlights", ClassName = "TLDVDataSource")]
         public async Task<List<TLDVHighlight>> GetHighlights(string meetingId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "meeting_id", FilterValue = meetingId, Operator = "=" } };
@@ -258,7 +258,7 @@ namespace TheTechIdea.Beep.Connectors.TLDV
             return result.Select(item => JsonSerializer.Deserialize<TLDVHighlight>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<TLDVHighlight>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "TLDVMeeting", PointType = EnumPointType.Function, Name = "CreateMeeting", Caption = "Create Meeting", ClassName = "TLDVDataSource", misc = "ReturnType: IEnumerable<TLDVMeeting>")]
+        [CommandAttribute(ObjectType ="TLDVMeeting", PointType = EnumPointType.Function, Name = "CreateMeeting", Caption = "Create Meeting", ClassName = "TLDVDataSource", misc = "ReturnType: IEnumerable<TLDVMeeting>")]
         public async Task<IEnumerable<TLDVMeeting>> CreateMeetingAsync(TLDVMeeting meeting)
         {
             try
@@ -290,7 +290,7 @@ namespace TheTechIdea.Beep.Connectors.TLDV
             return Array.Empty<TLDVMeeting>();
         }
 
-        [CommandAttribute(ObjectType = "TLDVHighlight", PointType = EnumPointType.Function, Name = "CreateHighlight", Caption = "Create Highlight", ClassName = "TLDVDataSource", misc = "ReturnType: IEnumerable<TLDVHighlight>")]
+        [CommandAttribute(ObjectType ="TLDVHighlight", PointType = EnumPointType.Function, Name = "CreateHighlight", Caption = "Create Highlight", ClassName = "TLDVDataSource", misc = "ReturnType: IEnumerable<TLDVHighlight>")]
         public async Task<IEnumerable<TLDVHighlight>> CreateHighlightAsync(string meetingId, TLDVHighlight highlight)
         {
             try

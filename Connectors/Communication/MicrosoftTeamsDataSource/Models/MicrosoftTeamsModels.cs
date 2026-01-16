@@ -18,7 +18,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
     public sealed class TeamsChannel : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
-        public string? DisplayName { get; set; }
+        public string? Caption { get; set; }
         public string? Description { get; set; }
         public bool IsFavoriteByDefault { get; set; }
         public string? Email { get; set; }
@@ -55,15 +55,15 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
     public sealed class TeamsUser : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
-        public string? DisplayName { get; set; }
+        public string? Caption { get; set; }
         public string? UserIdentityType { get; set; }
     }
 
     // Supporting classes for Microsoft Teams
     public enum TeamsChannelMembershipType { Standard, Private, Shared, UnknownFutureValue }
     public class TeamsFrom { public TeamsUser? User { get; set; } public TeamsApplication? Application { get; set; } public TeamsDevice? Device { get; set; } }
-    public class TeamsApplication { public string? Id { get; set; } public string? DisplayName { get; set; } public string? ApplicationIdentityType { get; set; } }
-    public class TeamsDevice { public string? Id { get; set; } public string? DisplayName { get; set; } }
+    public class TeamsApplication { public string? Id { get; set; } public string? Caption { get; set; } public string? ApplicationIdentityType { get; set; } }
+    public class TeamsDevice { public string? Id { get; set; } public string? Caption { get; set; } }
     public class TeamsBody { public string? ContentType { get; set; } public string? Content { get; set; } }
     public class TeamsChannelIdentity { public string? ChannelId { get; set; } public string? TeamId { get; set; } }
     public class TeamsOnBehalfOf { public TeamsUser? User { get; set; } public TeamsApplication? Application { get; set; } public TeamsDevice? Device { get; set; } }
@@ -75,7 +75,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
     public sealed class TeamsTeam : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
-        public string? DisplayName { get; set; }
+        public string? Caption { get; set; }
         public string? Description { get; set; }
         public bool IsArchived { get; set; }
         public string? WebUrl { get; set; }
@@ -87,7 +87,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
     public sealed class TeamsChannelTab : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
-        public string? DisplayName { get; set; }
+        public string? Caption { get; set; }
         public string? WebUrl { get; set; }
         public TeamsTabConfiguration? Configuration { get; set; }
         public List<string>? TeamsAppId { get; set; }
@@ -98,7 +98,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
     public sealed class TeamsTeamMember : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
-        public string? DisplayName { get; set; }
+        public string? Caption { get; set; }
         public string? UserId { get; set; }
         public string? Email { get; set; }
         public TeamsTeamMemberRole Roles { get; set; }
@@ -127,7 +127,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
     public sealed class TeamsChatMember : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
-        public string? DisplayName { get; set; }
+        public string? Caption { get; set; }
         public string? UserId { get; set; }
         public string? Email { get; set; }
         public bool IsOwner { get; set; }
@@ -138,7 +138,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
     public sealed class TeamsMe : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
-        public string? DisplayName { get; set; }
+        public string? Caption { get; set; }
         public string? UserPrincipalName { get; set; }
         public string? Mail { get; set; }
         public string? MobilePhone { get; set; }
@@ -149,7 +149,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
     public sealed class TeamsJoinedTeam : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
-        public string? DisplayName { get; set; }
+        public string? Caption { get; set; }
         public string? Description { get; set; }
         public bool IsArchived { get; set; }
         public string? WebUrl { get; set; }
@@ -169,7 +169,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
     public sealed class TeamsApp : MicrosoftTeamsEntityBase
     {
         public string? Id { get; set; }
-        public string? DisplayName { get; set; }
+        public string? Caption { get; set; }
         public string? DistributionMethod { get; set; }
         public string? ExternalId { get; set; }
         public TeamsAppPublishingState PublishingState { get; set; }
@@ -194,7 +194,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models
     public class TeamsAppDefinition
     {
         public string? TeamsAppId { get; set; }
-        public string? DisplayName { get; set; }
+        public string? Caption { get; set; }
         public string? Version { get; set; }
         public TeamsAppPublishingState PublishingState { get; set; }
     }

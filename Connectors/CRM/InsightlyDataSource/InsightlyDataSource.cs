@@ -98,16 +98,16 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                     Caption = "Contacts",
                     Fields = new List<EntityField>
                     {
-                        new EntityField { fieldname = "CONTACT_ID", fieldtype = "Int32" },
-                        new EntityField { fieldname = "FIRST_NAME", fieldtype = "String" },
-                        new EntityField { fieldname = "LAST_NAME", fieldtype = "String" },
-                        new EntityField { fieldname = "SALUTATION", fieldtype = "String" },
-                        new EntityField { fieldname = "DATE_CREATED_UTC", fieldtype = "DateTime" },
-                        new EntityField { fieldname = "DATE_UPDATED_UTC", fieldtype = "DateTime" },
-                        new EntityField { fieldname = "EMAIL_ADDRESS", fieldtype = "String" },
-                        new EntityField { fieldname = "PHONE", fieldtype = "String" },
-                        new EntityField { fieldname = "MOBILE", fieldtype = "String" },
-                        new EntityField { fieldname = "ORGANISATION_ID", fieldtype = "Int32" }
+                        new EntityField { FieldName = "CONTACT_ID", Fieldtype ="Int32" },
+                        new EntityField { FieldName = "FIRST_NAME", Fieldtype ="String" },
+                        new EntityField { FieldName = "LAST_NAME", Fieldtype ="String" },
+                        new EntityField { FieldName = "SALUTATION", Fieldtype ="String" },
+                        new EntityField { FieldName = "DATE_CREATED_UTC", Fieldtype ="DateTime" },
+                        new EntityField { FieldName = "DATE_UPDATED_UTC", Fieldtype ="DateTime" },
+                        new EntityField { FieldName = "EMAIL_ADDRESS", Fieldtype ="String" },
+                        new EntityField { FieldName = "PHONE", Fieldtype ="String" },
+                        new EntityField { FieldName = "MOBILE", Fieldtype ="String" },
+                        new EntityField { FieldName = "ORGANISATION_ID", Fieldtype ="Int32" }
                     }
                 },
                 new EntityStructure
@@ -116,17 +116,17 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                     Caption = "Organisations",
                     Fields = new List<EntityField>
                     {
-                        new EntityField { fieldname = "ORGANISATION_ID", fieldtype = "Int32" },
-                        new EntityField { fieldname = "ORGANISATION_NAME", fieldtype = "String" },
-                        new EntityField { fieldname = "DATE_CREATED_UTC", fieldtype = "DateTime" },
-                        new EntityField { fieldname = "DATE_UPDATED_UTC", fieldtype = "DateTime" },
-                        new EntityField { fieldname = "PHONE", fieldtype = "String" },
-                        new EntityField { fieldname = "FAX", fieldtype = "String" },
-                        new EntityField { fieldname = "WEBSITE", fieldtype = "String" },
-                        new EntityField { fieldname = "ADDRESS_BILLING_STREET", fieldtype = "String" },
-                        new EntityField { fieldname = "ADDRESS_BILLING_CITY", fieldtype = "String" },
-                        new EntityField { fieldname = "ADDRESS_BILLING_STATE", fieldtype = "String" },
-                        new EntityField { fieldname = "ADDRESS_BILLING_COUNTRY", fieldtype = "String" }
+                        new EntityField { FieldName = "ORGANISATION_ID", Fieldtype ="Int32" },
+                        new EntityField { FieldName = "ORGANISATION_NAME", Fieldtype ="String" },
+                        new EntityField { FieldName = "DATE_CREATED_UTC", Fieldtype ="DateTime" },
+                        new EntityField { FieldName = "DATE_UPDATED_UTC", Fieldtype ="DateTime" },
+                        new EntityField { FieldName = "PHONE", Fieldtype ="String" },
+                        new EntityField { FieldName = "FAX", Fieldtype ="String" },
+                        new EntityField { FieldName = "WEBSITE", Fieldtype ="String" },
+                        new EntityField { FieldName = "ADDRESS_BILLING_STREET", Fieldtype ="String" },
+                        new EntityField { FieldName = "ADDRESS_BILLING_CITY", Fieldtype ="String" },
+                        new EntityField { FieldName = "ADDRESS_BILLING_STATE", Fieldtype ="String" },
+                        new EntityField { FieldName = "ADDRESS_BILLING_COUNTRY", Fieldtype ="String" }
                     }
                 },
                 new EntityStructure
@@ -135,16 +135,16 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                     Caption = "Opportunities",
                     Fields = new List<EntityField>
                     {
-                        new EntityField { fieldname = "OPPORTUNITY_ID", fieldtype = "Int32" },
-                        new EntityField { fieldname = "OPPORTUNITY_NAME", fieldtype = "String" },
-                        new EntityField { fieldname = "OPPORTUNITY_DETAILS", fieldtype = "String" },
-                        new EntityField { fieldname = "PROBABILITY", fieldtype = "Decimal" },
-                        new EntityField { fieldname = "BID_AMOUNT", fieldtype = "Decimal" },
-                        new EntityField { fieldname = "BID_CURRENCY", fieldtype = "String" },
-                        new EntityField { fieldname = "DATE_CREATED_UTC", fieldtype = "DateTime" },
-                        new EntityField { fieldname = "DATE_UPDATED_UTC", fieldtype = "DateTime" },
-                        new EntityField { fieldname = "ORGANISATION_ID", fieldtype = "Int32" },
-                        new EntityField { fieldname = "CONTACT_ID", fieldtype = "Int32" }
+                        new EntityField { FieldName = "OPPORTUNITY_ID", Fieldtype ="Int32" },
+                        new EntityField { FieldName = "OPPORTUNITY_NAME", Fieldtype ="String" },
+                        new EntityField { FieldName = "OPPORTUNITY_DETAILS", Fieldtype ="String" },
+                        new EntityField { FieldName = "PROBABILITY", Fieldtype ="Decimal" },
+                        new EntityField { FieldName = "BID_AMOUNT", Fieldtype ="Decimal" },
+                        new EntityField { FieldName = "BID_CURRENCY", Fieldtype ="String" },
+                        new EntityField { FieldName = "DATE_CREATED_UTC", Fieldtype ="DateTime" },
+                        new EntityField { FieldName = "DATE_UPDATED_UTC", Fieldtype ="DateTime" },
+                        new EntityField { FieldName = "ORGANISATION_ID", Fieldtype ="Int32" },
+                        new EntityField { FieldName = "CONTACT_ID", Fieldtype ="Int32" }
                     }
                 },
                 new EntityStructure
@@ -153,16 +153,16 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
                     Caption = "Leads",
                     Fields = new List<EntityField>
                     {
-                        new EntityField { fieldname = "LEAD_ID", fieldtype = "Int32" },
-                        new EntityField { fieldname = "FIRST_NAME", fieldtype = "String" },
-                        new EntityField { fieldname = "LAST_NAME", fieldtype = "String" },
-                        new EntityField { fieldname = "ORGANISATION_NAME", fieldtype = "String" },
-                        new EntityField { fieldname = "PHONE_NUMBER", fieldtype = "String" },
-                        new EntityField { fieldname = "EMAIL_ADDRESS", fieldtype = "String" },
-                        new EntityField { fieldname = "DATE_CREATED_UTC", fieldtype = "DateTime" },
-                        new EntityField { fieldname = "DATE_UPDATED_UTC", fieldtype = "DateTime" },
-                        new EntityField { fieldname = "LEAD_STATUS_ID", fieldtype = "Int32" },
-                        new EntityField { fieldname = "LEAD_SOURCE_ID", fieldtype = "Int32" }
+                        new EntityField { FieldName = "LEAD_ID", Fieldtype ="Int32" },
+                        new EntityField { FieldName = "FIRST_NAME", Fieldtype ="String" },
+                        new EntityField { FieldName = "LAST_NAME", Fieldtype ="String" },
+                        new EntityField { FieldName = "ORGANISATION_NAME", Fieldtype ="String" },
+                        new EntityField { FieldName = "PHONE_NUMBER", Fieldtype ="String" },
+                        new EntityField { FieldName = "EMAIL_ADDRESS", Fieldtype ="String" },
+                        new EntityField { FieldName = "DATE_CREATED_UTC", Fieldtype ="DateTime" },
+                        new EntityField { FieldName = "DATE_UPDATED_UTC", Fieldtype ="DateTime" },
+                        new EntityField { FieldName = "LEAD_STATUS_ID", Fieldtype ="Int32" },
+                        new EntityField { FieldName = "LEAD_SOURCE_ID", Fieldtype ="Int32" }
                     }
                 }
             };
@@ -358,35 +358,35 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "List<Contact>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType ="Contact", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "List<Contact>")]
         public async Task<List<Contact>> GetContactsAsync(List<AppFilter>? filter = null)
         {
             var result = await GetEntityAsync("Contacts", filter);
             return result as List<Contact> ?? new List<Contact>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Organisation", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "List<Organisation>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType ="Organisation", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "List<Organisation>")]
         public async Task<List<Organisation>> GetOrganisationsAsync(List<AppFilter>? filter = null)
         {
             var result = await GetEntityAsync("Organisations", filter);
             return result as List<Organisation> ?? new List<Organisation>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "List<Opportunity>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType ="Opportunity", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "List<Opportunity>")]
         public async Task<List<Opportunity>> GetOpportunitiesAsync(List<AppFilter>? filter = null)
         {
             var result = await GetEntityAsync("Opportunities", filter);
             return result as List<Opportunity> ?? new List<Opportunity>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "List<Lead>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType ="Lead", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "List<Lead>")]
         public async Task<List<Lead>> GetLeadsAsync(List<AppFilter>? filter = null)
         {
             var result = await GetEntityAsync("Leads", filter);
             return result as List<Lead> ?? new List<Lead>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Contact")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType ="Contact", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Contact")]
         public async Task<List<Contact>> CreateContactAsync(Contact contact)
         {
             if (contact == null) return new List<Contact>();
@@ -405,7 +405,7 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Contact", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Contact")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType ="Contact", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Contact")]
         public async Task<List<Contact>> UpdateContactAsync(int contactId, Contact contact)
         {
             if (contactId <= 0 || contact == null) return new List<Contact>();
@@ -425,7 +425,7 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Organisation", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Organisation")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType ="Organisation", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Organisation")]
         public async Task<List<Organisation>> CreateOrganisationAsync(Organisation organisation)
         {
             if (organisation == null) return new List<Organisation>();
@@ -444,7 +444,7 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Organisation", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Organisation")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType ="Organisation", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Organisation")]
         public async Task<List<Organisation>> UpdateOrganisationAsync(int organisationId, Organisation organisation)
         {
             if (organisationId <= 0 || organisation == null) return new List<Organisation>();
@@ -464,7 +464,7 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType ="Opportunity", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
         public async Task<List<Opportunity>> CreateOpportunityAsync(Opportunity opportunity)
         {
             if (opportunity == null) return new List<Opportunity>();
@@ -483,7 +483,7 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType ="Opportunity", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Opportunity")]
         public async Task<List<Opportunity>> UpdateOpportunityAsync(int opportunityId, Opportunity opportunity)
         {
             if (opportunityId <= 0 || opportunity == null) return new List<Opportunity>();
@@ -503,7 +503,7 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Lead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType ="Lead", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Lead")]
         public async Task<List<Lead>> CreateLeadAsync(Lead lead)
         {
             if (lead == null) return new List<Lead>();
@@ -522,7 +522,7 @@ namespace TheTechIdea.Beep.Connectors.InsightlyDataSource
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType = "Lead", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Lead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Insightly, PointType = EnumPointType.Function, ObjectType ="Lead", ClassName = "InsightlyDataSource", Showin = ShowinType.Both, misc = "Lead")]
         public async Task<List<Lead>> UpdateLeadAsync(int leadId, Lead lead)
         {
             if (leadId <= 0 || lead == null) return new List<Lead>();

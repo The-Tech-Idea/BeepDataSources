@@ -90,7 +90,7 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive.Models
     public sealed class GoogleDriveUser : GoogleDriveEntityBase
     {
         [JsonPropertyName("kind")] public string Kind { get; set; }
-        [JsonPropertyName("displayName")] public string DisplayName { get; set; }
+        [JsonPropertyName("Caption")] public string Caption { get; set; }
         [JsonPropertyName("photoLink")] public string PhotoLink { get; set; }
         [JsonPropertyName("me")] public bool? Me { get; set; }
         [JsonPropertyName("permissionId")] public string PermissionId { get; set; }
@@ -109,7 +109,7 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive.Models
         [JsonPropertyName("role")] public string Role { get; set; } // owner, organizer, fileOrganizer, writer, commenter, reader
         [JsonPropertyName("view")] public string View { get; set; }
         [JsonPropertyName("allowFileDiscovery")] public bool? AllowFileDiscovery { get; set; }
-        [JsonPropertyName("displayName")] public string DisplayName { get; set; }
+        [JsonPropertyName("Caption")] public string Caption { get; set; }
         [JsonPropertyName("photoLink")] public string PhotoLink { get; set; }
         [JsonPropertyName("expirationTime")] public DateTimeOffset? ExpirationTime { get; set; }
         [JsonPropertyName("teamDrivePermissionDetails")] public List<GoogleDriveTeamDrivePermissionDetail> TeamDrivePermissionDetails { get; set; } = new();

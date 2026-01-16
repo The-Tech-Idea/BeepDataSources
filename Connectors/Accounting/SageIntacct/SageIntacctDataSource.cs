@@ -274,31 +274,31 @@ namespace TheTechIdea.Beep.Connectors.SageIntacct
         }
 
         // CommandAttribute methods for framework integration
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType = "Customers", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Customer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType ="Customers", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Customer>")]
         public IEnumerable<Customer> GetCustomers(List<AppFilter> filter) => GetEntity("customers", filter).Cast<Customer>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType = "Invoices", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Invoice>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType ="Invoices", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Invoice>")]
         public IEnumerable<Invoice> GetInvoices(List<AppFilter> filter) => GetEntity("invoices", filter).Cast<Invoice>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType = "Bills", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Bill>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType ="Bills", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Bill>")]
         public IEnumerable<Bill> GetBills(List<AppFilter> filter) => GetEntity("bills", filter).Cast<Bill>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType = "Vendors", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Vendor>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType ="Vendors", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Vendor>")]
         public IEnumerable<Vendor> GetVendors(List<AppFilter> filter) => GetEntity("vendors", filter).Cast<Vendor>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType = "Items", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Item>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType ="Items", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Item>")]
         public IEnumerable<Item> GetItems(List<AppFilter> filter) => GetEntity("items", filter).Cast<Item>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Account>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType ="Accounts", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Account>")]
         public IEnumerable<Account> GetAccounts(List<AppFilter> filter) => GetEntity("accounts", filter).Cast<Account>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType = "Employees", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Employee>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType ="Employees", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Employee>")]
         public IEnumerable<Employee> GetEmployees(List<AppFilter> filter) => GetEntity("employees", filter).Cast<Employee>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType = "Departments", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Department>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType ="Departments", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Department>")]
         public IEnumerable<Department> GetDepartments(List<AppFilter> filter) => GetEntity("departments", filter).Cast<Department>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType = "Locations", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Location>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.SageIntacct, PointType = EnumPointType.Function, ObjectType ="Locations", ClassName = "SageIntacctDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<Location>")]
         public IEnumerable<Location> GetLocations(List<AppFilter> filter) => GetEntity("locations", filter).Cast<Location>();
     }
 }

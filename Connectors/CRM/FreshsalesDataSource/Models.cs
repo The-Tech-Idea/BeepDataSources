@@ -24,7 +24,7 @@ namespace TheTechIdea.Beep.DataSources.CRM.Freshsales
     {
         [JsonPropertyName("first_name")] public string? FirstName { get; set; }
         [JsonPropertyName("last_name")] public string? LastName { get; set; }
-        [JsonPropertyName("display_name")] public string? DisplayName { get; set; }
+        [JsonPropertyName("display_name")] public string? Caption { get; set; }
         [JsonPropertyName("email")] public string? Email { get; set; }
         [JsonPropertyName("mobile_number")] public string? MobileNumber { get; set; }
         [JsonPropertyName("work_number")] public string? WorkNumber { get; set; }

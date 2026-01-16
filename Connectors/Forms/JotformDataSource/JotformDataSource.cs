@@ -189,9 +189,9 @@ namespace TheTechIdea.Beep.Connectors.Jotform
         // -------------------- CommandAttribute Methods --------------------
 
         [CommandAttribute(
-            ObjectType = "JotformForm",
+            ObjectType ="JotformForm",
             PointType = EnumPointType.Function,
-            Name = "GetForms",
+           Name = "GetForms",
             Caption = "Get Jotform Forms",
             ClassName = "JotformDataSource",
             misc = "ReturnType: IEnumerable<JotformForm>"
@@ -203,9 +203,9 @@ namespace TheTechIdea.Beep.Connectors.Jotform
         }
 
         [CommandAttribute(
-            ObjectType = "JotformForm",
+            ObjectType ="JotformForm",
             PointType = EnumPointType.Function,
-            Name = "GetForm",
+           Name = "GetForm",
             Caption = "Get Jotform Form by ID",
             ClassName = "JotformDataSource",
             misc = "ReturnType: IEnumerable<JotformForm>"
@@ -217,9 +217,9 @@ namespace TheTechIdea.Beep.Connectors.Jotform
         }
 
         [CommandAttribute(
-            ObjectType = "JotformSubmission",
+            ObjectType ="JotformSubmission",
             PointType = EnumPointType.Function,
-            Name = "GetSubmissions",
+           Name = "GetSubmissions",
             Caption = "Get Jotform Submissions",
             ClassName = "JotformDataSource",
             misc = "ReturnType: IEnumerable<JotformSubmission>"
@@ -231,9 +231,9 @@ namespace TheTechIdea.Beep.Connectors.Jotform
         }
 
         [CommandAttribute(
-            ObjectType = "JotformSubmission",
+            ObjectType ="JotformSubmission",
             PointType = EnumPointType.Function,
-            Name = "GetSubmission",
+           Name = "GetSubmission",
             Caption = "Get Jotform Submission by ID",
             ClassName = "JotformDataSource",
             misc = "ReturnType: IEnumerable<JotformSubmission>"
@@ -244,9 +244,9 @@ namespace TheTechIdea.Beep.Connectors.Jotform
         }
 
         [CommandAttribute(
-            ObjectType = "JotformSubmission",
+            ObjectType ="JotformSubmission",
             PointType = EnumPointType.Function,
-            Name = "GetFormSubmissions",
+           Name = "GetFormSubmissions",
             Caption = "Get Jotform Submissions for a Form",
             ClassName = "JotformDataSource",
             misc = "ReturnType: IEnumerable<JotformSubmission>"
@@ -257,9 +257,9 @@ namespace TheTechIdea.Beep.Connectors.Jotform
         }
 
         [CommandAttribute(
-            ObjectType = "JotformSubmission",
+            ObjectType ="JotformSubmission",
             PointType = EnumPointType.Function,
-            Name = "CreateSubmission",
+           Name = "CreateSubmission",
             Caption = "Create Jotform Submission",
             ClassName = "JotformDataSource",
             misc = "ReturnType: IEnumerable<JotformSubmission>"
@@ -293,9 +293,9 @@ namespace TheTechIdea.Beep.Connectors.Jotform
         }
 
         [CommandAttribute(
-            ObjectType = "JotformForm",
+            ObjectType ="JotformForm",
             PointType = EnumPointType.Function,
-            Name = "CreateForm",
+           Name = "CreateForm",
             Caption = "Create Jotform Form",
             ClassName = "JotformDataSource",
             misc = "ReturnType: IEnumerable<JotformForm>"

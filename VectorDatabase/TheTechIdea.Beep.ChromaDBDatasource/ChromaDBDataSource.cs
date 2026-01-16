@@ -13,6 +13,7 @@ using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
 
 namespace TheTechIdea.Beep.ChromaDBDatasource
 {

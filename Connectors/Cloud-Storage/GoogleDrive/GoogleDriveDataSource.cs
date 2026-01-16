@@ -252,40 +252,40 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveFile", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveFile>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType ="GoogleDriveFile", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveFile>")]
         public List<GoogleDriveFile> GetFiles()
         {
             return GetEntity("files", new List<AppFilter>()).Cast<GoogleDriveFile>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveFile", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDriveFile")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType ="GoogleDriveFile", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDriveFile")]
         public GoogleDriveFile? GetFile(string fileId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "fileId", FilterValue = fileId } };
             return GetEntity("file", filters).Cast<GoogleDriveFile>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveFile", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveFile>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType ="GoogleDriveFile", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveFile>")]
         public List<GoogleDriveFile> GetFolders()
         {
             return GetEntity("folders", new List<AppFilter>()).Cast<GoogleDriveFile>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveFile", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDriveFile")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType ="GoogleDriveFile", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDriveFile")]
         public GoogleDriveFile? GetFolder(string folderId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "folderId", FilterValue = folderId } };
             return GetEntity("folder", filters).Cast<GoogleDriveFile>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDrivePermission", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDrivePermission>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType ="GoogleDrivePermission", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDrivePermission>")]
         public List<GoogleDrivePermission> GetPermissions(string fileId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "fileId", FilterValue = fileId } };
             return GetEntity("permissions", filters).Cast<GoogleDrivePermission>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDrivePermission", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDrivePermission")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType ="GoogleDrivePermission", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDrivePermission")]
         public GoogleDrivePermission? GetPermission(string fileId, string permissionId)
         {
             var filters = new List<AppFilter> 
@@ -296,14 +296,14 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
             return GetEntity("permission", filters).Cast<GoogleDrivePermission>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveRevision", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveRevision>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType ="GoogleDriveRevision", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveRevision>")]
         public List<GoogleDriveRevision> GetRevisions(string fileId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "fileId", FilterValue = fileId } };
             return GetEntity("revisions", filters).Cast<GoogleDriveRevision>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveRevision", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDriveRevision")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType ="GoogleDriveRevision", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDriveRevision")]
         public GoogleDriveRevision? GetRevision(string fileId, string revisionId)
         {
             var filters = new List<AppFilter> 
@@ -314,14 +314,14 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
             return GetEntity("revision", filters).Cast<GoogleDriveRevision>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveComment", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveComment>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType ="GoogleDriveComment", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveComment>")]
         public List<GoogleDriveComment> GetComments(string fileId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "fileId", FilterValue = fileId } };
             return GetEntity("comments", filters).Cast<GoogleDriveComment>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveComment", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDriveComment")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType ="GoogleDriveComment", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "GoogleDriveComment")]
         public GoogleDriveComment? GetComment(string fileId, string commentId)
         {
             var filters = new List<AppFilter> 
@@ -332,20 +332,20 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
             return GetEntity("comment", filters).Cast<GoogleDriveComment>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType = "GoogleDriveChange", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveChange>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.GoogleDrive, PointType = EnumPointType.Function, ObjectType ="GoogleDriveChange", ClassName = "GoogleDriveDataSource", Showin = ShowinType.Both, misc = "List<GoogleDriveChange>")]
         public List<GoogleDriveChange> GetChanges()
         {
             return GetEntity("changes", new List<AppFilter>()).Cast<GoogleDriveChange>().ToList();
         }
 
         [CommandAttribute(
-            Name = "CreateFileAsync",
+           Name = "CreateFileAsync",
             Caption = "Create Google Drive File",
-            ObjectType = "GoogleDriveFile",
+            ObjectType ="GoogleDriveFile",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.GoogleDrive,
-            ClassType = "GoogleDriveDataSource",
+            ClassType ="GoogleDriveDataSource",
             Showin = ShowinType.Both,
             Order = 1,
             iconimage = "createfile.png",
@@ -376,13 +376,13 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
         }
 
         [CommandAttribute(
-            Name = "CreatePermissionAsync",
+           Name = "CreatePermissionAsync",
             Caption = "Create Google Drive Permission",
-            ObjectType = "GoogleDrivePermission",
+            ObjectType ="GoogleDrivePermission",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.GoogleDrive,
-            ClassType = "GoogleDriveDataSource",
+            ClassType ="GoogleDriveDataSource",
             Showin = ShowinType.Both,
             Order = 2,
             iconimage = "createpermission.png",
@@ -413,13 +413,13 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
         }
 
         [CommandAttribute(
-            Name = "CreateCommentAsync",
+           Name = "CreateCommentAsync",
             Caption = "Create Google Drive Comment",
-            ObjectType = "GoogleDriveComment",
+            ObjectType ="GoogleDriveComment",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.GoogleDrive,
-            ClassType = "GoogleDriveDataSource",
+            ClassType ="GoogleDriveDataSource",
             Showin = ShowinType.Both,
             Order = 3,
             iconimage = "createcomment.png",
@@ -450,13 +450,13 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
         }
 
         [CommandAttribute(
-            Name = "UpdateFileAsync",
+           Name = "UpdateFileAsync",
             Caption = "Update Google Drive File",
-            ObjectType = "GoogleDriveFile",
+            ObjectType ="GoogleDriveFile",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.GoogleDrive,
-            ClassType = "GoogleDriveDataSource",
+            ClassType ="GoogleDriveDataSource",
             Showin = ShowinType.Both,
             Order = 4,
             iconimage = "updatefile.png",
@@ -487,13 +487,13 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
         }
 
         [CommandAttribute(
-            Name = "UpdatePermissionAsync",
+           Name = "UpdatePermissionAsync",
             Caption = "Update Google Drive Permission",
-            ObjectType = "GoogleDrivePermission",
+            ObjectType ="GoogleDrivePermission",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.GoogleDrive,
-            ClassType = "GoogleDriveDataSource",
+            ClassType ="GoogleDriveDataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "updatepermission.png",
@@ -524,13 +524,13 @@ namespace TheTechIdea.Beep.Connectors.GoogleDrive
         }
 
         [CommandAttribute(
-            Name = "UpdateCommentAsync",
+           Name = "UpdateCommentAsync",
             Caption = "Update Google Drive Comment",
-            ObjectType = "GoogleDriveComment",
+            ObjectType ="GoogleDriveComment",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.GoogleDrive,
-            ClassType = "GoogleDriveDataSource",
+            ClassType ="GoogleDriveDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "updatecomment.png",

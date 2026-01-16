@@ -319,8 +319,8 @@ namespace TheTechIdea.Beep.Connectors.OneDrive.Models
         /// <summary>
         /// The user's display name
         /// </summary>
-        [JsonPropertyName("displayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
 
         /// <summary>
         /// The user's email address
@@ -373,8 +373,8 @@ namespace TheTechIdea.Beep.Connectors.OneDrive.Models
         /// <summary>
         /// The display name
         /// </summary>
-        [JsonPropertyName("displayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
     }
 
     /// <summary>

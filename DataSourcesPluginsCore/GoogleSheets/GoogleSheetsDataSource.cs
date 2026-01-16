@@ -350,7 +350,8 @@ namespace TheTechIdea.Beep.Cloud.GoogleSheets
                 var entity = GetEntityStructure(EntityName, false);
                 if (entity != null)
                 {
-                    return DMTypeBuilder.CreateTypeFromEntityStructure(entity, DMEEditor);
+                    DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, entity.Fields);
+                    return DMTypeBuilder.MyType ?? typeof(object);
                 }
             }
             catch (Exception ex)

@@ -384,8 +384,8 @@ namespace TheTechIdea.Beep.Connectors.Reddit.Models
     {
         [JsonPropertyName("id")] public string Id { get; set; }
         [JsonPropertyName("name")] public string Name { get; set; }
-        [JsonPropertyName("display_name")] public string DisplayName { get; set; }
-        [JsonPropertyName("display_name_prefixed")] public string DisplayNamePrefixed { get; set; }
+        [JsonPropertyName("display_name")] public string Caption { get; set; }
+        [JsonPropertyName("display_name_prefixed")] public string CaptionPrefixed { get; set; }
         [JsonPropertyName("subscribers")] public int? Subscribers { get; set; }
         [JsonPropertyName("active_user_count")] public int? ActiveUserCount { get; set; }
         [JsonPropertyName("accounts_active")] public int? AccountsActive { get; set; }
@@ -638,8 +638,8 @@ namespace TheTechIdea.Beep.Connectors.Reddit.Models
         [JsonPropertyName("default_set")] public bool? DefaultSet { get; set; }
         [JsonPropertyName("description")] public string Description { get; set; }
         [JsonPropertyName("disable_contributor_requests")] public bool? DisableContributorRequests { get; set; }
-        [JsonPropertyName("display_name")] public string DisplayName { get; set; }
-        [JsonPropertyName("display_name_prefixed")] public string DisplayNamePrefixed { get; set; }
+        [JsonPropertyName("display_name")] public string Caption { get; set; }
+        [JsonPropertyName("display_name_prefixed")] public string CaptionPrefixed { get; set; }
         [JsonPropertyName("free_form_reports")] public bool? FreeFormReports { get; set; }
         [JsonPropertyName("header_img")] public string HeaderImg { get; set; }
         [JsonPropertyName("header_size")] public List<int> HeaderSize { get; set; } = new();

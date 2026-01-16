@@ -173,27 +173,27 @@ namespace TheTechIdea.Beep.FileManager
             return datasetNames;
         }
 
-        private void TraverseHDF5Group(long groupId, string currentPath, List<string> datasetNames)
-        {
-            try
-            {
-                var info = new H5O.info_t();
-                H5O.get_info(groupId, ref info);
+         private void TraverseHDF5Group(long groupId, string currentPath, List<string> datasetNames)
+         {
+             try
+             {
+                 var info = new H5O.info_t();
+                 H5O.get_info(groupId, ref info);
 
-                // Iterate through objects in the group
-                var idxType = H5.index_t.NAME;
-                var order = H5.iter_order_t.INC;
-                ulong idx = 0;
-                H5.iterate(groupId, idxType, order, ref idx, (long loc_id, IntPtr name, ref H5L.info_t info) =>
-                {
-                    string objectName = Marshal.PtrToStringAnsi(name);
-                    string fullPath = currentPath == "/" ? $"/{objectName}" : $"{currentPath}/{objectName}";
+                 // Iterate through objects in the group
+                 var idxType = H5.index_t.NAME;
+                 var order = H5.iter_order_t.INC;
+                 ulong idx = 0;
+                 H5L.iterate(groupId, idxType, order, ref idx, (long g, IntPtr name, ref H5L.info_t linkInfo, IntPtr op_data) =>
+                 {
+                     string objectName = Marshal.PtrToStringAnsi(name);
+                     string fullPath = currentPath == "/" ? $"/{objectName}" : $"{currentPath}/{objectName}";
 
-                    var objId = H5O.open(loc_id, objectName);
-                    if (objId >= 0)
-                    {
-                        var objInfo = new H5O.info_t();
-                        H5O.get_info(objId, ref objInfo);
+                     var objId = H5O.open(g, objectName);
+                     if (objId >= 0)
+                     {
+                         var objInfo = new H5O.info_t();
+                         H5O.get_info(objId, ref objInfo);
 
                         if (objInfo.type == H5O.type_t.DATASET)
                         {
@@ -204,12 +204,12 @@ namespace TheTechIdea.Beep.FileManager
                             TraverseHDF5Group(objId, fullPath, datasetNames);
                         }
 
-                        H5O.close(objId);
-                    }
-                    return 0;
-                }, IntPtr.Zero);
-            }
-            catch
+                         H5O.close(objId);
+                     }
+                     return 0;
+                 }, IntPtr.Zero);
+             }
+             catch
             {
                 // Continue if traversal fails
             }
@@ -225,27 +225,34 @@ namespace TheTechIdea.Beep.FileManager
                     Openconnection();
                 }
 
-                if (ConnectionStatus == ConnectionState.Open && _fileId >= 0)
-                {
-                    var datasetId = H5D.open(_fileId, EntityName);
-                    if (datasetId >= 0)
-                    {
-                        // Read dataset data
-                        var spaceId = H5D.get_space(datasetId);
-                        var typeId = H5D.get_type(datasetId);
+                 if (ConnectionStatus == ConnectionState.Open && _fileId >= 0)
+                 {
+                     var datasetId = H5D.open(_fileId, EntityName);
+                     if (datasetId >= 0)
+                     {
+                         // Read dataset data
+                         var spaceId = H5D.get_space(datasetId);
+                         var typeId = H5D.get_type(datasetId);
 
-                        // Get dataset dimensions
-                        var dims = new long[2];
-                        H5S.get_simple_extent_dims(spaceId, dims, null);
+                         // Get dataset dimensions
+                         var rank = H5S.get_simple_extent_ndims(spaceId);
+                         if (rank > 0)
+                         {
+                             var dims = new ulong[rank];
+                             var maxDims = new ulong[rank];
+                             H5S.get_simple_extent_dims(spaceId, dims, maxDims);
+                         }
 
-                        // Read data (simplified - actual implementation depends on data type)
-                        // This is a placeholder - HDF5 data reading is complex
-                        results.Add(new { Path = EntityName, Type = "HDF5 Dataset" });
-                        
-                        H5D.close(datasetId);
-                    }
-                }
-            }
+                         // Read data (simplified - actual implementation depends on data type)
+                         // This is a placeholder - HDF5 data reading is complex
+                         results.Add(new { Path = EntityName, Type = "HDF5 Dataset" });
+
+                         if (spaceId >= 0) H5S.close(spaceId);
+                         if (typeId >= 0) H5T.close(typeId);
+                         H5D.close(datasetId);
+                     }
+                 }
+             }
             catch (Exception ex)
             {
                 DMEEditor?.AddLogMessage("Beep", $"Error getting entity: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
@@ -355,15 +362,16 @@ namespace TheTechIdea.Beep.FileManager
         {
             try
             {
-                var entity = GetEntityStructure(EntityName, false);
-                if (entity != null)
-                {
-                    return DMTypeBuilder.CreateTypeFromEntityStructure(entity, DMEEditor);
-                }
-            }
-            catch (Exception ex)
-            {
-                DMEEditor?.AddLogMessage("Beep", $"Error getting entity type: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                 var entity = GetEntityStructure(EntityName, false);
+                 if (entity != null)
+                 {
+                     DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, entity.Fields);
+                     return DMTypeBuilder.MyType ?? typeof(object);
+                 }
+             }
+             catch (Exception ex)
+             {
+                 DMEEditor?.AddLogMessage("Beep", $"Error getting entity type: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             return typeof(object);
         }

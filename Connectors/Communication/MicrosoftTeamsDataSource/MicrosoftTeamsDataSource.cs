@@ -214,13 +214,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         // =======================================================
 
         [CommandAttribute(
-            Name = "GetTeams",
+           Name = "GetTeams",
             Caption = "Get Microsoft Teams",
-            ObjectType = "TeamsTeam",
+            ObjectType ="TeamsTeam",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 1,
             iconimage = "teams.png",
@@ -233,13 +233,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetTeam",
+           Name = "GetTeam",
             Caption = "Get Microsoft Team by ID",
-            ObjectType = "TeamsTeam",
+            ObjectType ="TeamsTeam",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 2,
             iconimage = "team.png",
@@ -252,13 +252,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetChannels",
+           Name = "GetChannels",
             Caption = "Get Microsoft Teams Channels",
-            ObjectType = "TeamsChannel",
+            ObjectType ="TeamsChannel",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 3,
             iconimage = "channels.png",
@@ -271,13 +271,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetChannel",
+           Name = "GetChannel",
             Caption = "Get Microsoft Teams Channel by ID",
-            ObjectType = "TeamsChannel",
+            ObjectType ="TeamsChannel",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 4,
             iconimage = "channel.png",
@@ -290,13 +290,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetChannelMessages",
+           Name = "GetChannelMessages",
             Caption = "Get Microsoft Teams Channel Messages",
-            ObjectType = "TeamsMessage",
+            ObjectType ="TeamsMessage",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "messages.png",
@@ -309,13 +309,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetChannelMessage",
+           Name = "GetChannelMessage",
             Caption = "Get Microsoft Teams Channel Message by ID",
-            ObjectType = "TeamsMessage",
+            ObjectType ="TeamsMessage",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "message.png",
@@ -328,13 +328,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetTeamMembers",
+           Name = "GetTeamMembers",
             Caption = "Get Microsoft Teams Team Members",
-            ObjectType = "TeamsTeamMember",
+            ObjectType ="TeamsTeamMember",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 7,
             iconimage = "members.png",
@@ -347,13 +347,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetChats",
+           Name = "GetChats",
             Caption = "Get Microsoft Teams Chats",
-            ObjectType = "TeamsChat",
+            ObjectType ="TeamsChat",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 8,
             iconimage = "chats.png",
@@ -366,13 +366,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetChat",
+           Name = "GetChat",
             Caption = "Get Microsoft Teams Chat by ID",
-            ObjectType = "TeamsChat",
+            ObjectType ="TeamsChat",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 9,
             iconimage = "chat.png",
@@ -385,13 +385,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetChatMessages",
+           Name = "GetChatMessages",
             Caption = "Get Microsoft Teams Chat Messages",
-            ObjectType = "TeamsMessage",
+            ObjectType ="TeamsMessage",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 10,
             iconimage = "chatmessages.png",
@@ -404,13 +404,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetUsers",
+           Name = "GetUsers",
             Caption = "Get Microsoft Teams Users",
-            ObjectType = "TeamsUser",
+            ObjectType ="TeamsUser",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 11,
             iconimage = "users.png",
@@ -423,13 +423,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetMe",
+           Name = "GetMe",
             Caption = "Get Current Microsoft Teams User",
-            ObjectType = "TeamsMe",
+            ObjectType ="TeamsMe",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 12,
             iconimage = "me.png",
@@ -442,13 +442,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetMyJoinedTeams",
+           Name = "GetMyJoinedTeams",
             Caption = "Get My Joined Microsoft Teams",
-            ObjectType = "TeamsJoinedTeam",
+            ObjectType ="TeamsJoinedTeam",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 13,
             iconimage = "myteams.png",
@@ -461,13 +461,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetMyChats",
+           Name = "GetMyChats",
             Caption = "Get My Microsoft Teams Chats",
-            ObjectType = "TeamsMeChat",
+            ObjectType ="TeamsMeChat",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 14,
             iconimage = "mychats.png",
@@ -480,13 +480,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "GetApps",
+           Name = "GetApps",
             Caption = "Get Microsoft Teams Apps",
-            ObjectType = "TeamsApp",
+            ObjectType ="TeamsApp",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 15,
             iconimage = "apps.png",
@@ -499,13 +499,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "CreateMessageAsync",
+           Name = "CreateMessageAsync",
             Caption = "Create Microsoft Teams Message",
-            ObjectType = "TeamsMessage",
+            ObjectType ="TeamsMessage",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "microsoftteams.png",
@@ -531,13 +531,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "CreateChannelAsync",
+           Name = "CreateChannelAsync",
             Caption = "Create Microsoft Teams Channel",
-            ObjectType = "TeamsChannel",
+            ObjectType ="TeamsChannel",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 7,
             iconimage = "microsoftteams.png",
@@ -563,13 +563,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "CreateTeamAsync",
+           Name = "CreateTeamAsync",
             Caption = "Create Microsoft Teams Team",
-            ObjectType = "TeamsTeam",
+            ObjectType ="TeamsTeam",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 8,
             iconimage = "microsoftteams.png",
@@ -595,13 +595,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "UpdateTeamAsync",
+           Name = "UpdateTeamAsync",
             Caption = "Update Microsoft Teams Team",
-            ObjectType = "TeamsTeam",
+            ObjectType ="TeamsTeam",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 9,
             iconimage = "updateteam.png",
@@ -631,13 +631,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "CreateChatAsync",
+           Name = "CreateChatAsync",
             Caption = "Create Microsoft Teams Chat",
-            ObjectType = "TeamsChat",
+            ObjectType ="TeamsChat",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 10,
             iconimage = "createchat.png",
@@ -667,13 +667,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "UpdateChannelAsync",
+           Name = "UpdateChannelAsync",
             Caption = "Update Microsoft Teams Channel",
-            ObjectType = "TeamsChannel",
+            ObjectType ="TeamsChannel",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 12,
             iconimage = "updatechannel.png",
@@ -703,13 +703,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "UpdateMessageAsync",
+           Name = "UpdateMessageAsync",
             Caption = "Update Microsoft Teams Message",
-            ObjectType = "TeamsMessage",
+            ObjectType ="TeamsMessage",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 13,
             iconimage = "updatemessage.png",
@@ -739,13 +739,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams
         }
 
         [CommandAttribute(
-            Name = "UpdateChatAsync",
+           Name = "UpdateChatAsync",
             Caption = "Update Microsoft Teams Chat",
-            ObjectType = "TeamsChat",
+            ObjectType ="TeamsChat",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftTeams,
-            ClassType = "MicrosoftTeamsDataSource",
+            ClassType ="MicrosoftTeamsDataSource",
             Showin = ShowinType.Both,
             Order = 14,
             iconimage = "updatechat.png",

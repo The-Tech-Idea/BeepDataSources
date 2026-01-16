@@ -225,77 +225,77 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Product", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Product>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Product", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Product>")]
         public async Task<IEnumerable<Product>> GetProducts(AppFilter filter)
         {
             var result = await GetEntityAsync("products", new List<AppFilter> { filter });
             return result.Cast<Product>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Category", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Category>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Category", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Category>")]
         public async Task<IEnumerable<Category>> GetCategories(AppFilter filter)
         {
             var result = await GetEntityAsync("categories", new List<AppFilter> { filter });
             return result.Cast<Category>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Order", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Order>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Order", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Order>")]
         public async Task<IEnumerable<Order>> GetOrders(AppFilter filter)
         {
             var result = await GetEntityAsync("orders", new List<AppFilter> { filter });
             return result.Cast<Order>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Customer", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Customer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Customer", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Customer>")]
         public async Task<IEnumerable<Customer>> GetCustomers(AppFilter filter)
         {
             var result = await GetEntityAsync("customers", new List<AppFilter> { filter });
             return result.Cast<Customer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "InventoryItem", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<InventoryItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="InventoryItem", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<InventoryItem>")]
         public async Task<IEnumerable<InventoryItem>> GetInventory(AppFilter filter)
         {
             var result = await GetEntityAsync("inventory", new List<AppFilter> { filter });
             return result.Cast<InventoryItem>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Cart", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Cart>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Cart", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Cart>")]
         public async Task<IEnumerable<Cart>> GetCarts(AppFilter filter)
         {
             var result = await GetEntityAsync("carts", new List<AppFilter> { filter });
             return result.Cast<Cart>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Review", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Review>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Review", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Review>")]
         public async Task<IEnumerable<Review>> GetReviews(AppFilter filter)
         {
             var result = await GetEntityAsync("reviews", new List<AppFilter> { filter });
             return result.Cast<Review>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "StoreConfig", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<StoreConfig>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="StoreConfig", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<StoreConfig>")]
         public async Task<IEnumerable<StoreConfig>> GetStoreConfigs(AppFilter filter)
         {
             var result = await GetEntityAsync("store_configs", new List<AppFilter> { filter });
             return result.Cast<StoreConfig>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Attribute", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Models.Attribute>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Attribute", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<Models.Attribute>")]
         public async Task<IEnumerable<Models.Attribute>> GetAttributes(AppFilter filter)
         {
             var result = await GetEntityAsync("attributes", new List<AppFilter> { filter });
             return result.Cast<Models.Attribute>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "TaxRule", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<TaxRule>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="TaxRule", ClassName = "MagentoDataSource", Showin = ShowinType.Both, misc = "IEnumerable<TaxRule>")]
         public async Task<IEnumerable<TaxRule>> GetTaxRules(AppFilter filter)
         {
             var result = await GetEntityAsync("tax_rules", new List<AppFilter> { filter });
             return result.Cast<TaxRule>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Product", Name = "CreateProduct", Caption = "Create Magento Product", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Product>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Product", Name = "CreateProduct", Caption = "Create Magento Product", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Product>")]
         public async Task<IEnumerable<Product>> CreateProductAsync(Product product)
         {
             try
@@ -315,7 +315,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Product>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Product", Name = "UpdateProduct", Caption = "Update Magento Product", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Product>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Product", Name = "UpdateProduct", Caption = "Update Magento Product", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Product>")]
         public async Task<IEnumerable<Product>> UpdateProductAsync(Product product)
         {
             try
@@ -335,7 +335,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Product>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Category", Name = "CreateCategory", Caption = "Create Magento Category", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Category>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Category", Name = "CreateCategory", Caption = "Create Magento Category", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Category>")]
         public async Task<IEnumerable<Category>> CreateCategoryAsync(Category category)
         {
             try
@@ -355,7 +355,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Category>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Category", Name = "UpdateCategory", Caption = "Update Magento Category", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Category>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Category", Name = "UpdateCategory", Caption = "Update Magento Category", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Category>")]
         public async Task<IEnumerable<Category>> UpdateCategoryAsync(Category category)
         {
             try
@@ -375,7 +375,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Category>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Order", Name = "CreateOrder", Caption = "Create Magento Order", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Order>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Order", Name = "CreateOrder", Caption = "Create Magento Order", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Order>")]
         public async Task<IEnumerable<Order>> CreateOrderAsync(Order order)
         {
             try
@@ -395,7 +395,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Order>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Order", Name = "UpdateOrder", Caption = "Update Magento Order", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Order>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Order", Name = "UpdateOrder", Caption = "Update Magento Order", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Order>")]
         public async Task<IEnumerable<Order>> UpdateOrderAsync(Order order)
         {
             try
@@ -415,7 +415,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Order>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Customer", Name = "CreateCustomer", Caption = "Create Magento Customer", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Customer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Customer", Name = "CreateCustomer", Caption = "Create Magento Customer", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Customer>")]
         public async Task<IEnumerable<Customer>> CreateCustomerAsync(Customer customer)
         {
             try
@@ -435,7 +435,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Customer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Customer", Name = "UpdateCustomer", Caption = "Update Magento Customer", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Customer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Customer", Name = "UpdateCustomer", Caption = "Update Magento Customer", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Customer>")]
         public async Task<IEnumerable<Customer>> UpdateCustomerAsync(Customer customer)
         {
             try
@@ -455,7 +455,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Customer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "InventoryItem", Name = "CreateInventoryItem", Caption = "Create Magento Inventory Item", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "magento.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="InventoryItem", Name = "CreateInventoryItem", Caption = "Create Magento Inventory Item", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "magento.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
         public async Task<IEnumerable<InventoryItem>> CreateInventoryItemAsync(InventoryItem inventoryItem)
         {
             try
@@ -475,7 +475,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<InventoryItem>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "InventoryItem", Name = "UpdateInventoryItem", Caption = "Update Magento Inventory Item", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "magento.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="InventoryItem", Name = "UpdateInventoryItem", Caption = "Update Magento Inventory Item", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "magento.png", misc = "ReturnType: IEnumerable<InventoryItem>")]
         public async Task<IEnumerable<InventoryItem>> UpdateInventoryItemAsync(InventoryItem inventoryItem)
         {
             try
@@ -495,7 +495,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<InventoryItem>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Cart", Name = "CreateCart", Caption = "Create Magento Cart", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Cart>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Cart", Name = "CreateCart", Caption = "Create Magento Cart", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Cart>")]
         public async Task<IEnumerable<Cart>> CreateCartAsync(Cart cart)
         {
             try
@@ -515,7 +515,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Cart>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Cart", Name = "UpdateCart", Caption = "Update Magento Cart", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 22, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Cart>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Cart", Name = "UpdateCart", Caption = "Update Magento Cart", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 22, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Cart>")]
         public async Task<IEnumerable<Cart>> UpdateCartAsync(Cart cart)
         {
             try
@@ -535,7 +535,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Cart>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Review", Name = "CreateReview", Caption = "Create Magento Review", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 23, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Review>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Review", Name = "CreateReview", Caption = "Create Magento Review", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 23, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Review>")]
         public async Task<IEnumerable<Review>> CreateReviewAsync(Review review)
         {
             try
@@ -555,7 +555,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Review>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Review", Name = "UpdateReview", Caption = "Update Magento Review", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 24, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Review>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Review", Name = "UpdateReview", Caption = "Update Magento Review", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 24, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Review>")]
         public async Task<IEnumerable<Review>> UpdateReviewAsync(Review review)
         {
             try
@@ -575,7 +575,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Review>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "StoreConfig", Name = "CreateStoreConfig", Caption = "Create Magento Store Config", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 25, iconimage = "magento.png", misc = "ReturnType: IEnumerable<StoreConfig>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="StoreConfig", Name = "CreateStoreConfig", Caption = "Create Magento Store Config", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 25, iconimage = "magento.png", misc = "ReturnType: IEnumerable<StoreConfig>")]
         public async Task<IEnumerable<StoreConfig>> CreateStoreConfigAsync(StoreConfig storeConfig)
         {
             try
@@ -595,7 +595,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<StoreConfig>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "StoreConfig", Name = "UpdateStoreConfig", Caption = "Update Magento Store Config", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 26, iconimage = "magento.png", misc = "ReturnType: IEnumerable<StoreConfig>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="StoreConfig", Name = "UpdateStoreConfig", Caption = "Update Magento Store Config", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 26, iconimage = "magento.png", misc = "ReturnType: IEnumerable<StoreConfig>")]
         public async Task<IEnumerable<StoreConfig>> UpdateStoreConfigAsync(StoreConfig storeConfig)
         {
             try
@@ -615,7 +615,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<StoreConfig>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Attribute", Name = "CreateAttribute", Caption = "Create Magento Attribute", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 27, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Models.Attribute>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Attribute", Name = "CreateAttribute", Caption = "Create Magento Attribute", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 27, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Models.Attribute>")]
         public async Task<IEnumerable<Models.Attribute>> CreateAttributeAsync(Models.Attribute attribute)
         {
             try
@@ -635,7 +635,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Models.Attribute>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "Attribute", Name = "UpdateAttribute", Caption = "Update Magento Attribute", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 28, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Models.Attribute>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="Attribute", Name = "UpdateAttribute", Caption = "Update Magento Attribute", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 28, iconimage = "magento.png", misc = "ReturnType: IEnumerable<Models.Attribute>")]
         public async Task<IEnumerable<Models.Attribute>> UpdateAttributeAsync(Models.Attribute attribute)
         {
             try
@@ -655,7 +655,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<Models.Attribute>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "TaxRule", Name = "CreateTaxRule", Caption = "Create Magento Tax Rule", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 29, iconimage = "magento.png", misc = "ReturnType: IEnumerable<TaxRule>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="TaxRule", Name = "CreateTaxRule", Caption = "Create Magento Tax Rule", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 29, iconimage = "magento.png", misc = "ReturnType: IEnumerable<TaxRule>")]
         public async Task<IEnumerable<TaxRule>> CreateTaxRuleAsync(TaxRule taxRule)
         {
             try
@@ -675,7 +675,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.Magento
             return new List<TaxRule>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType = "TaxRule", Name = "UpdateTaxRule", Caption = "Update Magento Tax Rule", ClassType = "MagentoDataSource", Showin = ShowinType.Both, Order = 30, iconimage = "magento.png", misc = "ReturnType: IEnumerable<TaxRule>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Magento, PointType = EnumPointType.Function, ObjectType ="TaxRule", Name = "UpdateTaxRule", Caption = "Update Magento Tax Rule", ClassType ="MagentoDataSource", Showin = ShowinType.Both, Order = 30, iconimage = "magento.png", misc = "ReturnType: IEnumerable<TaxRule>")]
         public async Task<IEnumerable<TaxRule>> UpdateTaxRuleAsync(TaxRule taxRule)
         {
             try

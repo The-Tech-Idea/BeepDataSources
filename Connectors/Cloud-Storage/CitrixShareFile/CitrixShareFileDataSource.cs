@@ -359,85 +359,85 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileItem", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileItem", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileItem>")]
         public List<ShareFileItem> GetItems(string itemId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "item_id", FilterValue = itemId } };
             return GetEntity("files", filters).Cast<ShareFileItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileItem", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileItem", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileItem>")]
         public List<ShareFileItem> GetFolderChildren(string itemId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "item_id", FilterValue = itemId } };
             return GetEntity("folder_children", filters).Cast<ShareFileItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileItem", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileItem", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileItem>")]
         public List<ShareFileItem> GetRootFolder()
         {
             return GetEntity("root_folder", new List<AppFilter>()).Cast<ShareFileItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileUser", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileUser>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileUser", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileUser>")]
         public List<ShareFileUser> GetUsers()
         {
             return GetEntity("users", new List<AppFilter>()).Cast<ShareFileUser>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileUser", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "ShareFileUser")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileUser", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "ShareFileUser")]
         public ShareFileUser? GetUserInfo(string userId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "user_id", FilterValue = userId } };
             return GetEntity("user_info", filters).Cast<ShareFileUser>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileUser", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "ShareFileUser")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileUser", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "ShareFileUser")]
         public ShareFileUser? GetCurrentUser()
         {
             return GetEntity("current_user", new List<AppFilter>()).Cast<ShareFileUser>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileGroup", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileGroup>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileGroup", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileGroup>")]
         public List<ShareFileGroup> GetGroups()
         {
             return GetEntity("groups", new List<AppFilter>()).Cast<ShareFileGroup>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileGroup", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "ShareFileGroup")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileGroup", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "ShareFileGroup")]
         public ShareFileGroup? GetGroupInfo(string groupId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "group_id", FilterValue = groupId } };
             return GetEntity("group_info", filters).Cast<ShareFileGroup>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileShare", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileShare>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileShare", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileShare>")]
         public List<ShareFileShare> GetShares()
         {
             return GetEntity("shares", new List<AppFilter>()).Cast<ShareFileShare>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileShare", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "ShareFileShare")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileShare", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "ShareFileShare")]
         public ShareFileShare? GetShareInfo(string shareId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "share_id", FilterValue = shareId } };
             return GetEntity("share_info", filters).Cast<ShareFileShare>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileSearchResult", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileSearchResult>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileSearchResult", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileSearchResult>")]
         public List<ShareFileSearchResult> Search(string query)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "query", FilterValue = query } };
             return GetEntity("search", filters).Cast<ShareFileSearchResult>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileItem", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileItem", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileItem>")]
         public List<ShareFileItem> GetFavorites()
         {
             return GetEntity("favorites", new List<AppFilter>()).Cast<ShareFileItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType = "ShareFileAccessControl", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileAccessControl>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.CitrixShareFile, PointType = EnumPointType.Function, ObjectType ="ShareFileAccessControl", ClassName = "CitrixShareFileDataSource", Showin = ShowinType.Both, misc = "List<ShareFileAccessControl>")]
         public List<ShareFileAccessControl> GetAccessControls(string itemId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "item_id", FilterValue = itemId } };
@@ -445,13 +445,13 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
         }
 
         [CommandAttribute(
-            Name = "CreateItemAsync",
+           Name = "CreateItemAsync",
             Caption = "Create Citrix ShareFile Item",
-            ObjectType = "ShareFileItem",
+            ObjectType ="ShareFileItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.CitrixShareFile,
-            ClassType = "CitrixShareFileDataSource",
+            ClassType ="CitrixShareFileDataSource",
             Showin = ShowinType.Both,
             Order = 1,
             iconimage = "createitem.png",
@@ -480,13 +480,13 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
         }
 
         [CommandAttribute(
-            Name = "CreateShareAsync",
+           Name = "CreateShareAsync",
             Caption = "Create Citrix ShareFile Share",
-            ObjectType = "ShareFileShare",
+            ObjectType ="ShareFileShare",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.CitrixShareFile,
-            ClassType = "CitrixShareFileDataSource",
+            ClassType ="CitrixShareFileDataSource",
             Showin = ShowinType.Both,
             Order = 2,
             iconimage = "createshare.png",
@@ -515,13 +515,13 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
         }
 
         [CommandAttribute(
-            Name = "CreateGroupAsync",
+           Name = "CreateGroupAsync",
             Caption = "Create Citrix ShareFile Group",
-            ObjectType = "ShareFileGroup",
+            ObjectType ="ShareFileGroup",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.CitrixShareFile,
-            ClassType = "CitrixShareFileDataSource",
+            ClassType ="CitrixShareFileDataSource",
             Showin = ShowinType.Both,
             Order = 3,
             iconimage = "creategroup.png",
@@ -550,13 +550,13 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
         }
 
         [CommandAttribute(
-            Name = "UpdateItemAsync",
+           Name = "UpdateItemAsync",
             Caption = "Update Citrix ShareFile Item",
-            ObjectType = "ShareFileItem",
+            ObjectType ="ShareFileItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.CitrixShareFile,
-            ClassType = "CitrixShareFileDataSource",
+            ClassType ="CitrixShareFileDataSource",
             Showin = ShowinType.Both,
             Order = 4,
             iconimage = "updateitem.png",
@@ -585,13 +585,13 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
         }
 
         [CommandAttribute(
-            Name = "UpdateShareAsync",
+           Name = "UpdateShareAsync",
             Caption = "Update Citrix ShareFile Share",
-            ObjectType = "ShareFileShare",
+            ObjectType ="ShareFileShare",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.CitrixShareFile,
-            ClassType = "CitrixShareFileDataSource",
+            ClassType ="CitrixShareFileDataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "updateshare.png",
@@ -620,13 +620,13 @@ namespace TheTechIdea.Beep.Connectors.CitrixShareFile
         }
 
         [CommandAttribute(
-            Name = "UpdateGroupAsync",
+           Name = "UpdateGroupAsync",
             Caption = "Update Citrix ShareFile Group",
-            ObjectType = "ShareFileGroup",
+            ObjectType ="ShareFileGroup",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.CitrixShareFile,
-            ClassType = "CitrixShareFileDataSource",
+            ClassType ="CitrixShareFileDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "updategroup.png",

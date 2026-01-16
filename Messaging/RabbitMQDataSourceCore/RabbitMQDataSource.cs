@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -77,20 +77,18 @@ namespace RabbitMQDataSourceCore
         #region "Pull from Queue"
 
         // Pull data from Queue using EntityName and filter, where EntityName is the Queue name
-        public object GetEntity(string EntityName, List<AppFilter> filter)
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
             try
             {
                 // Use the PeekMessageAsync method to fetch a message without acknowledging
-                var peekTask = PeekMessageAsync(EntityName, CancellationToken.None);
-                peekTask.Wait(); // Blocking call since this is a synchronous method
-
-                var message = peekTask.Result;
+                var message = PeekMessageAsync(EntityName, CancellationToken.None).GetAwaiter().GetResult();
                 if (message == null)
                 {
                     Logger?.WriteLog($"[GetEntity] No message found in queue '{EntityName}'.");
+                    return new List<object>();
                 }
-                return message;
+                return new List<object> { message };
             }
             catch (Exception ex)
             {
@@ -99,29 +97,32 @@ namespace RabbitMQDataSourceCore
             }
         }
 
-        // Asynchronous method to pull data from Queue using EntityName and filter
-        public async Task<object> GetEntityAsync(string EntityName, List<AppFilter> filter)
-        {
-            try
-            {
-                // Use PeekMessageAsync to fetch a message without acknowledging
-                var message = await PeekMessageAsync(EntityName, CancellationToken.None);
-                if (message == null)
-                {
-                    Logger?.WriteLog($"[GetEntityAsync] No message found in queue '{EntityName}'.");
-                }
-                return message;
-            }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[GetEntityAsync] Error: {ex.Message}");
-                throw;
-            }
-        }
+         // Asynchronous method to pull data from Queue using EntityName and filter
+         public async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> filter)
+         {
+             try
+             {
+                 // Use PeekMessageAsync to fetch a message without acknowledging
+                 var message = await PeekMessageAsync(EntityName, CancellationToken.None);
+                 if (message == null)
+                 {
+                     Logger?.WriteLog($"[GetEntityAsync] No message found in queue '{EntityName}'.");
+                     return new List<object>();
+                 }
+                 return new List<object> { message };
+             }
+             catch (Exception ex)
+             {
+                 Logger?.WriteLog($"[GetEntityAsync] Error: {ex.Message}");
+                 throw;
+             }
+         }
 
-        // Pull data from Queue with pagination support
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+         // Pull data from Queue with pagination support
+        // NOTE: This method consumes messages from the queue (does not use peek), so messages will be removed
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
         {
+            var pagedResult = new PagedResult();
             try
             {
                 if (!Channels.TryGetValue(EntityName, out var channel))
@@ -129,39 +130,52 @@ namespace RabbitMQDataSourceCore
                     throw new Exception($"Channel not found for queue '{EntityName}'.");
                 }
 
-                // Collect messages up to the page size
-                var messages = new List<GenericMessage>();
-                for (int i = 0; i < pageSize; i++)
-                {
-                    // Use PeekMessageAsync to get the message
-                    var peekTask = PeekMessageAsync(EntityName, CancellationToken.None);
-                    peekTask.Wait(); // Blocking call to fetch each message
+                // Calculate skip count based on page number
+                int skipCount = (pageNumber - 1) * pageSize;
+                var messages = new List<object>();
 
-                    var message = peekTask.Result as GenericMessage;
-                    if (message != null)
+                // Consume skipCount messages first (skip to the desired page)
+                for (int i = 0; i < skipCount; i++)
+                {
+                    var result = channel.BasicGetAsync(queue: EntityName, autoAck: true).GetAwaiter().GetResult();
+                    if (result == null)
                     {
-                        messages.Add(message);
-                    }
-                    else
-                    {
-                        // Break if no more messages
+                        // No more messages available
                         break;
                     }
                 }
 
-                // Return the requested page
-                var pagedMessages = messages
-                    .Skip((pageNumber - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToList();
+                // Collect up to pageSize messages for the current page
+                for (int i = 0; i < pageSize; i++)
+                {
+                    var result = channel.BasicGetAsync(queue: EntityName, autoAck: true).GetAwaiter().GetResult();
+                    if (result != null)
+                    {
+                        var message = new GenericMessage
+                        {
+                            EntityName = EntityName,
+                            Payload = Encoding.UTF8.GetString(result.Body.ToArray()),
+                            Metadata = FromRabbitMqHeaders(result.BasicProperties?.Headers ?? new Dictionary<string, object>()),
+                            Timestamp = DateTime.UtcNow,
+                            MessageId = result.BasicProperties?.MessageId ?? Guid.NewGuid().ToString(),
+                            DeliveryTag = result.DeliveryTag
+                        };
+                        messages.Add(message);
+                    }
+                    else
+                    {
+                        // No more messages
+                        break;
+                    }
+                }
 
-                return pagedMessages;
             }
             catch (Exception ex)
             {
                 Logger?.WriteLog($"[GetEntity (with pagination)] Error: {ex.Message}");
                 throw;
             }
+            return pagedResult ?? new PagedResult();
         }
 
         #endregion "Pull from Queue"
@@ -201,12 +215,14 @@ namespace RabbitMQDataSourceCore
 
         /// <summary>
         /// Push data to the Queue using EntityName and InsertedData.
+        /// NOTE: This method blocks on async code - Consider using InsertEntityAsync instead for non-blocking operations.
         /// </summary>
         /// <param name="EntityName">The name of the queue.</param>
         /// <param name="InsertedData">The data to insert (message payload).</param>
         /// <returns>An IErrorsInfo object indicating the result of the operation.</returns>
         public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
         {
+            // Using GetAwaiter().GetResult() is preferred over Task.Wait() as it unwraps exceptions properly
             return InsertEntityAsync(EntityName, InsertedData).GetAwaiter().GetResult();
         }
 
@@ -229,22 +245,162 @@ namespace RabbitMQDataSourceCore
         }
         public ConnectionState Closeconnection()
         {
-            throw new NotImplementedException();
+            try
+            {
+                Dataconnection?.CloseConn();
+                ConnectionStatus = ConnectionState.Closed;
+                return ConnectionStatus;
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Beep", $"Error in Closing Connection {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                ConnectionStatus = ConnectionState.Broken;
+                return ConnectionStatus;
+            }
         }
         #endregion "open/close connection"
         #region "Add/Remove Queue"
         public IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
-            throw new NotImplementedException();
+            var errors = new ErrorsInfo();
+            try
+            {
+                if (entities == null || entities.Count == 0)
+                {
+                    errors.Flag = Errors.Warning;
+                    errors.Message = "No entities to create.";
+                    return errors;
+                }
+
+                foreach (var entity in entities)
+                {
+                    var result = CreateQueueAsync(entity.EntityName).GetAwaiter().GetResult();
+                    if (result.Flag == Errors.Failed)
+                    {
+                        errors.Flag = Errors.Failed;
+                        errors.Message = $"Failed to create queue '{entity.EntityName}': {result.Message}";
+                        Logger?.WriteLog($"[CreateEntities] Error: {errors.Message}");
+                        return errors;
+                    }
+
+                    // Add to EntitiesNames and Entities lists
+                    if (!EntitiesNames.Contains(entity.EntityName))
+                    {
+                        EntitiesNames.Add(entity.EntityName);
+                    }
+                    if (!Entities.Any(e => e.EntityName == entity.EntityName))
+                    {
+                        Entities.Add(entity);
+                    }
+                }
+
+                Logger?.WriteLog($"[CreateEntities] Successfully created {entities.Count} queue(s).");
+            }
+            catch (Exception ex)
+            {
+                errors.Flag = Errors.Failed;
+                errors.Message = ex.Message;
+                Logger?.WriteLog($"[CreateEntities] Error: {ex.Message}");
+            }
+            return errors;
         }
 
         public bool CreateEntityAs(EntityStructure entity)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (entity == null)
+                {
+                    Logger?.WriteLog("[CreateEntityAs] Entity cannot be null.");
+                    return false;
+                }
+
+                var result = CreateQueueAsync(entity.EntityName).GetAwaiter().GetResult();
+                if (result.Flag == Errors.Failed)
+                {
+                    Logger?.WriteLog($"[CreateEntityAs] Failed to create queue '{entity.EntityName}': {result.Message}");
+                    return false;
+                }
+
+                // Add to EntitiesNames and Entities lists
+                if (!EntitiesNames.Contains(entity.EntityName))
+                {
+                    EntitiesNames.Add(entity.EntityName);
+                }
+                if (!Entities.Any(e => e.EntityName == entity.EntityName))
+                {
+                    Entities.Add(entity);
+                }
+
+                Logger?.WriteLog($"[CreateEntityAs] Successfully created queue '{entity.EntityName}'.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"[CreateEntityAs] Error: {ex.Message}");
+                return false;
+            }
         }
         public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
         {
-            throw new NotImplementedException();
+            var errors = new ErrorsInfo();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(EntityName))
+                {
+                    errors.Flag = Errors.Failed;
+                    errors.Message = "EntityName cannot be null or empty.";
+                    Logger?.WriteLog($"[DeleteEntity] {errors.Message}");
+                    return errors;
+                }
+
+                // For RabbitMQ queues, DeleteEntity typically means deleting the queue
+                // If UploadDataRow is provided, it could be interpreted as deleting a specific message (if DeliveryTag is available)
+                if (UploadDataRow is GenericMessage message && message.DeliveryTag.HasValue)
+                {
+                    // Acknowledge (delete) a specific message
+                    if (Channels.TryGetValue(EntityName, out var channel))
+                    {
+                        channel.BasicNackAsync(message.DeliveryTag.Value, multiple: false, requeue: false).GetAwaiter().GetResult();
+                        Logger?.WriteLog($"[DeleteEntity] Successfully deleted message with DeliveryTag {message.DeliveryTag} from queue '{EntityName}'.");
+                    }
+                    else
+                    {
+                        errors.Flag = Errors.Failed;
+                        errors.Message = $"Channel not found for queue '{EntityName}'.";
+                        Logger?.WriteLog($"[DeleteEntity] {errors.Message}");
+                    }
+                }
+                else
+                {
+                    // Delete the entire queue
+                    var result = DeleteQueueAsync(EntityName).GetAwaiter().GetResult();
+                    if (result.Flag == Errors.Failed)
+                    {
+                        errors.Flag = Errors.Failed;
+                        errors.Message = result.Message;
+                        Logger?.WriteLog($"[DeleteEntity] Failed to delete queue '{EntityName}': {result.Message}");
+                        return errors;
+                    }
+
+                    // Remove from EntitiesNames and Entities lists
+                    EntitiesNames.Remove(EntityName);
+                    Entities.RemoveAll(e => e.EntityName == EntityName);
+                    if (Channels.ContainsKey(EntityName))
+                    {
+                        Channels.Remove(EntityName);
+                    }
+
+                    Logger?.WriteLog($"[DeleteEntity] Successfully deleted queue '{EntityName}'.");
+                }
+            }
+            catch (Exception ex)
+            {
+                errors.Flag = Errors.Failed;
+                errors.Message = ex.Message;
+                Logger?.WriteLog($"[DeleteEntity] Error: {ex.Message}");
+            }
+            return errors;
         }
         #endregion "Add/Remove Queue"
         #region "Updated Functions"
@@ -310,40 +466,42 @@ namespace RabbitMQDataSourceCore
                 Message = "SQL execution is not supported by RabbitMQ."
             };
         }
-        // Retrieve a list of child tables (not applicable to RabbitMQ; placeholder)
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
-        {
-            Logger?.WriteLog("[GetChildTablesList] Child relations are not supported by RabbitMQ.");
-            return new List<ChildRelation>();
-        }
-        // Generate create entity script (could return a sample RabbitMQ queue declaration command)
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
-        {
-            var scripts = new List<ETLScriptDet>();
-            if (entities != null)
-            {
-                //foreach (var entity in entities)
-                //{
-                //    var script = new ETLScriptDet
-                //    {
-                //          = $"QueueDeclare({entity.EntityName}, durable: false, exclusive: false, autoDelete: false, arguments: null);"
-                //    };
-                //    scripts.Add(script);
-                //}
-            }
-            return scripts;
-        }
-        // Retrieve a list of all entities (queues)
-        public List<string> GetEntitesList()
-        {
-            return EntitiesNames ?? new List<string>();
-        }
-        // Retrieve foreign keys for an entity (not applicable to RabbitMQ; placeholder)
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
-        {
-            Logger?.WriteLog("[GetEntityforeignkeys] Foreign keys are not supported by RabbitMQ.");
-            return new List<RelationShipKeys>();
-        }
+         // Retrieve a list of child tables (not applicable to RabbitMQ; placeholder)
+         public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+         {
+             Logger?.WriteLog("[GetChildTablesList] Child relations are not supported by RabbitMQ.");
+             return new List<ChildRelation>();
+         }
+         // Generate create entity script (returns RabbitMQ queue declaration commands)
+         public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+         {
+             var scripts = new List<ETLScriptDet>();
+             if (entities != null && entities.Count > 0)
+             {
+                 foreach (var entity in entities)
+                 {
+                     var script = new ETLScriptDet
+                     {
+                         SourceEntityName = entity.EntityName,
+                         DestinationDataSourceEntityName = DatasourceName,
+                         Ddl = $"await channel.QueueDeclareAsync(queue: \"{entity.EntityName}\", durable: false, exclusive: false, autoDelete: false, arguments: null);"
+                     };
+                     scripts.Add(script);
+                 }
+             }
+             return scripts;
+         }
+         // Retrieve a list of all entities (queues)
+         public IEnumerable<string> GetEntitesList()
+         {
+             return EntitiesNames ?? new List<string>();
+         }
+         // Retrieve foreign keys for an entity (not applicable to RabbitMQ; placeholder)
+         public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+         {
+             Logger?.WriteLog("[GetEntityforeignkeys] Foreign keys are not supported by RabbitMQ.");
+             return new List<RelationShipKeys>();
+         }
         // Get the index of an entity in the list
         public int GetEntityIdx(string entityName)
         {
@@ -393,12 +551,12 @@ namespace RabbitMQDataSourceCore
             Logger?.WriteLog("[GetScalarAsync] Scalar queries are not supported by RabbitMQ.");
             return Task.FromResult(0.0);
         }
-        // Run a query (not applicable to RabbitMQ; placeholder)
-        public object RunQuery(string qrystr)
-        {
-            Logger?.WriteLog("[RunQuery] Queries are not supported by RabbitMQ.");
-            return null;
-        }
+         // Run a query (not applicable to RabbitMQ; placeholder)
+         public IEnumerable<object> RunQuery(string qrystr)
+         {
+             Logger?.WriteLog("[RunQuery] Queries are not supported by RabbitMQ.");
+             return new List<object>();
+         }
         // Run a script (e.g., script for creating queues or exchanges)
         public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
         {
@@ -437,21 +595,60 @@ namespace RabbitMQDataSourceCore
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects)
+                    // Dispose managed state (managed objects)
+                    try
+                    {
+                        // Close all channels
+                        if (Channels != null)
+                        {
+                            foreach (var channel in Channels.Values)
+                            {
+                                try
+                                {
+                                    if (channel != null && channel.IsOpen)
+                                    {
+                                        channel.CloseAsync().GetAwaiter().GetResult();
+                                    }
+                                    channel?.Dispose();
+                                }
+                                catch (Exception ex)
+                                {
+                                    Logger?.WriteLog($"[Dispose] Error closing channel: {ex.Message}");
+                                }
+                            }
+                            Channels.Clear();
+                            Channels = null;
+                        }
+
+                        // Close the connection if it's open
+                        if (Dataconnection is RabbitMQDataConnection rabbitConn)
+                        {
+                            try
+                            {
+                                rabbitConn.CloseConn();
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger?.WriteLog($"[Dispose] Error closing RabbitMQ connection: {ex.Message}");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger?.WriteLog($"[Dispose] Error during managed resource cleanup: {ex.Message}");
+                    }
                 }
 
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
                 disposedValue = true;
             }
         }
 
-        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~RabbitMQDataSource()
-        // {
-        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        //     Dispose(disposing: false);
-        // }
+        // Override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        ~RabbitMQDataSource()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: false);
+        }
 
         public void Dispose()
         {
@@ -748,8 +945,8 @@ namespace RabbitMQDataSourceCore
                         var msg = Encoding.UTF8.GetString(body);
                         Logger?.WriteLog($"[ReceiveMessageAsync] From '{queueName}': {msg}");
 
-                        // Manually acknowledge
-                        channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                         // Manually acknowledge
+                         await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
 
                         // If you want to do further async processing, you can do it here.
                         await Task.Yield();
@@ -842,7 +1039,7 @@ namespace RabbitMQDataSourceCore
                         DeliveryMode = (message.Priority.HasValue ? DeliveryModes.Persistent : DeliveryModes.Transient),
                         MessageId = message.MessageId,
                         Timestamp = new AmqpTimestamp(new DateTimeOffset(message.Timestamp).ToUnixTimeSeconds()),
-                        Priority = (byte?)(message.Priority ?? 0),
+                        Priority = (byte)(message.Priority ?? 0),
                         Headers = ToRabbitMqHeaders(message),
                         CorrelationId = message.CorrelationId,
                         Type = message.MessageType
@@ -1081,16 +1278,26 @@ namespace RabbitMQDataSourceCore
             return headers;
         }
 
-        // Convert RabbitMQ Headers to GenericMessage Metadata
-        public Dictionary<string, string> FromRabbitMqHeaders(IDictionary<string, object> headers)
-        {
-            var metadata = new Dictionary<string, string>();
-            foreach (var header in headers)
-            {
-                metadata[header.Key] = header.Value?.ToString();
-            }
-            return metadata;
-        }
+         // Convert RabbitMQ Headers to GenericMessage Metadata
+         // Excludes null values to prevent downstream issues
+         public Dictionary<string, string> FromRabbitMqHeaders(IDictionary<string, object> headers)
+         {
+             var metadata = new Dictionary<string, string>();
+             if (headers == null)
+             {
+                 return metadata;
+             }
+             
+             foreach (var header in headers)
+             {
+                 // Skip null values to prevent downstream issues with null strings
+                 if (header.Value != null)
+                 {
+                     metadata[header.Key] = header.Value.ToString();
+                 }
+             }
+             return metadata;
+         }
 
         // Create IBasicProperties with Headers from GenericMessage
         public IBasicProperties ToRabbitMQHeaders(GenericMessage message)

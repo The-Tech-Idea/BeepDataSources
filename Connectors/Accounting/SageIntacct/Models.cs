@@ -41,8 +41,8 @@ namespace TheTechIdea.Beep.Connectors.SageIntacct
         [JsonPropertyName("customerName")]
         public string? CustomerName { get; set; }
 
-        [JsonPropertyName("displayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
 
         [JsonPropertyName("companyName")]
         public string? CompanyName { get; set; }
@@ -299,8 +299,8 @@ namespace TheTechIdea.Beep.Connectors.SageIntacct
         [JsonPropertyName("vendorName")]
         public string? VendorName { get; set; }
 
-        [JsonPropertyName("displayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
 
         [JsonPropertyName("companyName")]
         public string? CompanyName { get; set; }
@@ -975,7 +975,7 @@ namespace TheTechIdea.Beep.Connectors.SageIntacct
 
     public class CustomField
     {
-        [JsonPropertyName("fieldName")]
+        [JsonPropertyName("FieldName")]
         public string? FieldName { get; set; }
 
         [JsonPropertyName("fieldValue")]

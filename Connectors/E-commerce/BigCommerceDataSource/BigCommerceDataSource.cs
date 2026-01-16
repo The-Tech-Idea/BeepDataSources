@@ -306,63 +306,63 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Products", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceProduct>")]
         public async Task<IEnumerable<BigCommerceProduct>> GetProducts(AppFilter filter)
         {
             var result = await GetEntityAsync("products", new List<AppFilter> { filter });
             return result.Cast<BigCommerceProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Categories", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Categories", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceCategory>")]
         public async Task<IEnumerable<BigCommerceCategory>> GetCategories(AppFilter filter)
         {
             var result = await GetEntityAsync("categories", new List<AppFilter> { filter });
             return result.Cast<BigCommerceCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Brands", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceBrand>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Brands", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceBrand>")]
         public async Task<IEnumerable<BigCommerceBrand>> GetBrands(AppFilter filter)
         {
             var result = await GetEntityAsync("brands", new List<AppFilter> { filter });
             return result.Cast<BigCommerceBrand>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Customers", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceCustomer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Customers", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceCustomer>")]
         public async Task<IEnumerable<BigCommerceCustomer>> GetCustomers(AppFilter filter)
         {
             var result = await GetEntityAsync("customers", new List<AppFilter> { filter });
             return result.Cast<BigCommerceCustomer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Orders", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Orders", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceOrder>")]
         public async Task<IEnumerable<BigCommerceOrder>> GetOrders(AppFilter filter)
         {
             var result = await GetEntityAsync("orders", new List<AppFilter> { filter });
             return result.Cast<BigCommerceOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Carts", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceCart>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Carts", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceCart>")]
         public async Task<IEnumerable<BigCommerceCart>> GetCarts(AppFilter filter)
         {
             var result = await GetEntityAsync("carts", new List<AppFilter> { filter });
             return result.Cast<BigCommerceCart>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Coupons", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceCoupon>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Coupons", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceCoupon>")]
         public async Task<IEnumerable<BigCommerceCoupon>> GetCoupons(AppFilter filter)
         {
             var result = await GetEntityAsync("coupons", new List<AppFilter> { filter });
             return result.Cast<BigCommerceCoupon>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Inventory", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceInventoryItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Inventory", ClassName = "BigCommerceDataSource", Showin = ShowinType.Both, misc = "IEnumerable<BigCommerceInventoryItem>")]
         public async Task<IEnumerable<BigCommerceInventoryItem>> GetInventory(AppFilter filter)
         {
             var result = await GetEntityAsync("inventory", new List<AppFilter> { filter });
             return result.Cast<BigCommerceInventoryItem>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Products", Name = "CreateProduct", Caption = "Create BigCommerce Product", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Products", Name = "CreateProduct", Caption = "Create BigCommerce Product", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceProduct>")]
         public async Task<IEnumerable<BigCommerceProduct>> CreateProductAsync(BigCommerceProduct product)
         {
             try
@@ -382,7 +382,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Products", Name = "UpdateProduct", Caption = "Update BigCommerce Product", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Products", Name = "UpdateProduct", Caption = "Update BigCommerce Product", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceProduct>")]
         public async Task<IEnumerable<BigCommerceProduct>> UpdateProductAsync(BigCommerceProduct product)
         {
             try
@@ -402,7 +402,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "CreateCategory", Caption = "Create BigCommerce Category", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Categories", Name = "CreateCategory", Caption = "Create BigCommerce Category", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCategory>")]
         public async Task<IEnumerable<BigCommerceCategory>> CreateCategoryAsync(BigCommerceCategory category)
         {
             try
@@ -422,7 +422,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "UpdateCategory", Caption = "Update BigCommerce Category", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Categories", Name = "UpdateCategory", Caption = "Update BigCommerce Category", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCategory>")]
         public async Task<IEnumerable<BigCommerceCategory>> UpdateCategoryAsync(BigCommerceCategory category)
         {
             try
@@ -442,7 +442,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Brands", Name = "CreateBrand", Caption = "Create BigCommerce Brand", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceBrand>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Brands", Name = "CreateBrand", Caption = "Create BigCommerce Brand", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceBrand>")]
         public async Task<IEnumerable<BigCommerceBrand>> CreateBrandAsync(BigCommerceBrand brand)
         {
             try
@@ -462,7 +462,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceBrand>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Brands", Name = "UpdateBrand", Caption = "Update BigCommerce Brand", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceBrand>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Brands", Name = "UpdateBrand", Caption = "Update BigCommerce Brand", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceBrand>")]
         public async Task<IEnumerable<BigCommerceBrand>> UpdateBrandAsync(BigCommerceBrand brand)
         {
             try
@@ -482,7 +482,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceBrand>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Customers", Name = "CreateCustomer", Caption = "Create BigCommerce Customer", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCustomer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Customers", Name = "CreateCustomer", Caption = "Create BigCommerce Customer", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCustomer>")]
         public async Task<IEnumerable<BigCommerceCustomer>> CreateCustomerAsync(BigCommerceCustomer customer)
         {
             try
@@ -502,7 +502,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceCustomer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Customers", Name = "UpdateCustomer", Caption = "Update BigCommerce Customer", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCustomer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Customers", Name = "UpdateCustomer", Caption = "Update BigCommerce Customer", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCustomer>")]
         public async Task<IEnumerable<BigCommerceCustomer>> UpdateCustomerAsync(BigCommerceCustomer customer)
         {
             try
@@ -522,7 +522,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceCustomer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "CreateOrder", Caption = "Create BigCommerce Order", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Orders", Name = "CreateOrder", Caption = "Create BigCommerce Order", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceOrder>")]
         public async Task<IEnumerable<BigCommerceOrder>> CreateOrderAsync(BigCommerceOrder order)
         {
             try
@@ -542,7 +542,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "UpdateOrder", Caption = "Update BigCommerce Order", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Orders", Name = "UpdateOrder", Caption = "Update BigCommerce Order", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceOrder>")]
         public async Task<IEnumerable<BigCommerceOrder>> UpdateOrderAsync(BigCommerceOrder order)
         {
             try
@@ -562,7 +562,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Carts", Name = "CreateCart", Caption = "Create BigCommerce Cart", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCart>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Carts", Name = "CreateCart", Caption = "Create BigCommerce Cart", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCart>")]
         public async Task<IEnumerable<BigCommerceCart>> CreateCartAsync(BigCommerceCart cart)
         {
             try
@@ -582,7 +582,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceCart>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Carts", Name = "UpdateCart", Caption = "Update BigCommerce Cart", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCart>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Carts", Name = "UpdateCart", Caption = "Update BigCommerce Cart", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCart>")]
         public async Task<IEnumerable<BigCommerceCart>> UpdateCartAsync(BigCommerceCart cart)
         {
             try
@@ -602,7 +602,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceCart>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Coupons", Name = "CreateCoupon", Caption = "Create BigCommerce Coupon", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCoupon>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Coupons", Name = "CreateCoupon", Caption = "Create BigCommerce Coupon", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCoupon>")]
         public async Task<IEnumerable<BigCommerceCoupon>> CreateCouponAsync(BigCommerceCoupon coupon)
         {
             try
@@ -622,7 +622,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceCoupon>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Coupons", Name = "UpdateCoupon", Caption = "Update BigCommerce Coupon", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 22, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCoupon>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Coupons", Name = "UpdateCoupon", Caption = "Update BigCommerce Coupon", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 22, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceCoupon>")]
         public async Task<IEnumerable<BigCommerceCoupon>> UpdateCouponAsync(BigCommerceCoupon coupon)
         {
             try
@@ -642,7 +642,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceCoupon>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Inventory", Name = "CreateInventoryItem", Caption = "Create BigCommerce Inventory Item", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 23, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceInventoryItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Inventory", Name = "CreateInventoryItem", Caption = "Create BigCommerce Inventory Item", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 23, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceInventoryItem>")]
         public async Task<IEnumerable<BigCommerceInventoryItem>> CreateInventoryItemAsync(BigCommerceInventoryItem inventoryItem)
         {
             try
@@ -662,7 +662,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource
             return new List<BigCommerceInventoryItem>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType = "Inventory", Name = "UpdateInventoryItem", Caption = "Update BigCommerce Inventory Item", ClassType = "BigCommerceDataSource", Showin = ShowinType.Both, Order = 24, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceInventoryItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.BigCommerce, PointType = EnumPointType.Function, ObjectType ="Inventory", Name = "UpdateInventoryItem", Caption = "Update BigCommerce Inventory Item", ClassType ="BigCommerceDataSource", Showin = ShowinType.Both, Order = 24, iconimage = "bigcommerce.png", misc = "ReturnType: IEnumerable<BigCommerceInventoryItem>")]
         public async Task<IEnumerable<BigCommerceInventoryItem>> UpdateInventoryItemAsync(BigCommerceInventoryItem inventoryItem)
         {
             try

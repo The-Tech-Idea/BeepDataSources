@@ -302,28 +302,28 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.EcwidDataSource
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "EcwidDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EcwidProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType ="Products", ClassName = "EcwidDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EcwidProduct>")]
         public async Task<IEnumerable<EcwidProduct>> GetProducts(AppFilter filter)
         {
             var result = await GetEntityAsync("products", new List<AppFilter> { filter });
             return result.Cast<EcwidProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Orders", ClassName = "EcwidDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EcwidOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType ="Orders", ClassName = "EcwidDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EcwidOrder>")]
         public async Task<IEnumerable<EcwidOrder>> GetOrders(AppFilter filter)
         {
             var result = await GetEntityAsync("orders", new List<AppFilter> { filter });
             return result.Cast<EcwidOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Categories", ClassName = "EcwidDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EcwidCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType ="Categories", ClassName = "EcwidDataSource", Showin = ShowinType.Both, misc = "IEnumerable<EcwidCategory>")]
         public async Task<IEnumerable<EcwidCategory>> GetCategories(AppFilter filter)
         {
             var result = await GetEntityAsync("categories", new List<AppFilter> { filter });
             return result.Cast<EcwidCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Products", Name = "CreateProduct", Caption = "Create Ecwid Product", ClassType = "EcwidDataSource", Showin = ShowinType.Both, Order = 4, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType ="Products", Name = "CreateProduct", Caption = "Create Ecwid Product", ClassType ="EcwidDataSource", Showin = ShowinType.Both, Order = 4, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidProduct>")]
         public async Task<IEnumerable<EcwidProduct>> CreateProductAsync(EcwidProduct product)
         {
             try
@@ -343,7 +343,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.EcwidDataSource
             return new List<EcwidProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Products", Name = "UpdateProduct", Caption = "Update Ecwid Product", ClassType = "EcwidDataSource", Showin = ShowinType.Both, Order = 5, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType ="Products", Name = "UpdateProduct", Caption = "Update Ecwid Product", ClassType ="EcwidDataSource", Showin = ShowinType.Both, Order = 5, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidProduct>")]
         public async Task<IEnumerable<EcwidProduct>> UpdateProductAsync(EcwidProduct product)
         {
             try
@@ -363,7 +363,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.EcwidDataSource
             return new List<EcwidProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "CreateOrder", Caption = "Create Ecwid Order", ClassType = "EcwidDataSource", Showin = ShowinType.Both, Order = 6, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType ="Orders", Name = "CreateOrder", Caption = "Create Ecwid Order", ClassType ="EcwidDataSource", Showin = ShowinType.Both, Order = 6, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidOrder>")]
         public async Task<IEnumerable<EcwidOrder>> CreateOrderAsync(EcwidOrder order)
         {
             try
@@ -383,7 +383,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.EcwidDataSource
             return new List<EcwidOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "UpdateOrder", Caption = "Update Ecwid Order", ClassType = "EcwidDataSource", Showin = ShowinType.Both, Order = 7, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType ="Orders", Name = "UpdateOrder", Caption = "Update Ecwid Order", ClassType ="EcwidDataSource", Showin = ShowinType.Both, Order = 7, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidOrder>")]
         public async Task<IEnumerable<EcwidOrder>> UpdateOrderAsync(EcwidOrder order)
         {
             try
@@ -403,7 +403,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.EcwidDataSource
             return new List<EcwidOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "CreateCategory", Caption = "Create Ecwid Category", ClassType = "EcwidDataSource", Showin = ShowinType.Both, Order = 8, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType ="Categories", Name = "CreateCategory", Caption = "Create Ecwid Category", ClassType ="EcwidDataSource", Showin = ShowinType.Both, Order = 8, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidCategory>")]
         public async Task<IEnumerable<EcwidCategory>> CreateCategoryAsync(EcwidCategory category)
         {
             try
@@ -423,7 +423,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.EcwidDataSource
             return new List<EcwidCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "UpdateCategory", Caption = "Update Ecwid Category", ClassType = "EcwidDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Ecwid, PointType = EnumPointType.Function, ObjectType ="Categories", Name = "UpdateCategory", Caption = "Update Ecwid Category", ClassType ="EcwidDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "ecwid.png", misc = "ReturnType: IEnumerable<EcwidCategory>")]
         public async Task<IEnumerable<EcwidCategory>> UpdateCategoryAsync(EcwidCategory category)
         {
             try

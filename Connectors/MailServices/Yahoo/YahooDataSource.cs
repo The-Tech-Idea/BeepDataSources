@@ -14,6 +14,7 @@ using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
 using TheTechIdea.Beep.Connectors.Yahoo.Models;
+using System.Text.Json.Serialization;
 
 namespace TheTechIdea.Beep.Connectors.Yahoo
 {
@@ -123,7 +124,7 @@ namespace TheTechIdea.Beep.Connectors.Yahoo
         private IEnumerable<object> ParseMessages(string json)
         {
             var response = JsonSerializer.Deserialize<YahooMessagesResponse>(json);
-            return response?.Messages ?? Array.Empty<YahooMessage>();
+            return (response?.Messages ?? new List<YahooMessage>()).Cast<object>();
         }
 
         private IEnumerable<object> ParseMessage(string json)
@@ -135,7 +136,7 @@ namespace TheTechIdea.Beep.Connectors.Yahoo
         private IEnumerable<object> ParseContacts(string json)
         {
             var response = JsonSerializer.Deserialize<YahooContactsResponse>(json);
-            return response?.Contacts ?? Array.Empty<YahooContact>();
+            return (response?.Contacts ?? new List<YahooContact>()).Cast<object>();
         }
 
         private IEnumerable<object> ParseContact(string json)
@@ -147,7 +148,7 @@ namespace TheTechIdea.Beep.Connectors.Yahoo
         private IEnumerable<object> ParseFolders(string json)
         {
             var response = JsonSerializer.Deserialize<YahooFoldersResponse>(json);
-            return response?.Folders ?? Array.Empty<YahooFolder>();
+            return (response?.Folders ?? new List<YahooFolder>()).Cast<object>();
         }
 
         private IEnumerable<object> ParseFolder(string json)
@@ -236,28 +237,28 @@ namespace TheTechIdea.Beep.Connectors.Yahoo
         }
 
         // CommandAttribute methods for Yahoo API
-        [CommandAttribute(Name = "GetMessages", Caption = "Get Yahoo Messages", ObjectType = "YahooMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Yahoo, ClassType = "YahooMessage", Showin = ShowinType.Grid, Order = 1, iconimage = "mail.png")]
+        [CommandAttribute(Name = "GetMessages", Caption = "Get Yahoo Messages", ObjectType ="YahooMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Yahoo, ClassType ="YahooMessage", Showin = ShowinType.Both, Order = 1, iconimage = "mail.png")]
         public async Task<IEnumerable<YahooMessage>> GetMessages(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("messages", filters);
             return result.Cast<YahooMessage>();
         }
 
-        [CommandAttribute(Name = "GetMessage", Caption = "Get Yahoo Message", ObjectType = "YahooMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Yahoo, ClassType = "YahooMessage", Showin = ShowinType.Grid, Order = 2, iconimage = "mail.png")]
+        [CommandAttribute(Name = "GetMessage", Caption = "Get Yahoo Message", ObjectType ="YahooMessage", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Yahoo, ClassType ="YahooMessage", Showin = ShowinType.Both, Order = 2, iconimage = "mail.png")]
         public async Task<IEnumerable<YahooMessage>> GetMessage(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("messages.get", filters);
             return result.Cast<YahooMessage>();
         }
 
-        [CommandAttribute(Name = "GetContacts", Caption = "Get Yahoo Contacts", ObjectType = "YahooContact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Yahoo, ClassType = "YahooContact", Showin = ShowinType.Grid, Order = 3, iconimage = "contact.png")]
+        [CommandAttribute(Name = "GetContacts", Caption = "Get Yahoo Contacts", ObjectType ="YahooContact", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Yahoo, ClassType ="YahooContact", Showin = ShowinType.Both, Order = 3, iconimage = "contact.png")]
         public async Task<IEnumerable<YahooContact>> GetContacts(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("contacts", filters);
             return result.Cast<YahooContact>();
         }
 
-        [CommandAttribute(Name = "GetFolders", Caption = "Get Yahoo Folders", ObjectType = "YahooFolder", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Yahoo, ClassType = "YahooFolder", Showin = ShowinType.Grid, Order = 4, iconimage = "folder.png")]
+        [CommandAttribute(Name = "GetFolders", Caption = "Get Yahoo Folders", ObjectType ="YahooFolder", PointType = EnumPointType.Function, Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Yahoo, ClassType ="YahooFolder", Showin = ShowinType.Both, Order = 4, iconimage = "folder.png")]
         public async Task<IEnumerable<YahooFolder>> GetFolders(List<AppFilter> filters = null)
         {
             var result = await GetEntityAsync("folders", filters);
@@ -273,8 +274,8 @@ namespace TheTechIdea.Beep.Connectors.Yahoo
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Yahoo,
             PointType = EnumPointType.Function,
-            ObjectType = "YahooMessage",
-            ClassType = "YahooDataSource",
+            ObjectType ="YahooMessage",
+            ClassType ="YahooDataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "mail.png",
@@ -294,13 +295,13 @@ namespace TheTechIdea.Beep.Connectors.Yahoo
         /// Creates a Yahoo contact
         /// </summary>
         [CommandAttribute(
-            Name = "CreateContact",
+           Name = "CreateContact",
             Caption = "Create Yahoo Contact",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Yahoo,
             PointType = EnumPointType.Function,
-            ObjectType = "YahooContact",
-            ClassType = "YahooDataSource",
+            ObjectType ="YahooContact",
+            ClassType ="YahooDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "contact.png",
@@ -319,13 +320,13 @@ namespace TheTechIdea.Beep.Connectors.Yahoo
         /// Updates a Yahoo contact
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateContact",
+           Name = "UpdateContact",
             Caption = "Update Yahoo Contact",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Yahoo,
             PointType = EnumPointType.Function,
-            ObjectType = "YahooContact",
-            ClassType = "YahooDataSource",
+            ObjectType ="YahooContact",
+            ClassType ="YahooDataSource",
             Showin = ShowinType.Both,
             Order = 7,
             iconimage = "contact.png",
@@ -344,13 +345,13 @@ namespace TheTechIdea.Beep.Connectors.Yahoo
         /// Creates a Yahoo folder
         /// </summary>
         [CommandAttribute(
-            Name = "CreateFolder",
+           Name = "CreateFolder",
             Caption = "Create Yahoo Folder",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Yahoo,
             PointType = EnumPointType.Function,
-            ObjectType = "YahooFolder",
-            ClassType = "YahooDataSource",
+            ObjectType ="YahooFolder",
+            ClassType ="YahooDataSource",
             Showin = ShowinType.Both,
             Order = 8,
             iconimage = "folder.png",
@@ -369,13 +370,13 @@ namespace TheTechIdea.Beep.Connectors.Yahoo
         /// Updates a Yahoo folder
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateFolder",
+           Name = "UpdateFolder",
             Caption = "Update Yahoo Folder",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Yahoo,
             PointType = EnumPointType.Function,
-            ObjectType = "YahooFolder",
-            ClassType = "YahooDataSource",
+            ObjectType ="YahooFolder",
+            ClassType ="YahooDataSource",
             Showin = ShowinType.Both,
             Order = 9,
             iconimage = "folder.png",

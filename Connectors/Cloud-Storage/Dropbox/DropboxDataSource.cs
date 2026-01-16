@@ -193,7 +193,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType = "DropboxFileMetadata", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "List<DropboxFileMetadata>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType ="DropboxFileMetadata", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "List<DropboxFileMetadata>")]
         public List<DropboxFileMetadata> GetFiles(string path = "")
         {
             var filters = new List<AppFilter>();
@@ -202,14 +202,14 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
             return GetEntity("files", filters).Cast<DropboxFileMetadata>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType = "DropboxFileMetadata", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "DropboxFileMetadata")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType ="DropboxFileMetadata", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "DropboxFileMetadata")]
         public DropboxFileMetadata? GetFile(string path)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "path", FilterValue = path } };
             return GetEntity("file_details", filters).Cast<DropboxFileMetadata>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType = "DropboxFolderMetadata", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "List<DropboxFolderMetadata>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType ="DropboxFolderMetadata", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "List<DropboxFolderMetadata>")]
         public List<DropboxFolderMetadata> GetFolders(string path = "")
         {
             var filters = new List<AppFilter>();
@@ -218,57 +218,57 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
             return GetEntity("folders", filters).Cast<DropboxFolderMetadata>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType = "DropboxFolderMetadata", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "DropboxFolderMetadata")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType ="DropboxFolderMetadata", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "DropboxFolderMetadata")]
         public DropboxFolderMetadata? GetFolder(string path)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "path", FilterValue = path } };
             return GetEntity("folder_details", filters).Cast<DropboxFolderMetadata>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType = "DropboxSharedLink", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "List<DropboxSharedLink>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType ="DropboxSharedLink", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "List<DropboxSharedLink>")]
         public List<DropboxSharedLink> GetSharedLinks()
         {
             return GetEntity("shared_links", new List<AppFilter>()).Cast<DropboxSharedLink>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType = "DropboxFolderMetadata", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "List<DropboxFolderMetadata>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType ="DropboxFolderMetadata", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "List<DropboxFolderMetadata>")]
         public List<DropboxFolderMetadata> GetSharedFolders()
         {
             return GetEntity("shared_folders", new List<AppFilter>()).Cast<DropboxFolderMetadata>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType = "DropboxAccountInfo", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "DropboxAccountInfo")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType ="DropboxAccountInfo", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "DropboxAccountInfo")]
         public DropboxAccountInfo? GetAccountInfo()
         {
             return GetEntity("account_info", new List<AppFilter>()).Cast<DropboxAccountInfo>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType = "DropboxSpaceUsage", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "DropboxSpaceUsage")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType ="DropboxSpaceUsage", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "DropboxSpaceUsage")]
         public DropboxSpaceUsage? GetSpaceUsage()
         {
             return GetEntity("space_usage", new List<AppFilter>()).Cast<DropboxSpaceUsage>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType = "DropboxTeamMember", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "List<DropboxTeamMember>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType ="DropboxTeamMember", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "List<DropboxTeamMember>")]
         public List<DropboxTeamMember> GetTeamMembers()
         {
             return GetEntity("team_members", new List<AppFilter>()).Cast<DropboxTeamMember>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType = "DropboxTeamInfo", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "DropboxTeamInfo")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Dropbox, PointType = EnumPointType.Function, ObjectType ="DropboxTeamInfo", ClassName = "DropboxDataSource", Showin = ShowinType.Both, misc = "DropboxTeamInfo")]
         public DropboxTeamInfo? GetTeamInfo()
         {
             return GetEntity("team_info", new List<AppFilter>()).Cast<DropboxTeamInfo>().FirstOrDefault();
         }
 
         [CommandAttribute(
-            Name = "CreateFolderAsync",
+           Name = "CreateFolderAsync",
             Caption = "Create Dropbox Folder",
-            ObjectType = "DropboxFolderMetadata",
+            ObjectType ="DropboxFolderMetadata",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Dropbox,
-            ClassType = "DropboxDataSource",
+            ClassType ="DropboxDataSource",
             Showin = ShowinType.Both,
             Order = 1,
             iconimage = "createfolder.png",
@@ -297,13 +297,13 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
         }
 
         [CommandAttribute(
-            Name = "UploadFileAsync",
+           Name = "UploadFileAsync",
             Caption = "Upload Dropbox File",
-            ObjectType = "DropboxFileMetadata",
+            ObjectType ="DropboxFileMetadata",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Dropbox,
-            ClassType = "DropboxDataSource",
+            ClassType ="DropboxDataSource",
             Showin = ShowinType.Both,
             Order = 2,
             iconimage = "uploadfile.png",
@@ -332,13 +332,13 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
         }
 
         [CommandAttribute(
-            Name = "CreateSharedLinkAsync",
+           Name = "CreateSharedLinkAsync",
             Caption = "Create Dropbox Shared Link",
-            ObjectType = "DropboxSharedLink",
+            ObjectType ="DropboxSharedLink",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Dropbox,
-            ClassType = "DropboxDataSource",
+            ClassType ="DropboxDataSource",
             Showin = ShowinType.Both,
             Order = 3,
             iconimage = "createsharedlink.png",
@@ -367,13 +367,13 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
         }
 
         [CommandAttribute(
-            Name = "UpdateFolderAsync",
+           Name = "UpdateFolderAsync",
             Caption = "Update Dropbox Folder",
-            ObjectType = "DropboxFolderMetadata",
+            ObjectType ="DropboxFolderMetadata",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Dropbox,
-            ClassType = "DropboxDataSource",
+            ClassType ="DropboxDataSource",
             Showin = ShowinType.Both,
             Order = 4,
             iconimage = "updatefolder.png",
@@ -402,13 +402,13 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
         }
 
         [CommandAttribute(
-            Name = "UpdateFileAsync",
+           Name = "UpdateFileAsync",
             Caption = "Update Dropbox File",
-            ObjectType = "DropboxFileMetadata",
+            ObjectType ="DropboxFileMetadata",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Dropbox,
-            ClassType = "DropboxDataSource",
+            ClassType ="DropboxDataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "updatefile.png",
@@ -437,13 +437,13 @@ namespace TheTechIdea.Beep.Connectors.Dropbox
         }
 
         [CommandAttribute(
-            Name = "UpdateSharedLinkAsync",
+           Name = "UpdateSharedLinkAsync",
             Caption = "Update Dropbox Shared Link",
-            ObjectType = "DropboxSharedLink",
+            ObjectType ="DropboxSharedLink",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Dropbox,
-            ClassType = "DropboxDataSource",
+            ClassType ="DropboxDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "updatesharedlink.png",

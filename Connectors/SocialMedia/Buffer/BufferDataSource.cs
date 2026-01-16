@@ -100,13 +100,18 @@ namespace TheTechIdea.Beep.BufferDataSource
             var endpoint = m.endpoint;
             if (endpoint.Contains("{profile_id}"))
             {
-                var profileId = q.FirstOrDefault(f => f.FieldName == "profile_id")?.FieldValue?.ToString();
+                var profileId = Filter?
+                    .FirstOrDefault(f => string.Equals(f.FieldName, "profile_id", StringComparison.OrdinalIgnoreCase))?
+                    .FilterValue1?
+                    .ToString();
                 if (string.IsNullOrEmpty(profileId))
                     throw new InvalidOperationException("profile_id is required for analytics entity");
                 endpoint = endpoint.Replace("{profile_id}", profileId);
             }
 
-            var fullUrl = $"{BaseURL}/v1/{endpoint}.json{q}";
+            var baseUrl = Dataconnection?.ConnectionProp?.Url ?? "https://api.bufferapp.com";
+            baseUrl = baseUrl.TrimEnd('/');
+            var fullUrl = $"{baseUrl}/v1/{endpoint}.json{q}";
 
             // Make the request
             var response = await GetAsync(fullUrl);
@@ -116,13 +121,13 @@ namespace TheTechIdea.Beep.BufferDataSource
             var json = await response.Content.ReadAsStringAsync();
 
             // Parse based on entity type
-            var result = EntityName switch
+            IEnumerable<object> result = EntityName switch
             {
-                "posts" or "posts.pending" or "posts.sent" => ParsePosts(json),
-                "profiles" => ParseProfiles(json),
-                "analytics" => ParseAnalytics(json),
-                "campaigns" => ParseCampaigns(json),
-                "links" => ParseLinks(json),
+                "posts" or "posts.pending" or "posts.sent" => ParsePosts(json).Cast<object>(),
+                "profiles" => ParseProfiles(json).Cast<object>(),
+                "analytics" => ParseAnalytics(json).Cast<object>(),
+                "campaigns" => ParseCampaigns(json).Cast<object>(),
+                "links" => ParseLinks(json).Cast<object>(),
                 _ => throw new InvalidOperationException($"Unsupported entity: {EntityName}")
             };
 
@@ -162,7 +167,7 @@ namespace TheTechIdea.Beep.BufferDataSource
 
                 // Buffer API returns updates array
                 var response = JsonSerializer.Deserialize<BufferPostsResponse>(json, options);
-                return response?.Updates ?? Array.Empty<BufferPost>();
+                return response?.Updates ?? new List<BufferPost>();
             }
             catch (Exception ex)
             {
@@ -182,7 +187,7 @@ namespace TheTechIdea.Beep.BufferDataSource
                 };
 
                 var response = JsonSerializer.Deserialize<BufferProfilesResponse>(json, options);
-                return response?.Profiles ?? Array.Empty<BufferProfile>();
+                return response?.Profiles ?? new List<BufferProfile>();
             }
             catch (Exception ex)
             {
@@ -201,7 +206,7 @@ namespace TheTechIdea.Beep.BufferDataSource
                     DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
                 };
 
-                var response = JsonSerializer.Deserialize<BufferAnalyticsResponse>(json, options);
+                var response = JsonSerializer.Deserialize<BufferAnalytics>(json, options);
                 return response != null ? new[] { response } : Array.Empty<BufferAnalytics>();
             }
             catch (Exception ex)
@@ -222,7 +227,7 @@ namespace TheTechIdea.Beep.BufferDataSource
                 };
 
                 var response = JsonSerializer.Deserialize<BufferCampaignsResponse>(json, options);
-                return response?.Campaigns ?? Array.Empty<BufferCampaign>();
+                return response?.Campaigns ?? new List<BufferCampaign>();
             }
             catch (Exception ex)
             {
@@ -242,7 +247,7 @@ namespace TheTechIdea.Beep.BufferDataSource
                 };
 
                 var response = JsonSerializer.Deserialize<BufferLinksResponse>(json, options);
-                return response?.Links ?? Array.Empty<BufferLink>();
+                return response?.Links ?? new List<BufferLink>();
             }
             catch (Exception ex)
             {
@@ -261,9 +266,9 @@ namespace TheTechIdea.Beep.BufferDataSource
             var queryParts = new List<string>();
             foreach (var f in filters)
             {
-                if (f.FieldName != null && f.FieldValue != null)
+                if (f.FieldName != null && f.FilterValue1 != null)
                 {
-                    var value = Uri.EscapeDataString(f.FieldValue.ToString() ?? "");
+                    var value = Uri.EscapeDataString(f.FilterValue1.ToString() ?? "");
                     queryParts.Add($"{f.FieldName}={value}");
                 }
             }
@@ -274,7 +279,7 @@ namespace TheTechIdea.Beep.BufferDataSource
         /// <summary>
         /// Gets all posts/updates
         /// </summary>
-        [CommandAttribute(ObjectType = "BufferPost", PointType = EnumPointType.Function, Name = "GetPosts", Caption = "Get Buffer Posts", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferPost>")]
+        [CommandAttribute(ObjectType ="BufferPost", PointType = EnumPointType.Function,Name = "GetPosts", Caption = "Get Buffer Posts", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferPost>")]
         public async Task<IEnumerable<BufferPost>> GetPosts()
         {
             string endpoint = "updates.json";
@@ -287,7 +292,7 @@ namespace TheTechIdea.Beep.BufferDataSource
         /// <summary>
         /// Gets pending posts
         /// </summary>
-        [CommandAttribute(ObjectType = "BufferPost", PointType = EnumPointType.Function, Name = "GetPendingPosts", Caption = "Get Buffer Pending Posts", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferPost>")]
+        [CommandAttribute(ObjectType ="BufferPost", PointType = EnumPointType.Function,Name = "GetPendingPosts", Caption = "Get Buffer Pending Posts", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferPost>")]
         public async Task<IEnumerable<BufferPost>> GetPendingPosts()
         {
             string endpoint = "updates/pending.json";
@@ -300,7 +305,7 @@ namespace TheTechIdea.Beep.BufferDataSource
         /// <summary>
         /// Gets sent posts
         /// </summary>
-        [CommandAttribute(ObjectType = "BufferPost", PointType = EnumPointType.Function, Name = "GetSentPosts", Caption = "Get Buffer Sent Posts", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferPost>")]
+        [CommandAttribute(ObjectType ="BufferPost", PointType = EnumPointType.Function,Name = "GetSentPosts", Caption = "Get Buffer Sent Posts", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferPost>")]
         public async Task<IEnumerable<BufferPost>> GetSentPosts()
         {
             string endpoint = "updates/sent.json";
@@ -313,7 +318,7 @@ namespace TheTechIdea.Beep.BufferDataSource
         /// <summary>
         /// Gets all social media profiles
         /// </summary>
-        [CommandAttribute(ObjectType = "BufferProfile", PointType = EnumPointType.Function, Name = "GetProfiles", Caption = "Get Buffer Profiles", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferProfile>")]
+        [CommandAttribute(ObjectType ="BufferProfile", PointType = EnumPointType.Function,Name = "GetProfiles", Caption = "Get Buffer Profiles", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferProfile>")]
         public async Task<IEnumerable<BufferProfile>> GetProfiles()
         {
             string endpoint = "profiles.json";
@@ -326,7 +331,7 @@ namespace TheTechIdea.Beep.BufferDataSource
         /// <summary>
         /// Gets analytics for a specific profile
         /// </summary>
-        [CommandAttribute(ObjectType = "BufferAnalytics", PointType = EnumPointType.Function, Name = "GetAnalytics", Caption = "Get Buffer Analytics", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferAnalytics>")]
+        [CommandAttribute(ObjectType ="BufferAnalytics", PointType = EnumPointType.Function,    Name = "GetAnalytics", Caption = "Get Buffer Analytics", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferAnalytics>")]
         public async Task<IEnumerable<BufferAnalytics>> GetAnalytics(string profileId)
         {
             string endpoint = $"analytics/{profileId}.json";
@@ -339,7 +344,7 @@ namespace TheTechIdea.Beep.BufferDataSource
         /// <summary>
         /// Gets all campaigns
         /// </summary>
-        [CommandAttribute(ObjectType = "BufferCampaign", PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Buffer Campaigns", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferCampaign>")]
+        [CommandAttribute(ObjectType ="BufferCampaign", PointType = EnumPointType.Function,Name = "GetCampaigns", Caption = "Get Buffer Campaigns", ClassName = "BufferDataSource", misc = "ReturnType: IEnumerable<BufferCampaign>")]
         public async Task<IEnumerable<BufferCampaign>> GetCampaigns()
         {
             string endpoint = "campaigns.json";
@@ -349,7 +354,7 @@ namespace TheTechIdea.Beep.BufferDataSource
             return responseObj?.Data ?? new List<BufferCampaign>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Buffer, PointType = EnumPointType.Function, ObjectType = "BufferPost", Name = "CreatePost", Caption = "Create Buffer Post", ClassType = "BufferDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "buffer.png", misc = "ReturnType: IEnumerable<BufferPost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Buffer, PointType = EnumPointType.Function, ObjectType ="BufferPost",Name = "CreatePost", Caption = "Create Buffer Post", ClassType ="BufferDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "buffer.png", misc = "ReturnType: IEnumerable<BufferPost>")]
         public async Task<IEnumerable<BufferPost>> CreatePostAsync(BufferPost post)
         {
             try

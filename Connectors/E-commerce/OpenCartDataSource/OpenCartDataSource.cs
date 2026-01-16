@@ -257,42 +257,42 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCart
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Products", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartProduct>")]
         public async Task<IEnumerable<OpenCartProduct>> GetProducts(AppFilter filter)
         {
             var result = await GetEntityAsync("products", new List<AppFilter> { filter });
             return result.Cast<OpenCartProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Orders", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Orders", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartOrder>")]
         public async Task<IEnumerable<OpenCartOrder>> GetOrders(AppFilter filter)
         {
             var result = await GetEntityAsync("orders", new List<AppFilter> { filter });
             return result.Cast<OpenCartOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Customers", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartCustomer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Customers", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartCustomer>")]
         public async Task<IEnumerable<OpenCartCustomer>> GetCustomers(AppFilter filter)
         {
             var result = await GetEntityAsync("customers", new List<AppFilter> { filter });
             return result.Cast<OpenCartCustomer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Categories", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Categories", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartCategory>")]
         public async Task<IEnumerable<OpenCartCategory>> GetCategories(AppFilter filter)
         {
             var result = await GetEntityAsync("categories", new List<AppFilter> { filter });
             return result.Cast<OpenCartCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Manufacturers", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartManufacturer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Manufacturers", ClassName = "OpenCartDataSource", Showin = ShowinType.Both, misc = "IEnumerable<OpenCartManufacturer>")]
         public async Task<IEnumerable<OpenCartManufacturer>> GetManufacturers(AppFilter filter)
         {
             var result = await GetEntityAsync("manufacturers", new List<AppFilter> { filter });
             return result.Cast<OpenCartManufacturer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Products", Name = "CreateProduct", Caption = "Create OpenCart Product", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 6, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Products", Name = "CreateProduct", Caption = "Create OpenCart Product", ClassType ="OpenCartDataSource", Showin = ShowinType.Both, Order = 6, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartProduct>")]
         public async Task<IEnumerable<OpenCartProduct>> CreateProductAsync(OpenCartProduct product)
         {
             try
@@ -312,7 +312,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCart
             return new List<OpenCartProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Products", Name = "UpdateProduct", Caption = "Update OpenCart Product", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 7, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Products", Name = "UpdateProduct", Caption = "Update OpenCart Product", ClassType ="OpenCartDataSource", Showin = ShowinType.Both, Order = 7, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartProduct>")]
         public async Task<IEnumerable<OpenCartProduct>> UpdateProductAsync(OpenCartProduct product)
         {
             try
@@ -332,7 +332,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCart
             return new List<OpenCartProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "CreateOrder", Caption = "Create OpenCart Order", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 8, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Orders", Name = "CreateOrder", Caption = "Create OpenCart Order", ClassType ="OpenCartDataSource", Showin = ShowinType.Both, Order = 8, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartOrder>")]
         public async Task<IEnumerable<OpenCartOrder>> CreateOrderAsync(OpenCartOrder order)
         {
             try
@@ -352,7 +352,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCart
             return new List<OpenCartOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "UpdateOrder", Caption = "Update OpenCart Order", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Orders", Name = "UpdateOrder", Caption = "Update OpenCart Order", ClassType ="OpenCartDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartOrder>")]
         public async Task<IEnumerable<OpenCartOrder>> UpdateOrderAsync(OpenCartOrder order)
         {
             try
@@ -372,7 +372,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCart
             return new List<OpenCartOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Customers", Name = "CreateCustomer", Caption = "Create OpenCart Customer", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartCustomer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Customers", Name = "CreateCustomer", Caption = "Create OpenCart Customer", ClassType ="OpenCartDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartCustomer>")]
         public async Task<IEnumerable<OpenCartCustomer>> CreateCustomerAsync(OpenCartCustomer customer)
         {
             try
@@ -392,7 +392,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCart
             return new List<OpenCartCustomer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Customers", Name = "UpdateCustomer", Caption = "Update OpenCart Customer", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartCustomer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Customers", Name = "UpdateCustomer", Caption = "Update OpenCart Customer", ClassType ="OpenCartDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartCustomer>")]
         public async Task<IEnumerable<OpenCartCustomer>> UpdateCustomerAsync(OpenCartCustomer customer)
         {
             try
@@ -412,7 +412,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCart
             return new List<OpenCartCustomer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "CreateCategory", Caption = "Create OpenCart Category", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Categories", Name = "CreateCategory", Caption = "Create OpenCart Category", ClassType ="OpenCartDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartCategory>")]
         public async Task<IEnumerable<OpenCartCategory>> CreateCategoryAsync(OpenCartCategory category)
         {
             try
@@ -432,7 +432,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCart
             return new List<OpenCartCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Categories", Name = "UpdateCategory", Caption = "Update OpenCart Category", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartCategory>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Categories", Name = "UpdateCategory", Caption = "Update OpenCart Category", ClassType ="OpenCartDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartCategory>")]
         public async Task<IEnumerable<OpenCartCategory>> UpdateCategoryAsync(OpenCartCategory category)
         {
             try
@@ -452,7 +452,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCart
             return new List<OpenCartCategory>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Manufacturers", Name = "CreateManufacturer", Caption = "Create OpenCart Manufacturer", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartManufacturer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Manufacturers", Name = "CreateManufacturer", Caption = "Create OpenCart Manufacturer", ClassType ="OpenCartDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartManufacturer>")]
         public async Task<IEnumerable<OpenCartManufacturer>> CreateManufacturerAsync(OpenCartManufacturer manufacturer)
         {
             try
@@ -472,7 +472,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.OpenCart
             return new List<OpenCartManufacturer>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType = "Manufacturers", Name = "UpdateManufacturer", Caption = "Update OpenCart Manufacturer", ClassType = "OpenCartDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartManufacturer>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.OpenCart, PointType = EnumPointType.Function, ObjectType ="Manufacturers", Name = "UpdateManufacturer", Caption = "Update OpenCart Manufacturer", ClassType ="OpenCartDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "opencart.png", misc = "ReturnType: IEnumerable<OpenCartManufacturer>")]
         public async Task<IEnumerable<OpenCartManufacturer>> UpdateManufacturerAsync(OpenCartManufacturer manufacturer)
         {
             try

@@ -107,8 +107,8 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MarketoDataSource.Models
         [JsonPropertyName("website")]
         public string? Website { get; set; }
 
-        [JsonPropertyName("facebookDisplayName")]
-        public string? FacebookDisplayName { get; set; }
+        [JsonPropertyName("facebookCaption")]
+        public string? FacebookCaption { get; set; }
 
         [JsonPropertyName("facebookId")]
         public string? FacebookId { get; set; }
@@ -140,8 +140,8 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MarketoDataSource.Models
         [JsonPropertyName("industry")]
         public string? Industry { get; set; }
 
-        [JsonPropertyName("linkedinDisplayName")]
-        public string? LinkedinDisplayName { get; set; }
+        [JsonPropertyName("linkedinCaption")]
+        public string? LinkedinCaption { get; set; }
 
         [JsonPropertyName("linkedinId")]
         public string? LinkedinId { get; set; }
@@ -161,8 +161,8 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MarketoDataSource.Models
         [JsonPropertyName("site")]
         public string? Site { get; set; }
 
-        [JsonPropertyName("twitterDisplayName")]
-        public string? TwitterDisplayName { get; set; }
+        [JsonPropertyName("twitterCaption")]
+        public string? TwitterCaption { get; set; }
 
         [JsonPropertyName("twitterId")]
         public string? TwitterId { get; set; }
@@ -715,8 +715,8 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MarketoDataSource.Models
         [JsonPropertyName("updatedAt")]
         public DateTime? UpdatedAt { get; set; }
 
-        [JsonPropertyName("displayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
 
         [JsonPropertyName("pluralName")]
         public string? PluralName { get; set; }
@@ -947,8 +947,8 @@ namespace TheTechIdea.Beep.Connectors.Marketing.MarketoDataSource.Models
         [JsonPropertyName("name")]
         public string? Name { get; set; }
 
-        [JsonPropertyName("displayName")]
-        public string? DisplayName { get; set; }
+        [JsonPropertyName("Caption")]
+        public string? Caption { get; set; }
 
         [JsonPropertyName("dataType")]
         public string? DataType { get; set; }

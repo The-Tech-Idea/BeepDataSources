@@ -186,13 +186,13 @@ namespace TheTechIdea.Beep.Connectors.Gmail
         /// Gets Gmail messages
         /// </summary>
         [CommandAttribute(
-            Name = "GetMessages",
+           Name = "GetMessages",
             Caption = "Get Gmail Messages",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Gmail,
             PointType = EnumPointType.Function,
-            ObjectType = "GmailMessage",
-            ClassType = "GmailDataSource",
+            ObjectType ="GmailMessage",
+            ClassType ="GmailDataSource",
             Showin = ShowinType.Both,
             Order = 1,
             iconimage = "gmail.png",
@@ -217,13 +217,13 @@ namespace TheTechIdea.Beep.Connectors.Gmail
         /// Gets a specific Gmail message
         /// </summary>
         [CommandAttribute(
-            Name = "GetMessage",
+           Name = "GetMessage",
             Caption = "Get Gmail Message",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Gmail,
             PointType = EnumPointType.Function,
-            ObjectType = "GmailMessage",
-            ClassType = "GmailDataSource",
+            ObjectType ="GmailMessage",
+            ClassType ="GmailDataSource",
             Showin = ShowinType.Both,
             Order = 2,
             iconimage = "gmail.png",
@@ -244,13 +244,13 @@ namespace TheTechIdea.Beep.Connectors.Gmail
         /// Gets Gmail threads
         /// </summary>
         [CommandAttribute(
-            Name = "GetThreads",
+           Name = "GetThreads",
             Caption = "Get Gmail Threads",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Gmail,
             PointType = EnumPointType.Function,
-            ObjectType = "GmailThread",
-            ClassType = "GmailDataSource",
+            ObjectType ="GmailThread",
+            ClassType ="GmailDataSource",
             Showin = ShowinType.Both,
             Order = 3,
             iconimage = "gmail.png",
@@ -273,13 +273,13 @@ namespace TheTechIdea.Beep.Connectors.Gmail
         /// Gets Gmail labels
         /// </summary>
         [CommandAttribute(
-            Name = "GetLabels",
+           Name = "GetLabels",
             Caption = "Get Gmail Labels",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Gmail,
             PointType = EnumPointType.Function,
-            ObjectType = "GmailLabel",
-            ClassType = "GmailDataSource",
+            ObjectType ="GmailLabel",
+            ClassType ="GmailDataSource",
             Showin = ShowinType.Both,
             Order = 4,
             iconimage = "gmail.png",
@@ -295,13 +295,13 @@ namespace TheTechIdea.Beep.Connectors.Gmail
         /// Gets Gmail profile
         /// </summary>
         [CommandAttribute(
-            Name = "GetProfile",
+           Name = "GetProfile",
             Caption = "Get Gmail Profile",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Gmail,
             PointType = EnumPointType.Function,
-            ObjectType = "GmailProfile",
-            ClassType = "GmailDataSource",
+            ObjectType ="GmailProfile",
+            ClassType ="GmailDataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "gmail.png",
@@ -317,13 +317,13 @@ namespace TheTechIdea.Beep.Connectors.Gmail
         /// Sends a Gmail message
         /// </summary>
         [CommandAttribute(
-            Name = "SendMessage",
+           Name = "SendMessage",
             Caption = "Send Gmail Message",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Gmail,
             PointType = EnumPointType.Function,
-            ObjectType = "GmailMessage",
-            ClassType = "GmailDataSource",
+            ObjectType ="GmailMessage",
+            ClassType ="GmailDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "gmail.png",
@@ -342,13 +342,13 @@ namespace TheTechIdea.Beep.Connectors.Gmail
         /// Creates a Gmail label
         /// </summary>
         [CommandAttribute(
-            Name = "CreateLabel",
+           Name = "CreateLabel",
             Caption = "Create Gmail Label",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Gmail,
             PointType = EnumPointType.Function,
-            ObjectType = "GmailLabel",
-            ClassType = "GmailDataSource",
+            ObjectType ="GmailLabel",
+            ClassType ="GmailDataSource",
             Showin = ShowinType.Both,
             Order = 7,
             iconimage = "gmail.png",
@@ -367,13 +367,13 @@ namespace TheTechIdea.Beep.Connectors.Gmail
         /// Updates a Gmail label
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateLabel",
+           Name = "UpdateLabel",
             Caption = "Update Gmail Label",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Gmail,
             PointType = EnumPointType.Function,
-            ObjectType = "GmailLabel",
-            ClassType = "GmailDataSource",
+            ObjectType ="GmailLabel",
+            ClassType ="GmailDataSource",
             Showin = ShowinType.Both,
             Order = 8,
             iconimage = "gmail.png",
@@ -392,13 +392,13 @@ namespace TheTechIdea.Beep.Connectors.Gmail
         /// Creates a Gmail draft
         /// </summary>
         [CommandAttribute(
-            Name = "CreateDraft",
+           Name = "CreateDraft",
             Caption = "Create Gmail Draft",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Gmail,
             PointType = EnumPointType.Function,
-            ObjectType = "GmailDraft",
-            ClassType = "GmailDataSource",
+            ObjectType ="GmailDraft",
+            ClassType ="GmailDataSource",
             Showin = ShowinType.Both,
             Order = 9,
             iconimage = "gmail.png",
@@ -417,13 +417,13 @@ namespace TheTechIdea.Beep.Connectors.Gmail
         /// Updates a Gmail draft
         /// </summary>
         [CommandAttribute(
-            Name = "UpdateDraft",
+           Name = "UpdateDraft",
             Caption = "Update Gmail Draft",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Gmail,
             PointType = EnumPointType.Function,
-            ObjectType = "GmailDraft",
-            ClassType = "GmailDataSource",
+            ObjectType ="GmailDraft",
+            ClassType ="GmailDataSource",
             Showin = ShowinType.Both,
             Order = 10,
             iconimage = "gmail.png",

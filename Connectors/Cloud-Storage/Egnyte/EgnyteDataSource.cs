@@ -368,100 +368,100 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteItem", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteItem", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteItem>")]
         public List<EgnyteItem> GetFiles(string path = "/Shared")
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "path", FilterValue = path } };
             return GetEntity("files", filters).Cast<EgnyteItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteItem", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnyteItem")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteItem", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnyteItem")]
         public EgnyteItem? GetFileInfo(string path)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "path", FilterValue = path } };
             return GetEntity("file_info", filters).Cast<EgnyteItem>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteItem", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteItem", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteItem>")]
         public List<EgnyteItem> GetFolders(string path = "/Shared")
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "path", FilterValue = path } };
             return GetEntity("folders", filters).Cast<EgnyteItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteItem", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteItem", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteItem>")]
         public List<EgnyteItem> GetFolderItems(string path = "/Shared")
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "path", FilterValue = path } };
             return GetEntity("folder_items", filters).Cast<EgnyteItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteUser", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteUser>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteUser", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteUser>")]
         public List<EgnyteUser> GetUsers()
         {
             return GetEntity("users", new List<AppFilter>()).Cast<EgnyteUser>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteUserInfo", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnyteUserInfo")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteUserInfo", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnyteUserInfo")]
         public EgnyteUserInfo? GetUserInfo(string userId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "user_id", FilterValue = userId } };
             return GetEntity("user_info", filters).Cast<EgnyteUserInfo>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteUserInfo", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnyteUserInfo")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteUserInfo", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnyteUserInfo")]
         public EgnyteUserInfo? GetCurrentUser()
         {
             return GetEntity("current_user", new List<AppFilter>()).Cast<EgnyteUserInfo>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteGroup", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteGroup>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteGroup", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteGroup>")]
         public List<EgnyteGroup> GetGroups()
         {
             return GetEntity("groups", new List<AppFilter>()).Cast<EgnyteGroup>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteGroup", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnyteGroup")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteGroup", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnyteGroup")]
         public EgnyteGroup? GetGroupInfo(string groupId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "group_id", FilterValue = groupId } };
             return GetEntity("group_info", filters).Cast<EgnyteGroup>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteSearchResult", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnyteSearchResult")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteSearchResult", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnyteSearchResult")]
         public EgnyteSearchResult? Search(string query)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "query", FilterValue = query } };
             return GetEntity("search", filters).Cast<EgnyteSearchResult>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteLink", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteLink>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteLink", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteLink>")]
         public List<EgnyteLink> GetLinks()
         {
             return GetEntity("links", new List<AppFilter>()).Cast<EgnyteLink>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteLink", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnyteLink")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteLink", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnyteLink")]
         public EgnyteLink? GetLinkInfo(string linkId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "link_id", FilterValue = linkId } };
             return GetEntity("link_info", filters).Cast<EgnyteLink>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteAuditEvent", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteAuditEvent>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteAuditEvent", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteAuditEvent>")]
         public List<EgnyteAuditEvent> GetAuditEvents()
         {
             return GetEntity("audit", new List<AppFilter>()).Cast<EgnyteAuditEvent>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnytePermissions", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnytePermissions")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnytePermissions", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "EgnytePermissions")]
         public EgnytePermissions? GetPermissions(string path)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "path", FilterValue = path } };
             return GetEntity("permissions", filters).Cast<EgnytePermissions>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType = "EgnyteFileVersion", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteFileVersion>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Egnyte, PointType = EnumPointType.Function, ObjectType ="EgnyteFileVersion", ClassName = "EgnyteDataSource", Showin = ShowinType.Both, misc = "List<EgnyteFileVersion>")]
         public List<EgnyteFileVersion> GetFileVersions(string path)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "path", FilterValue = path } };
@@ -469,13 +469,13 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
         }
 
         [CommandAttribute(
-            Name = "CreateFolderAsync",
+           Name = "CreateFolderAsync",
             Caption = "Create Egnyte Folder",
-            ObjectType = "EgnyteFolder",
+            ObjectType ="EgnyteFolder",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Egnyte,
-            ClassType = "EgnyteDataSource",
+            ClassType ="EgnyteDataSource",
             Showin = ShowinType.Both,
             Order = 1,
             iconimage = "createfolder.png",
@@ -504,13 +504,13 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
         }
 
         [CommandAttribute(
-            Name = "UploadFileAsync",
+           Name = "UploadFileAsync",
             Caption = "Upload Egnyte File",
-            ObjectType = "EgnyteFile",
+            ObjectType ="EgnyteFile",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Egnyte,
-            ClassType = "EgnyteDataSource",
+            ClassType ="EgnyteDataSource",
             Showin = ShowinType.Both,
             Order = 2,
             iconimage = "uploadfile.png",
@@ -539,13 +539,13 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
         }
 
         [CommandAttribute(
-            Name = "CreateLinkAsync",
+           Name = "CreateLinkAsync",
             Caption = "Create Egnyte Link",
-            ObjectType = "EgnyteLink",
+            ObjectType ="EgnyteLink",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Egnyte,
-            ClassType = "EgnyteDataSource",
+            ClassType ="EgnyteDataSource",
             Showin = ShowinType.Both,
             Order = 3,
             iconimage = "createlink.png",
@@ -574,13 +574,13 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
         }
 
         [CommandAttribute(
-            Name = "UpdateFolderAsync",
+           Name = "UpdateFolderAsync",
             Caption = "Update Egnyte Folder",
-            ObjectType = "EgnyteFolder",
+            ObjectType ="EgnyteFolder",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Egnyte,
-            ClassType = "EgnyteDataSource",
+            ClassType ="EgnyteDataSource",
             Showin = ShowinType.Both,
             Order = 4,
             iconimage = "updatefolder.png",
@@ -609,13 +609,13 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
         }
 
         [CommandAttribute(
-            Name = "UpdateFileAsync",
+           Name = "UpdateFileAsync",
             Caption = "Update Egnyte File",
-            ObjectType = "EgnyteFile",
+            ObjectType ="EgnyteFile",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Egnyte,
-            ClassType = "EgnyteDataSource",
+            ClassType ="EgnyteDataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "updatefile.png",
@@ -644,13 +644,13 @@ namespace TheTechIdea.Beep.Connectors.Egnyte
         }
 
         [CommandAttribute(
-            Name = "UpdateLinkAsync",
+           Name = "UpdateLinkAsync",
             Caption = "Update Egnyte Link",
-            ObjectType = "EgnyteLink",
+            ObjectType ="EgnyteLink",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Egnyte,
-            ClassType = "EgnyteDataSource",
+            ClassType ="EgnyteDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "updatelink.png",

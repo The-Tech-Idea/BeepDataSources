@@ -1,0 +1,188 @@
+# Cline Rules for BeepDataSources
+
+Multi-modal AI code assistant instructions for BeepDataSources.
+
+## Context & Scope
+
+**Repository:** BeepDataSources (287+ datasource implementations for BeepDM)  
+**Language:** C# (.NET 9.0)  
+**Primary Task:** Implement/maintain IDataSource and IDataSourceHelper implementations  
+**Integration:** Tight coupling with BeepDM (uses IDataSource interface)
+
+## Three Main Implementation Types
+
+### 1. WebAPI Connectors (Connectors/ folder)
+- Inherit: `WebAPIDataSource` (from BeepDM)
+- Structure: Models.cs + {ServiceName}DataSource.cs + optional Helpers.cs
+- Examples: Twitter, Zoom, Slack, GitHub, etc. (100+ APIs)
+
+### 2. Direct IDataSource (VectorDatabase/, InMemoryDB/, Messaging/)
+- Inherit/Implement: `IDataSource` interface directly
+- Manage: Connection, CRUD, metadata, transactions independently
+- Examples: Qdrant, Redis, Kafka, etc.
+
+### 3. IDataSourceHelper (Factory-managed in BeepDM)
+- Interface: IDataSourceHelper (query generation)
+- Factory: DataSourceHelperFactory (287 type mappings)
+- Current Helpers: RdbmsHelper, MongoDBHelper, RedisHelper, CassandraHelper, RestApiHelper
+- Planned: 9 additional helpers (File, Streaming, Graph, Search, TimeSeries, Vector, BigData, Blockchain, Email)
+
+## Essential Interfaces & Classes
+
+### IDataSource (40+ methods)
+```
+Properties: DatasourceName, DatasourceType, Category, ConnectionStatus, Entities, Logger, ErrorObject, DMEEditor
+Methods: Openconnection(), Closeconnection(), GetEntity(), GetEntityAsync(), InsertEntity(), UpdateEntity(), DeleteEntity(), BeginTransaction(), Commit(), EndTransaction(), + metadata/script/query methods
+```
+
+### IDataSourceHelper (query generation)
+```
+Properties: SupportedType, Name, Capabilities
+Methods: GenerateCreateTableSql(), GenerateSelectSql(), GenerateInsertSql(), GenerateUpdateSql(), GenerateDeleteSql(), GenerateTruncateTableSql(), QuoteIdentifier(), SupportsCapability()
+```
+
+## Critical Implementation Rules
+
+| Rule | Severity | Details |
+|------|----------|---------|
+| Implement IDataSource completely | 🔴 Critical | All 40+ methods required; no partial implementations |
+| Use [AddinAttribute] | 🔴 Critical | Without it, AssemblyHandler won't discover datasource |
+| ObjectType matches POCO className | 🔴 Critical | [CommandAttribute(ObjectType = "...")] must match exactly, case-sensitive |
+| Never throw on expected failures | 🟠 High | Use IErrorsInfo or empty collections; set ErrorObject.Flag |
+| Sealed POCOs with [JsonPropertyName] | 🟠 High | Required for JSON deserialization and convention |
+| Async/await consistently | 🟠 High | Provide GetEntityAsync(), GetScalarAsync(); use .ConfigureAwait(false) |
+| Initialize ErrorObject | 🟠 High | Always set Flag (Ok/Failed) and Message on errors |
+| No Models.cs in subfolder (Connectors) | 🟡 Medium | Must be at project root for build conventions |
+| Support transactions | 🟡 Medium | Implement BeginTransaction(), Commit(), EndTransaction() |
+| Populate Entities list | 🟡 Medium | Initialize in Openconnection() with entity metadata |
+
+## Code Generation Snippets
+
+### WebAPI Connector Template
+```csharp
+[AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.{ServiceName})]
+public class {ServiceName}DataSource : WebAPIDataSource
+{
+    private static readonly Dictionary<string, string> EntityEndpoints = new() { ["entity1"] = "/api/entity1" };
+    private static readonly Dictionary<string, string[]> RequiredFilters = new() { ["entity1"] = new[] { "id" } };
+    
+    public {ServiceName}DataSource(string datasourcename, IDMLogger logger, IDMEEditor dmeEditor, DataSourceType databasetype, IErrorsInfo errorObject)
+        : base(datasourcename, logger, dmeEditor, databasetype, errorObject)
+    {
+        if (Dataconnection?.ConnectionProp is not WebAPIConnectionProperties)
+            if (Dataconnection != null)
+                Dataconnection.ConnectionProp = new WebAPIConnectionProperties();
+        
+        EntitiesNames = EntityEndpoints.Keys.ToList();
+        Entities = EntitiesNames.Select(n => new EntityStructure { EntityName = n, DatasourceEntityName = n }).ToList();
+    }
+    
+    public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+    {
+        if (!EntityEndpoints.TryGetValue(EntityName, out var endpoint))
+            throw new InvalidOperationException($"Unknown entity '{EntityName}'.");
+        
+        var q = FiltersToQuery(Filter);
+        RequireFilters(EntityName, q, RequiredFilters.GetValueOrDefault(EntityName, Array.Empty<string>()));
+        
+        var resolvedEndpoint = ResolveEndpoint(endpoint, q);
+        using var resp = await GetAsync(resolvedEndpoint, q).ConfigureAwait(false);
+        return resp?.IsSuccessStatusCode == true ? ExtractArray(resp, "data") : Array.Empty<object>();
+    }
+}
+```
+
+### Models.cs Base Class
+```csharp
+public abstract class {ServiceName}EntityBase
+{
+    [JsonIgnore] public IDataSource DataSource { get; private set; }
+    public T Attach<T>(IDataSource ds) where T : {ServiceName}EntityBase { DataSource = ds; return (T)this; }
+}
+
+public sealed class {ServiceName}Item : {ServiceName}EntityBase
+{
+    [JsonPropertyName("id")] public string Id { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
+}
+```
+
+## Testing Strategy
+
+1. **Unit Tests:** CRUD operations, error handling, filter validation
+2. **Integration Tests:** Connection lifecycle, entity discovery
+3. **Smoke Tests:** Verify [AddinAttribute] and [CommandAttribute] attributes exist
+4. **UI Tests:** Confirm CommandAttribute methods appear in BeepDM UI
+5. **Mock External:** Use mock HTTP responses; no live API calls in CI/CD
+
+## Common Pitfalls to Detect
+
+- ❌ `[CommandAttribute(ObjectType = "Wrong")]` when class is `TwitterUser`
+- ❌ Missing `[JsonPropertyName(...)]` on POCO properties
+- ❌ Forgetting `[AddinAttribute]` on DataSource class
+- ❌ Placing Models.cs in subfolder instead of root
+- ❌ Partial IDataSource implementations
+- ❌ Throwing exceptions instead of using IErrorsInfo
+- ❌ Blocking calls in async methods (no .GetAwaiter().GetResult())
+- ❌ Not initializing Entities list in Openconnection()
+
+## File Navigation
+
+```
+BeepDataSources/
+├── .github/copilot-instructions.md        ← Full architecture guide
+├── .github/claude.md                      ← Claude-specific instructions
+├── idatasourceimplementationplan.md       ← (BeepDM) IDataSourceHelper roadmap
+├── REMAINING_REFACTORING_TASKS.md         ← Connector consolidation tasks
+├── Connectors/SocialMedia/Twitter/        ← REFERENCE IMPLEMENTATION
+│   ├── TwitterDataSource.cs
+│   ├── Models.cs
+│   └── TwitterHelpers.cs
+├── VectorDatabase/QdrantDatasource/       ← Direct IDataSource example
+├── VectorDatabase/SharpVectorDatasource/  ← In-memory example
+└── DataSourcesPluginsCore/                ← RDBMS, file, cache implementations
+```
+
+## Build & Deployment
+
+```bash
+# Build all datasources
+dotnet build DataSourcePluginSolution.sln
+
+# Build connectors only
+dotnet build Connectors/Connectors.sln
+
+# Build and test
+dotnet build && dotnet test
+
+# Place DLL in BeepDM
+cp {ServiceName}DataSource.dll /path/to/BeepDM/ProjectClasses/
+```
+
+## When to Escalate
+
+- ❓ Architectural decisions (new pattern type)
+- ❓ IDataSource interface changes (requires BeepDM coordination)
+- ❓ Cross-datasource helper design
+- ❓ Performance optimization strategies
+- ❓ Security/authentication patterns
+
+## Key Resources in This Repo
+
+- **Copilot Instructions:** `.github/copilot-instructions.md` — Comprehensive guide
+- **Claude Instructions:** `.github/claude.md` — Claude-specific guidance
+- **Cursor Rules:** `.github/.cursorrules` — Cursor IDE conventions
+- **Implementation Plan:** `idatasourceimplementationplan.md` (BeepDM) — Helper roadmap
+- **Refactoring Tasks:** `REMAINING_REFACTORING_TASKS.md` — Open tasks
+- **Reference:** `Connectors/SocialMedia/Twitter/` — Use as template
+
+## Tips for Autonomous Coding
+
+1. Always check [AddinAttribute] before [CommandAttribute]
+2. Verify ObjectType matches POCO class name exactly
+3. Test both sync and async code paths
+4. Ensure Models.cs has sealed classes with [JsonPropertyName]
+5. Run smoke tests to verify attributes exist
+6. Build incrementally and fix compilation errors immediately
+7. Reference Twitter connector for WebAPI pattern
+8. Check BeepDM's IDataSource interface for contract compliance

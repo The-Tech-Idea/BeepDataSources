@@ -357,11 +357,13 @@ namespace OPCUADataSource
                         }
                     };
 
-                    BrowseResponse browseResponse = session.Browse(null, null, 0, browseRequest.NodesToBrowse, null);
+                    BrowseResultCollection browseResults;
+                    DiagnosticInfoCollection browseDiagnosticInfos;
+                    session.Browse(null, null, 0u, browseRequest.NodesToBrowse, out browseResults, out browseDiagnosticInfos);
 
-                    if (browseResponse.Results != null && browseResponse.Results.Count > 0)
+                    if (browseResults != null && browseResults.Count > 0)
                     {
-                        foreach (var result in browseResponse.Results)
+                        foreach (var result in browseResults)
                         {
                             if (result.References != null)
                             {
@@ -413,11 +415,13 @@ namespace OPCUADataSource
                         }
                     };
 
-                    BrowseResponse browseResponse = session.Browse(null, null, 0, browseRequest.NodesToBrowse, null);
+                    BrowseResultCollection browseResults;
+                    DiagnosticInfoCollection browseDiagnosticInfos;
+                    session.Browse(null, null, 0u, browseRequest.NodesToBrowse, out browseResults, out browseDiagnosticInfos);
 
-                    if (browseResponse.Results != null && browseResponse.Results.Count > 0)
+                    if (browseResults != null && browseResults.Count > 0)
                     {
-                        foreach (var result in browseResponse.Results)
+                        foreach (var result in browseResults)
                         {
                             if (result.References != null)
                             {
@@ -589,11 +593,13 @@ namespace OPCUADataSource
                         }
                     };
 
-                    BrowseResponse browseResponse = session.Browse(null, null, 0, browseRequest.NodesToBrowse, null);
+                    BrowseResultCollection browseResults;
+                    DiagnosticInfoCollection browseDiagnosticInfos;
+                    session.Browse(null, null, 0u, browseRequest.NodesToBrowse, out browseResults, out browseDiagnosticInfos);
 
-                    if (browseResponse.Results != null && browseResponse.Results.Count > 0)
+                    if (browseResults != null && browseResults.Count > 0)
                     {
-                        foreach (var result in browseResponse.Results)
+                        foreach (var result in browseResults)
                         {
                             if (result.References != null)
                             {
@@ -671,14 +677,14 @@ namespace OPCUADataSource
                 var entityStructure = GetEntityStructure(EntityName, false);
                 if (entityStructure != null && entityStructure.Fields != null && entityStructure.Fields.Count > 0)
                 {
-                    if (DMEEditor != null)
-                    {
-                        string code = DMTypeBuilder.ConvertPOCOClassToEntity(DMEEditor, entityStructure, "OPCUAGeneratedTypes");
-                        return DMTypeBuilder.CreateTypeFromCode(DMEEditor, code, EntityName);
+                        if (DMEEditor != null)
+                        {
+                            string code = DMTypeBuilder.ConvertPOCOClassToEntity(DMEEditor, entityStructure, "OPCUAGeneratedTypes");
+                            return DMEEditor.classCreator.CreateTypeFromCode(code, EntityName);
+                        }
                     }
+                    return typeof(object);
                 }
-                return typeof(object);
-            }
             catch (Exception ex)
             {
                 DMEEditor?.AddLogMessage("Beep", $"Error in GetEntityType: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
@@ -728,9 +734,13 @@ namespace OPCUADataSource
                 string username = Dataconnection.ConnectionProp?.UserID ?? "";
                 string password = Dataconnection.ConnectionProp?.Password ?? "";
 
-                // Create application configuration
-                ApplicationConfiguration configuration = ApplicationConfiguration.Load(
-                    new FileInfo("OPCUA_Client_Config.xml"), ApplicationType.Client).Result;
+                // Create application configuration (optional config file)
+                ApplicationConfiguration configuration = null;
+                var configFilePath = Path.Combine(AppContext.BaseDirectory, "OPCUA_Client_Config.xml");
+                if (File.Exists(configFilePath))
+                {
+                    configuration = ApplicationConfiguration.Load(configFilePath, ApplicationType.Client).Result;
+                }
 
                 if (configuration == null)
                 {
@@ -769,14 +779,14 @@ namespace OPCUADataSource
                 }
 
                 // Discover endpoints
-                EndpointDescription selectedEndpoint = CoreClientUtils.SelectEndpoint(endpointUrl, false);
+                EndpointDescription selectedEndpoint = CoreClientUtils.SelectEndpoint(configuration, endpointUrl, false);
                 EndpointConfiguration endpointConfiguration = EndpointConfiguration.Create(configuration);
                 ConfiguredEndpoint endpoint = new ConfiguredEndpoint(null, selectedEndpoint, endpointConfiguration);
 
                 // Create session
                 UserIdentity userIdentity = string.IsNullOrEmpty(username) 
                     ? new UserIdentity(new AnonymousIdentityToken()) 
-                    : new UserIdentity(username, password);
+                    : new UserIdentity(username, Encoding.UTF8.GetBytes(password));
 
                 session = Session.Create(configuration, endpoint, false, "OPC UA Client", 60000, userIdentity, null).Result;
 

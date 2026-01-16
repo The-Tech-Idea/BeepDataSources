@@ -188,13 +188,13 @@ namespace TheTechIdea.Beep.FacebookDataSource
             metadata["posts"] = new EntityMetadata
             {
                 EntityName = "posts",
-                DisplayName = "Posts",
+                Caption = "Posts",
                 PrimaryKey = "id",
                 Fields = new List<EntityField>
                 {
-                    new EntityField { Name = "id", Type = "string", IsPrimaryKey = true },
-                    new EntityField { Name = "message", Type = "string" },
-                    new EntityField { Name = "created_time", Type = "datetime" },
+                    new EntityField {FieldName = "id", Fieldtype ="string", IsKey = true },
+                    new EntityField {FieldName = "message", Fieldtype ="string" },
+                    new EntityField {FieldName = "created_time", Fieldtype ="datetime" },
                     // ... comprehensive field list
                 }
             };

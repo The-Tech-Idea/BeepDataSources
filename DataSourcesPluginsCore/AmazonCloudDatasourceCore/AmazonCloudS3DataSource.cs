@@ -9,6 +9,7 @@ using System.IO;
 using System.Threading;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Amazon.S3.Util;
 using Amazon.Runtime;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
@@ -70,7 +71,7 @@ namespace TheTechIdea.Beep.Cloud
             if (Dataconnection.ConnectionProp != null)
             {
                 _bucketName = Dataconnection.ConnectionProp.Database;
-                _region = Dataconnection.ConnectionProp.Region ?? "us-east-1";
+                _region = string.IsNullOrWhiteSpace(Dataconnection.ConnectionProp.SchemaName) ? "us-east-1" : Dataconnection.ConnectionProp.SchemaName;
                 _s3Config = new AmazonS3Config { RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(_region) };
                 
                 // Initialize S3 client
@@ -188,7 +189,7 @@ namespace TheTechIdea.Beep.Cloud
                 {
                     if (Dataconnection.ConnectionProp != null)
                     {
-                        _region = Dataconnection.ConnectionProp.Region ?? "us-east-1";
+                        _region = string.IsNullOrWhiteSpace(Dataconnection.ConnectionProp.SchemaName) ? "us-east-1" : Dataconnection.ConnectionProp.SchemaName;
                         _s3Config = new AmazonS3Config { RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(_region) };
                         
                         if (!string.IsNullOrEmpty(Dataconnection.ConnectionProp.UserID) && !string.IsNullOrEmpty(Dataconnection.ConnectionProp.Password))
@@ -252,14 +253,14 @@ namespace TheTechIdea.Beep.Cloud
                 if (ConnectionStatus == ConnectionState.Open && _s3Client != null)
                 {
                     // Check if bucket exists or if object exists
-                    if (string.IsNullOrEmpty(_bucketName))
-                    {
-                        // Check for bucket
-                        retval = _s3Client.DoesS3BucketExistAsync(EntityName).Result;
-                    }
-                    else
-                    {
-                        // Check for object in bucket
+                     if (string.IsNullOrEmpty(_bucketName))
+                     {
+                         // Check for bucket
+                         retval = AmazonS3Util.DoesS3BucketExistV2Async(_s3Client, EntityName).GetAwaiter().GetResult();
+                     }
+                     else
+                     {
+                         // Check for object in bucket
                         var request = new GetObjectMetadataRequest
                         {
                             BucketName = _bucketName,
@@ -524,7 +525,7 @@ namespace TheTechIdea.Beep.Cloud
                         DatasourceEntityName = EntityName,
                         OriginalEntityName = EntityName,
                         Caption = EntityName,
-                        Category = DatasourceCategory.CLOUD,
+                        Category = DatasourceCategory.CLOUD.ToString(),
                         DatabaseType = DataSourceType.WebApi,
                         DataSourceID = DatasourceName,
                         Fields = new List<EntityField>()
@@ -643,7 +644,7 @@ namespace TheTechIdea.Beep.Cloud
                     {
                         UpdateEntity(EntityName, item);
                         count++;
-                        progress?.Report(new PassedArgs { Message = $"Updated {count} records" });
+                        progress?.Report(new PassedArgs { Messege = $"Updated {count} records" });
                     }
                 }
             }
@@ -761,9 +762,12 @@ namespace TheTechIdea.Beep.Cloud
                     {
                         var script = new ETLScriptDet
                         {
-                            EntityName = entity.EntityName,
-                           ScriptType= "CREATE",
-                            ScriptText = $"# S3 bucket/object: {entity.EntityName}\n# Use AWS CLI or SDK to create buckets/upload objects"
+                            SourceEntityName = entity.EntityName,
+                            DestinationEntityName = entity.EntityName,
+                            SourceDataSourceEntityName = entity.DatasourceEntityName ?? entity.EntityName,
+                            DestinationDataSourceEntityName = entity.DatasourceEntityName ?? entity.EntityName,
+                            ScriptType = DDLScriptType.CreateEntity,
+                            Ddl = $"# S3 bucket/object: {entity.EntityName}\n# Use AWS CLI or SDK to create buckets/upload objects"
                         };
                         scripts.Add(script);
                     }

@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis;
 using MongoDB.Bson;
 using Realms;
 using System.Data;
+using System.IO;
 using System.Reflection;
 using System.Text;
 using TheTechIdea.Beep.Connections;
@@ -26,6 +27,7 @@ namespace TheTechIdea.Beep.DataSource
     {
         public string DbPath { get; set; }
         public string dbname { get; set; }
+        public string Extension { get; set; } = ".realm";
         
        
         public RealMDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
@@ -45,6 +47,7 @@ namespace TheTechIdea.Beep.DataSource
                 Dataconnection.DataSourceDriver = DMEEditor.ConfigEditor.DataDriversClasses.Find(p => p.classHandler == "SQLiteMauiDataSource");
             }
             dbname = "MyData.db";
+#if REALM_SYNC
             Appid= Dataconnection.ConnectionProp.GuidID;
             AppConfiguration = new AppConfiguration(Appid)
             {
@@ -57,6 +60,7 @@ namespace TheTechIdea.Beep.DataSource
                     FastReconnectLimit = TimeSpan.FromMinutes(1),
                 },
             };
+#endif
 
 
         }
@@ -65,6 +69,7 @@ namespace TheTechIdea.Beep.DataSource
         string lastentityname = null;
         EntityStructure DataStruct = null;
         Transaction transaction;
+        private RealmConfiguration _realmConfiguration;
         #region "Properties"
         public string GuidID { get; set; }
         public DataSourceType DatasourceType { get; set; } = DataSourceType.RealIM;
@@ -93,9 +98,11 @@ namespace TheTechIdea.Beep.DataSource
         #endregion "Events"
         #region "RealM Properties"
         public Realm RealMInstance { get; set; }
+#if REALM_SYNC
         public Realms.Sync.App App { get; set; }
         public Realms.Sync.AppConfiguration AppConfiguration { get; set; }
         public Realms.Sync.User User { get; set; }
+#endif
         public List<RealmObject> RealMObjects { get; set; } = new List<RealmObject>();
         public List<Type> RealTypeMObjects { get; set; } = new List<Type>();
         public bool IsConnected { get; set; } = false;
@@ -148,7 +155,8 @@ namespace TheTechIdea.Beep.DataSource
                 CopyProperties(InsertedData, realmObject);
 
                 dynamic existingObject = null;
-                var idProperty = enttype.GetProperty(ent.PrimaryKeys.FirstOrDefault().fieldname);
+                var pkName = ent?.PrimaryKeys?.FirstOrDefault()?.FieldName;
+                var idProperty = !string.IsNullOrWhiteSpace(pkName) ? enttype.GetProperty(pkName) : null;
                 if (idProperty != null)
                 {
                     var idValue = idProperty.GetValue(InsertedData);
@@ -191,7 +199,7 @@ namespace TheTechIdea.Beep.DataSource
                     {
                         UpdateEntity(EntityName, item);
                         count++;
-                        progress?.Report(new PassedArgs { Message = $"Updated {count} records" });
+                        progress?.Report(new PassedArgs { Messege = $"Updated {count} records" });
                     }
                     retval.Message = $"Updated {count} records successfully.";
                 }
@@ -224,7 +232,8 @@ namespace TheTechIdea.Beep.DataSource
                     {
                         dynamic existingObject = null;
 
-                        var idProperty = uploadRealmObject.GetType().GetProperty(ent.PrimaryKeys.FirstOrDefault().fieldname);
+                        var keyFieldName = ent?.PrimaryKeys?.FirstOrDefault()?.FieldName;
+                        var idProperty = !string.IsNullOrWhiteSpace(keyFieldName) ? uploadRealmObject.GetType().GetProperty(keyFieldName) : null;
                         if (idProperty != null)
                         {
                             var idValue = idProperty.GetValue(uploadRealmObject);
@@ -240,19 +249,7 @@ namespace TheTechIdea.Beep.DataSource
                             // For example, if your RealmObject has a field named "Name":
                             foreach (var property in existingObject.GetType().GetProperties())
                             {
-                                if (property.CanWrite && property.Name != ent.PrimaryKeys.FirstOrDefault().fieldname)  // Assuming "Id" is the primary key and should not be changed
-                                {
-                                    var newValue = property.GetValue(uploadRealmObject);
-                                    property.SetValue(existingObject, newValue);
-                                }
-                            }
-
-                            // Repeat this for all fields you wish to update.
-
-                            // Optionally, if you want to update all properties, you can loop through properties using reflection.
-                            foreach (var property in existingObject.GetType().GetProperties())
-                            {
-                                if (property.CanWrite && property.Name != ent.PrimaryKeys.FirstOrDefault().fieldname) // Assuming "Id" is the primary key and should not be changed.
+                                if (property.CanWrite && property.Name != keyFieldName)  // Primary key should not be changed
                                 {
                                     var newValue = property.GetValue(uploadRealmObject);
                                     property.SetValue(existingObject, newValue);
@@ -342,9 +339,15 @@ namespace TheTechIdea.Beep.DataSource
                     var genericMethod = method.MakeGenericMethod(entityType);
                     var result = genericMethod.Invoke(realm, null);
 
-                    // Apply any filtering or other query logic based on qrystr...
-                    // Assuming the query does not have a WHERE clause, return the results
-                    return result;
+                    List<object> results = new List<object>();
+                    if (result is System.Collections.IEnumerable enumerable)
+                    {
+                        foreach (var item in enumerable)
+                        {
+                            results.Add(item);
+                        }
+                    }
+                    return results;
                 }
             }
             catch (Exception ex)
@@ -490,8 +493,8 @@ namespace TheTechIdea.Beep.DataSource
                     {
                         EntityField field = new EntityField
                         {
-                            fieldname = property.Name,
-                            fieldtype = property.PropertyType.Name,
+                            FieldName = property.Name,
+                            Fieldtype = property.PropertyType.Name,
                             IsKey = property.GetCustomAttributes(typeof(PrimaryKeyAttribute), false).Any(),
                             IsUnique = property.GetCustomAttributes(typeof(IndexedAttribute), false).Any(),
                             AllowDBNull = !property.PropertyType.IsValueType || (Nullable.GetUnderlyingType(property.PropertyType) != null)
@@ -675,7 +678,7 @@ namespace TheTechIdea.Beep.DataSource
             ErrorObject.Flag = Errors.Ok;
             try
             {
-                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.ScriptText))
+                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.Ddl))
                 {
                     // Realm doesn't support SQL scripts, but could execute migration code
                     DMEEditor?.AddLogMessage("Beep", "RunScript not fully supported for Realm - use migrations", DateTime.Now, -1, null, Errors.Failed);
@@ -831,9 +834,11 @@ namespace TheTechIdea.Beep.DataSource
                     {
                         var script = new ETLScriptDet
                         {
-                            EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
-                            ScriptText = $"# Realm class: {entity.EntityName}\n# Use Realm migrations to create classes"
+                            SourceEntityName = entity.EntityName,
+                            DestinationDataSourceName = DatasourceName,
+                            DestinationDataSourceEntityName = entity.EntityName,
+                            ScriptType = DDLScriptType.CreateEntity,
+                            Ddl = $"# Realm class: {entity.EntityName}\n# Use Realm migrations to create classes"
                         };
                         scripts.Add(script);
                     }
@@ -865,14 +870,17 @@ namespace TheTechIdea.Beep.DataSource
             ErrorObject.Flag = Errors.Ok;
             try
             {
-                
-                RealMInstance.Dispose();
-                ConnectionStatus = System.Data.ConnectionState.Open;
+                transaction?.Dispose();
+                transaction = null;
+
+                RealMInstance?.Dispose();
+                RealMInstance = null;
+                ConnectionStatus = System.Data.ConnectionState.Closed;
             }
             catch (Exception ex)
             {
                 ConnectionStatus = System.Data.ConnectionState.Broken;
-                DMEEditor.AddLogMessage("Beep", $"Error in Opening RealM : {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor.AddLogMessage("Beep", $"Error in Closing RealM : {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
             }
             return ConnectionStatus;
           
@@ -903,18 +911,21 @@ namespace TheTechIdea.Beep.DataSource
                     RealMInstance.Dispose();
                     RealMInstance = null;
                 }
+#if REALM_SYNC
                 if (App != null)
                 {
                     App.Dispose();
                     App = null;
                 }
+#endif
             }
             catch (Exception ex)
             {
                 DMEEditor?.AddLogMessage("Beep", $"Error disposing RealMDataSource: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
             }
         }
-        #region "RealM Functions"
+#if REALM_SYNC
+        #region "RealM Sync"
         FlexibleSyncConfiguration syncConfiguration;
         public string Appid { get; set; }
         public async Task<IErrorsInfo> CreateFlexSyncRealm()
@@ -1174,8 +1185,7 @@ namespace TheTechIdea.Beep.DataSource
             return DMEEditor.ErrorObject;
         }
         #endregion
-        #region "RealM Util"
-     
+
         public async Task<IErrorsInfo> CreateFlexSyncRealm(EntityStructure entityStructure)
         {
             try
@@ -1211,6 +1221,8 @@ namespace TheTechIdea.Beep.DataSource
 
             return DMEEditor.ErrorObject;
         }
+#endif
+        #region "RealM Util"
         private string GenerateRealmClassFromEntityStructure(EntityStructure structure)
         {
             var classBuilder = new StringBuilder();
@@ -1222,8 +1234,8 @@ namespace TheTechIdea.Beep.DataSource
 
             foreach (var field in structure.Fields)
             {
-                string propertyType = field.fieldtype;
-                string propertyName = field.fieldname;
+                string propertyType = field.Fieldtype;
+                string propertyName = field.FieldName;
 
                 if (field.IsKey)
                 {
@@ -1386,8 +1398,8 @@ namespace TheTechIdea.Beep.DataSource
             {
                 EntityField field = new EntityField
                 {
-                    fieldname = property.Name,
-                    fieldtype = GetRealmType(property.PropertyType),
+                    FieldName = property.Name,
+                    Fieldtype = GetRealmType(property.PropertyType),
                     IsKey = property.GetCustomAttributes(typeof(PrimaryKeyAttribute), false).Any(),
                     Originalfieldname = property.GetCustomAttributes<MapToAttribute>(false).FirstOrDefault()?.Mapping ?? property.Name,
                     AllowDBNull = !property.PropertyType.IsValueType || Nullable.GetUnderlyingType(property.PropertyType) != null
@@ -1419,8 +1431,8 @@ namespace TheTechIdea.Beep.DataSource
             {
                 EntityField field = new EntityField
                 {
-                    fieldname = property.Name,
-                    fieldtype = GetRealmType(property.PropertyType),
+                    FieldName = property.Name,
+                    Fieldtype = GetRealmType(property.PropertyType),
                     IsKey = property.GetCustomAttributes(typeof(PrimaryKeyAttribute), false).Any(),
                     Originalfieldname = property.GetCustomAttributes<MapToAttribute>(false).FirstOrDefault()?.Mapping ?? property.Name,
                     AllowDBNull = !property.PropertyType.IsValueType || Nullable.GetUnderlyingType(property.PropertyType) != null
@@ -1599,34 +1611,34 @@ namespace TheTechIdea.Beep.DataSource
                 dynamic instance = Activator.CreateInstance(type);
                 foreach (var field in entStructure.Fields)
                 {
-                    var propertyName = field.fieldname;
+                    var propertyName = field.FieldName;
                     var propertyInfo = item.GetType().GetProperty(propertyName);
                     if (propertyInfo != null)
                     {
                         var value = propertyInfo.GetValue(item);
                         try
                         {
-                            string netTypeString = field.fieldtype;
+                            string netTypeString = field.Fieldtype;
                             Type netType = Type.GetType(netTypeString);
 
                             if (netType == typeof(string) && value is ObjectId)
                             {
-                                type.GetProperty(field.fieldname).SetValue(instance, value.ToString());
+                                type.GetProperty(field.FieldName).SetValue(instance, value.ToString());
                             }
                             else if (Type.GetTypeCode(netType) == Type.GetTypeCode(value.GetType()))
                             {
                                 object convertedValue = Convert.ChangeType(value, netType);
-                                type.GetProperty(field.fieldname).SetValue(instance, convertedValue);
+                                type.GetProperty(field.FieldName).SetValue(instance, convertedValue);
                             }
                             else
                             {
                                 object convertedValue = Convert.ChangeType(value, netType);
-                                type.GetProperty(field.fieldname).SetValue(instance, convertedValue);
+                                type.GetProperty(field.FieldName).SetValue(instance, convertedValue);
                             }
                         }
                         catch (Exception ex)
                         {
-                            DMEEditor.AddLogMessage("Beep", $"Error setting property {field.fieldname} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                            DMEEditor.AddLogMessage("Beep", $"Error setting property {field.FieldName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
                         }
                     }
                 }
@@ -1645,34 +1657,34 @@ namespace TheTechIdea.Beep.DataSource
                 dynamic instance = Activator.CreateInstance(type);
                 foreach (var field in entStructure.Fields)
                 {
-                    var propertyName = field.fieldname;
+                    var propertyName = field.FieldName;
                     var propertyInfo = realmObject.GetType().GetProperty(propertyName);
                     if (propertyInfo != null)
                     {
                         var value = propertyInfo.GetValue(realmObject);
                         try
                         {
-                            string netTypeString = field.fieldtype;
+                            string netTypeString = field.Fieldtype;
                             Type netType = Type.GetType(netTypeString);
 
                             if (netType == typeof(string) && value is ObjectId)
                             {
-                                type.GetProperty(field.fieldname).SetValue(instance, value.ToString());
+                                type.GetProperty(field.FieldName).SetValue(instance, value.ToString());
                             }
                             else if (Type.GetTypeCode(netType) == Type.GetTypeCode(value.GetType()))
                             {
                                 object convertedValue = Convert.ChangeType(value, netType);
-                                type.GetProperty(field.fieldname).SetValue(instance, convertedValue);
+                                type.GetProperty(field.FieldName).SetValue(instance, convertedValue);
                             }
                             else
                             {
                                 object convertedValue = Convert.ChangeType(value, netType);
-                                type.GetProperty(field.fieldname).SetValue(instance, convertedValue);
+                                type.GetProperty(field.FieldName).SetValue(instance, convertedValue);
                             }
                         }
                         catch (Exception ex)
                         {
-                            DMEEditor.AddLogMessage("Beep", $"Error setting property {field.fieldname} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                            DMEEditor.AddLogMessage("Beep", $"Error setting property {field.FieldName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
                         }
                     }
                 }
@@ -1688,7 +1700,7 @@ namespace TheTechIdea.Beep.DataSource
             if (bsonValue.IsInt64) return bsonValue.AsInt64;
             if (bsonValue.IsBoolean) return bsonValue.AsBoolean;
             if (bsonValue.IsDouble) return bsonValue.AsDouble;
-            if (bsonValue.IsDateTime) return bsonValue.ToUniversalTime();
+            if (bsonValue.IsBsonDateTime) return bsonValue.ToUniversalTime();
 
             throw new InvalidOperationException($"Unsupported BsonValue type: {bsonValue.BsonType}");
         }
@@ -1749,7 +1761,7 @@ namespace TheTechIdea.Beep.DataSource
         }
         #endregion "RealM Util"
         #region "LocalDB Methods"
-        RealmConfiguration realmConfiguration;
+        RealmConfigurationBase realmConfiguration;
         public bool CreateDB()
         {
             bool retval=false;
@@ -1779,7 +1791,7 @@ namespace TheTechIdea.Beep.DataSource
                 InMemory = inMemory;
                 if (inMemory)
                 {
-                    realmConfiguration = new InMemoryConfiguration();
+                    realmConfiguration = new InMemoryConfiguration(Guid.NewGuid().ToString());
                 }
                 else
                 {
@@ -1953,7 +1965,7 @@ namespace TheTechIdea.Beep.DataSource
             {
                 IsSaved = true;
                 InMemoryStructures = Entities;
-                OnSaveStructure?.Invoke(this, new PassedArgs { Message = "Structure saved successfully" });
+                OnSaveStructure?.Invoke(this, new PassedArgs { Messege = "Structure saved successfully" });
             }
             catch (Exception ex)
             {
@@ -1964,7 +1976,7 @@ namespace TheTechIdea.Beep.DataSource
             return ErrorObject;
         }
 
-        public IErrorsInfo LoadStructure(Progress<PassedArgs> progress, CancellationToken token, bool copydata = false)
+        public IErrorsInfo LoadStructure(IProgress<PassedArgs> progress, CancellationToken token, bool copydata = false)
         {
             ErrorObject.Flag = Errors.Ok;
             try
@@ -1975,8 +1987,8 @@ namespace TheTechIdea.Beep.DataSource
                     Entities = InMemoryStructures;
                     EntitiesNames = Entities.Select(e => e.EntityName).ToList();
                 }
-                progress?.Report(new PassedArgs { Message = "Structure loaded successfully" });
-                OnLoadStructure?.Invoke(this, new PassedArgs { Message = "Structure loaded successfully" });
+                progress?.Report(new PassedArgs { Messege = "Structure loaded successfully" });
+                OnLoadStructure?.Invoke(this, new PassedArgs { Messege = "Structure loaded successfully" });
             }
             catch (Exception ex)
             {
@@ -1987,7 +1999,7 @@ namespace TheTechIdea.Beep.DataSource
             return ErrorObject;
         }
 
-        public IErrorsInfo CreateStructure(Progress<PassedArgs> progress, CancellationToken token)
+        public IErrorsInfo CreateStructure(IProgress<PassedArgs> progress, CancellationToken token)
         {
             ErrorObject.Flag = Errors.Ok;
             try
@@ -1997,8 +2009,8 @@ namespace TheTechIdea.Beep.DataSource
                 {
                     CreateDB();
                 }
-                progress?.Report(new PassedArgs { Message = "Structure created successfully" });
-                OnCreateStructure?.Invoke(this, new PassedArgs { Message = "Structure created successfully" });
+                progress?.Report(new PassedArgs { Messege = "Structure created successfully" });
+                OnCreateStructure?.Invoke(this, new PassedArgs { Messege = "Structure created successfully" });
             }
             catch (Exception ex)
             {
@@ -2009,7 +2021,7 @@ namespace TheTechIdea.Beep.DataSource
             return ErrorObject;
         }
 
-        public IErrorsInfo LoadData(Progress<PassedArgs> progress, CancellationToken token)
+        public IErrorsInfo LoadData(IProgress<PassedArgs> progress, CancellationToken token)
         {
             ErrorObject.Flag = Errors.Ok;
             try
@@ -2020,9 +2032,9 @@ namespace TheTechIdea.Beep.DataSource
                     if (token.IsCancellationRequested)
                         break;
                     GetEntitesList();
-                    progress?.Report(new PassedArgs { Message = $"Loading data for {entityName}" });
+                    progress?.Report(new PassedArgs { Messege = $"Loading data for {entityName}" });
                 }
-                OnLoadData?.Invoke(this, new PassedArgs { Message = "Data loaded successfully" });
+                OnLoadData?.Invoke(this, new PassedArgs { Messege = "Data loaded successfully" });
             }
             catch (Exception ex)
             {
@@ -2033,7 +2045,7 @@ namespace TheTechIdea.Beep.DataSource
             return ErrorObject;
         }
 
-        public IErrorsInfo SyncData(Progress<PassedArgs> progress, CancellationToken token)
+        public IErrorsInfo SyncData(IProgress<PassedArgs> progress, CancellationToken token)
         {
             ErrorObject.Flag = Errors.Ok;
             try
@@ -2045,9 +2057,9 @@ namespace TheTechIdea.Beep.DataSource
                     if (token.IsCancellationRequested)
                         break;
                     SyncData(entityName, progress, token);
-                    progress?.Report(new PassedArgs { Message = $"Syncing {entityName}" });
+                    progress?.Report(new PassedArgs { Messege = $"Syncing {entityName}" });
                 }
-                OnSyncData?.Invoke(this, new PassedArgs { Message = "Data synced successfully" });
+                OnSyncData?.Invoke(this, new PassedArgs { Messege = "Data synced successfully" });
             }
             catch (Exception ex)
             {
@@ -2058,21 +2070,12 @@ namespace TheTechIdea.Beep.DataSource
             return ErrorObject;
         }
 
-        public IErrorsInfo SyncData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
+        public IErrorsInfo SyncData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
         {
             ErrorObject.Flag = Errors.Ok;
             try
             {
-                // Realm sync would be implemented here with App.SyncSession
-                if (App != null && App.CurrentUser != null)
-                {
-                    // Sync session operations
-                    progress?.Report(new PassedArgs { Message = $"Syncing {entityname}" });
-                }
-                else
-                {
-                    progress?.Report(new PassedArgs { Message = $"No sync session for {entityname}" });
-                }
+                progress?.Report(new PassedArgs { Messege = $"Sync not supported for {entityname} (REALM_SYNC disabled)" });
             }
             catch (Exception ex)
             {
@@ -2083,7 +2086,7 @@ namespace TheTechIdea.Beep.DataSource
             return ErrorObject;
         }
 
-        public IErrorsInfo RefreshData(Progress<PassedArgs> progress, CancellationToken token)
+        public IErrorsInfo RefreshData(IProgress<PassedArgs> progress, CancellationToken token)
         {
             ErrorObject.Flag = Errors.Ok;
             try
@@ -2094,9 +2097,9 @@ namespace TheTechIdea.Beep.DataSource
                     if (token.IsCancellationRequested)
                         break;
                     RefreshData(entityName, progress, token);
-                    progress?.Report(new PassedArgs { Message = $"Refreshing {entityName}" });
+                    progress?.Report(new PassedArgs { Messege = $"Refreshing {entityName}" });
                 }
-                OnRefreshData?.Invoke(this, new PassedArgs { Message = "Data refreshed successfully" });
+                OnRefreshData?.Invoke(this, new PassedArgs { Messege = "Data refreshed successfully" });
             }
             catch (Exception ex)
             {
@@ -2107,7 +2110,7 @@ namespace TheTechIdea.Beep.DataSource
             return ErrorObject;
         }
 
-        public IErrorsInfo RefreshData(string entityname, Progress<PassedArgs> progress, CancellationToken token)
+        public IErrorsInfo RefreshData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
         {
             ErrorObject.Flag = Errors.Ok;
             try
@@ -2115,8 +2118,8 @@ namespace TheTechIdea.Beep.DataSource
                 // Refresh entity data
                 GetEntityStructure(entityname, true);
                 GetEntitesList();
-                progress?.Report(new PassedArgs { Message = $"Refreshed {entityname}" });
-                OnRefreshDataEntity?.Invoke(this, new PassedArgs { Message = $"Refreshed {entityname}" });
+                progress?.Report(new PassedArgs { Messege = $"Refreshed {entityname}" });
+                OnRefreshDataEntity?.Invoke(this, new PassedArgs { Messege = $"Refreshed {entityname}" });
             }
             catch (Exception ex)
             {

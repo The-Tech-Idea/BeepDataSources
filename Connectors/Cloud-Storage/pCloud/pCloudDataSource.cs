@@ -330,54 +330,54 @@ namespace TheTechIdea.Beep.Connectors.pCloud
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudItem", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "List<pCloudItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType ="pCloudItem", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "List<pCloudItem>")]
         public List<pCloudItem> GetFiles(string folderId = "0")
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "folderid", FilterValue = folderId } };
             return GetEntity("files", filters).Cast<pCloudItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudItem", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "List<pCloudItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType ="pCloudItem", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "List<pCloudItem>")]
         public List<pCloudItem> GetFolders(string folderId = "0")
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "folderid", FilterValue = folderId } };
             return GetEntity("folders", filters).Cast<pCloudItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudItem", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudItem")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType ="pCloudItem", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudItem")]
         public pCloudItem? GetFileInfo(string fileId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "fileid", FilterValue = fileId } };
             return GetEntity("fileinfo", filters).Cast<pCloudItem>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudUser", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudUser")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType ="pCloudUser", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudUser")]
         public pCloudUser? GetUserInfo()
         {
             return GetEntity("userinfo", new List<AppFilter>()).Cast<pCloudUser>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudUser", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudUser")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType ="pCloudUser", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudUser")]
         public pCloudUser? GetAccountInfo()
         {
             return GetEntity("accountinfo", new List<AppFilter>()).Cast<pCloudUser>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudItem", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "List<pCloudItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType ="pCloudItem", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "List<pCloudItem>")]
         public List<pCloudItem> Search(string query)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "query", FilterValue = query } };
             return GetEntity("search", filters).Cast<pCloudItem>().ToList();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudShare", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudShare")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType ="pCloudShare", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudShare")]
         public pCloudShare? ShareFile(string fileId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "fileid", FilterValue = fileId } };
             return GetEntity("share", filters).Cast<pCloudShare>().FirstOrDefault();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType = "pCloudShare", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudShare")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.pCloud, PointType = EnumPointType.Function, ObjectType ="pCloudShare", ClassName = "pCloudDataSource", Showin = ShowinType.Both, misc = "pCloudShare")]
         public pCloudShare? ShareFolder(string folderId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "folderid", FilterValue = folderId } };
@@ -385,13 +385,13 @@ namespace TheTechIdea.Beep.Connectors.pCloud
         }
 
         [CommandAttribute(
-            Name = "UploadFileAsync",
+           Name = "UploadFileAsync",
             Caption = "Upload pCloud File",
-            ObjectType = "pCloudItem",
+            ObjectType ="pCloudItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.pCloud,
-            ClassType = "pCloudDataSource",
+            ClassType ="pCloudDataSource",
             Showin = ShowinType.Both,
             Order = 1,
             iconimage = "uploadfile.png",
@@ -422,13 +422,13 @@ namespace TheTechIdea.Beep.Connectors.pCloud
         }
 
         [CommandAttribute(
-            Name = "CreateFolderAsync",
+           Name = "CreateFolderAsync",
             Caption = "Create pCloud Folder",
-            ObjectType = "pCloudItem",
+            ObjectType ="pCloudItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.pCloud,
-            ClassType = "pCloudDataSource",
+            ClassType ="pCloudDataSource",
             Showin = ShowinType.Both,
             Order = 2,
             iconimage = "createfolder.png",
@@ -459,13 +459,13 @@ namespace TheTechIdea.Beep.Connectors.pCloud
         }
 
         [CommandAttribute(
-            Name = "CopyFileAsync",
+           Name = "CopyFileAsync",
             Caption = "Copy pCloud File",
-            ObjectType = "pCloudItem",
+            ObjectType ="pCloudItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.pCloud,
-            ClassType = "pCloudDataSource",
+            ClassType ="pCloudDataSource",
             Showin = ShowinType.Both,
             Order = 3,
             iconimage = "copyfile.png",
@@ -496,13 +496,13 @@ namespace TheTechIdea.Beep.Connectors.pCloud
         }
 
         [CommandAttribute(
-            Name = "UpdateFileAsync",
+           Name = "UpdateFileAsync",
             Caption = "Update pCloud File",
-            ObjectType = "pCloudItem",
+            ObjectType ="pCloudItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.pCloud,
-            ClassType = "pCloudDataSource",
+            ClassType ="pCloudDataSource",
             Showin = ShowinType.Both,
             Order = 4,
             iconimage = "updatefile.png",
@@ -533,13 +533,13 @@ namespace TheTechIdea.Beep.Connectors.pCloud
         }
 
         [CommandAttribute(
-            Name = "UpdateFolderAsync",
+           Name = "UpdateFolderAsync",
             Caption = "Update pCloud Folder",
-            ObjectType = "pCloudItem",
+            ObjectType ="pCloudItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.pCloud,
-            ClassType = "pCloudDataSource",
+            ClassType ="pCloudDataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "updatefolder.png",
@@ -570,13 +570,13 @@ namespace TheTechIdea.Beep.Connectors.pCloud
         }
 
         [CommandAttribute(
-            Name = "UpdateCopyAsync",
+           Name = "UpdateCopyAsync",
             Caption = "Update pCloud Copy",
-            ObjectType = "pCloudItem",
+            ObjectType ="pCloudItem",
             PointType = EnumPointType.Function,
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.pCloud,
-            ClassType = "pCloudDataSource",
+            ClassType ="pCloudDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "updatecopy.png",

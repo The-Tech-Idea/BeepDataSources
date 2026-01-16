@@ -416,7 +416,9 @@ namespace TheTechIdea.Beep.Cloud.Kusto
                 var entity = GetEntityStructure(EntityName, false);
                 if (entity != null)
                 {
-                    return DMTypeBuilder.CreateTypeFromEntityStructure(entity, DMEEditor);
+                    // Use the correct DMTypeBuilder method - CreateNewObject returns an object, get its type
+                    var obj = DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, entity.Fields);
+                    return obj?.GetType() ?? typeof(object);
                 }
             }
             catch (Exception ex)

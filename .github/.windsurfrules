@@ -1,0 +1,126 @@
+# Windsurf Rules for BeepDataSources
+
+BeepDataSources implements `IDataSource` and `IDataSourceHelper` for 287+ data sources (RDBMS, NoSQL, APIs, Vector DBs, etc.) integrated with BeepDM.
+
+## Quick Facts
+
+- **Language:** C# (.NET 9.0)
+- **Main Projects:** Connectors (WebAPI), VectorDatabase, InMemoryDB, Messaging, DataSourcesPluginsCore
+- **Core Interface:** `IDataSource` (40+ methods) from BeepDM
+- **Base Classes:** `WebAPIDataSource` (Connectors), Direct IDataSource impl (others)
+- **Discovery:** `[AddinAttribute]` for assembly scanning, `[CommandAttribute]` for UI methods
+- **Build:** `dotnet build DataSourcePluginSolution.sln`
+
+## Critical Rules
+
+1. **Always use [AddinAttribute]** — Required for AssemblyHandler to discover datasources
+2. **IDataSource Contract Must Be Respected** — All implementations must implement or inherit from IDataSource
+3. **ObjectType = POCO ClassName** — In [CommandAttribute], must match exactly (case-sensitive)
+4. **Sealed POCOs with [JsonPropertyName]** — Required for JSON deserialization and UI discovery
+5. **Never Throw on Expected Failures** — Use `IErrorsInfo` or return empty collections
+6. **Always Initialize ErrorObject** — Set Flag and Message on operations
+7. **No Models in Subfolders** — For Connectors, keep Models.cs at project root
+8. **Support Async Variants** — Provide both sync and async CRUD methods
+
+## Implementation Checklist (WebAPI Connectors)
+
+- [ ] Create Models.cs with sealed POCOs
+- [ ] Create `{ServiceName}EntityBase` with `Attach<T>()` method
+- [ ] Apply `[JsonPropertyName(...)]` to all properties
+- [ ] Create DataSource class inheriting `WebAPIDataSource`
+- [ ] Add `[AddinAttribute(...)]` decorator
+- [ ] Define static `EntityEndpoints` dictionary
+- [ ] Define static `RequiredFilters` dictionary
+- [ ] Override `GetEntity()` (sync wrapper)
+- [ ] Override `GetEntityAsync()` (main implementation)
+- [ ] Optionally override `GetEntity(pageNumber, pageSize)` for pagination
+- [ ] Add `[CommandAttribute(...)]` decorated methods (ObjectType critical!)
+- [ ] Initialize WebAPIConnectionProperties in constructor
+- [ ] Add project references to DataManagementModels and DataManagementEngine DLLs
+- [ ] Test with mock HTTP responses (no live API calls)
+
+## Common Implementation Patterns
+
+### Sync Wrapper Pattern
+```csharp
+public override IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+{
+    var data = GetEntityAsync(EntityName, filter).ConfigureAwait(false).GetAwaiter().GetResult();
+    return data ?? Array.Empty<object>();
+}
+```
+
+### Async GetEntity Implementation
+```csharp
+public override async Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+{
+    if (!EntityEndpoints.TryGetValue(EntityName, out var endpoint))
+        throw new InvalidOperationException($"Unknown entity '{EntityName}'.");
+    
+    var q = FiltersToQuery(Filter);
+    RequireFilters(EntityName, q, RequiredFilters.GetValueOrDefault(EntityName, Array.Empty<string>()));
+    var resolvedEndpoint = ResolveEndpoint(endpoint, q);
+    using var resp = await GetAsync(resolvedEndpoint, q).ConfigureAwait(false);
+    
+    return resp?.IsSuccessStatusCode == true ? ExtractArray(resp, "data") : Array.Empty<object>();
+}
+```
+
+### CommandAttribute Pattern
+```csharp
+[CommandAttribute(
+    Name = "MethodName",
+    Caption = "Display Name",
+    Category = DatasourceCategory.Connector,
+    DatasourceType = DataSourceType.{ServiceName},
+    PointType = EnumPointType.Function,
+    ObjectType = "{POCOClassName}",  // EXACT MATCH!
+    ClassType = "{ServiceName}DataSource",
+    Showin = ShowinType.Both,
+    Order = 1,
+    iconimage = "{lower}.png",
+    misc = "ReturnType: IEnumerable<{POCOClassName}>"
+)]
+public async Task<IEnumerable<{POCOClassName}>> MethodName(string param) { }
+```
+
+## Test Cases to Verify
+
+1. Datasource is discoverable by AssemblyHandler
+2. CommandAttribute methods appear in UI
+3. GetEntity and GetEntityAsync both work
+4. Filter validation works (RequireFilters throws on missing)
+5. Error handling: ErrorObject.Flag set correctly
+6. Async methods use .ConfigureAwait(false)
+7. POCO serialization works with [JsonPropertyName]
+
+## Files to Reference
+
+- **Interface Contract:** DataManagementModelsStandard/IDataSource.cs (BeepDM)
+- **Base Class:** DataManagementEngineStandard/WebAPI/WebAPIDataSource.cs (BeepDM)
+- **Reference Impl:** Connectors/SocialMedia/Twitter/ (Twitter example)
+- **Architecture Docs:** .github/copilot-instructions.md, idatasourceimplementationplan.md (BeepDM)
+
+## Deployment
+
+1. Build: `dotnet build DataSourcePluginSolution.sln`
+2. Place DLL in BeepDM's `ProjectClasses/` or `ConnectionDrivers/` folder
+3. AssemblyHandler discovers via [AddinAttribute] at runtime
+4. [CommandAttribute] methods appear in BeepDM UI automatically
+
+## Key Gotchas
+
+- ❌ ObjectType mismatch → UI won't discover methods
+- ❌ Missing [AddinAttribute] → Datasource won't load
+- ❌ Missing [JsonPropertyName] → Properties deserialize as null
+- ❌ Models.cs in subfolder → Build succeeds but patterns break
+- ❌ Not sealed POCOs → Slight perf loss (but convention-breaking)
+- ❌ Throwing exceptions → Expected failures must use IErrorsInfo
+- ❌ Blocking on async → Use .ConfigureAwait(false) consistently
+
+## Where to Ask Questions
+
+- Attribute-related issues: Review [CommandAttribute] and [AddinAttribute] definitions
+- Entity structure issues: Check `EntityStructure` class in BeepDM models
+- Filter handling: Review `AppFilter` and `FiltersToQuery` in WebAPIDataSource
+- Async patterns: Check BeepDM documentation on async method conventions

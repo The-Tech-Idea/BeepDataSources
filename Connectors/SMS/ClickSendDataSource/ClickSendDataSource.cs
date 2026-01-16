@@ -158,21 +158,21 @@ namespace TheTechIdea.Beep.Connectors.ClickSend
             }
         }
 
-        [CommandAttribute(ObjectType = "ClickSendSMSMessage", PointType = EnumPointType.Function, Name = "GetSMSHistory", Caption = "Get SMS History", ClassName = "ClickSendDataSource")]
+        [CommandAttribute(ObjectType ="ClickSendSMSMessage", PointType = EnumPointType.Function, Name = "GetSMSHistory", Caption = "Get SMS History", ClassName = "ClickSendDataSource")]
         public async Task<List<ClickSendSMSMessage>> GetSMSHistory()
         {
             var result = await GetEntityAsync("sms_history", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<ClickSendSMSMessage>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<ClickSendSMSMessage>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "ClickSendAccount", PointType = EnumPointType.Function, Name = "GetAccount", Caption = "Get Account", ClassName = "ClickSendDataSource")]
+        [CommandAttribute(ObjectType ="ClickSendAccount", PointType = EnumPointType.Function, Name = "GetAccount", Caption = "Get Account", ClassName = "ClickSendDataSource")]
         public async Task<ClickSendAccount> GetAccount()
         {
             var result = await GetEntityAsync("account", new List<AppFilter>());
             return result.FirstOrDefault() as ClickSendAccount;
         }
 
-        [CommandAttribute(ObjectType = "ClickSendContact", PointType = EnumPointType.Function, Name = "GetContacts", Caption = "Get Contacts", ClassName = "ClickSendDataSource")]
+        [CommandAttribute(ObjectType ="ClickSendContact", PointType = EnumPointType.Function, Name = "GetContacts", Caption = "Get Contacts", ClassName = "ClickSendDataSource")]
         public async Task<List<ClickSendContact>> GetContacts(string listId)
         {
             var filters = new List<AppFilter> { new AppFilter { FieldName = "list_id", FilterValue = listId, Operator = "=" } };
@@ -181,7 +181,7 @@ namespace TheTechIdea.Beep.Connectors.ClickSend
         }
 
         // POST/PUT methods for creating and updating entities
-        [CommandAttribute(ObjectType = "ClickSendSMS", PointType = EnumPointType.Function, Name = "SendSMS", Caption = "Send SMS", ClassName = "ClickSendDataSource")]
+        [CommandAttribute(ObjectType ="ClickSendSMS", PointType = EnumPointType.Function, Name = "SendSMS", Caption = "Send SMS", ClassName = "ClickSendDataSource")]
         public async Task<ClickSendSMSResponse> SendSMS(ClickSendSMS sms)
         {
             var endpoint = "sms/send";
@@ -189,7 +189,7 @@ namespace TheTechIdea.Beep.Connectors.ClickSend
             return response;
         }
 
-        [CommandAttribute(ObjectType = "ClickSendContact", PointType = EnumPointType.Function, Name = "CreateContact", Caption = "Create Contact", ClassName = "ClickSendDataSource")]
+        [CommandAttribute(ObjectType ="ClickSendContact", PointType = EnumPointType.Function, Name = "CreateContact", Caption = "Create Contact", ClassName = "ClickSendDataSource")]
         public async Task<ClickSendContact> CreateContact(string listId, ClickSendContact contact)
         {
             var endpoint = $"lists/{listId}/contacts";
@@ -197,7 +197,7 @@ namespace TheTechIdea.Beep.Connectors.ClickSend
             return response;
         }
 
-        [CommandAttribute(ObjectType = "ClickSendContact", PointType = EnumPointType.Function, Name = "UpdateContact", Caption = "Update Contact", ClassName = "ClickSendDataSource")]
+        [CommandAttribute(ObjectType ="ClickSendContact", PointType = EnumPointType.Function, Name = "UpdateContact", Caption = "Update Contact", ClassName = "ClickSendDataSource")]
         public async Task<ClickSendContact> UpdateContact(string listId, string contactId, ClickSendContact contact)
         {
             var endpoint = $"lists/{listId}/contacts/{contactId}";

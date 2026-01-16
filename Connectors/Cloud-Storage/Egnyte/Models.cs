@@ -569,7 +569,7 @@ namespace TheTechIdea.Beep.Connectors.Egnyte.Models
         /// The group name
         /// </summary>
         [JsonPropertyName("display_name")]
-        public string? DisplayName { get; set; }
+        public string? Caption { get; set; }
 
         /// <summary>
         /// The group description

@@ -207,19 +207,19 @@ namespace TheTechIdea.Beep.Connectors.Copper
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "Leads", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<CopperLead>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType ="Leads", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<CopperLead>")]
         public IEnumerable<CopperLead> GetLeads(List<AppFilter> filter) => GetEntity("leads", filter).Cast<CopperLead>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<CopperContact>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType ="Contacts", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<CopperContact>")]
         public IEnumerable<CopperContact> GetContacts(List<AppFilter> filter) => GetEntity("contacts", filter).Cast<CopperContact>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "Accounts", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<CopperAccount>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType ="Accounts", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<CopperAccount>")]
         public IEnumerable<CopperAccount> GetAccounts(List<AppFilter> filter) => GetEntity("accounts", filter).Cast<CopperAccount>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "Deals", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<CopperDeal>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType ="Deals", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<CopperDeal>")]
         public IEnumerable<CopperDeal> GetDeals(List<AppFilter> filter) => GetEntity("deals", filter).Cast<CopperDeal>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperLead", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperLead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType ="CopperLead", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperLead")]
         public async Task<IEnumerable<CopperLead>> CreateLeadAsync(CopperLead lead)
         {
             if (lead == null) return Array.Empty<CopperLead>();
@@ -238,7 +238,7 @@ namespace TheTechIdea.Beep.Connectors.Copper
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperLead", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperLead")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType ="CopperLead", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperLead")]
         public async Task<IEnumerable<CopperLead>> UpdateLeadAsync(string leadId, CopperLead lead)
         {
             if (string.IsNullOrWhiteSpace(leadId) || lead == null) return Array.Empty<CopperLead>();
@@ -258,7 +258,7 @@ namespace TheTechIdea.Beep.Connectors.Copper
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperContact", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperContact")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType ="CopperContact", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperContact")]
         public async Task<IEnumerable<CopperContact>> CreateContactAsync(CopperContact contact)
         {
             if (contact == null) return Array.Empty<CopperContact>();
@@ -277,7 +277,7 @@ namespace TheTechIdea.Beep.Connectors.Copper
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperContact", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperContact")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType ="CopperContact", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperContact")]
         public async Task<IEnumerable<CopperContact>> UpdateContactAsync(string contactId, CopperContact contact)
         {
             if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<CopperContact>();
@@ -297,7 +297,7 @@ namespace TheTechIdea.Beep.Connectors.Copper
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperAccount", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperAccount")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType ="CopperAccount", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperAccount")]
         public async Task<IEnumerable<CopperAccount>> CreateAccountAsync(CopperAccount account)
         {
             if (account == null) return Array.Empty<CopperAccount>();
@@ -316,7 +316,7 @@ namespace TheTechIdea.Beep.Connectors.Copper
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperAccount", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperAccount")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType ="CopperAccount", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperAccount")]
         public async Task<IEnumerable<CopperAccount>> UpdateAccountAsync(string accountId, CopperAccount account)
         {
             if (string.IsNullOrWhiteSpace(accountId) || account == null) return Array.Empty<CopperAccount>();
@@ -336,7 +336,7 @@ namespace TheTechIdea.Beep.Connectors.Copper
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperDeal", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperDeal")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType ="CopperDeal", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperDeal")]
         public async Task<IEnumerable<CopperDeal>> CreateDealAsync(CopperDeal deal)
         {
             if (deal == null) return Array.Empty<CopperDeal>();
@@ -355,7 +355,7 @@ namespace TheTechIdea.Beep.Connectors.Copper
             }
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType = "CopperDeal", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperDeal")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Copper, PointType = EnumPointType.Function, ObjectType ="CopperDeal", ClassName = "CopperDataSource", Showin = ShowinType.Both, misc = "CopperDeal")]
         public async Task<IEnumerable<CopperDeal>> UpdateDealAsync(string dealId, CopperDeal deal)
         {
             if (string.IsNullOrWhiteSpace(dealId) || deal == null) return Array.Empty<CopperDeal>();

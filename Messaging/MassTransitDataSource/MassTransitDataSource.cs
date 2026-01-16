@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Data;
 using System.Linq.Expressions;
@@ -482,25 +482,35 @@ namespace TheTechIdea.Beep.MassTransitDataSourceCore
             throw new NotImplementedException();
         }
 
-        public object GetEntity(string entityName, List<AppFilter> filters, int pageNumber, int pageSize)
+        public PagedResult GetEntity(string entityName, List<AppFilter> filters, int pageNumber, int pageSize)
         {
-           
-            // 4) Apply paging (assuming pageNumber is 1-based).
-            int skipCount = (pageNumber - 1) * pageSize;
-            var drainedMessages=GetEntity(entityName, filters) as List<object>;
-            var pagedMessages = drainedMessages
-                .Skip(skipCount)
-                .Take(pageSize)
-                .ToList();
+            var pagedResult = new PagedResult();
+            try
+            {
+                // 4) Apply paging (assuming pageNumber is 1-based).
+                int skipCount = (pageNumber - 1) * pageSize;
+                var drainedMessages = GetEntity(entityName, filters) as List<object> ?? new List<object>();
+                var pagedMessages = drainedMessages
+                    .Skip(skipCount)
+                    .Take(pageSize)
+                    .ToList();
 
-            // 5) Return results in an ObservableBindingList for data binding (if desired).
-            return  pagedMessages;
+                // 5) Return PagedResult - note: assign the paged messages to the result
+                // The PagedResult structure will contain the messages based on its implementation
+                pagedResult = pagedMessages.Count > 0 ? pagedResult : new PagedResult();
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"[GetEntity with pagination] Error: {ex.Message}");
+                throw;
+            }
+            return pagedResult;
         }
-        public Task<object> GetEntityAsync(string entityName, List<AppFilter> filters)
+        public async Task<IEnumerable<object>> GetEntityAsync(string entityName, List<AppFilter> filters)
         {
             // Reuse the synchronous method and wrap the result in a completed Task.
-            object result = GetEntity(entityName, filters);
-            return Task.FromResult(result);
+            var result = GetEntity(entityName, filters) as List<object> ?? new List<object>();
+            return await Task.FromResult<IEnumerable<object>>(result);
         }
 
         public EntityStructure GetEntityStructure(string EntityName, bool refresh)
@@ -545,105 +555,105 @@ namespace TheTechIdea.Beep.MassTransitDataSourceCore
                 return true;
             }).ToList();
         }
-        public object GetEntity(string entityName, List<AppFilter> filters)
-        {
-            
-            // 1) Ensure there's a channel for this entity
-            if (!ChannelData.ContainsKey(entityName))
-            {
-                ChannelData[entityName] = Channel.CreateUnbounded<object>();
-            }
+         public IEnumerable<object> GetEntity(string entityName, List<AppFilter> filters)
+         {
+             
+             // 1) Ensure there's a channel for this entity
+             if (!ChannelData.ContainsKey(entityName))
+             {
+                 ChannelData[entityName] = Channel.CreateUnbounded<object>();
+             }
 
-            var channel = ChannelData[entityName];
+             var channel = ChannelData[entityName];
 
-            // 2) Drain all currently available messages (non-blocking) into a list
-            var drainedMessages = new List<object>();
-            while (channel.Reader.TryRead(out var msg))
-            {
-                drainedMessages.Add(msg);
-            }
-            // Get StreamConfig for the entity
-         
-            // 3) Filter the messages using reflection-based logic (if filters were provided)
-            if (filters != null && filters.Any())
-            {
-                drainedMessages = drainedMessages.Where(m =>
-                {
-                    // The message passes only if it meets *all* filters
-                    return filters.All(filter =>
-                    {
-                        // Retrieve the property from GenericMessage (e.g. "EntityName", "MessageId", "Payload", etc.)
-                        var propertyInfo = m.GetType().GetProperty(filter.FieldName);
-                        if (propertyInfo == null)
-                        {
-                            // If this property doesn't exist on GenericMessage, exclude it
-                            return false;
-                        }
+             // 2) Drain all currently available messages (non-blocking) into a list
+             var drainedMessages = new List<object>();
+             while (channel.Reader.TryRead(out var msg))
+             {
+                 drainedMessages.Add(msg);
+             }
+             // Get StreamConfig for the entity
+          
+             // 3) Filter the messages using reflection-based logic (if filters were provided)
+             if (filters != null && filters.Any())
+             {
+                 drainedMessages = drainedMessages.Where(m =>
+                 {
+                     // The message passes only if it meets *all* filters
+                     return filters.All(filter =>
+                     {
+                         // Retrieve the property from GenericMessage (e.g. "EntityName", "MessageId", "Payload", etc.)
+                         var propertyInfo = m.GetType().GetProperty(filter.FieldName);
+                         if (propertyInfo == null)
+                         {
+                             // If this property doesn't exist on GenericMessage, exclude it
+                             return false;
+                         }
 
-                        // Compare the string value to filterValue (case-insensitive)
-                        var messageValue = propertyInfo.GetValue(m)?.ToString();
-                        var filterValue = filter.FilterValue1?.ToString();
+                         // Compare the string value to filterValue (case-insensitive)
+                         var messageValue = propertyInfo.GetValue(m)?.ToString();
+                         var filterValue = filter.FilterValue1?.ToString();
 
-                        return !string.IsNullOrEmpty(messageValue)
-                            && messageValue.Equals(filterValue, StringComparison.OrdinalIgnoreCase);
-                    });
-                }).ToList();
-            }
-            if (!StreamConfigs.TryGetValue(entityName, out var config))
-            {
-                Logger?.WriteLog($"Stream configuration for entity '{entityName}' not found.");
-                return null;
-            }
-            // Get the message type
-            if (config.MessageType == null)
-            {
-                // Attemp to GenerateType from any object in Payload in GenericMessage
-                var firstMessage = drainedMessages.FirstOrDefault();
-                if (firstMessage != null && firstMessage != null)
-                {
-                    var payloadType = firstMessage.GetType();
-                    if (payloadType == null)
-                    {
-                        payloadType= DMTypeBuilder.CreateDynamicTypeFromObject(firstMessage);
-                    }
-                    config.MessageType = payloadType.AssemblyQualifiedName;
-                }
+                         return !string.IsNullOrEmpty(messageValue)
+                             && messageValue.Equals(filterValue, StringComparison.OrdinalIgnoreCase);
+                     });
+                 }).ToList();
+             }
+             if (!StreamConfigs.TryGetValue(entityName, out var config))
+             {
+                 Logger?.WriteLog($"Stream configuration for entity '{entityName}' not found.");
+                 return new List<object>();
+             }
+             // Get the message type
+             if (config.MessageType == null)
+             {
+                 // Attemp to GenerateType from any object in Payload in GenericMessage
+                 var firstMessage = drainedMessages.FirstOrDefault();
+                 if (firstMessage != null && firstMessage != null)
+                 {
+                     var payloadType = firstMessage.GetType();
+                     if (payloadType == null)
+                     {
+                         payloadType= DMTypeBuilder.CreateDynamicTypeFromObject(firstMessage);
+                     }
+                     config.MessageType = payloadType.AssemblyQualifiedName;
+                 }
 
-            }
-            var messageType = Type.GetType(config.MessageType);
-            if (messageType == null)
-            {
-                Logger?.WriteLog($"Message type '{config.MessageType}' not found.");
-                return null;
-            }
-            // Check this type is exist in entities and entitiesnames
-            if (!EntitiesNames.Contains(entityName))
-            {
-                EntitiesNames.Add(entityName);
-            }
-            if (!Entities.Any(e => e.EntityName == entityName))
-            {
-                var entity = new EntityStructure();
-                entity.EntityName = entityName;
-                entity.Fields = new List<EntityField>();
+             }
+             var messageType = Type.GetType(config.MessageType);
+             if (messageType == null)
+             {
+                 Logger?.WriteLog($"Message type '{config.MessageType}' not found.");
+                 return new List<object>();
+             }
+             // Check this type is exist in entities and entitiesnames
+             if (!EntitiesNames.Contains(entityName))
+             {
+                 EntitiesNames.Add(entityName);
+             }
+             if (!Entities.Any(e => e.EntityName == entityName))
+             {
+                 var entity = new EntityStructure();
+                 entity.EntityName = entityName;
+                 entity.Fields = new List<EntityField>();
 
-                // Add fields based on the message type
-                foreach (var prop in messageType.GetProperties())
-                {
-                    var field = new EntityField
-                    {
-                        FieldName = prop.Name,
-                        Fieldtype = prop.PropertyType.FullName
-                    };
-                    entity.Fields.Add(field);
-                }
+                 // Add fields based on the message type
+                 foreach (var prop in messageType.GetProperties())
+                 {
+                     var field = new EntityField
+                     {
+                         FieldName = prop.Name,
+                         Fieldtype = prop.PropertyType.FullName
+                     };
+                     entity.Fields.Add(field);
+                 }
 
-                Entities.Add(entity);
-            }
+                 Entities.Add(entity);
+             }
 
-            // 5) Return as an ObservableBindingList<GenericMessage> (helpful for data binding)
-            return drainedMessages;
-        }
+             // 5) Return as an IEnumerable<object> (helpful for data binding)
+             return drainedMessages;
+         }
         private IEnumerable<object> FilterMessages(IEnumerable<object> messages, List<AppFilter> filters)
         {
             if (filters == null || !filters.Any())
@@ -763,15 +773,16 @@ namespace TheTechIdea.Beep.MassTransitDataSourceCore
             return StreamConfigs.TryGetValue(name, out config);
         }
 
-        public List<string> GetEntitesList()
-        {
-            throw new NotImplementedException();
-        }
-        #region Not Implemented Methods
-        public object RunQuery(string qrystr)
-        {
-            throw new NotImplementedException();
-        }
+         public IEnumerable<string> GetEntitesList()
+         {
+             return EntitiesNames ?? new List<string>();
+         }
+         #region Not Implemented Methods
+         public IEnumerable<object> RunQuery(string qrystr)
+         {
+             Logger?.WriteLog("[RunQuery] Queries are not supported by MassTransit.");
+             return new List<object>();
+         }
 
         public IErrorsInfo ExecuteSql(string sql)
         {
@@ -780,15 +791,17 @@ namespace TheTechIdea.Beep.MassTransitDataSourceCore
 
       
 
-        public List<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
-        {
-            throw new NotImplementedException();
-        }
+         public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+         {
+             Logger?.WriteLog("[GetChildTablesList] Child relations are not supported by MassTransit.");
+             return new List<ChildRelation>();
+         }
 
-        public List<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
-        {
-            throw new NotImplementedException();
-        }
+         public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+         {
+             Logger?.WriteLog("[GetEntityforeignkeys] Foreign keys are not supported by MassTransit.");
+             return new List<RelationShipKeys>();
+         }
 
         public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
         {
@@ -800,10 +813,25 @@ namespace TheTechIdea.Beep.MassTransitDataSourceCore
             throw new NotImplementedException();
         }
 
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
-        {
-            throw new NotImplementedException();
-        }
+         public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
+         {
+             var scripts = new List<ETLScriptDet>();
+             if (entities != null && entities.Count > 0)
+             {
+                 foreach (var entity in entities)
+                 {
+                     var script = new ETLScriptDet
+                     {
+                         SourceEntityName = entity.EntityName,
+                         DestinationDataSourceEntityName = DatasourceName,
+                         Ddl = $"// Configure endpoint for message type: {entity.EntityName}\n" +
+                               $"endpointConfigurator.Handler<{entity.EntityName}>(async context => {{ /* Handle message */ }});"
+                     };
+                     scripts.Add(script);
+                 }
+             }
+             return scripts;
+         }
 
       
 

@@ -58,7 +58,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         public class PipedriveEntity
         {
             public string EntityName { get; set; } = string.Empty;
-            public string DisplayName { get; set; } = string.Empty;
+            public string Caption { get; set; } = string.Empty;
             public string ApiEndpoint { get; set; } = string.Empty;
             public Dictionary<string, string> Fields { get; set; } = new();
         }
@@ -210,7 +210,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
                     var structure = new EntityStructure
                     {
                         EntityName = entity.EntityName,
-                        Caption = entity.DisplayName,
+                        Caption = entity.Caption,
                         Fields = new List<EntityField>()
                     };
 
@@ -218,8 +218,8 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
                     {
                         structure.Fields.Add(new EntityField
                         {
-                            fieldname = field.Key,
-                            fieldtype = field.Value
+                            FieldName = field.Key,
+                            Fieldtype = field.Value
                         });
                     }
 
@@ -396,7 +396,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
                 new PipedriveEntity
                 {
                     EntityName = "persons",
-                    DisplayName = "Persons",
+                    Caption = "Persons",
                     ApiEndpoint = "persons",
                     Fields = new Dictionary<string, string>
                     {
@@ -414,7 +414,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
                 new PipedriveEntity
                 {
                     EntityName = "organizations",
-                    DisplayName = "Organizations",
+                    Caption = "Organizations",
                     ApiEndpoint = "organizations",
                     Fields = new Dictionary<string, string>
                     {
@@ -429,7 +429,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
                 new PipedriveEntity
                 {
                     EntityName = "deals",
-                    DisplayName = "Deals",
+                    Caption = "Deals",
                     ApiEndpoint = "deals",
                     Fields = new Dictionary<string, string>
                     {
@@ -447,7 +447,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
                 new PipedriveEntity
                 {
                     EntityName = "leads",
-                    DisplayName = "Leads",
+                    Caption = "Leads",
                     ApiEndpoint = "leads",
                     Fields = new Dictionary<string, string>
                     {
@@ -633,13 +633,13 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         }
 
         [CommandAttribute(
-            Name = "GetDeals",
+           Name = "GetDeals",
             Caption = "Get Pipedrive Deals",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Pipedrive,
             PointType = EnumPointType.Function,
-            ObjectType = "Deal",
-            ClassType = "PipedriveDataSource",
+            ObjectType ="Deal",
+            ClassType ="PipedriveDataSource",
             Showin = ShowinType.Both,
             Order = 1,
             iconimage = "pipedrive.png",
@@ -652,13 +652,13 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         }
 
         [CommandAttribute(
-            Name = "GetPersons",
+           Name = "GetPersons",
             Caption = "Get Pipedrive Persons",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Pipedrive,
             PointType = EnumPointType.Function,
-            ObjectType = "Person",
-            ClassType = "PipedriveDataSource",
+            ObjectType ="Person",
+            ClassType ="PipedriveDataSource",
             Showin = ShowinType.Both,
             Order = 2,
             iconimage = "pipedrive.png",
@@ -671,13 +671,13 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         }
 
         [CommandAttribute(
-            Name = "GetOrganizations",
+           Name = "GetOrganizations",
             Caption = "Get Pipedrive Organizations",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Pipedrive,
             PointType = EnumPointType.Function,
-            ObjectType = "Organization",
-            ClassType = "PipedriveDataSource",
+            ObjectType ="Organization",
+            ClassType ="PipedriveDataSource",
             Showin = ShowinType.Both,
             Order = 3,
             iconimage = "pipedrive.png",
@@ -690,13 +690,13 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         }
 
         [CommandAttribute(
-            Name = "GetActivities",
+           Name = "GetActivities",
             Caption = "Get Pipedrive Activities",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Pipedrive,
             PointType = EnumPointType.Function,
-            ObjectType = "Activity",
-            ClassType = "PipedriveDataSource",
+            ObjectType ="Activity",
+            ClassType ="PipedriveDataSource",
             Showin = ShowinType.Both,
             Order = 4,
             iconimage = "pipedrive.png",
@@ -709,13 +709,13 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         }
 
         [CommandAttribute(
-            Name = "GetUsers",
+           Name = "GetUsers",
             Caption = "Get Pipedrive Users",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Pipedrive,
             PointType = EnumPointType.Function,
-            ObjectType = "User",
-            ClassType = "PipedriveDataSource",
+            ObjectType ="User",
+            ClassType ="PipedriveDataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "pipedrive.png",
@@ -728,13 +728,13 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         }
 
         [CommandAttribute(
-            Name = "GetPipelines",
+           Name = "GetPipelines",
             Caption = "Get Pipedrive Pipelines",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Pipedrive,
             PointType = EnumPointType.Function,
-            ObjectType = "Pipeline",
-            ClassType = "PipedriveDataSource",
+            ObjectType ="Pipeline",
+            ClassType ="PipedriveDataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "pipedrive.png",
@@ -747,13 +747,13 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         }
 
         [CommandAttribute(
-            Name = "GetStages",
+           Name = "GetStages",
             Caption = "Get Pipedrive Stages",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Pipedrive,
             PointType = EnumPointType.Function,
-            ObjectType = "Stage",
-            ClassType = "PipedriveDataSource",
+            ObjectType ="Stage",
+            ClassType ="PipedriveDataSource",
             Showin = ShowinType.Both,
             Order = 7,
             iconimage = "pipedrive.png",
@@ -766,13 +766,13 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
         }
 
         [CommandAttribute(
-            Name = "GetProducts",
+           Name = "GetProducts",
             Caption = "Get Pipedrive Products",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.Pipedrive,
             PointType = EnumPointType.Function,
-            ObjectType = "Product",
-            ClassType = "PipedriveDataSource",
+            ObjectType ="Product",
+            ClassType ="PipedriveDataSource",
             Showin = ShowinType.Both,
             Order = 8,
             iconimage = "pipedrive.png",
@@ -786,7 +786,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
 
         // -------------------- Create / Update (POST/PUT) methods --------------------
 
-        [CommandAttribute(Name = "CreateDeal", Caption = "Create Pipedrive Deal", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Deal", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "pipedrive.png", misc = "Deal")]
+        [CommandAttribute(Name = "CreateDeal", Caption = "Create Pipedrive Deal", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType ="Deal", ClassType ="PipedriveDataSource", Showin = ShowinType.Both, Order = 9, iconimage = "pipedrive.png", misc = "Deal")]
         public async Task<IEnumerable<Deal>> CreateDealAsync(Deal deal)
         {
             if (deal == null) return Array.Empty<Deal>();
@@ -795,7 +795,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
             return success ? new[] { deal } : Array.Empty<Deal>();
         }
 
-        [CommandAttribute(Name = "UpdateDeal", Caption = "Update Pipedrive Deal", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Deal", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "pipedrive.png", misc = "Deal")]
+        [CommandAttribute(Name = "UpdateDeal", Caption = "Update Pipedrive Deal", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType ="Deal", ClassType ="PipedriveDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "pipedrive.png", misc = "Deal")]
         public async Task<IEnumerable<Deal>> UpdateDealAsync(string dealId, Deal deal)
         {
             if (string.IsNullOrWhiteSpace(dealId) || deal == null) return Array.Empty<Deal>();
@@ -804,7 +804,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
             return success ? new[] { deal } : Array.Empty<Deal>();
         }
 
-        [CommandAttribute(Name = "CreatePerson", Caption = "Create Pipedrive Person", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Person", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "pipedrive.png", misc = "Person")]
+        [CommandAttribute(Name = "CreatePerson", Caption = "Create Pipedrive Person", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType ="Person", ClassType ="PipedriveDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "pipedrive.png", misc = "Person")]
         public async Task<IEnumerable<Person>> CreatePersonAsync(Person person)
         {
             if (person == null) return Array.Empty<Person>();
@@ -813,7 +813,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
             return success ? new[] { person } : Array.Empty<Person>();
         }
 
-        [CommandAttribute(Name = "UpdatePerson", Caption = "Update Pipedrive Person", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Person", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "pipedrive.png", misc = "Person")]
+        [CommandAttribute(Name = "UpdatePerson", Caption = "Update Pipedrive Person", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType ="Person", ClassType ="PipedriveDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "pipedrive.png", misc = "Person")]
         public async Task<IEnumerable<Person>> UpdatePersonAsync(string personId, Person person)
         {
             if (string.IsNullOrWhiteSpace(personId) || person == null) return Array.Empty<Person>();
@@ -822,7 +822,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
             return success ? new[] { person } : Array.Empty<Person>();
         }
 
-        [CommandAttribute(Name = "CreateOrganization", Caption = "Create Pipedrive Organization", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Organization", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "pipedrive.png", misc = "Organization")]
+        [CommandAttribute(Name = "CreateOrganization", Caption = "Create Pipedrive Organization", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType ="Organization", ClassType ="PipedriveDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "pipedrive.png", misc = "Organization")]
         public async Task<IEnumerable<Organization>> CreateOrganizationAsync(Organization organization)
         {
             if (organization == null) return Array.Empty<Organization>();
@@ -831,7 +831,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
             return success ? new[] { organization } : Array.Empty<Organization>();
         }
 
-        [CommandAttribute(Name = "UpdateOrganization", Caption = "Update Pipedrive Organization", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Organization", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "pipedrive.png", misc = "Organization")]
+        [CommandAttribute(Name = "UpdateOrganization", Caption = "Update Pipedrive Organization", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType ="Organization", ClassType ="PipedriveDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "pipedrive.png", misc = "Organization")]
         public async Task<IEnumerable<Organization>> UpdateOrganizationAsync(string organizationId, Organization organization)
         {
             if (string.IsNullOrWhiteSpace(organizationId) || organization == null) return Array.Empty<Organization>();
@@ -840,7 +840,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
             return success ? new[] { organization } : Array.Empty<Organization>();
         }
 
-        [CommandAttribute(Name = "CreateActivity", Caption = "Create Pipedrive Activity", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Activity", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "pipedrive.png", misc = "Activity")]
+        [CommandAttribute(Name = "CreateActivity", Caption = "Create Pipedrive Activity", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType ="Activity", ClassType ="PipedriveDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "pipedrive.png", misc = "Activity")]
         public async Task<IEnumerable<Activity>> CreateActivityAsync(Activity activity)
         {
             if (activity == null) return Array.Empty<Activity>();
@@ -849,7 +849,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
             return success ? new[] { activity } : Array.Empty<Activity>();
         }
 
-        [CommandAttribute(Name = "UpdateActivity", Caption = "Update Pipedrive Activity", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Activity", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "pipedrive.png", misc = "Activity")]
+        [CommandAttribute(Name = "UpdateActivity", Caption = "Update Pipedrive Activity", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType ="Activity", ClassType ="PipedriveDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "pipedrive.png", misc = "Activity")]
         public async Task<IEnumerable<Activity>> UpdateActivityAsync(string activityId, Activity activity)
         {
             if (string.IsNullOrWhiteSpace(activityId) || activity == null) return Array.Empty<Activity>();
@@ -858,7 +858,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
             return success ? new[] { activity } : Array.Empty<Activity>();
         }
 
-        [CommandAttribute(Name = "CreateProduct", Caption = "Create Pipedrive Product", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Product", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "pipedrive.png", misc = "Product")]
+        [CommandAttribute(Name = "CreateProduct", Caption = "Create Pipedrive Product", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType ="Product", ClassType ="PipedriveDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "pipedrive.png", misc = "Product")]
         public async Task<IEnumerable<Product>> CreateProductAsync(Product product)
         {
             if (product == null) return Array.Empty<Product>();
@@ -867,7 +867,7 @@ namespace TheTechIdea.Beep.Connectors.PipedriveDataSource
             return success ? new[] { product } : Array.Empty<Product>();
         }
 
-        [CommandAttribute(Name = "UpdateProduct", Caption = "Update Pipedrive Product", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType = "Product", ClassType = "PipedriveDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "pipedrive.png", misc = "Product")]
+        [CommandAttribute(Name = "UpdateProduct", Caption = "Update Pipedrive Product", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Pipedrive, PointType = EnumPointType.Function, ObjectType ="Product", ClassType ="PipedriveDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "pipedrive.png", misc = "Product")]
         public async Task<IEnumerable<Product>> UpdateProductAsync(string productId, Product product)
         {
             if (string.IsNullOrWhiteSpace(productId) || product == null) return Array.Empty<Product>();

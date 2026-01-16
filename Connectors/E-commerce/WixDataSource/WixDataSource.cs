@@ -283,49 +283,49 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
 
         #region Command Methods
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Products", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Products", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixProduct>")]
         public async Task<IEnumerable<WixProduct>> GetProducts(AppFilter filter)
         {
             var result = await GetEntityAsync("products", new List<AppFilter> { filter });
             return result.Cast<WixProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Orders", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Orders", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixOrder>")]
         public async Task<IEnumerable<WixOrder>> GetOrders(AppFilter filter)
         {
             var result = await GetEntityAsync("orders", new List<AppFilter> { filter });
             return result.Cast<WixOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Collections", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixCollection>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Collections", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixCollection>")]
         public async Task<IEnumerable<WixCollection>> GetCollections(AppFilter filter)
         {
             var result = await GetEntityAsync("collections", new List<AppFilter> { filter });
             return result.Cast<WixCollection>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Contacts", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixContact>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Contacts", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixContact>")]
         public async Task<IEnumerable<WixContact>> GetContacts(AppFilter filter)
         {
             var result = await GetEntityAsync("contacts", new List<AppFilter> { filter });
             return result.Cast<WixContact>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Inventory", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixInventoryItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Inventory", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixInventoryItem>")]
         public async Task<IEnumerable<WixInventoryItem>> GetInventory(AppFilter filter)
         {
             var result = await GetEntityAsync("inventory", new List<AppFilter> { filter });
             return result.Cast<WixInventoryItem>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Coupons", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixCoupon>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Coupons", ClassName = "WixDataSource", Showin = ShowinType.Both, misc = "IEnumerable<WixCoupon>")]
         public async Task<IEnumerable<WixCoupon>> GetCoupons(AppFilter filter)
         {
             var result = await GetEntityAsync("coupons", new List<AppFilter> { filter });
             return result.Cast<WixCoupon>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Products", Name = "CreateProduct", Caption = "Create Wix Product", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Products", Name = "CreateProduct", Caption = "Create Wix Product", ClassType ="WixDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixProduct>")]
         public async Task<IEnumerable<WixProduct>> CreateProductAsync(WixProduct product)
         {
             try
@@ -345,7 +345,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return new List<WixProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Products", Name = "UpdateProduct", Caption = "Update Wix Product", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixProduct>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Products", Name = "UpdateProduct", Caption = "Update Wix Product", ClassType ="WixDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixProduct>")]
         public async Task<IEnumerable<WixProduct>> UpdateProductAsync(WixProduct product)
         {
             try
@@ -365,7 +365,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return new List<WixProduct>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "CreateOrder", Caption = "Create Wix Order", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Orders", Name = "CreateOrder", Caption = "Create Wix Order", ClassType ="WixDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixOrder>")]
         public async Task<IEnumerable<WixOrder>> CreateOrderAsync(WixOrder order)
         {
             try
@@ -385,7 +385,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return new List<WixOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Orders", Name = "UpdateOrder", Caption = "Update Wix Order", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixOrder>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Orders", Name = "UpdateOrder", Caption = "Update Wix Order", ClassType ="WixDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixOrder>")]
         public async Task<IEnumerable<WixOrder>> UpdateOrderAsync(WixOrder order)
         {
             try
@@ -405,7 +405,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return new List<WixOrder>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Collections", Name = "CreateCollection", Caption = "Create Wix Collection", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixCollection>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Collections", Name = "CreateCollection", Caption = "Create Wix Collection", ClassType ="WixDataSource", Showin = ShowinType.Both, Order = 14, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixCollection>")]
         public async Task<IEnumerable<WixCollection>> CreateCollectionAsync(WixCollection collection)
         {
             try
@@ -425,7 +425,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return new List<WixCollection>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Collections", Name = "UpdateCollection", Caption = "Update Wix Collection", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixCollection>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Collections", Name = "UpdateCollection", Caption = "Update Wix Collection", ClassType ="WixDataSource", Showin = ShowinType.Both, Order = 15, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixCollection>")]
         public async Task<IEnumerable<WixCollection>> UpdateCollectionAsync(WixCollection collection)
         {
             try
@@ -445,7 +445,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return new List<WixCollection>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Contacts", Name = "CreateContact", Caption = "Create Wix Contact", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixContact>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Contacts", Name = "CreateContact", Caption = "Create Wix Contact", ClassType ="WixDataSource", Showin = ShowinType.Both, Order = 16, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixContact>")]
         public async Task<IEnumerable<WixContact>> CreateContactAsync(WixContact contact)
         {
             try
@@ -465,7 +465,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return new List<WixContact>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Contacts", Name = "UpdateContact", Caption = "Update Wix Contact", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixContact>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Contacts", Name = "UpdateContact", Caption = "Update Wix Contact", ClassType ="WixDataSource", Showin = ShowinType.Both, Order = 17, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixContact>")]
         public async Task<IEnumerable<WixContact>> UpdateContactAsync(WixContact contact)
         {
             try
@@ -485,7 +485,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return new List<WixContact>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Inventory", Name = "CreateInventory", Caption = "Create Wix Inventory Item", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixInventoryItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Inventory", Name = "CreateInventory", Caption = "Create Wix Inventory Item", ClassType ="WixDataSource", Showin = ShowinType.Both, Order = 18, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixInventoryItem>")]
         public async Task<IEnumerable<WixInventoryItem>> CreateInventoryAsync(WixInventoryItem inventory)
         {
             try
@@ -505,7 +505,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return new List<WixInventoryItem>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Inventory", Name = "UpdateInventory", Caption = "Update Wix Inventory Item", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixInventoryItem>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Inventory", Name = "UpdateInventory", Caption = "Update Wix Inventory Item", ClassType ="WixDataSource", Showin = ShowinType.Both, Order = 19, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixInventoryItem>")]
         public async Task<IEnumerable<WixInventoryItem>> UpdateInventoryAsync(WixInventoryItem inventory)
         {
             try
@@ -525,7 +525,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return new List<WixInventoryItem>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Coupons", Name = "CreateCoupon", Caption = "Create Wix Coupon", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixCoupon>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Coupons", Name = "CreateCoupon", Caption = "Create Wix Coupon", ClassType ="WixDataSource", Showin = ShowinType.Both, Order = 20, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixCoupon>")]
         public async Task<IEnumerable<WixCoupon>> CreateCouponAsync(WixCoupon coupon)
         {
             try
@@ -545,7 +545,7 @@ namespace TheTechIdea.Beep.Connectors.Ecommerce.WixDataSource
             return new List<WixCoupon>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType = "Coupons", Name = "UpdateCoupon", Caption = "Update Wix Coupon", ClassType = "WixDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixCoupon>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Wix, PointType = EnumPointType.Function, ObjectType ="Coupons", Name = "UpdateCoupon", Caption = "Update Wix Coupon", ClassType ="WixDataSource", Showin = ShowinType.Both, Order = 21, iconimage = "wix.png", misc = "ReturnType: IEnumerable<WixCoupon>")]
         public async Task<IEnumerable<WixCoupon>> UpdateCouponAsync(WixCoupon coupon)
         {
             try

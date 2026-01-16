@@ -352,13 +352,13 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
         }
 
         [CommandAttribute(
-            Name = "GetAccounts",
+           Name = "GetAccounts",
             Caption = "Get Dynamics 365 Accounts",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftDynamics365,
             PointType = EnumPointType.Function,
-            ObjectType = "Account",
-            ClassType = "Dynamics365DataSource",
+            ObjectType ="Account",
+            ClassType ="Dynamics365DataSource",
             Showin = ShowinType.Both,
             Order = 1,
             iconimage = "dynamics365.png",
@@ -371,13 +371,13 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
         }
 
         [CommandAttribute(
-            Name = "GetContacts",
+           Name = "GetContacts",
             Caption = "Get Dynamics 365 Contacts",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftDynamics365,
             PointType = EnumPointType.Function,
-            ObjectType = "Contact",
-            ClassType = "Dynamics365DataSource",
+            ObjectType ="Contact",
+            ClassType ="Dynamics365DataSource",
             Showin = ShowinType.Both,
             Order = 2,
             iconimage = "dynamics365.png",
@@ -390,13 +390,13 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
         }
 
         [CommandAttribute(
-            Name = "GetLeads",
+           Name = "GetLeads",
             Caption = "Get Dynamics 365 Leads",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftDynamics365,
             PointType = EnumPointType.Function,
-            ObjectType = "Lead",
-            ClassType = "Dynamics365DataSource",
+            ObjectType ="Lead",
+            ClassType ="Dynamics365DataSource",
             Showin = ShowinType.Both,
             Order = 3,
             iconimage = "dynamics365.png",
@@ -409,13 +409,13 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
         }
 
         [CommandAttribute(
-            Name = "GetOpportunities",
+           Name = "GetOpportunities",
             Caption = "Get Dynamics 365 Opportunities",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftDynamics365,
             PointType = EnumPointType.Function,
-            ObjectType = "Opportunity",
-            ClassType = "Dynamics365DataSource",
+            ObjectType ="Opportunity",
+            ClassType ="Dynamics365DataSource",
             Showin = ShowinType.Both,
             Order = 4,
             iconimage = "dynamics365.png",
@@ -428,13 +428,13 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
         }
 
         [CommandAttribute(
-            Name = "GetSystemUsers",
+           Name = "GetSystemUsers",
             Caption = "Get Dynamics 365 System Users",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftDynamics365,
             PointType = EnumPointType.Function,
-            ObjectType = "SystemUser",
-            ClassType = "Dynamics365DataSource",
+            ObjectType ="SystemUser",
+            ClassType ="Dynamics365DataSource",
             Showin = ShowinType.Both,
             Order = 5,
             iconimage = "dynamics365.png",
@@ -447,13 +447,13 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
         }
 
         [CommandAttribute(
-            Name = "GetBusinessUnits",
+           Name = "GetBusinessUnits",
             Caption = "Get Dynamics 365 Business Units",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftDynamics365,
             PointType = EnumPointType.Function,
-            ObjectType = "BusinessUnit",
-            ClassType = "Dynamics365DataSource",
+            ObjectType ="BusinessUnit",
+            ClassType ="Dynamics365DataSource",
             Showin = ShowinType.Both,
             Order = 6,
             iconimage = "dynamics365.png",
@@ -466,13 +466,13 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
         }
 
         [CommandAttribute(
-            Name = "GetTeams",
+           Name = "GetTeams",
             Caption = "Get Dynamics 365 Teams",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftDynamics365,
             PointType = EnumPointType.Function,
-            ObjectType = "Team",
-            ClassType = "Dynamics365DataSource",
+            ObjectType ="Team",
+            ClassType ="Dynamics365DataSource",
             Showin = ShowinType.Both,
             Order = 7,
             iconimage = "dynamics365.png",
@@ -485,13 +485,13 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
         }
 
         [CommandAttribute(
-            Name = "GetIncidents",
+           Name = "GetIncidents",
             Caption = "Get Dynamics 365 Incidents",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftDynamics365,
             PointType = EnumPointType.Function,
-            ObjectType = "Incident",
-            ClassType = "Dynamics365DataSource",
+            ObjectType ="Incident",
+            ClassType ="Dynamics365DataSource",
             Showin = ShowinType.Both,
             Order = 8,
             iconimage = "dynamics365.png",
@@ -504,13 +504,13 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
         }
 
         [CommandAttribute(
-            Name = "GetProducts",
+           Name = "GetProducts",
             Caption = "Get Dynamics 365 Products",
             Category = DatasourceCategory.Connector,
             DatasourceType = DataSourceType.MicrosoftDynamics365,
             PointType = EnumPointType.Function,
-            ObjectType = "Product",
-            ClassType = "Dynamics365DataSource",
+            ObjectType ="Product",
+            ClassType ="Dynamics365DataSource",
             Showin = ShowinType.Both,
             Order = 9,
             iconimage = "dynamics365.png",
@@ -524,7 +524,7 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
 
         // -------------------- Create / Update (POST/PATCH) methods --------------------
 
-        [CommandAttribute(Name = "CreateAccount", Caption = "Create Dynamics 365 Account", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType = "Account", ClassType = "Dynamics365DataSource", Showin = ShowinType.Both, Order = 10, iconimage = "dynamics365.png", misc = "Account")]
+        [CommandAttribute(Name = "CreateAccount", Caption = "Create Dynamics 365 Account", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType ="Account", ClassType ="Dynamics365DataSource", Showin = ShowinType.Both, Order = 10, iconimage = "dynamics365.png", misc = "Account")]
         public async Task<IEnumerable<Account>> CreateAccountAsync(Account account)
         {
             if (account == null) return Array.Empty<Account>();
@@ -543,7 +543,7 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
             }
         }
 
-        [CommandAttribute(Name = "UpdateAccount", Caption = "Update Dynamics 365 Account", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType = "Account", ClassType = "Dynamics365DataSource", Showin = ShowinType.Both, Order = 11, iconimage = "dynamics365.png", misc = "Account")]
+        [CommandAttribute(Name = "UpdateAccount", Caption = "Update Dynamics 365 Account", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType ="Account", ClassType ="Dynamics365DataSource", Showin = ShowinType.Both, Order = 11, iconimage = "dynamics365.png", misc = "Account")]
         public async Task<IEnumerable<Account>> UpdateAccountAsync(string accountId, Account account)
         {
             if (string.IsNullOrWhiteSpace(accountId) || account == null) return Array.Empty<Account>();
@@ -563,7 +563,7 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
             }
         }
 
-        [CommandAttribute(Name = "CreateContact", Caption = "Create Dynamics 365 Contact", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType = "Contact", ClassType = "Dynamics365DataSource", Showin = ShowinType.Both, Order = 12, iconimage = "dynamics365.png", misc = "Contact")]
+        [CommandAttribute(Name = "CreateContact", Caption = "Create Dynamics 365 Contact", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType ="Contact", ClassType ="Dynamics365DataSource", Showin = ShowinType.Both, Order = 12, iconimage = "dynamics365.png", misc = "Contact")]
         public async Task<IEnumerable<Contact>> CreateContactAsync(Contact contact)
         {
             if (contact == null) return Array.Empty<Contact>();
@@ -582,7 +582,7 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
             }
         }
 
-        [CommandAttribute(Name = "UpdateContact", Caption = "Update Dynamics 365 Contact", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType = "Contact", ClassType = "Dynamics365DataSource", Showin = ShowinType.Both, Order = 13, iconimage = "dynamics365.png", misc = "Contact")]
+        [CommandAttribute(Name = "UpdateContact", Caption = "Update Dynamics 365 Contact", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType ="Contact", ClassType ="Dynamics365DataSource", Showin = ShowinType.Both, Order = 13, iconimage = "dynamics365.png", misc = "Contact")]
         public async Task<IEnumerable<Contact>> UpdateContactAsync(string contactId, Contact contact)
         {
             if (string.IsNullOrWhiteSpace(contactId) || contact == null) return Array.Empty<Contact>();
@@ -602,7 +602,7 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
             }
         }
 
-        [CommandAttribute(Name = "CreateLead", Caption = "Create Dynamics 365 Lead", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType = "Lead", ClassType = "Dynamics365DataSource", Showin = ShowinType.Both, Order = 14, iconimage = "dynamics365.png", misc = "Lead")]
+        [CommandAttribute(Name = "CreateLead", Caption = "Create Dynamics 365 Lead", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType ="Lead", ClassType ="Dynamics365DataSource", Showin = ShowinType.Both, Order = 14, iconimage = "dynamics365.png", misc = "Lead")]
         public async Task<IEnumerable<Lead>> CreateLeadAsync(Lead lead)
         {
             if (lead == null) return Array.Empty<Lead>();
@@ -621,7 +621,7 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
             }
         }
 
-        [CommandAttribute(Name = "UpdateLead", Caption = "Update Dynamics 365 Lead", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType = "Lead", ClassType = "Dynamics365DataSource", Showin = ShowinType.Both, Order = 15, iconimage = "dynamics365.png", misc = "Lead")]
+        [CommandAttribute(Name = "UpdateLead", Caption = "Update Dynamics 365 Lead", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType ="Lead", ClassType ="Dynamics365DataSource", Showin = ShowinType.Both, Order = 15, iconimage = "dynamics365.png", misc = "Lead")]
         public async Task<IEnumerable<Lead>> UpdateLeadAsync(string leadId, Lead lead)
         {
             if (string.IsNullOrWhiteSpace(leadId) || lead == null) return Array.Empty<Lead>();
@@ -641,7 +641,7 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
             }
         }
 
-        [CommandAttribute(Name = "CreateOpportunity", Caption = "Create Dynamics 365 Opportunity", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassType = "Dynamics365DataSource", Showin = ShowinType.Both, Order = 16, iconimage = "dynamics365.png", misc = "Opportunity")]
+        [CommandAttribute(Name = "CreateOpportunity", Caption = "Create Dynamics 365 Opportunity", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType ="Opportunity", ClassType ="Dynamics365DataSource", Showin = ShowinType.Both, Order = 16, iconimage = "dynamics365.png", misc = "Opportunity")]
         public async Task<IEnumerable<Opportunity>> CreateOpportunityAsync(Opportunity opportunity)
         {
             if (opportunity == null) return Array.Empty<Opportunity>();
@@ -660,7 +660,7 @@ namespace TheTechIdea.Beep.Connectors.Dynamics365
             }
         }
 
-        [CommandAttribute(Name = "UpdateOpportunity", Caption = "Update Dynamics 365 Opportunity", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType = "Opportunity", ClassType = "Dynamics365DataSource", Showin = ShowinType.Both, Order = 17, iconimage = "dynamics365.png", misc = "Opportunity")]
+        [CommandAttribute(Name = "UpdateOpportunity", Caption = "Update Dynamics 365 Opportunity", Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.MicrosoftDynamics365, PointType = EnumPointType.Function, ObjectType ="Opportunity", ClassType ="Dynamics365DataSource", Showin = ShowinType.Both, Order = 17, iconimage = "dynamics365.png", misc = "Opportunity")]
         public async Task<IEnumerable<Opportunity>> UpdateOpportunityAsync(string opportunityId, Opportunity opportunity)
         {
             if (string.IsNullOrWhiteSpace(opportunityId) || opportunity == null) return Array.Empty<Opportunity>();

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net8.0</TargetFrameworks>
+		<TargetFrameworks>net10.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>Latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -37,9 +37,11 @@
     <Compile Remove="..\CouchDBDataSource\CouchDbReader.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CouchDB.NET" Version="3.7.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.61" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.118" />
+    <PackageReference Include="CouchDB.NET" Version="4.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.2" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.62" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.119" />
+    <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.14" />
   </ItemGroup>
 
 </Project>

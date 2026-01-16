@@ -259,9 +259,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
         // ------------ CommandAttribute Methods ------------
 
     [CommandAttribute(Name = "GetPhoneNumbers", Caption = "Get WhatsApp Phone Numbers", 
-        ObjectType = "WabaPhoneNumber", PointType = EnumPointType.Function,
+        ObjectType ="WabaPhoneNumber", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WhatsAppBusiness,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 1,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 1,
         iconimage = "whatsapp.png", misc = "Requires waba_id filter")]
     public async Task<IEnumerable<WabaPhoneNumber>> GetPhoneNumbers(List<AppFilter> filters = null)
     {
@@ -270,9 +270,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
     }
 
     [CommandAttribute(Name = "GetMessageTemplates", Caption = "Get WhatsApp Message Templates",
-        ObjectType = "WabaMessageTemplate", PointType = EnumPointType.Function,
+        ObjectType ="WabaMessageTemplate", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WhatsAppBusiness,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 2,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 2,
         iconimage = "whatsapp.png", misc = "Requires waba_id filter")]
     public async Task<IEnumerable<WabaMessageTemplate>> GetMessageTemplates(List<AppFilter> filters = null)
     {
@@ -281,9 +281,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
     }
 
     [CommandAttribute(Name = "GetSubscribedApps", Caption = "Get WhatsApp Subscribed Apps",
-        ObjectType = "WabaSubscribedApp", PointType = EnumPointType.Function,
+        ObjectType ="WabaSubscribedApp", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WhatsAppBusiness,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 3,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 3,
         iconimage = "whatsapp.png", misc = "Requires waba_id filter")]
     public async Task<IEnumerable<WabaSubscribedApp>> GetSubscribedApps(List<AppFilter> filters = null)
     {
@@ -292,9 +292,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
     }
 
     [CommandAttribute(Name = "GetBusinessProfiles", Caption = "Get WhatsApp Business Profiles",
-        ObjectType = "WabaBusinessProfile", PointType = EnumPointType.Function,
+        ObjectType ="WabaBusinessProfile", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WhatsAppBusiness,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 4,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 4,
         iconimage = "whatsapp.png", misc = "Requires waba_id filter")]
     public async Task<IEnumerable<WabaBusinessProfile>> GetBusinessProfiles(List<AppFilter> filters = null)
     {
@@ -303,9 +303,9 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
     }
 
     [CommandAttribute(Name = "GetMediaById", Caption = "Get WhatsApp Media by ID",
-        ObjectType = "WabaMedia", PointType = EnumPointType.Function,
+        ObjectType ="WabaMedia", PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.WhatsAppBusiness,
-        ClassType = "WebAPIDataSource", Showin = ShowinType.Both, Order = 5,
+        ClassType ="WebAPIDataSource", Showin = ShowinType.Both, Order = 5,
         iconimage = "whatsapp.png", misc = "Requires media_id filter")]
     public async Task<IEnumerable<WabaMedia>> GetMediaById(List<AppFilter> filters = null)
     {
@@ -314,13 +314,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
     }
 
     [CommandAttribute(
-        Name = "CreateMessageTemplateAsync",
+       FieldName = "CreateMessageTemplateAsync",
         Caption = "Create WhatsApp Message Template",
-        ObjectType = "WabaMessageTemplate",
+        ObjectType ="WabaMessageTemplate",
         PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector,
         DatasourceType = DataSourceType.WhatsAppBusiness,
-        ClassType = "WhatsAppBusinessDataSource",
+        ClassType ="WhatsAppBusinessDataSource",
         Showin = ShowinType.Both,
         Order = 6,
         iconimage = "createtemplate.png",
@@ -350,13 +350,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
     }
 
     [CommandAttribute(
-        Name = "UploadMediaAsync",
+       FieldName = "UploadMediaAsync",
         Caption = "Upload WhatsApp Media",
-        ObjectType = "WabaMedia",
+        ObjectType ="WabaMedia",
         PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector,
         DatasourceType = DataSourceType.WhatsAppBusiness,
-        ClassType = "WhatsAppBusinessDataSource",
+        ClassType ="WhatsAppBusinessDataSource",
         Showin = ShowinType.Both,
         Order = 7,
         iconimage = "uploadmedia.png",
@@ -386,13 +386,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
     }
 
     [CommandAttribute(
-        Name = "UpdateBusinessProfileAsync",
+       FieldName = "UpdateBusinessProfileAsync",
         Caption = "Update WhatsApp Business Profile",
-        ObjectType = "WabaBusinessProfile",
+        ObjectType ="WabaBusinessProfile",
         PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector,
         DatasourceType = DataSourceType.WhatsAppBusiness,
-        ClassType = "WhatsAppBusinessDataSource",
+        ClassType ="WhatsAppBusinessDataSource",
         Showin = ShowinType.Both,
         Order = 8,
         iconimage = "updateprofile.png",
@@ -422,13 +422,13 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
     }
 
     [CommandAttribute(
-        Name = "SendMessageAsync",
+       FieldName = "SendMessageAsync",
         Caption = "Send WhatsApp Message",
-        ObjectType = "WabaMessage",
+        ObjectType ="WabaMessage",
         PointType = EnumPointType.Function,
         Category = DatasourceCategory.Connector,
         DatasourceType = DataSourceType.WhatsAppBusiness,
-        ClassType = "WhatsAppBusinessDataSource",
+        ClassType ="WhatsAppBusinessDataSource",
         Showin = ShowinType.Both,
         Order = 9,
         iconimage = "sendmessage.png",

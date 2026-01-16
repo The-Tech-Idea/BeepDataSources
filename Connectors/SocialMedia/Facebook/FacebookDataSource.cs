@@ -126,7 +126,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Gets posts from a Facebook page
         /// </summary>
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookPost", Name = "GetPosts", Caption = "Get Facebook Posts", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookPost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType ="FacebookPost", Name = "GetPosts", Caption = "Get Facebook Posts", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookPost>")]
         public async Task<IEnumerable<FacebookPost>> GetPosts(string pageId, int limit = 10)
         {
             string fields = "id,message,story,created_time,updated_time,type,status_type,permalink_url,full_picture,picture,source,name,caption,description,link,likes.summary(true),comments.summary(true),shares.summary(true),reactions.summary(true)";
@@ -140,7 +140,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Gets information about a Facebook page
         /// </summary>
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookPage", Name = "GetPageInfo", Caption = "Get Facebook Page Info", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookPage>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType ="FacebookPage", Name = "GetPageInfo", Caption = "Get Facebook Page Info", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookPage>")]
         public async Task<IEnumerable<FacebookPage>> GetPageInfo(string pageId)
         {
             string fields = "id,name,category,description,website,phone,emails,location,hours,cover,picture,about,link,followers_count,fan_count";
@@ -154,7 +154,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Gets posts from a Facebook group
         /// </summary>
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookPost", Name = "GetGroupPosts", Caption = "Get Facebook Group Posts", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookPost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType ="FacebookPost", Name = "GetGroupPosts", Caption = "Get Facebook Group Posts", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookPost>")]
         public async Task<IEnumerable<FacebookPost>> GetGroupPosts(string groupId, int limit = 10)
         {
             string fields = "id,message,story,created_time,updated_time,type,status_type,permalink_url,full_picture,picture,source,name,caption,description,link,likes.summary(true),comments.summary(true),shares.summary(true),reactions.summary(true)";
@@ -168,7 +168,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Gets user profile information
         /// </summary>
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookUser", Name = "GetUserProfile", Caption = "Get Facebook User Profile", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookUser>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType ="FacebookUser", Name = "GetUserProfile", Caption = "Get Facebook User Profile", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookUser>")]
         public async Task<IEnumerable<FacebookUser>> GetUserProfile(string userId)
         {
             string fields = "id,name,first_name,last_name,email,birthday,gender,location,hometown,about,website,picture";
@@ -182,7 +182,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Gets events from a Facebook page
         /// </summary>
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookEvent", Name = "GetEvents", Caption = "Get Facebook Events", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookEvent>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType ="FacebookEvent", Name = "GetEvents", Caption = "Get Facebook Events", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookEvent>")]
         public async Task<IEnumerable<FacebookEvent>> GetEvents(string pageId, int limit = 10)
         {
             string fields = "id,name,description,start_time,end_time,place,attending_count,interested_count,maybe_count,noreply_count,cover,picture,type,category,ticket_uri";
@@ -196,7 +196,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         /// <summary>
         /// Gets photos from a Facebook album or page
         /// </summary>
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookPicture", Name = "GetPhotos", Caption = "Get Facebook Photos", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookPicture>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType ="FacebookPicture", Name = "GetPhotos", Caption = "Get Facebook Photos", ClassName = "FacebookDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<FacebookPicture>")]
         public async Task<IEnumerable<FacebookPicture>> GetPhotos(string albumId, int limit = 10)
         {
             string fields = "id,name,source,images,height,width,created_time,updated_time,link,likes.summary(true),comments.summary(true)";
@@ -208,7 +208,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         }
 
         // POST methods for creating entities
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookPost", Name = "CreatePost", Caption = "Create Facebook Post", ClassType = "FacebookDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "facebook.png", misc = "ReturnType: IEnumerable<FacebookPost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType ="FacebookPost", Name = "CreatePost", Caption = "Create Facebook Post", ClassType ="FacebookDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "facebook.png", misc = "ReturnType: IEnumerable<FacebookPost>")]
         public async Task<IEnumerable<FacebookPost>> CreatePostAsync(FacebookPost post)
         {
             try
@@ -228,7 +228,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
             return new List<FacebookPost>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookEvent", Name = "CreateEvent", Caption = "Create Facebook Event", ClassType = "FacebookDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "facebook.png", misc = "ReturnType: IEnumerable<FacebookEvent>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType ="FacebookEvent", Name = "CreateEvent", Caption = "Create Facebook Event", ClassType ="FacebookDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "facebook.png", misc = "ReturnType: IEnumerable<FacebookEvent>")]
         public async Task<IEnumerable<FacebookEvent>> CreateEventAsync(FacebookEvent fbEvent)
         {
             try
@@ -249,7 +249,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
         }
 
         // PUT methods for updating entities
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookPost", Name = "UpdatePost", Caption = "Update Facebook Post", ClassType = "FacebookDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "facebook.png", misc = "ReturnType: IEnumerable<FacebookPost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType ="FacebookPost", Name = "UpdatePost", Caption = "Update Facebook Post", ClassType ="FacebookDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "facebook.png", misc = "ReturnType: IEnumerable<FacebookPost>")]
         public async Task<IEnumerable<FacebookPost>> UpdatePostAsync(FacebookPost post)
         {
             try
@@ -269,7 +269,7 @@ namespace TheTechIdea.Beep.FacebookDataSource
             return new List<FacebookPost>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType = "FacebookEvent", Name = "UpdateEvent", Caption = "Update Facebook Event", ClassType = "FacebookDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "facebook.png", misc = "ReturnType: IEnumerable<FacebookEvent>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Facebook, PointType = EnumPointType.Function, ObjectType ="FacebookEvent", Name = "UpdateEvent", Caption = "Update Facebook Event", ClassType ="FacebookDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "facebook.png", misc = "ReturnType: IEnumerable<FacebookEvent>")]
         public async Task<IEnumerable<FacebookEvent>> UpdateEventAsync(FacebookEvent fbEvent)
         {
             try

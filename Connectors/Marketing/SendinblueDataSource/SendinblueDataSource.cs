@@ -246,35 +246,35 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Sendinblue
             return list;
         }
 
-        [CommandAttribute(ObjectType = "SendinblueContact", PointType = EnumPointType.Function, Name = "GetContacts", Caption = "Get Contacts", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueContact", PointType = EnumPointType.Function, Name = "GetContacts", Caption = "Get Contacts", ClassName = "SendinblueDataSource")]
         public async Task<List<SendinblueContact>> GetContacts()
         {
             var result = await GetEntityAsync("contacts", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<SendinblueContact>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<SendinblueContact>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "SendinblueList", PointType = EnumPointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueList", PointType = EnumPointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "SendinblueDataSource")]
         public async Task<List<SendinblueList>> GetLists()
         {
             var result = await GetEntityAsync("contact_lists", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<SendinblueList>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<SendinblueList>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "SendinblueEmailCampaign", PointType = EnumPointType.Function, Name = "GetEmailCampaigns", Caption = "Get Email Campaigns", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueEmailCampaign", PointType = EnumPointType.Function, Name = "GetEmailCampaigns", Caption = "Get Email Campaigns", ClassName = "SendinblueDataSource")]
         public async Task<List<SendinblueEmailCampaign>> GetEmailCampaigns()
         {
             var result = await GetEntityAsync("email_campaigns", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<SendinblueEmailCampaign>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<SendinblueEmailCampaign>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "SendinblueSmsCampaign", PointType = EnumPointType.Function, Name = "GetSmsCampaigns", Caption = "Get SMS Campaigns", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueSmsCampaign", PointType = EnumPointType.Function, Name = "GetSmsCampaigns", Caption = "Get SMS Campaigns", ClassName = "SendinblueDataSource")]
         public async Task<List<SendinblueSmsCampaign>> GetSmsCampaigns()
         {
             var result = await GetEntityAsync("sms_campaigns", new List<AppFilter>());
             return result.Select(item => JsonSerializer.Deserialize<SendinblueSmsCampaign>(JsonSerializer.Serialize(item))).Where(x => x != null).Cast<SendinblueSmsCampaign>().ToList();
         }
 
-        [CommandAttribute(ObjectType = "SendinblueTemplate", PointType = EnumPointType.Function, Name = "GetTemplates", Caption = "Get Templates", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueTemplate", PointType = EnumPointType.Function, Name = "GetTemplates", Caption = "Get Templates", ClassName = "SendinblueDataSource")]
         public async Task<List<SendinblueTemplate>> GetTemplates()
         {
             var result = await GetEntityAsync("email_templates", new List<AppFilter>());
@@ -282,7 +282,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Sendinblue
         }
 
         // POST/PUT methods for creating and updating entities
-        [CommandAttribute(ObjectType = "SendinblueContact", PointType = EnumPointType.Function, Name = "CreateContact", Caption = "Create Contact", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueContact", PointType = EnumPointType.Function, Name = "CreateContact", Caption = "Create Contact", ClassName = "SendinblueDataSource")]
         public async Task<SendinblueContact> CreateContact(SendinblueContact contact)
         {
             var endpoint = "contacts";
@@ -290,7 +290,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Sendinblue
             return response;
         }
 
-        [CommandAttribute(ObjectType = "SendinblueContact", PointType = EnumPointType.Function, Name = "UpdateContact", Caption = "Update Contact", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueContact", PointType = EnumPointType.Function, Name = "UpdateContact", Caption = "Update Contact", ClassName = "SendinblueDataSource")]
         public async Task<SendinblueContact> UpdateContact(string contactId, SendinblueContact contact)
         {
             var endpoint = $"contacts/{contactId}";
@@ -298,7 +298,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Sendinblue
             return response;
         }
 
-        [CommandAttribute(ObjectType = "SendinblueEmailCampaign", PointType = EnumPointType.Function, Name = "CreateEmailCampaign", Caption = "Create Email Campaign", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueEmailCampaign", PointType = EnumPointType.Function, Name = "CreateEmailCampaign", Caption = "Create Email Campaign", ClassName = "SendinblueDataSource")]
         public async Task<SendinblueEmailCampaign> CreateEmailCampaign(SendinblueEmailCampaign campaign)
         {
             var endpoint = "emailCampaigns";
@@ -306,7 +306,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Sendinblue
             return response;
         }
 
-        [CommandAttribute(ObjectType = "SendinblueEmailCampaign", PointType = EnumPointType.Function, Name = "UpdateEmailCampaign", Caption = "Update Email Campaign", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueEmailCampaign", PointType = EnumPointType.Function, Name = "UpdateEmailCampaign", Caption = "Update Email Campaign", ClassName = "SendinblueDataSource")]
         public async Task<SendinblueEmailCampaign> UpdateEmailCampaign(string campaignId, SendinblueEmailCampaign campaign)
         {
             var endpoint = $"emailCampaigns/{campaignId}";
@@ -314,7 +314,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Sendinblue
             return response;
         }
 
-        [CommandAttribute(ObjectType = "SendinblueSmsCampaign", PointType = EnumPointType.Function, Name = "CreateSmsCampaign", Caption = "Create SMS Campaign", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueSmsCampaign", PointType = EnumPointType.Function, Name = "CreateSmsCampaign", Caption = "Create SMS Campaign", ClassName = "SendinblueDataSource")]
         public async Task<SendinblueSmsCampaign> CreateSmsCampaign(SendinblueSmsCampaign campaign)
         {
             var endpoint = "smsCampaigns";
@@ -322,7 +322,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Sendinblue
             return response;
         }
 
-        [CommandAttribute(ObjectType = "SendinblueSmsCampaign", PointType = EnumPointType.Function, Name = "UpdateSmsCampaign", Caption = "Update SMS Campaign", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueSmsCampaign", PointType = EnumPointType.Function, Name = "UpdateSmsCampaign", Caption = "Update SMS Campaign", ClassName = "SendinblueDataSource")]
         public async Task<SendinblueSmsCampaign> UpdateSmsCampaign(string campaignId, SendinblueSmsCampaign campaign)
         {
             var endpoint = $"smsCampaigns/{campaignId}";
@@ -330,7 +330,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Sendinblue
             return response;
         }
 
-        [CommandAttribute(ObjectType = "SendinblueTemplate", PointType = EnumPointType.Function, Name = "CreateTemplate", Caption = "Create Template", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueTemplate", PointType = EnumPointType.Function, Name = "CreateTemplate", Caption = "Create Template", ClassName = "SendinblueDataSource")]
         public async Task<SendinblueTemplate> CreateTemplate(SendinblueTemplate template)
         {
             var endpoint = "smtp/templates";
@@ -338,7 +338,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.Sendinblue
             return response;
         }
 
-        [CommandAttribute(ObjectType = "SendinblueTemplate", PointType = EnumPointType.Function, Name = "UpdateTemplate", Caption = "Update Template", ClassName = "SendinblueDataSource")]
+        [CommandAttribute(ObjectType ="SendinblueTemplate", PointType = EnumPointType.Function, Name = "UpdateTemplate", Caption = "Update Template", ClassName = "SendinblueDataSource")]
         public async Task<SendinblueTemplate> UpdateTemplate(string templateId, SendinblueTemplate template)
         {
             var endpoint = $"smtp/templates/{templateId}";

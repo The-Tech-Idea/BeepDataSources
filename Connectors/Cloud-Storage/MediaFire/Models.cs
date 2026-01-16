@@ -75,7 +75,7 @@ namespace TheTechIdea.Beep.Connectors.MediaFire.Models
         [JsonPropertyName("email")] public string? Email { get; set; }
         [JsonPropertyName("first_name")] public string? FirstName { get; set; }
         [JsonPropertyName("last_name")] public string? LastName { get; set; }
-        [JsonPropertyName("display_name")] public string? DisplayName { get; set; }
+        [JsonPropertyName("display_name")] public string? Caption { get; set; }
         [JsonPropertyName("gender")] public string? Gender { get; set; }
         [JsonPropertyName("birthday")] public DateTimeOffset? Birthday { get; set; }
         [JsonPropertyName("premium")] public bool? Premium { get; set; }

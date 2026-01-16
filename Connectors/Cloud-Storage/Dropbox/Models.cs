@@ -161,7 +161,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
         [JsonPropertyName("given_name")] public string? GivenName { get; set; }
         [JsonPropertyName("surname")] public string? Surname { get; set; }
         [JsonPropertyName("familiar_name")] public string? FamiliarName { get; set; }
-        [JsonPropertyName("display_name")] public string? DisplayName { get; set; }
+        [JsonPropertyName("display_name")] public string? Caption { get; set; }
         [JsonPropertyName("abbreviated_name")] public string? AbbreviatedName { get; set; }
     }
 
@@ -192,7 +192,7 @@ namespace TheTechIdea.Beep.Connectors.Dropbox.Models
     public sealed class DropboxTeamMemberInfo : DropboxEntityBase
     {
         [JsonPropertyName("team_info")] public DropboxTeamInfo? TeamInfo { get; set; }
-        [JsonPropertyName("display_name")] public string? DisplayName { get; set; }
+        [JsonPropertyName("display_name")] public string? Caption { get; set; }
         [JsonPropertyName("member_id")] public string? MemberId { get; set; }
     }
 

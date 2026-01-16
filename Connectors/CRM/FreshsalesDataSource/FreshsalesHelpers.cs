@@ -123,12 +123,12 @@ namespace TheTechIdea.Beep.Connectors.Freshsales
             foreach (var property in modelType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
                 var jsonName = property.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name ?? property.Name;
-                var fieldType = ResolveFieldType(property.PropertyType);
+                var Fieldtype = ResolveFieldtype(property.PropertyType);
 
                 fields.Add(new EntityField
                 {
-                    fieldname = jsonName,
-                    fieldtype = fieldType,
+                    FieldName = jsonName,
+                    Fieldtype = Fieldtype,
                     AllowDBNull = true,
                     ValueRetrievedFromParent = false,
                     IsAutoIncrement = false,
@@ -297,7 +297,7 @@ namespace TheTechIdea.Beep.Connectors.Freshsales
             return false;
         }
 
-        private static string ResolveFieldType(Type type)
+        private static string ResolveFieldtype(Type type)
         {
             type = Nullable.GetUnderlyingType(type) ?? type;
 

@@ -208,9 +208,9 @@ namespace TheTechIdea.Beep.Connectors.Loomly
         // -------------------- CommandAttribute Methods --------------------
 
         [CommandAttribute(
-            ObjectType = "LoomlyPost",
+            ObjectType ="LoomlyPost",
             PointType = EnumPointType.Function,
-            Name = "GetPosts",
+           Name = "GetPosts",
             Caption = "Get Loomly Posts",
             ClassName = "LoomlyDataSource",
             misc = "ReturnType: IEnumerable<LoomlyPost>"
@@ -221,9 +221,9 @@ namespace TheTechIdea.Beep.Connectors.Loomly
         }
 
         [CommandAttribute(
-            ObjectType = "LoomlyPost",
+            ObjectType ="LoomlyPost",
             PointType = EnumPointType.Function,
-            Name = "GetPost",
+           Name = "GetPost",
             Caption = "Get Loomly Post by ID",
             ClassName = "LoomlyDataSource",
             misc = "ReturnType: IEnumerable<LoomlyPost>"
@@ -234,9 +234,9 @@ namespace TheTechIdea.Beep.Connectors.Loomly
         }
 
         [CommandAttribute(
-            ObjectType = "LoomlyCampaign",
+            ObjectType ="LoomlyCampaign",
             PointType = EnumPointType.Function,
-            Name = "GetCampaigns",
+           Name = "GetCampaigns",
             Caption = "Get Loomly Campaigns",
             ClassName = "LoomlyDataSource",
             misc = "ReturnType: IEnumerable<LoomlyCampaign>"
@@ -247,9 +247,9 @@ namespace TheTechIdea.Beep.Connectors.Loomly
         }
 
         [CommandAttribute(
-            ObjectType = "LoomlyCampaign",
+            ObjectType ="LoomlyCampaign",
             PointType = EnumPointType.Function,
-            Name = "GetCampaign",
+           Name = "GetCampaign",
             Caption = "Get Loomly Campaign by ID",
             ClassName = "LoomlyDataSource",
             misc = "ReturnType: IEnumerable<LoomlyCampaign>"
@@ -260,7 +260,7 @@ namespace TheTechIdea.Beep.Connectors.Loomly
         }
 
         // POST methods for creating entities
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Loomly, PointType = EnumPointType.Function, ObjectType = "LoomlyPost", Name = "CreatePost", Caption = "Create Loomly Post", ClassType = "LoomlyDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "loomly.png", misc = "ReturnType: IEnumerable<LoomlyPost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Loomly, PointType = EnumPointType.Function, ObjectType ="LoomlyPost", Name = "CreatePost", Caption = "Create Loomly Post", ClassType ="LoomlyDataSource", Showin = ShowinType.Both, Order = 10, iconimage = "loomly.png", misc = "ReturnType: IEnumerable<LoomlyPost>")]
         public async Task<IEnumerable<LoomlyPost>> CreatePostAsync(LoomlyPost post)
         {
             try
@@ -280,7 +280,7 @@ namespace TheTechIdea.Beep.Connectors.Loomly
             return new List<LoomlyPost>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Loomly, PointType = EnumPointType.Function, ObjectType = "LoomlyPost", Name = "UpdatePost", Caption = "Update Loomly Post", ClassType = "LoomlyDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "loomly.png", misc = "ReturnType: IEnumerable<LoomlyPost>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Loomly, PointType = EnumPointType.Function, ObjectType ="LoomlyPost", Name = "UpdatePost", Caption = "Update Loomly Post", ClassType ="LoomlyDataSource", Showin = ShowinType.Both, Order = 11, iconimage = "loomly.png", misc = "ReturnType: IEnumerable<LoomlyPost>")]
         public async Task<IEnumerable<LoomlyPost>> UpdatePostAsync(LoomlyPost post)
         {
             try
@@ -300,7 +300,7 @@ namespace TheTechIdea.Beep.Connectors.Loomly
             return new List<LoomlyPost>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Loomly, PointType = EnumPointType.Function, ObjectType = "LoomlyCampaign", Name = "CreateCampaign", Caption = "Create Loomly Campaign", ClassType = "LoomlyDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "loomly.png", misc = "ReturnType: IEnumerable<LoomlyCampaign>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Loomly, PointType = EnumPointType.Function, ObjectType ="LoomlyCampaign", Name = "CreateCampaign", Caption = "Create Loomly Campaign", ClassType ="LoomlyDataSource", Showin = ShowinType.Both, Order = 12, iconimage = "loomly.png", misc = "ReturnType: IEnumerable<LoomlyCampaign>")]
         public async Task<IEnumerable<LoomlyCampaign>> CreateCampaignAsync(LoomlyCampaign campaign)
         {
             try
@@ -320,7 +320,7 @@ namespace TheTechIdea.Beep.Connectors.Loomly
             return new List<LoomlyCampaign>();
         }
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Loomly, PointType = EnumPointType.Function, ObjectType = "LoomlyCampaign", Name = "UpdateCampaign", Caption = "Update Loomly Campaign", ClassType = "LoomlyDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "loomly.png", misc = "ReturnType: IEnumerable<LoomlyCampaign>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Loomly, PointType = EnumPointType.Function, ObjectType ="LoomlyCampaign", Name = "UpdateCampaign", Caption = "Update Loomly Campaign", ClassType ="LoomlyDataSource", Showin = ShowinType.Both, Order = 13, iconimage = "loomly.png", misc = "ReturnType: IEnumerable<LoomlyCampaign>")]
         public async Task<IEnumerable<LoomlyCampaign>> UpdateCampaignAsync(LoomlyCampaign campaign)
         {
             try

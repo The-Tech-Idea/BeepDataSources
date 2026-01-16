@@ -187,9 +187,9 @@ namespace TheTechIdea.Beep.Connectors.Typeform
         // -------------------- CommandAttribute Methods --------------------
 
         [CommandAttribute(
-            ObjectType = "TypeformForm",
+            ObjectType ="TypeformForm",
             PointType = EnumPointType.Function,
-            Name = "GetForms",
+           Name = "GetForms",
             Caption = "Get Typeform Forms",
             ClassName = "TypeformDataSource",
             misc = "ReturnType: IEnumerable<TypeformForm>"
@@ -200,9 +200,9 @@ namespace TheTechIdea.Beep.Connectors.Typeform
         }
 
         [CommandAttribute(
-            ObjectType = "TypeformForm",
+            ObjectType ="TypeformForm",
             PointType = EnumPointType.Function,
-            Name = "GetForm",
+           Name = "GetForm",
             Caption = "Get Typeform Form by ID",
             ClassName = "TypeformDataSource",
             misc = "ReturnType: IEnumerable<TypeformForm>"
@@ -213,9 +213,9 @@ namespace TheTechIdea.Beep.Connectors.Typeform
         }
 
         [CommandAttribute(
-            ObjectType = "TypeformResponse",
+            ObjectType ="TypeformResponse",
             PointType = EnumPointType.Function,
-            Name = "GetResponses",
+           Name = "GetResponses",
             Caption = "Get Typeform Responses for a Form",
             ClassName = "TypeformDataSource",
             misc = "ReturnType: IEnumerable<TypeformResponse>"
@@ -226,9 +226,9 @@ namespace TheTechIdea.Beep.Connectors.Typeform
         }
 
         [CommandAttribute(
-            ObjectType = "TypeformResponse",
+            ObjectType ="TypeformResponse",
             PointType = EnumPointType.Function,
-            Name = "GetResponse",
+           Name = "GetResponse",
             Caption = "Get Typeform Response by ID",
             ClassName = "TypeformDataSource",
             misc = "ReturnType: IEnumerable<TypeformResponse>"
@@ -239,9 +239,9 @@ namespace TheTechIdea.Beep.Connectors.Typeform
         }
 
         [CommandAttribute(
-            ObjectType = "TypeformForm",
+            ObjectType ="TypeformForm",
             PointType = EnumPointType.Function,
-            Name = "CreateForm",
+           Name = "CreateForm",
             Caption = "Create Typeform Form",
             ClassName = "TypeformDataSource",
             misc = "ReturnType: IEnumerable<TypeformForm>"
@@ -276,9 +276,9 @@ namespace TheTechIdea.Beep.Connectors.Typeform
         }
 
         [CommandAttribute(
-            ObjectType = "TypeformResponse",
+            ObjectType ="TypeformResponse",
             PointType = EnumPointType.Function,
-            Name = "CreateResponse",
+           Name = "CreateResponse",
             Caption = "Create Typeform Response",
             ClassName = "TypeformDataSource",
             misc = "ReturnType: IEnumerable<TypeformResponse>"

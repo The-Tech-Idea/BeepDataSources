@@ -531,7 +531,7 @@ namespace TheTechIdea.Beep.DataBase
                             DatasourceEntityName = path,
                             OriginalEntityName = EntityName,
                             Caption = Path.GetFileName(EntityName),
-                            Category = DatasourceCategory.WEBAPI,
+                           
                             DatabaseType = DataSourceType.Hadoop,
                             DataSourceID = DatasourceName,
                             Fields = new List<EntityField>()

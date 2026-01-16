@@ -167,25 +167,25 @@ namespace TheTechIdea.Beep.Connectors.Tableau
         }
 
         // CommandAttribute methods for framework integration
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "Sites", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauSite>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType ="Sites", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauSite>")]
         public IEnumerable<TableauSite> GetSites(List<AppFilter> filter) => GetEntity("sites", filter).Cast<TableauSite>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "Users", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauUser>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType ="Users", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauUser>")]
         public IEnumerable<TableauUser> GetUsers(List<AppFilter> filter) => GetEntity("users", filter).Cast<TableauUser>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "Groups", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauGroup>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType ="Groups", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauGroup>")]
         public IEnumerable<TableauGroup> GetGroups(List<AppFilter> filter) => GetEntity("groups", filter).Cast<TableauGroup>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "Projects", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauProject>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType ="Projects", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauProject>")]
         public IEnumerable<TableauProject> GetProjects(List<AppFilter> filter) => GetEntity("projects", filter).Cast<TableauProject>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "Workbooks", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauWorkbook>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType ="Workbooks", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauWorkbook>")]
         public IEnumerable<TableauWorkbook> GetWorkbooks(List<AppFilter> filter) => GetEntity("workbooks", filter).Cast<TableauWorkbook>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "Views", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauView>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType ="Views", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauView>")]
         public IEnumerable<TableauView> GetViews(List<AppFilter> filter) => GetEntity("views", filter).Cast<TableauView>();
 
-        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType = "DataSources", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauDataSource>")]
+        [CommandAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.Tableau, PointType = EnumPointType.Function, ObjectType ="DataSources", ClassName = "TableauDataSource", Showin = ShowinType.Both, misc = "ReturnType: IEnumerable<TableauDataSource>")]
         public IEnumerable<TableauDataSource> GetDataSources(List<AppFilter> filter) => GetEntity("datasources", filter).Cast<TableauDataSource>();
     }
 }
