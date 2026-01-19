@@ -234,38 +234,38 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ActiveCampaign
         }
 
         // CommandAttribute methods for framework integration
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignContact), PointType = EnumPointType.Function,FieldName = "GetContacts", Caption = "Get Contacts", ClassName = "ActiveCampaignDataSource", misc = "GetContacts")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignContact), PointType = EnumPointType.Function, Name = "GetContacts", Caption = "Get Contacts", ClassName = "ActiveCampaignDataSource", misc = "GetContacts")]
         public IEnumerable<ActiveCampaignContact> GetContacts()
         {
             return GetEntity("contacts", null).Cast<ActiveCampaignContact>();
         }
 
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignList), PointType = EnumPointType.Function,FieldName = "GetLists", Caption = "Get Lists", ClassName = "ActiveCampaignDataSource", misc = "GetLists")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignList), PointType = EnumPointType.Function, Name = "GetLists", Caption = "Get Lists", ClassName = "ActiveCampaignDataSource", misc = "GetLists")]
         public IEnumerable<ActiveCampaignList> GetLists()
         {
             return GetEntity("lists", null).Cast<ActiveCampaignList>();
         }
 
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignTag), PointType = EnumPointType.Function,FieldName = "GetTags", Caption = "Get Tags", ClassName = "ActiveCampaignDataSource", misc = "GetTags")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignTag), PointType = EnumPointType.Function, Name = "GetTags", Caption = "Get Tags", ClassName = "ActiveCampaignDataSource", misc = "GetTags")]
         public IEnumerable<ActiveCampaignTag> GetTags()
         {
             return GetEntity("tags", null).Cast<ActiveCampaignTag>();
         }
 
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignCampaign), PointType = EnumPointType.Function,FieldName = "GetCampaigns", Caption = "Get Campaigns", ClassName = "ActiveCampaignDataSource", misc = "GetCampaigns")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignCampaign), PointType = EnumPointType.Function, Name = "GetCampaigns", Caption = "Get Campaigns", ClassName = "ActiveCampaignDataSource", misc = "GetCampaigns")]
         public IEnumerable<ActiveCampaignCampaign> GetCampaigns()
         {
             return GetEntity("campaigns", null).Cast<ActiveCampaignCampaign>();
         }
 
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignDeal), PointType = EnumPointType.Function,FieldName = "GetDeals", Caption = "Get Deals", ClassName = "ActiveCampaignDataSource", misc = "GetDeals")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignDeal), PointType = EnumPointType.Function, Name = "GetDeals", Caption = "Get Deals", ClassName = "ActiveCampaignDataSource", misc = "GetDeals")]
         public IEnumerable<ActiveCampaignDeal> GetDeals()
         {
             return GetEntity("deals", null).Cast<ActiveCampaignDeal>();
         }
 
         // POST/PUT methods for creating and updating entities
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignContact), PointType = EnumPointType.Function,FieldName = "CreateContact", Caption = "Create Contact", ClassName = "ActiveCampaignDataSource", misc = "CreateContact")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignContact), PointType = EnumPointType.Function, Name = "CreateContact", Caption = "Create Contact", ClassName = "ActiveCampaignDataSource", misc = "CreateContact")]
         public async Task<ActiveCampaignContact> CreateContact(ActiveCampaignContact contact)
         {
             var endpoint = "api/3/contacts";
@@ -273,7 +273,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ActiveCampaign
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignContact), PointType = EnumPointType.Function,FieldName = "UpdateContact", Caption = "Update Contact", ClassName = "ActiveCampaignDataSource", misc = "UpdateContact")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignContact), PointType = EnumPointType.Function, Name = "UpdateContact", Caption = "Update Contact", ClassName = "ActiveCampaignDataSource", misc = "UpdateContact")]
         public async Task<ActiveCampaignContact> UpdateContact(string contactId, ActiveCampaignContact contact)
         {
             var endpoint = $"api/3/contacts/{contactId}";
@@ -281,7 +281,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ActiveCampaign
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignList), PointType = EnumPointType.Function,FieldName = "CreateList", Caption = "Create List", ClassName = "ActiveCampaignDataSource", misc = "CreateList")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignList), PointType = EnumPointType.Function, Name = "CreateList", Caption = "Create List", ClassName = "ActiveCampaignDataSource", misc = "CreateList")]
         public async Task<ActiveCampaignList> CreateList(ActiveCampaignList list)
         {
             var endpoint = "api/3/lists";
@@ -289,7 +289,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ActiveCampaign
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignList), PointType = EnumPointType.Function,FieldName = "UpdateList", Caption = "Update List", ClassName = "ActiveCampaignDataSource", misc = "UpdateList")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignList), PointType = EnumPointType.Function, Name = "UpdateList", Caption = "Update List", ClassName = "ActiveCampaignDataSource", misc = "UpdateList")]
         public async Task<ActiveCampaignList> UpdateList(string listId, ActiveCampaignList list)
         {
             var endpoint = $"api/3/lists/{listId}";
@@ -297,7 +297,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ActiveCampaign
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignCampaign), PointType = EnumPointType.Function,FieldName = "CreateCampaign", Caption = "Create Campaign", ClassName = "ActiveCampaignDataSource", misc = "CreateCampaign")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignCampaign), PointType = EnumPointType.Function, Name = "CreateCampaign", Caption = "Create Campaign", ClassName = "ActiveCampaignDataSource", misc = "CreateCampaign")]
         public async Task<ActiveCampaignCampaign> CreateCampaign(ActiveCampaignCampaign campaign)
         {
             var endpoint = "api/3/campaigns";
@@ -305,7 +305,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ActiveCampaign
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignCampaign), PointType = EnumPointType.Function,FieldName = "UpdateCampaign", Caption = "Update Campaign", ClassName = "ActiveCampaignDataSource", misc = "UpdateCampaign")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignCampaign), PointType = EnumPointType.Function, Name = "UpdateCampaign", Caption = "Update Campaign", ClassName = "ActiveCampaignDataSource", misc = "UpdateCampaign")]
         public async Task<ActiveCampaignCampaign> UpdateCampaign(string campaignId, ActiveCampaignCampaign campaign)
         {
             var endpoint = $"api/3/campaigns/{campaignId}";
@@ -313,7 +313,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ActiveCampaign
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignDeal), PointType = EnumPointType.Function,FieldName = "CreateDeal", Caption = "Create Deal", ClassName = "ActiveCampaignDataSource", misc = "CreateDeal")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignDeal), PointType = EnumPointType.Function, Name = "CreateDeal", Caption = "Create Deal", ClassName = "ActiveCampaignDataSource", misc = "CreateDeal")]
         public async Task<ActiveCampaignDeal> CreateDeal(ActiveCampaignDeal deal)
         {
             var endpoint = "api/3/deals";
@@ -321,7 +321,7 @@ namespace TheTechIdea.Beep.Connectors.Marketing.ActiveCampaign
             return response;
         }
 
-    [CommandAttribute(ObjectType = nameof(ActiveCampaignDeal), PointType = EnumPointType.Function,FieldName = "UpdateDeal", Caption = "Update Deal", ClassName = "ActiveCampaignDataSource", misc = "UpdateDeal")]
+    [CommandAttribute(ObjectType = nameof(ActiveCampaignDeal), PointType = EnumPointType.Function, Name = "UpdateDeal", Caption = "Update Deal", ClassName = "ActiveCampaignDataSource", misc = "UpdateDeal")]
         public async Task<ActiveCampaignDeal> UpdateDeal(string dealId, ActiveCampaignDeal deal)
         {
             var endpoint = $"api/3/deals/{dealId}";

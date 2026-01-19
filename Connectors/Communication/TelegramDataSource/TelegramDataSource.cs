@@ -357,7 +357,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(
-       FieldName = "SendMessageAsync",
+       Name = "SendMessageAsync",
         Caption = "Send Telegram Message",
         ObjectType ="TgMessage",
         PointType = EnumPointType.Function,
@@ -393,7 +393,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(
-       FieldName = "SendPhotoAsync",
+       Name = "SendPhotoAsync",
         Caption = "Send Telegram Photo",
         ObjectType ="TgMessage",
         PointType = EnumPointType.Function,
@@ -429,7 +429,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(
-       FieldName = "SendDocumentAsync",
+       Name = "SendDocumentAsync",
         Caption = "Send Telegram Document",
         ObjectType ="TgMessage",
         PointType = EnumPointType.Function,
@@ -465,7 +465,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.Telegram
     }
 
     [CommandAttribute(
-       FieldName = "UpdateMessageAsync",
+       Name = "UpdateMessageAsync",
         Caption = "Update Telegram Message",
         ObjectType ="TgMessage",
         PointType = EnumPointType.Function,

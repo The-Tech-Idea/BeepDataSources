@@ -210,7 +210,7 @@ namespace TheTechIdea.Beep.Connectors.iCloud
                         var icloudFile = new iCloudFile
                         {
                             Id = file.GetProperty("id").GetString(),
-                           FieldName = file.GetProperty("name").GetString(),
+                            Name = file.GetProperty("name").GetString(),
                             Type = file.GetProperty("type").GetString(),
                             Size = file.GetProperty("size").GetInt64(),
                             DateCreated = file.GetProperty("dateCreated").GetDateTime(),
@@ -244,7 +244,7 @@ namespace TheTechIdea.Beep.Connectors.iCloud
                         var icloudFolder = new iCloudFolder
                         {
                             Id = folder.GetProperty("id").GetString(),
-                           FieldName = folder.GetProperty("name").GetString(),
+                            Name = folder.GetProperty("name").GetString(),
                             Type = folder.GetProperty("type").GetString(),
                             DateCreated = folder.GetProperty("dateCreated").GetDateTime(),
                             DateModified = folder.GetProperty("dateModified").GetDateTime(),
@@ -277,7 +277,7 @@ namespace TheTechIdea.Beep.Connectors.iCloud
                         var icloudShare = new iCloudShare
                         {
                             Id = share.GetProperty("id").GetString(),
-                           FieldName = share.GetProperty("name").GetString(),
+                           Name = share.GetProperty("name").GetString(),
                             Url = share.GetProperty("url").GetString(),
                             Owner = share.GetProperty("owner").GetString(),
                             Permissions = share.GetProperty("permissions").GetString(),
@@ -310,7 +310,7 @@ namespace TheTechIdea.Beep.Connectors.iCloud
                         var icloudDevice = new iCloudDevice
                         {
                             Id = device.GetProperty("id").GetString(),
-                           FieldName = device.GetProperty("name").GetString(),
+                           Name = device.GetProperty("name").GetString(),
                             Model = device.GetProperty("model").GetString(),
                             OsVersion = device.GetProperty("osVersion").GetString(),
                             LastSeen = device.GetProperty("lastSeen").GetDateTime(),

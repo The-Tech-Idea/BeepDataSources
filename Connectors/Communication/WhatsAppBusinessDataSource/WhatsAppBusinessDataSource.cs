@@ -314,7 +314,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
     }
 
     [CommandAttribute(
-       FieldName = "CreateMessageTemplateAsync",
+       Name = "CreateMessageTemplateAsync",
         Caption = "Create WhatsApp Message Template",
         ObjectType ="WabaMessageTemplate",
         PointType = EnumPointType.Function,
@@ -350,7 +350,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
     }
 
     [CommandAttribute(
-       FieldName = "UploadMediaAsync",
+        Name = "UploadMediaAsync",
         Caption = "Upload WhatsApp Media",
         ObjectType ="WabaMedia",
         PointType = EnumPointType.Function,
@@ -386,7 +386,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
     }
 
     [CommandAttribute(
-       FieldName = "UpdateBusinessProfileAsync",
+       Name = "UpdateBusinessProfileAsync",
         Caption = "Update WhatsApp Business Profile",
         ObjectType ="WabaBusinessProfile",
         PointType = EnumPointType.Function,
@@ -422,7 +422,7 @@ namespace TheTechIdea.Beep.Connectors.Communication.WhatsAppBusiness
     }
 
     [CommandAttribute(
-       FieldName = "SendMessageAsync",
+       Name = "SendMessageAsync",
         Caption = "Send WhatsApp Message",
         ObjectType ="WabaMessage",
         PointType = EnumPointType.Function,
