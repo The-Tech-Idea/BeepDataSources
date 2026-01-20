@@ -37,8 +37,8 @@
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.2" />
     <PackageReference Include="Polly" Version="8.6.5" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.62" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.119" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.63" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.120" />
   </ItemGroup>
 
 </Project>
