@@ -573,6 +573,17 @@ namespace TheTechIdea.Beep.DataBase
             if (CheckEntityExist(entity.EntityName) == false)
             {
                 string createstring = CreateEntity(entity);
+                
+                // Guard against null/empty SQL - GenerateCreateEntityScript may have failed silently
+                if (string.IsNullOrWhiteSpace(createstring))
+                {
+                    string errorMsg = $"Failed to generate CREATE TABLE script for '{entity.EntityName}'. Check log for details.";
+                    DMEEditor.AddLogMessage("Fail", errorMsg, DateTime.Now, 0, entity.EntityName, Errors.Failed);
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.ErrorObject.Message = errorMsg;
+                    return false;
+                }
+                
                 DMEEditor.ErrorObject = ExecuteSql(createstring);
                 if (DMEEditor.ErrorObject.Flag == Errors.Failed)
                 {

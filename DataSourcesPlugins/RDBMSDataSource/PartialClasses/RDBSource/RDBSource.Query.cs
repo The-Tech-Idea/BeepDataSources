@@ -112,6 +112,16 @@ namespace TheTechIdea.Beep.DataBase
         public virtual IErrorsInfo ExecuteSql(string sql)
         {
             ErrorObject.Flag = Errors.Ok;
+            
+            // Guard against null/empty SQL to prevent NullReferenceException in database drivers
+            if (string.IsNullOrWhiteSpace(sql))
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = "SQL command is null or empty - cannot execute";
+                DMEEditor.AddLogMessage("Fail", "ExecuteSql called with null or empty SQL", DateTime.Now, -1, null, Errors.Failed);
+                return ErrorObject;
+            }
+            
             // CurrentSql = sql;
             IDbCommand cmd = GetDataCommand();
             if (cmd != null)

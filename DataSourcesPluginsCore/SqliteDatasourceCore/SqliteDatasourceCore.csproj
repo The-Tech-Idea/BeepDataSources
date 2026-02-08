@@ -14,7 +14,7 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Title>TheTechIdea.Beep.SqliteDatasourceCore</Title>
 		<PackageId>TheTechIdea.Beep.SqliteDatasourceCore</PackageId>
-		<Version>1.0.55</Version>
+		<Version>1.0.56</Version>
 
 	</PropertyGroup>
 
@@ -39,8 +39,8 @@
  </ItemGroup>
  <ItemGroup>
    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.64" />
-   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.123" />
+   <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.70" />
+   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.125" />
  </ItemGroup>
  <ItemGroup>
    <ProjectReference Include="..\..\DataSourcesPlugins\RDBMSDataSource\RDBDataSource.csproj" />
