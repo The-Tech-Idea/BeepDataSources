@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Reflection;
 using System.Threading.Tasks;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.ConfigUtil;
@@ -16,6 +17,25 @@ namespace TheTechIdea.Beep.DataBase
 {
     public partial class RDBSource : IRDBSource
     {
+
+        /// <summary>
+        /// Finds a property on the given type using case-insensitive matching.
+        /// First tries exact (case-sensitive) match for performance, then falls back to case-insensitive.
+        /// This ensures that database column names like "name" correctly match C# properties like "Name".
+        /// </summary>
+        private static PropertyInfo FindPropertyCaseInsensitive(Type type, string propertyName)
+        {
+            if (type == null || string.IsNullOrEmpty(propertyName))
+                return null;
+
+            // Fast path: try exact match first (most common case)
+            var prop = type.GetProperty(propertyName);
+            if (prop != null)
+                return prop;
+
+            // Slow path: case-insensitive fallback
+            return type.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        }
         /// <summary>
         /// Updates a specific record in the database for the given entity based on provided data.
         /// </summary>
@@ -171,7 +191,8 @@ namespace TheTechIdea.Beep.DataBase
                             object result = cmd.ExecuteScalar();
                             if (result != null)
                             {
-                                var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().FieldName);
+                                var pkFieldName = DataStruct.PrimaryKeys.First().FieldName;
+                                var primaryKeyProperty = FindPropertyCaseInsensitive(InsertedData.GetType(), pkFieldName);
                                 if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
                                 {
                                     var primaryKeyType = primaryKeyProperty.PropertyType;
@@ -203,6 +224,7 @@ namespace TheTechIdea.Beep.DataBase
             return ErrorObject;
         }
 
+       
         public virtual IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
         {
             SetObjects(EntityName);
@@ -411,7 +433,8 @@ namespace TheTechIdea.Beep.DataBase
                             object result = await ExecuteScalarAsync(cmd);
                             if (result != null)
                             {
-                                var primaryKeyProperty = InsertedData.GetType().GetProperty(DataStruct.PrimaryKeys.First().FieldName);
+                                var pkFieldName = DataStruct.PrimaryKeys.First().FieldName;
+                                var primaryKeyProperty = FindPropertyCaseInsensitive(InsertedData.GetType(), pkFieldName);
                                 if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
                                 {
                                     var primaryKeyType = primaryKeyProperty.PropertyType;

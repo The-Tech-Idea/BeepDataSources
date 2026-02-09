@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
@@ -676,12 +677,73 @@ namespace TheTechIdea.Beep.DataBase
                 yield break;
             }
 
+            // Resolve entity type for converting dictionary rows to typed objects
+            Type entityType = null;
+            PropertyInfo[] entityProperties = null;
+            try
+            {
+                entityType = GetEntityType(inname);
+                if (entityType != null)
+                {
+                    entityProperties = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                }
+            }
+            catch { /* fallback: yield raw dictionaries if type resolution fails */ }
+
             // Streaming loop using DataStreamer helper
             using (cmd)
             {
                 foreach (var row in DataBase.Helpers.DataStreamer.Stream(reader))
                 {
-                    yield return row;
+                    if (entityType != null && entityProperties != null)
+                    {
+                        // Create typed object and populate from dictionary
+                        var obj = Activator.CreateInstance(entityType);
+                        foreach (var prop in entityProperties)
+                        {
+                            if (!prop.CanWrite) continue;
+
+                            // Dictionary uses OrdinalIgnoreCase comparer, so TryGetValue handles case
+                            if (row.TryGetValue(prop.Name, out var value) && value != null)
+                            {
+                                try
+                                {
+                                    Type targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+                                    object convertedValue;
+
+                                    if (targetType == value.GetType())
+                                    {
+                                        convertedValue = value;
+                                    }
+                                    else if (targetType == typeof(DateTime) && value is string dateStr)
+                                    {
+                                        convertedValue = DateTime.TryParse(dateStr, out var dt) ? dt : default(DateTime);
+                                    }
+                                    else if (targetType == typeof(Guid) && value is string guidStr)
+                                    {
+                                        convertedValue = Guid.TryParse(guidStr, out var g) ? g : Guid.Empty;
+                                    }
+                                    else if (targetType.IsEnum)
+                                    {
+                                        convertedValue = Enum.Parse(targetType, value.ToString(), true);
+                                    }
+                                    else
+                                    {
+                                        convertedValue = Convert.ChangeType(value, targetType);
+                                    }
+
+                                    prop.SetValue(obj, convertedValue);
+                                }
+                                catch { /* skip properties that fail conversion */ }
+                            }
+                        }
+                        yield return obj;
+                    }
+                    else
+                    {
+                        // Fallback: yield raw dictionary if entity type not resolved
+                        yield return row;
+                    }
                 }
             }
         }
@@ -781,6 +843,19 @@ namespace TheTechIdea.Beep.DataBase
                 DMEEditor.AddLogMessage("Warning", $"Count failed: {ex.Message}", DateTime.Now, 0, EntityName, Errors.Warning);
             }
 
+            // Resolve entity type for converting dictionary rows to typed objects
+            Type pagedEntityType = null;
+            PropertyInfo[] pagedEntityProperties = null;
+            try
+            {
+                pagedEntityType = GetEntityType(entityForStruct);
+                if (pagedEntityType != null)
+                {
+                    pagedEntityProperties = pagedEntityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                }
+            }
+            catch { /* fallback: raw dictionaries */ }
+
             // Execute paged data query
             var rows = new List<object>();
             try
@@ -791,10 +866,43 @@ namespace TheTechIdea.Beep.DataBase
                 AddFilterParameters(dataCmd, Filter);
 
                 using var reader = dataCmd.ExecuteReader(CommandBehavior.SequentialAccess);
-                // Use DataStreamer helper for efficient data streaming
                 foreach (var row in DataBase.Helpers.DataStreamer.Stream(reader))
                 {
-                    rows.Add(row);
+                    if (pagedEntityType != null && pagedEntityProperties != null)
+                    {
+                        var obj = Activator.CreateInstance(pagedEntityType);
+                        foreach (var prop in pagedEntityProperties)
+                        {
+                            if (!prop.CanWrite) continue;
+                            if (row.TryGetValue(prop.Name, out var value) && value != null)
+                            {
+                                try
+                                {
+                                    Type targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+                                    object convertedValue;
+
+                                    if (targetType == value.GetType())
+                                        convertedValue = value;
+                                    else if (targetType == typeof(DateTime) && value is string dateStr)
+                                        convertedValue = DateTime.TryParse(dateStr, out var dt) ? dt : default(DateTime);
+                                    else if (targetType == typeof(Guid) && value is string guidStr)
+                                        convertedValue = Guid.TryParse(guidStr, out var g) ? g : Guid.Empty;
+                                    else if (targetType.IsEnum)
+                                        convertedValue = Enum.Parse(targetType, value.ToString(), true);
+                                    else
+                                        convertedValue = Convert.ChangeType(value, targetType);
+
+                                    prop.SetValue(obj, convertedValue);
+                                }
+                                catch { /* skip properties that fail conversion */ }
+                            }
+                        }
+                        rows.Add(obj);
+                    }
+                    else
+                    {
+                        rows.Add(row);
+                    }
                 }
             }
             catch (Exception ex)

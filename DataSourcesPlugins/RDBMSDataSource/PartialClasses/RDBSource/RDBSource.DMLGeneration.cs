@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Linq;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Data.SqlTypes;
 using TheTechIdea.Beep.Editor;
@@ -123,10 +124,10 @@ namespace TheTechIdea.Beep.DataBase
                     continue;
                 }
 
-                var property = InsertedData.GetType().GetProperty(field.FieldName);
+                var property = FindPropertyCaseInsensitive(InsertedData.GetType(), field.FieldName);
                 if (property != null)
                 {
-                    var value = InsertedData.GetType().GetProperty(field.FieldName).GetValue(InsertedData) ?? DBNull.Value;
+                    var value = property.GetValue(InsertedData) ?? DBNull.Value;
                     var parameter = command.CreateParameter();
 
                     // Find the corresponding parameter name in usedParameterNames
@@ -171,10 +172,10 @@ namespace TheTechIdea.Beep.DataBase
                     continue;
                 }
 
-                var property = InsertedData.GetType().GetProperty(field.FieldName);
+                var property = FindPropertyCaseInsensitive(InsertedData.GetType(), field.FieldName);
                 if (property != null)
                 {
-                    var value = InsertedData.GetType().GetProperty(field.FieldName).GetValue(InsertedData) ?? DBNull.Value;
+                    var value = property.GetValue(InsertedData) ?? DBNull.Value;
                     var parameter = command.CreateParameter();
 
                     // Find the corresponding parameter name in usedParameterNames
@@ -223,7 +224,7 @@ namespace TheTechIdea.Beep.DataBase
             foreach (EntityField field in DataStruct.PrimaryKeys.OrderBy(o => o.FieldName))
             {
 
-                var property = r.GetType().GetProperty(field.FieldName);
+                var property = FindPropertyCaseInsensitive(r.GetType(), field.FieldName);
                 if (property != null)
                 {
                     var value = property.GetValue(r);
@@ -905,5 +906,6 @@ namespace TheTechIdea.Beep.DataBase
             }
             return createtablestring;
         }
+
     }
 }

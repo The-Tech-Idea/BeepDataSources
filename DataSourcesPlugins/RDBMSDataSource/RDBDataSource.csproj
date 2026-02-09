@@ -17,7 +17,7 @@
 	  <PackageIcon>SimpleODM.png</PackageIcon>
 	  <RepositoryUrl>https://github.com/The-Tech-Idea/BeepDM</RepositoryUrl>
 	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
-	  <Version>2.0.16</Version>
+	  <Version>2.0.20</Version>
 	 
   </PropertyGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
