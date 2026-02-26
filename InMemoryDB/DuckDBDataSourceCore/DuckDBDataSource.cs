@@ -27,7 +27,7 @@ using DateTime = System.DateTime;
 namespace DuckDBDataSourceCore
 {
     [AddinAttribute(Category = DatasourceCategory.INMEMORY, DatasourceType = DataSourceType.DuckDB)]
-    public class DuckDBDataSource : InMemoryRDBSource,IDisposable
+    public partial class DuckDBDataSource : InMemoryRDBSource,IDisposable
     {
         private bool disposedValue;
         public DuckDBConnection DuckConn { get; set; }
