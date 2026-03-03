@@ -54,7 +54,7 @@ namespace DuckDBDataSourceCore
 
             }
             Dataconnection.ConnectionProp.DatabaseType = DataSourceType.DuckDB;
-            
+              
              //   Dataconnection.ConnectionProp.IsInMemory=true;
              ColumnDelimiter = "[]";
             ParameterDelimiter = "$";
