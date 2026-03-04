@@ -1,0 +1,12 @@
+global using System;
+global using System.Collections.Generic;
+global using System.IO;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using TheTechIdea.Beep;
+global using TheTechIdea.Beep.Utilities; 
+global using TheTechIdea.Beep.Addin;
+global using TheTechIdea.Beep.ConfigUtil;
+global using TheTechIdea.Beep.Report;
+global using TheTechIdea.Beep.Vis;
