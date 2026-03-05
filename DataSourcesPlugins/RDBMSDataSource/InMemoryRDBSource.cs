@@ -11,6 +11,7 @@ using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.Editor.ETL;
+using TheTechIdea.Beep.Helpers.UniversalDataSourceHelpers.Core;
 
 
 
@@ -82,10 +83,8 @@ namespace TheTechIdea.Beep
                     LoadEntities(DatasourceName);
                     if (Entities != null  && Entities.Any())
                     {
-                      
                         IsStructureLoaded = true;
-                        IsLoaded = true;
-                   }
+                    }
 
                     OnLoadStructure?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
                 }
@@ -225,66 +224,209 @@ namespace TheTechIdea.Beep
 
         public virtual IErrorsInfo OpenDatabaseInMemory(string databasename)
         {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(databasename))
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.AddLogMessage("Beep", $"Database name cannot be null or empty.", DateTime.Now, 0, null, Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                DatasourceName = databasename;
+                if (ConnectionStatus != System.Data.ConnectionState.Open)
+                {
+                    Openconnection();
+                }
+                if (ConnectionStatus == System.Data.ConnectionState.Open)
+                {
+                    if (InMemoryStructures == null)
+                        InMemoryStructures = new List<EntityStructure>();
+                    IsCreated = true;
+                    DMEEditor.AddLogMessage("Beep", $"In-memory database '{databasename}' opened successfully.", DateTime.Now, 0, null, Errors.Ok);
+                }
+                else
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.AddLogMessage("Beep", $"Failed to open in-memory database '{databasename}'.", DateTime.Now, 0, null, Errors.Failed);
+                }
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Error opening in-memory database '{databasename}': {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
             return DMEEditor.ErrorObject;
         }
         public virtual IErrorsInfo SyncData(IProgress<PassedArgs> progress, CancellationToken token)
         {
-            OnSyncData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (IsCreated && Entities != null && Entities.Any())
+                {
+                    SyncEntitiesNameandEntities();
+                    List<ETLScriptDet> retscripts = DMEEditor.ETL.GetCopyDataEntityScript(this, Entities, progress, token);
+                    DMEEditor.ETL.Script.ScriptDetails = retscripts;
+                    DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
+                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
+                    IsSynced = true;
+                    DMEEditor.AddLogMessage("Beep", $"Synced all data for {DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                IsSynced = false;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Sync of {DatasourceName} was cancelled.", DateTime.Now, 0, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                IsSynced = false;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Error syncing data for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            RaiseOnSyncData((PassedArgs)DMEEditor.Passedarguments);
             return DMEEditor.ErrorObject;
         }
         public IErrorsInfo SyncData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
         {
-            OnSyncData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(entityname))
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.AddLogMessage("Beep", $"Entity name cannot be null or empty.", DateTime.Now, 0, null, Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                var entity = Entities?.FirstOrDefault(e => e.EntityName.Equals(entityname, StringComparison.OrdinalIgnoreCase));
+                if (entity == null)
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.AddLogMessage("Beep", $"Entity '{entityname}' not found for sync.", DateTime.Now, 0, null, Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                if (IsCreated)
+                {
+                    List<ETLScriptDet> retscripts = DMEEditor.ETL.GetCopyDataEntityScript(this, new List<EntityStructure> { entity }, progress, token);
+                    DMEEditor.ETL.Script.ScriptDetails = retscripts;
+                    DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
+                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
+                    DMEEditor.AddLogMessage("Beep", $"Synced entity '{entityname}' for {DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Sync of entity '{entityname}' was cancelled.", DateTime.Now, 0, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Error syncing entity '{entityname}' for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            RaiseOnSyncData((PassedArgs)DMEEditor.Passedarguments);
             return DMEEditor.ErrorObject;
         }
 
         public IErrorsInfo RefreshData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
         {
-            OnRefreshData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(entityname))
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.AddLogMessage("Beep", $"Entity name cannot be null or empty.", DateTime.Now, 0, null, Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                if (!IsCreated)
+                    return DMEEditor.ErrorObject;
+                var entity = InMemoryStructures?.FirstOrDefault(e => e.EntityName.Equals(entityname, StringComparison.OrdinalIgnoreCase));
+                if (entity == null)
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.AddLogMessage("Beep", $"Entity '{entityname}' not found in in-memory structures.", DateTime.Now, 0, null, Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                token.ThrowIfCancellationRequested();
+                DMEEditor.AddLogMessage("Beep", $"Refreshing entity '{entityname}' — clearing data.", DateTime.Now, 0, null, Errors.Ok);
+                string sql = GetDeleteAllSql(entity.EntityName);
+                DMEEditor.ErrorObject = ExecuteSql(sql);
+                if (DMEEditor.ErrorObject.Flag == Errors.Ok)
+                {
+                    DMEEditor.AddLogMessage("Beep", $"Deleted data from '{entityname}', reloading.", DateTime.Now, 0, null, Errors.Ok);
+                    List<ETLScriptDet> retscripts = DMEEditor.ETL.GetCopyDataEntityScript(this, new List<EntityStructure> { entity }, progress, token);
+                    DMEEditor.ETL.Script.ScriptDetails = retscripts;
+                    DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
+                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
+                    DMEEditor.AddLogMessage("Beep", $"Refreshed entity '{entityname}' successfully.", DateTime.Now, 0, null, Errors.Ok);
+                }
+                else
+                {
+                    DMEEditor.AddLogMessage("Beep", $"Could not delete data from '{entityname}' during refresh.", DateTime.Now, 0, null, Errors.Failed);
+                }
+                RaiseOnRefreshDataEntity((PassedArgs)DMEEditor.Passedarguments);
+            }
+            catch (OperationCanceledException)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Refresh of entity '{entityname}' was cancelled.", DateTime.Now, 0, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Error refreshing entity '{entityname}': {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
             return DMEEditor.ErrorObject;
         }
         public IErrorsInfo RefreshData(IProgress<PassedArgs> progress, CancellationToken token)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             bool isdeleted = false;
-            ETLDataCopier etl = new ETLDataCopier(DMEEditor);
             try
             {
                 if (IsCreated)
                 {
-                    // delete all data in the  sqllite InMemory database
                     foreach (var item in InMemoryStructures)
                     {
-                        // run sql to delete data from entity 
-                        string sql = $"delete from {item.EntityName}";
+                        token.ThrowIfCancellationRequested();
+                        DMEEditor.AddLogMessage("Beep", $"Refreshing entity '{item.EntityName}' — clearing data.", DateTime.Now, 0, null, Errors.Ok);
+                        string sql = GetDeleteAllSql(item.EntityName);
                         DMEEditor.ErrorObject = ExecuteSql(sql);
                         if (DMEEditor.ErrorObject.Flag == Errors.Ok)
                         {
                             isdeleted = true;
-                            DMEEditor.AddLogMessage("Beep", $"Deleted data from {item.EntityName}", System.DateTime.Now, 0, null, Errors.Ok);
+                            DMEEditor.AddLogMessage("Beep", $"Deleted data from {item.EntityName}", DateTime.Now, 0, null, Errors.Ok);
                         }
                         else
                         {
-                            DMEEditor.AddLogMessage("Beep", $"Could not delete data from {item.EntityName}", System.DateTime.Now, 0, null, Errors.Failed);
+                            DMEEditor.AddLogMessage("Beep", $"Could not delete data from {item.EntityName}", DateTime.Now, 0, null, Errors.Failed);
                         }
                     }
                     if (isdeleted)
                     {
                         LoadData(progress, token);
                     }
-                    OnLoadData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+                    RaiseOnLoadData((PassedArgs)DMEEditor.Passedarguments);
                     IsLoaded = true;
                 }
-                OnRefreshData?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+                RaiseOnRefreshData((PassedArgs)DMEEditor.Passedarguments);
+            }
+            catch (OperationCanceledException)
+            {
+                IsLoaded = false;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Refresh of {DatasourceName} was cancelled.", DateTime.Now, 0, null, Errors.Failed);
             }
             catch (Exception ex)
             {
                 IsLoaded = false;
-                DMEEditor.AddLogMessage("Beep", $"Could not refresh InMemory data for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Could not refresh InMemory data for {DatasourceName}- {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
-
-
         }
         #endregion
         #region "InMemoryDataSource Events"
@@ -296,6 +438,53 @@ namespace TheTechIdea.Beep
         public event EventHandler<PassedArgs> OnCreateStructure;
         public event EventHandler<PassedArgs> OnRefreshData;
         public event EventHandler<PassedArgs> OnRefreshDataEntity;
+
+        /// <summary>Raises the <see cref="OnLoadData"/> event. Derived classes can override to intercept.</summary>
+        protected virtual void RaiseOnLoadData(PassedArgs args) => OnLoadData?.Invoke(this, args);
+
+        /// <summary>Raises the <see cref="OnSyncData"/> event. Derived classes can override to intercept.</summary>
+        protected virtual void RaiseOnSyncData(PassedArgs args) => OnSyncData?.Invoke(this, args);
+
+        /// <summary>Raises the <see cref="OnRefreshData"/> event. Derived classes can override to intercept.</summary>
+        protected virtual void RaiseOnRefreshData(PassedArgs args) => OnRefreshData?.Invoke(this, args);
+
+        /// <summary>Raises the <see cref="OnRefreshDataEntity"/> event. Derived classes can override to intercept.</summary>
+        protected virtual void RaiseOnRefreshDataEntity(PassedArgs args) => OnRefreshDataEntity?.Invoke(this, args);
+
+        /// <summary>Raises the <see cref="OnCreateStructure"/> event. Derived classes can override to intercept.</summary>
+        protected virtual void RaiseOnCreateStructure(PassedArgs args) => OnCreateStructure?.Invoke(this, args);
+
+        /// <summary>
+        /// Returns a provider-appropriate DELETE-all statement for the given table.
+        /// Resolves via <see cref="GeneralDataSourceHelper"/> (uses the same dialect as the current
+        /// <see cref="DatasourceType"/>), falling back to quoted-identifier SQL when the helper
+        /// cannot produce a statement.
+        /// </summary>
+        protected virtual string GetDeleteAllSql(string tableName)
+        {
+            try
+            {
+                var helper = new GeneralDataSourceHelper(DatasourceType, DMEEditor);
+                var (sql, success, _) = helper.GenerateTruncateTableSql(tableName);
+                if (success && !string.IsNullOrWhiteSpace(sql))
+                    return sql;
+            }
+            catch
+            {
+                // fall through to safe quoted-identifier fallback
+            }
+            // Fallback: provider-appropriate quoted identifier DELETE
+            switch (DatasourceType)
+            {
+                case DataSourceType.SqlServer:
+                    return $"DELETE FROM [{tableName}]";
+                case DataSourceType.Mysql:
+                    return $"DELETE FROM `{tableName}`";
+                default:
+                    // SQLite, PostgreSQL, Oracle, FireBird, DB2 and most ANSI-SQL providers.
+                    return $"DELETE FROM \"{tableName}\"";
+            }
+        }
         #endregion
         #region "Overriden Methods"
         public override bool CreateEntityAs(EntityStructure entity)

@@ -110,38 +110,50 @@ namespace DuckDBDataSourceCore
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
             {
+                if (string.IsNullOrWhiteSpace(databasename))
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.AddLogMessage("Beep", "Database name cannot be null or empty.", DateTime.Now, 0, null, Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
                 Dataconnection.InMemory = true;
+                Dataconnection.ConnectionProp.IsInMemory = true;
                 Dataconnection.ConnectionProp.FileName = string.Empty;
                 Dataconnection.ConnectionProp.ConnectionString = "DataSource=:memory:?cache=shared";
                 Dataconnection.ConnectionProp.Database = databasename;
                 Dataconnection.ConnectionProp.ConnectionName = databasename;
                 Dataconnection.ConnectionProp.SchemaName = "main";
+                DatasourceName = databasename;
 
                 DuckConn = new DuckDBConnection("DataSource=:memory:?cache=shared");
                 DuckConn.Open();
                 IsStructureLoaded = false;
                 IsStructureCreated = false;
                 if (DuckConn.State != ConnectionState.Open)
-             
                 {
+                    IsCreated = false;
                     ConnectionStatus = ConnectionState.Closed;
                     Dataconnection.ConnectionStatus = ConnectionState.Closed;
                     DMEEditor.ErrorObject.Flag = Errors.Failed;
-                    DMEEditor.ErrorObject.Message = "Failed to open in-memory database connection";
+                    DMEEditor.ErrorObject.Message = "Failed to open in-memory database connection.";
+                    DMEEditor.AddLogMessage("Beep", $"Failed to open DuckDB in-memory database '{databasename}'.", DateTime.Now, 0, null, Errors.Failed);
                 }
                 else
                 {
-
+                    IsCreated = true;
                     ConnectionStatus = ConnectionState.Open;
                     Dataconnection.ConnectionStatus = ConnectionState.Open;
+                    if (InMemoryStructures == null)
+                        InMemoryStructures = new System.Collections.Generic.List<TheTechIdea.Beep.DataBase.EntityStructure>();
+                    DMEEditor.AddLogMessage("Beep", $"DuckDB in-memory database '{databasename}' opened successfully.", DateTime.Now, 0, null, Errors.Ok);
                 }
             }
             catch (Exception ex)
             {
+                IsCreated = false;
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
                 DMEEditor.ErrorObject.Ex = ex;
-                DMEEditor.AddLogMessage("Beep", $"Error opening in-memory database: {ex.Message}",
-                    System.DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor.AddLogMessage("Beep", $"Error opening DuckDB in-memory database: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
         }
@@ -150,6 +162,233 @@ namespace DuckDBDataSourceCore
         {
             return Dataconnection.ConnectionProp.ConnectionString;
         }
+
+        #region "InMemory Data Methods"
+
+        public override IErrorsInfo LoadData(IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (IsCreated && DuckConn != null && DuckConn.State == ConnectionState.Open)
+                {
+                    DMEEditor.AddLogMessage("Beep", $"Loading data for {DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
+                    List<ETLScriptDet> retscripts = DMEEditor.ETL.GetCopyDataEntityScript(this, Entities, progress, token);
+                    DMEEditor.ETL.Script.ScriptDetails = retscripts;
+                    DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
+                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
+                    RaiseOnLoadData((PassedArgs)DMEEditor.Passedarguments);
+                    IsLoaded = true;
+                    DMEEditor.AddLogMessage("Beep", $"Loaded data for {DatasourceName} successfully.", DateTime.Now, 0, null, Errors.Ok);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                IsLoaded = false;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Load of {DatasourceName} was cancelled.", DateTime.Now, 0, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                IsLoaded = false;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.AddLogMessage("Beep", $"Could not load data for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+
+        public override IErrorsInfo SyncData(IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (IsCreated && DuckConn != null && DuckConn.State == ConnectionState.Open
+                    && Entities != null && Entities.Any())
+                {
+                    SyncEntitiesNameandEntities();
+                    DMEEditor.AddLogMessage("Beep", $"Syncing all data for {DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
+                    List<ETLScriptDet> retscripts = DMEEditor.ETL.GetCopyDataEntityScript(this, Entities, progress, token);
+                    DMEEditor.ETL.Script.ScriptDetails = retscripts;
+                    DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
+                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
+                    IsSynced = true;
+                    DMEEditor.AddLogMessage("Beep", $"Synced all data for {DatasourceName} successfully.", DateTime.Now, 0, null, Errors.Ok);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                IsSynced = false;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Sync of {DatasourceName} was cancelled.", DateTime.Now, 0, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                IsSynced = false;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.AddLogMessage("Beep", $"Error syncing data for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            RaiseOnSyncData((PassedArgs)DMEEditor.Passedarguments);
+            return DMEEditor.ErrorObject;
+        }
+
+        public IErrorsInfo SyncData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(entityname))
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.AddLogMessage("Beep", "Entity name cannot be null or empty.", DateTime.Now, 0, null, Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                var entity = Entities?.FirstOrDefault(e => e.EntityName.Equals(entityname, StringComparison.OrdinalIgnoreCase));
+                if (entity == null)
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.AddLogMessage("Beep", $"Entity '{entityname}' not found for sync.", DateTime.Now, 0, null, Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                if (IsCreated && DuckConn != null && DuckConn.State == ConnectionState.Open)
+                {
+                    DMEEditor.AddLogMessage("Beep", $"Syncing entity '{entityname}' for {DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
+                    List<ETLScriptDet> retscripts = DMEEditor.ETL.GetCopyDataEntityScript(this, new System.Collections.Generic.List<TheTechIdea.Beep.DataBase.EntityStructure> { entity }, progress, token);
+                    DMEEditor.ETL.Script.ScriptDetails = retscripts;
+                    DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
+                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
+                    DMEEditor.AddLogMessage("Beep", $"Synced entity '{entityname}' for {DatasourceName} successfully.", DateTime.Now, 0, null, Errors.Ok);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Sync of entity '{entityname}' was cancelled.", DateTime.Now, 0, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.AddLogMessage("Beep", $"Error syncing entity '{entityname}': {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            RaiseOnSyncData((PassedArgs)DMEEditor.Passedarguments);
+            return DMEEditor.ErrorObject;
+        }
+
+        public IErrorsInfo RefreshData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(entityname))
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.AddLogMessage("Beep", "Entity name cannot be null or empty.", DateTime.Now, 0, null, Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                if (!IsCreated || DuckConn == null || DuckConn.State != ConnectionState.Open)
+                    return DMEEditor.ErrorObject;
+                var entity = InMemoryStructures?.FirstOrDefault(e => e.EntityName.Equals(entityname, StringComparison.OrdinalIgnoreCase));
+                if (entity == null)
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.AddLogMessage("Beep", $"Entity '{entityname}' not found in in-memory structures.", DateTime.Now, 0, null, Errors.Failed);
+                    return DMEEditor.ErrorObject;
+                }
+                token.ThrowIfCancellationRequested();
+                string sql = GetDeleteAllSql(entity.EntityName);
+                DMEEditor.AddLogMessage("Beep", $"Refreshing entity '{entityname}' — clearing data.", DateTime.Now, 0, null, Errors.Ok);
+                DMEEditor.ErrorObject = ExecuteSql(sql);
+                if (DMEEditor.ErrorObject.Flag == Errors.Ok)
+                {
+                    List<ETLScriptDet> retscripts = DMEEditor.ETL.GetCopyDataEntityScript(this, new System.Collections.Generic.List<TheTechIdea.Beep.DataBase.EntityStructure> { entity }, progress, token);
+                    DMEEditor.ETL.Script.ScriptDetails = retscripts;
+                    DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
+                    DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
+                    DMEEditor.AddLogMessage("Beep", $"Refreshed entity '{entityname}' successfully.", DateTime.Now, 0, null, Errors.Ok);
+                }
+                else
+                {
+                    DMEEditor.AddLogMessage("Beep", $"Could not delete data from '{entityname}' during refresh.", DateTime.Now, 0, null, Errors.Failed);
+                }
+                RaiseOnRefreshDataEntity((PassedArgs)DMEEditor.Passedarguments);
+            }
+            catch (OperationCanceledException)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Refresh of entity '{entityname}' was cancelled.", DateTime.Now, 0, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.AddLogMessage("Beep", $"Error refreshing entity '{entityname}': {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+
+        public IErrorsInfo RefreshData(IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            bool isdeleted = false;
+            try
+            {
+                if (IsCreated && DuckConn != null && DuckConn.State == ConnectionState.Open)
+                {
+                    DMEEditor.AddLogMessage("Beep", $"Beginning full refresh for {DatasourceName} ({InMemoryStructures?.Count ?? 0} entities).", DateTime.Now, 0, null, Errors.Ok);
+                    BeginTransaction(null);
+                    try
+                    {
+                        foreach (var item in InMemoryStructures)
+                        {
+                            token.ThrowIfCancellationRequested();
+                            DMEEditor.AddLogMessage("Beep", $"Clearing entity '{item.EntityName}'.", DateTime.Now, 0, null, Errors.Ok);
+                            string sql = GetDeleteAllSql(item.EntityName);
+                            DMEEditor.ErrorObject = ExecuteSql(sql);
+                            if (DMEEditor.ErrorObject.Flag == Errors.Ok)
+                            {
+                                isdeleted = true;
+                                DMEEditor.AddLogMessage("Beep", $"Deleted data from {item.EntityName}.", DateTime.Now, 0, null, Errors.Ok);
+                            }
+                            else
+                            {
+                                DMEEditor.AddLogMessage("Beep", $"Could not delete data from {item.EntityName}.", DateTime.Now, 0, null, Errors.Failed);
+                            }
+                            progress?.Report(new PassedArgs { Messege = $"Cleared {item.EntityName}", EventType = "Refresh" });
+                        }
+                        if (isdeleted)
+                            LoadData(progress, token);
+                        Commit(null);
+                    }
+                    catch
+                    {
+                        EndTransaction(null);
+                        throw;
+                    }
+                    RaiseOnLoadData((PassedArgs)DMEEditor.Passedarguments);
+                    IsLoaded = true;
+                    DMEEditor.AddLogMessage("Beep", $"Full refresh completed for {DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
+                }
+                RaiseOnRefreshData((PassedArgs)DMEEditor.Passedarguments);
+            }
+            catch (OperationCanceledException)
+            {
+                IsLoaded = false;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"Refresh of {DatasourceName} was cancelled.", DateTime.Now, 0, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                IsLoaded = false;
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.AddLogMessage("Beep", $"Could not refresh data for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+
+        #endregion "InMemory Data Methods"
 
         #region "IDataSource Properties"
 
