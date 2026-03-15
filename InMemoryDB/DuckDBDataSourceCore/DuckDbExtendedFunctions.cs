@@ -564,7 +564,7 @@ namespace DuckDBDataSourceCore
             long columnCount = (long)Query.DuckDBColumnCount(ref queryResult);
             for (var index = 0; index < columnCount; index++)
             {
-                var columnName = Query.DuckDBColumnName(ref queryResult, index).ToManagedString(false);
+                var columnName = Query.DuckDBColumnName(ref queryResult, index).ToString();
                 Console.Write($"{columnName} ");
             }
 
