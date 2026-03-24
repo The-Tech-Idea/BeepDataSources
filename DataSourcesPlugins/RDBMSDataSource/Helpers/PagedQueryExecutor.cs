@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Extensions;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 
@@ -23,38 +24,54 @@ namespace TheTechIdea.Beep.DataBase.Helpers
             _errorObject = errorObject;
         }
 
-        public (List<object> rows, int total) Execute(string baseQuery, IEnumerable<AppFilter> filters, DataSourceType dbType, int pageNumber, int pageSize, Func<string,string> sanitizeParam)
+        public (List<object> rows, int total) Execute(string baseQuery, IEnumerable<AppFilter> filters, DataSourceType dbType, int pageNumber, int pageSize, Func<string, string> sanitizeParam)
         {
+            _ = sanitizeParam;
             var rows = new List<object>();
             int total = 0;
             try
             {
-                string filtered = SqlQueryBuilder.BuildFilteredQuery(baseQuery, filters, null, "@", sanitizeParam);
+                string delim = dbType == DataSourceType.Oracle ? ":" : "@";
+                var queryDefinition = DataSourceAppFilterExtensions.BuildSelectQueryDefinition(
+                    baseQuery,
+                    filters,
+                    dbType,
+                    delim,
+                    selectedColumns: null);
+                string filtered = queryDefinition.QueryText;
                 string countSql = BuildCountQuery(baseQuery, filtered);
                 string pagedSql = PaginationHelper.ApplyPaging(filtered, dbType, pageNumber, pageSize);
 
                 using (var countCmd = _commandFactory())
                 {
                     if (countCmd == null) return (rows, 0);
-                    countCmd.CommandText = countSql;
-                    FilterParameterBinder.Bind(countCmd, filters, sanitizeParam);
+                    var countDef = new AppFilterQueryDefinition
+                    {
+                        QueryText = countSql,
+                        Parameters = queryDefinition.Parameters
+                    };
+                    countCmd.ApplyFilterQueryDefinition(countDef, dataSource: null);
                     object scalar = countCmd.ExecuteScalar();
-                    if (scalar != null && int.TryParse(Convert.ToString(scalar), out var c)) total = c; else total = Convert.ToInt32(scalar);
+                    if (scalar != null && int.TryParse(Convert.ToString(scalar), out var c)) total = c;
+                    else total = Convert.ToInt32(scalar);
                 }
+
                 using (var dataCmd = _commandFactory())
                 {
                     if (dataCmd == null) return (rows, total);
-                    dataCmd.CommandText = pagedSql;
-                    FilterParameterBinder.Bind(dataCmd, filters, sanitizeParam);
+                    var dataDef = new AppFilterQueryDefinition
+                    {
+                        QueryText = pagedSql,
+                        Parameters = queryDefinition.Parameters
+                    };
+                    dataCmd.ApplyFilterQueryDefinition(dataDef, dataSource: null);
                     using var reader = dataCmd.ExecuteReader(CommandBehavior.SequentialAccess);
                     int fieldCount = reader.FieldCount;
                     while (reader.Read())
                     {
                         var dict = new Dictionary<string, object>(fieldCount, StringComparer.OrdinalIgnoreCase);
                         for (int i = 0; i < fieldCount; i++)
-                        {
                             dict[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
-                        }
                         rows.Add(dict);
                     }
                 }
@@ -65,6 +82,7 @@ namespace TheTechIdea.Beep.DataBase.Helpers
                 _errorObject.Flag = Errors.Failed;
                 _errorObject.Message = ex.Message;
             }
+
             return (rows, total);
         }
 
@@ -77,6 +95,7 @@ namespace TheTechIdea.Beep.DataBase.Helpers
                 string whereClause = ExtractWhere(filtered);
                 return $"SELECT COUNT(*) FROM {table} {whereClause}".Trim();
             }
+
             string filteredNoOrder = Regex.Replace(filtered, @"order\s+by[\s\S]*$", string.Empty, RegexOptions.IgnoreCase).Trim();
             return $"SELECT COUNT(*) FROM ( {filteredNoOrder} ) q";
         }
@@ -89,11 +108,10 @@ namespace TheTechIdea.Beep.DataBase.Helpers
                 string chunk = m.Value;
                 var stop = Regex.Match(chunk, @"\b(group\s+by|having|order\s+by)\b", RegexOptions.IgnoreCase);
                 if (stop.Success)
-                {
                     return chunk.Substring(0, stop.Index).Trim();
-                }
                 return chunk.Trim();
             }
+
             return string.Empty;
         }
     }

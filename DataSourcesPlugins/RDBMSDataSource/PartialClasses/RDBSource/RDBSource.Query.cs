@@ -11,6 +11,8 @@ using TheTechIdea.Beep.Helpers.RDBMSHelpers;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.DataBase.Helpers;
+using TheTechIdea.Beep.Extensions;
 
 namespace TheTechIdea.Beep.DataBase
 {
@@ -606,8 +608,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch { /* ignore metadata errors for streaming */ }
 
-            // Inject filter placeholders (adds parameter tokens only)
-            qrystr = BuildQuery(qrystr, Filter, inname);
+            var streamQueryDefinition = this.BuildSelectQueryDefinition(qrystr, Filter);
 
             if (Dataconnection.ConnectionStatus != ConnectionState.Open)
                 Openconnection();
@@ -622,48 +623,7 @@ namespace TheTechIdea.Beep.DataBase
                 if (cmd == null)
                     yield break;
 
-                cmd.CommandText = qrystr;
-
-                // Add parameters matching placeholders
-                if (Filter != null)
-                {
-                    foreach (var f in Filter.Where(p =>
-                             !string.IsNullOrWhiteSpace(p.FieldName) &&
-                             !string.IsNullOrWhiteSpace(p.Operator) &&
-                             !string.IsNullOrWhiteSpace(p.FilterValue)))
-                    {
-                        string paramBase = SanitizeParameterName(f.FieldName);
-
-                        var p = cmd.CreateParameter();
-                        p.ParameterName = $"p_{paramBase}";
-                        if (f.valueType == "System.DateTime" && DateTime.TryParse(f.FilterValue, out var dt))
-                        {
-                            p.DbType = DbType.DateTime;
-                            p.Value = dt;
-                        }
-                        else
-                        {
-                            p.Value = f.FilterValue;
-                        }
-                        cmd.Parameters.Add(p);
-
-                        if (f.Operator.Equals("between", StringComparison.OrdinalIgnoreCase))
-                        {
-                            var p2 = cmd.CreateParameter();
-                            p2.ParameterName = $"p_{paramBase}1";
-                            if (f.valueType == "System.DateTime" && DateTime.TryParse(f.FilterValue1, out var dt2))
-                            {
-                                p2.DbType = DbType.DateTime;
-                                p2.Value = dt2;
-                            }
-                            else
-                            {
-                                p2.Value = f.FilterValue1;
-                            }
-                            cmd.Parameters.Add(p2);
-                        }
-                    }
-                }
+                cmd.ApplyFilterQueryDefinition(streamQueryDefinition, this);
 
                 reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
             }
@@ -800,8 +760,8 @@ namespace TheTechIdea.Beep.DataBase
                 }
             }
 
-            // Build filtered query (adds WHERE and parameter placeholders)
-            string filteredQuery = BuildQuery(baseQuery, Filter, entityForStruct);
+            var queryDefinition = this.BuildSelectQueryDefinition(baseQuery, Filter);
+            string filteredQuery = queryDefinition.QueryText;
 
             // Count query
             string countQuery;
@@ -834,8 +794,12 @@ namespace TheTechIdea.Beep.DataBase
             {
                 using var countCmd = GetDataCommand();
                 if (countCmd == null) return null;
-                countCmd.CommandText = countQuery;
-                AddFilterParameters(countCmd, Filter);
+                var countQueryDef = new AppFilterQueryDefinition
+                {
+                    QueryText = countQuery,
+                    Parameters = queryDefinition.Parameters
+                };
+                countCmd.ApplyFilterQueryDefinition(countQueryDef, this);
                 totalRecords = (int)Convert.ToInt64(countCmd.ExecuteScalar());
             }
             catch (Exception ex)
@@ -862,8 +826,12 @@ namespace TheTechIdea.Beep.DataBase
             {
                 using var dataCmd = GetDataCommand();
                 if (dataCmd == null) return null;
-                dataCmd.CommandText = pagedQuery;
-                AddFilterParameters(dataCmd, Filter);
+                var pagedQueryDef = new AppFilterQueryDefinition
+                {
+                    QueryText = pagedQuery,
+                    Parameters = queryDefinition.Parameters
+                };
+                dataCmd.ApplyFilterQueryDefinition(pagedQueryDef, this);
 
                 using var reader = dataCmd.ExecuteReader(CommandBehavior.SequentialAccess);
                 foreach (var row in DataBase.Helpers.DataStreamer.Stream(reader))
@@ -923,15 +891,6 @@ namespace TheTechIdea.Beep.DataBase
             };
         }
 
-        // Reuse the same parameter injection logic as streaming GetEntity
-        /// <summary>
-        /// Adds filter parameters to a database command using the FilterParameterBinder helper.
-        /// This eliminates duplicate parameter binding logic by delegating to the centralized helper.
-        /// </summary>
-        private void AddFilterParameters(IDbCommand cmd, List<AppFilter> filters)
-        {
-            DataBase.Helpers.FilterParameterBinder.Bind(cmd, filters, SanitizeParameterName);
-        }
         // Helper: remove trailing ORDER BY for wrapping in COUNT
         private static string StripTrailingOrderBy(string sql)
         {
