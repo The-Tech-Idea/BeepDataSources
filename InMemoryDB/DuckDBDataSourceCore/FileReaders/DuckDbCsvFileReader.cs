@@ -1,8 +1,10 @@
 using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.FileManager.Attributes;
 
 namespace DuckDBDataSourceCore.FileReaders
 {
     /// <summary>CSV via <c>read_csv_auto</c> (DuckDB type / delimiter detection).</summary>
+    [FileReader(DataSourceType.CSV, "DuckDB CSV", "csv")]
     public sealed class DuckDbCsvFileReader : DuckDbFileReaderBase
     {
         public override DataSourceType SupportedType => DataSourceType.CSV;

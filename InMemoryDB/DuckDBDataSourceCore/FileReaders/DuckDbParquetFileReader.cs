@@ -1,8 +1,10 @@
 using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.FileManager.Attributes;
 
 namespace DuckDBDataSourceCore.FileReaders
 {
     /// <summary>Parquet via <c>read_parquet</c> / <c>parquet_scan</c> (glob).</summary>
+    [FileReader(DataSourceType.Parquet, "DuckDB Parquet", "parquet")]
     public sealed class DuckDbParquetFileReader : DuckDbFileReaderBase
     {
         public override DataSourceType SupportedType => DataSourceType.Parquet;
