@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connectors — Customer support — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <a href="impl-connectors.html">Connectors</a>
+                    <span>›</span>
+                    <span>Customer support</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Customer support connectors</h1>
+                    <p class="page-subtitle">Ticketing and helpdesk APIs under <code>Connectors/CustomerSupport/</code>.</p>
+                </div>
+
+                <section class="section">
+                    <table>
+                        <thead>
+                            <tr><th>Connector</th><th>Path</th><th>Role</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Freshdesk</td><td><code>CustomerSupport/Freshdesk/</code></td><td>Tickets, contacts, satisfaction.</td></tr>
+                            <tr><td>Front</td><td><code>CustomerSupport/Front/</code></td><td>Shared inbox conversations.</td></tr>
+                            <tr><td>Help Scout</td><td><code>CustomerSupport/HelpScout/</code></td><td>Mailboxes, conversations, customers.</td></tr>
+                            <tr><td>Kayako</td><td><code>CustomerSupport/Kayako/</code></td><td>Multi-channel support cases.</td></tr>
+                            <tr><td>LiveAgent</td><td><code>CustomerSupport/LiveAgent/</code></td><td>Tickets, chats, knowledge base.</td></tr>
+                            <tr><td><a href="providers/conn-zendesk.html">Zendesk</a></td><td><code>CustomerSupport/Zendesk/</code></td><td>Tickets, users, views.</td></tr>
+                            <tr><td>Zoho Desk</td><td><code>CustomerSupport/ZohoDesk/</code></td><td>Zoho support desk modules.</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="note">Flagship <code>conn-*</code> provider pages for this category appear in the <a href="impl-connectors.html#flagship-provider-pages">phase 09 index table</a> on the REST / SaaS overview.</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="connectors-crm.html"><i class="bi bi-arrow-left"></i> CRM</a>
+                    <a href="connectors-ecommerce.html">E-commerce <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="index.html">Home</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

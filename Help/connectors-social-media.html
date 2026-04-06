@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connectors — Social media — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <a href="impl-connectors.html">Connectors</a>
+                    <span>›</span>
+                    <span>Social media</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Social media connectors</h1>
+                    <p class="page-subtitle">Publishing, ads, and analytics APIs under <code>Connectors/SocialMedia/</code>. <strong>Reference implementation:</strong> <code>Twitter/TwitterDataSource.cs</code> — <code>WebAPIDataSource</code>, entity maps, filters.</p>
+                </div>
+
+                <section class="section">
+                    <table>
+                        <thead>
+                            <tr><th>Connector</th><th>Path</th><th>Role</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Buffer</td><td><code>SocialMedia/Buffer/</code></td><td>Scheduling queue for multi-network posts.</td></tr>
+                            <tr><td>Facebook</td><td><code>SocialMedia/Facebook/</code></td><td>Graph API pages, posts, insights.</td></tr>
+                            <tr><td>Hootsuite</td><td><code>SocialMedia/Hootsuite/</code></td><td>Enterprise social management API.</td></tr>
+                            <tr><td>Instagram</td><td><code>SocialMedia/Instagram/</code></td><td>IG Graph content and insights.</td></tr>
+                            <tr><td>LinkedIn</td><td><code>SocialMedia/LinkedIn/</code></td><td>UGC, profiles, organization shares.</td></tr>
+                            <tr><td>Loomly</td><td><code>SocialMedia/LoomlyDataSource/</code></td><td>Brand calendar and approvals.</td></tr>
+                            <tr><td>Pinterest</td><td><code>SocialMedia/Pinterest/</code></td><td>Pins, boards, analytics.</td></tr>
+                            <tr><td>Reddit</td><td><code>SocialMedia/Reddit/</code></td><td>OAuth posts, subreddit reads.</td></tr>
+                            <tr><td>Snapchat</td><td><code>SocialMedia/Snapchat/</code></td><td>Marketing API campaigns.</td></tr>
+                            <tr><td>TikTok</td><td><code>SocialMedia/TikTok/</code></td><td>Organic content / login-kit patterns.</td></tr>
+                            <tr><td>TikTok Ads</td><td><code>SocialMedia/TikTokAds/</code></td><td>Advertising API.</td></tr>
+                            <tr><td><a href="providers/conn-twitter.html">Twitter / X</a></td><td><code>SocialMedia/Twitter/</code></td><td>API v2 tweets, users, lists (flagship pattern).</td></tr>
+                            <tr><td>YouTube</td><td><code>SocialMedia/YouTube/</code></td><td>Data API playlists, videos, comments.</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="note">Flagship <code>conn-*</code> provider pages for this category appear in the <a href="impl-connectors.html#flagship-provider-pages">phase 09 index table</a> on the REST / SaaS overview.</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="connectors-sms.html"><i class="bi bi-arrow-left"></i> SMS</a>
+                    <a href="connectors-task-management.html">Task management <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="index.html">Home</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

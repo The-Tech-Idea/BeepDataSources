@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asana (connector) — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-connectors.html">Connectors</a>
+                    <span>›</span>
+                    <a href="../connectors-task-management.html">Task management</a>
+                    <span>›</span>
+                    <span>Asana</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Asana</h1>
+                    <p class="page-subtitle">Project <code>Connectors/TaskManagement/AsanaDataSource/</code>. <code>AsanaDataSource : WebAPIDataSource</code>. Namespace <code>TheTechIdea.Beep.Connectors.TaskManagement.Asana</code> (<code>…Asana.Models</code>). <code>DataSourceType.Asana</code>, <code>DatasourceCategory.Connector</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>API surface</h2>
+                    <p>Targets the Asana REST API (<code>https://app.asana.com/api/1.0</code>). Entities and operations follow the shared <code>WebAPIDataSource</code> pattern with JSON entity maps in source; use the <strong>Connection</strong> section below for base URL and authentication.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Source &amp; <code>IDataSource</code></h2>
+                    <p><strong>Implementation:</strong> <code>Connectors/TaskManagement/AsanaDataSource/AsanaDataSource.cs</code> — <code>AsanaDataSource</code> : <code>WebAPIDataSource</code>. Reads use <code>GetEntity</code> with logical keys (<code>workspaces</code>, <code>projects.get</code>, …); mutating calls use <code>PostAsync</code>, <code>PutAsync</code>, or <code>DeleteAsync</code> against <code>API_BASE_URL</code>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Command methods (<code>CommandAttribute</code>)</h2>
+                    <table>
+                        <thead><tr><th><code>Name</code></th><th>Method</th><th>Returns</th><th><code>ObjectType</code></th></tr></thead>
+                        <tbody>
+                            <tr><td>GetWorkspaces</td><td><code>GetWorkspaces()</code></td><td><code>IEnumerable&lt;AsanaWorkspace&gt;</code></td><td>AsanaWorkspace</td></tr>
+                            <tr><td>GetWorkspace</td><td><code>GetWorkspace(string workspaceId)</code></td><td><code>IEnumerable&lt;AsanaWorkspace&gt;</code></td><td>AsanaWorkspace</td></tr>
+                            <tr><td>GetProjects</td><td><code>GetProjects()</code></td><td><code>IEnumerable&lt;AsanaProject&gt;</code></td><td>AsanaProject</td></tr>
+                            <tr><td>GetProject</td><td><code>GetProject(string projectId)</code></td><td><code>IEnumerable&lt;AsanaProject&gt;</code></td><td>AsanaProject</td></tr>
+                            <tr><td>GetWorkspaceProjects</td><td><code>GetWorkspaceProjects(string workspaceId)</code></td><td><code>IEnumerable&lt;AsanaProject&gt;</code></td><td>AsanaProject</td></tr>
+                            <tr><td>GetTasks</td><td><code>GetTasks()</code></td><td><code>IEnumerable&lt;AsanaTask&gt;</code></td><td>AsanaTask</td></tr>
+                            <tr><td>GetTask</td><td><code>GetTask(string taskId)</code></td><td><code>IEnumerable&lt;AsanaTask&gt;</code></td><td>AsanaTask</td></tr>
+                            <tr><td>GetProjectTasks</td><td><code>GetProjectTasks(string projectId)</code></td><td><code>IEnumerable&lt;AsanaTask&gt;</code></td><td>AsanaTask</td></tr>
+                            <tr><td>GetUsers</td><td><code>GetUsers()</code></td><td><code>IEnumerable&lt;AsanaUser&gt;</code></td><td>AsanaUser</td></tr>
+                            <tr><td>GetUser</td><td><code>GetUser(string userId)</code></td><td><code>IEnumerable&lt;AsanaUser&gt;</code></td><td>AsanaUser</td></tr>
+                            <tr><td>GetTeams</td><td><code>GetTeams()</code></td><td><code>IEnumerable&lt;AsanaTeam&gt;</code></td><td>AsanaTeam</td></tr>
+                            <tr><td>GetTeam</td><td><code>GetTeam(string teamId)</code></td><td><code>IEnumerable&lt;AsanaTeam&gt;</code></td><td>AsanaTeam</td></tr>
+                            <tr><td>GetSections</td><td><code>GetSections(string projectId)</code></td><td><code>IEnumerable&lt;AsanaSection&gt;</code></td><td>AsanaSection</td></tr>
+                            <tr><td>GetTags</td><td><code>GetTags(string workspaceId)</code></td><td><code>IEnumerable&lt;AsanaTag&gt;</code></td><td>AsanaTag</td></tr>
+                            <tr><td>GetStories</td><td><code>GetStories(string taskId)</code></td><td><code>IEnumerable&lt;AsanaStory&gt;</code></td><td>AsanaStory</td></tr>
+                            <tr><td>CreateProject</td><td><code>CreateProjectAsync(AsanaProject project)</code></td><td><code>Task&lt;IEnumerable&lt;AsanaProject&gt;&gt;</code></td><td>AsanaProject</td></tr>
+                            <tr><td>CreateTask</td><td><code>CreateTaskAsync(AsanaTask task)</code></td><td><code>Task&lt;IEnumerable&lt;AsanaTask&gt;&gt;</code></td><td>AsanaTask</td></tr>
+                            <tr><td>CreateSection</td><td><code>CreateSectionAsync(string projectId, AsanaSection section)</code></td><td><code>Task&lt;IEnumerable&lt;AsanaSection&gt;&gt;</code></td><td>AsanaSection</td></tr>
+                            <tr><td>CreateTag</td><td><code>CreateTagAsync(string workspaceId, AsanaTag tag)</code></td><td><code>Task&lt;IEnumerable&lt;AsanaTag&gt;&gt;</code></td><td>AsanaTag</td></tr>
+                            <tr><td>UpdateProject</td><td><code>UpdateProjectAsync(string projectId, AsanaProject project)</code></td><td><code>Task&lt;IEnumerable&lt;AsanaProject&gt;&gt;</code></td><td>AsanaProject</td></tr>
+                            <tr><td>UpdateTask</td><td><code>UpdateTaskAsync(string taskId, AsanaTask task)</code></td><td><code>Task&lt;IEnumerable&lt;AsanaTask&gt;&gt;</code></td><td>AsanaTask</td></tr>
+                            <tr><td>DeleteProject</td><td><code>DeleteProjectAsync(string projectId)</code></td><td><code>Task&lt;bool&gt;</code></td><td>AsanaProject</td></tr>
+                            <tr><td>DeleteTask</td><td><code>DeleteTaskAsync(string taskId)</code></td><td><code>Task&lt;bool&gt;</code></td><td>AsanaTask</td></tr>
+                            <tr><td>DeleteSection</td><td><code>DeleteSectionAsync(string sectionId)</code></td><td><code>Task&lt;bool&gt;</code></td><td>AsanaSection</td></tr>
+                            <tr><td>DeleteTag</td><td><code>DeleteTagAsync(string tagId)</code></td><td><code>Task&lt;bool&gt;</code></td><td>AsanaTag</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Model types</h2>
+                    <p><code>TheTechIdea.Beep.Connectors.TaskManagement.Asana.Models</code> — entity DTOs above plus <code>AsanaApiResponse&lt;T&gt;</code> for REST envelope parsing; see <code>Models.cs</code> for full property sets on workspace, project, task, user, team, section, tag, and story types.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Connection</h2>
+                    <p>Configure base URL and authentication (personal access token or OAuth bearer) through <a href="../platform-connection-properties.html"><code>WebAPIConnectionProperties</code></a> per your Asana app. Scopes must cover the workspaces, projects, and tasks you read or write.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Also read</h2>
+                    <ul>
+                        <li><a href="../impl-connectors.html">REST / SaaS connectors overview</a></li>
+                        <li><a href="../impl-connectors.html#flagship-provider-pages">Flagship <code>conn-*</code> index (table)</a></li>
+                        <li><a href="../connectors-task-management.html">Task management category hub</a></li>
+                    </ul>
+                </section>
+
+                <div class="nav-links">
+                    <a href="conn-google-chat.html"><i class="bi bi-arrow-left"></i> Google Chat</a>
+                    <a href="conn-bigcommerce.html">BigCommerce <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="../roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="../navigation.js"></script>
+</body>
+</html>

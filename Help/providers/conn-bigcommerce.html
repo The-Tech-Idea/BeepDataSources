@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigCommerce (connector) — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-connectors.html">Connectors</a>
+                    <span>›</span>
+                    <a href="../connectors-ecommerce.html">E-commerce</a>
+                    <span>›</span>
+                    <span>BigCommerce</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>BigCommerce</h1>
+                    <p class="page-subtitle">Project <code>Connectors/E-commerce/BigCommerceDataSource/</code>. <code>BigCommerceDataSource : WebAPIDataSource</code>. Namespace <code>TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource</code> (<code>…BigCommerceDataSource.Models</code>). <code>DataSourceType.BigCommerce</code>, <code>DatasourceCategory.Connector</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Entities &amp; commands</h2>
+                    <p>v3 REST patterns for catalog and operations; <code>CommandAttribute</code> surfaces typed helpers (e.g. Products, Categories). See <code>BigCommerceDataSource.cs</code> for the full list and DTOs under <code>Models</code>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Source &amp; <code>IDataSource</code></h2>
+                    <p><strong>Implementation:</strong> <code>Connectors/E-commerce/BigCommerceDataSource/BigCommerceDataSource.cs</code> — <code>BigCommerceDataSource</code> : <code>WebAPIDataSource</code>. List operations call <code>GetEntityAsync</code> with a single <code>AppFilter</code>; create/update paths use <code>PostAsync</code> / <code>PutAsync</code> on relative resource paths (<code>products</code>, <code>orders/{id}</code>, …).</p>
+                </section>
+
+                <section class="section">
+                    <h2>Command methods (<code>CommandAttribute</code>)</h2>
+                    <p>Read helpers below omit an explicit <code>Name</code> on the attribute; the registered command name matches the C# method name (<code>GetProducts</code>, …).</p>
+                    <table>
+                        <thead><tr><th><code>Name</code> / method</th><th>Signature</th><th>Returns</th><th><code>ObjectType</code></th></tr></thead>
+                        <tbody>
+                            <tr><td>GetProducts</td><td><code>GetProducts(AppFilter filter)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceProduct&gt;&gt;</code></td><td>Products</td></tr>
+                            <tr><td>GetCategories</td><td><code>GetCategories(AppFilter filter)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceCategory&gt;&gt;</code></td><td>Categories</td></tr>
+                            <tr><td>GetBrands</td><td><code>GetBrands(AppFilter filter)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceBrand&gt;&gt;</code></td><td>Brands</td></tr>
+                            <tr><td>GetCustomers</td><td><code>GetCustomers(AppFilter filter)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceCustomer&gt;&gt;</code></td><td>Customers</td></tr>
+                            <tr><td>GetOrders</td><td><code>GetOrders(AppFilter filter)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceOrder&gt;&gt;</code></td><td>Orders</td></tr>
+                            <tr><td>GetCarts</td><td><code>GetCarts(AppFilter filter)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceCart&gt;&gt;</code></td><td>Carts</td></tr>
+                            <tr><td>GetCoupons</td><td><code>GetCoupons(AppFilter filter)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceCoupon&gt;&gt;</code></td><td>Coupons</td></tr>
+                            <tr><td>GetInventory</td><td><code>GetInventory(AppFilter filter)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceInventoryItem&gt;&gt;</code></td><td>Inventory</td></tr>
+                            <tr><td>CreateProduct</td><td><code>CreateProductAsync(BigCommerceProduct product)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceProduct&gt;&gt;</code></td><td>Products</td></tr>
+                            <tr><td>UpdateProduct</td><td><code>UpdateProductAsync(BigCommerceProduct product)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceProduct&gt;&gt;</code></td><td>Products</td></tr>
+                            <tr><td>CreateCategory</td><td><code>CreateCategoryAsync(BigCommerceCategory category)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceCategory&gt;&gt;</code></td><td>Categories</td></tr>
+                            <tr><td>UpdateCategory</td><td><code>UpdateCategoryAsync(BigCommerceCategory category)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceCategory&gt;&gt;</code></td><td>Categories</td></tr>
+                            <tr><td>CreateBrand</td><td><code>CreateBrandAsync(BigCommerceBrand brand)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceBrand&gt;&gt;</code></td><td>Brands</td></tr>
+                            <tr><td>UpdateBrand</td><td><code>UpdateBrandAsync(BigCommerceBrand brand)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceBrand&gt;&gt;</code></td><td>Brands</td></tr>
+                            <tr><td>CreateCustomer</td><td><code>CreateCustomerAsync(BigCommerceCustomer customer)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceCustomer&gt;&gt;</code></td><td>Customers</td></tr>
+                            <tr><td>UpdateCustomer</td><td><code>UpdateCustomerAsync(BigCommerceCustomer customer)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceCustomer&gt;&gt;</code></td><td>Customers</td></tr>
+                            <tr><td>CreateOrder</td><td><code>CreateOrderAsync(BigCommerceOrder order)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceOrder&gt;&gt;</code></td><td>Orders</td></tr>
+                            <tr><td>UpdateOrder</td><td><code>UpdateOrderAsync(BigCommerceOrder order)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceOrder&gt;&gt;</code></td><td>Orders</td></tr>
+                            <tr><td>CreateCart</td><td><code>CreateCartAsync(BigCommerceCart cart)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceCart&gt;&gt;</code></td><td>Carts</td></tr>
+                            <tr><td>UpdateCart</td><td><code>UpdateCartAsync(BigCommerceCart cart)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceCart&gt;&gt;</code></td><td>Carts</td></tr>
+                            <tr><td>CreateCoupon</td><td><code>CreateCouponAsync(BigCommerceCoupon coupon)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceCoupon&gt;&gt;</code></td><td>Coupons</td></tr>
+                            <tr><td>UpdateCoupon</td><td><code>UpdateCouponAsync(BigCommerceCoupon coupon)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceCoupon&gt;&gt;</code></td><td>Coupons</td></tr>
+                            <tr><td>CreateInventoryItem</td><td><code>CreateInventoryItemAsync(BigCommerceInventoryItem inventoryItem)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceInventoryItem&gt;&gt;</code></td><td>Inventory</td></tr>
+                            <tr><td>UpdateInventoryItem</td><td><code>UpdateInventoryItemAsync(BigCommerceInventoryItem inventoryItem)</code></td><td><code>Task&lt;IEnumerable&lt;BigCommerceInventoryItem&gt;&gt;</code></td><td>Inventory</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Model types</h2>
+                    <p><code>TheTechIdea.Beep.Connectors.Ecommerce.BigCommerceDataSource.Models</code> — <code>BigCommerceProduct</code>, <code>BigCommerceCategory</code>, <code>BigCommerceBrand</code>, <code>BigCommerceCustomer</code>, <code>BigCommerceOrder</code>, <code>BigCommerceCart</code>, <code>BigCommerceCoupon</code>, <code>BigCommerceInventoryItem</code>, and related nested types in <code>Models.cs</code> (plus additional catalog/order shapes the datasource can deserialize).</p>
+                </section>
+
+                <section class="section">
+                    <h2>Connection</h2>
+                    <p>Use <a href="../platform-connection-properties.html"><code>WebAPIConnectionProperties</code></a> with store hash / API path and <code>X-Auth-Token</code> (or OAuth) per BigCommerce API keys documentation.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Also read</h2>
+                    <ul>
+                        <li><a href="../impl-connectors.html">REST / SaaS connectors overview</a></li>
+                        <li><a href="../impl-connectors.html#flagship-provider-pages">Flagship <code>conn-*</code> index (table)</a></li>
+                        <li><a href="../connectors-ecommerce.html">E-commerce category hub</a> — see also <a href="conn-shopify.html">Shopify</a>.</li>
+                    </ul>
+                </section>
+
+                <div class="nav-links">
+                    <a href="conn-asana.html"><i class="bi bi-arrow-left"></i> Asana</a>
+                    <a href="conn-gmail.html">Gmail <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="../roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="../navigation.js"></script>
+</body>
+</html>

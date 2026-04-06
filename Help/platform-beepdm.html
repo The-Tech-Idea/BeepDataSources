@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor &amp; orchestration — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <span>BeepDM platform</span>
+                    <span>›</span>
+                    <span>Editor</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Editor &amp; orchestration</h1>
+                    <p class="page-subtitle">How <code>IDMEEditor</code> fits around datasources loaded from this repository. Full detail: <code>BeepDM/.cursor/beepdm/SKILL.md</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Core types</h2>
+                    <ul>
+                        <li><strong>IDMEEditor</strong> — orchestration: datasource creation, lookup, helpers, ETL, mapping, unit-of-work.</li>
+                        <li><strong>IDataSource</strong> — runtime contract for CRUD, metadata, scripts, transactions (<a href="platform-idatasource.html">summary</a>).</li>
+                        <li><strong>IDataSourceHelper</strong> — dialect-aware SQL/schema helpers.</li>
+                        <li><strong>ConfigEditor</strong> — persisted connections and metadata (<a href="platform-configeditor.html">summary</a>).</li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>Routing work</h2>
+                    <p>Use the narrowest skill: DI startup → <code>beepserviceregistration</code> or <code>beepservice</code>; building definitions → <code>connectionproperties</code>; validation → <code>connection</code>; CRUD → <code>idatasource</code>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Datasource help in this repo</h2>
+                    <p>Static HTML groups plugins by family on <a href="phased-implementations.html">Implementations (phased)</a>. REST/SaaS vendors document HTTP command surfaces on <a href="impl-connectors.html#flagship-provider-pages">flagship <code>conn-*</code> pages</a> (<a href="impl-connectors.html">REST overview</a>).</p>
+                </section>
+
+                <section class="section">
+                    <h2>Plugin assemblies</h2>
+                    <p>Datasource projects in this repository are loaded at runtime through BeepDM discovery (for example <code>AssemblyHandler</code> / shared-context flows). See <code>BeepDM/.cursor/assemblyhandler</code> and related skills when changing load paths or NuGet driver layout.</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="index.html"><i class="bi bi-arrow-left"></i> Home</a>
+                    <a href="platform-beepservice.html">BeepService <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

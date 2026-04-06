@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connectors — E-commerce — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <a href="impl-connectors.html">Connectors</a>
+                    <span>›</span>
+                    <span>E-commerce</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>E-commerce connectors</h1>
+                    <p class="page-subtitle">Storefront and marketplace APIs under <code>Connectors/E-commerce/</code>.</p>
+                </div>
+
+                <section class="section">
+                    <table>
+                        <thead>
+                            <tr><th>Connector</th><th>Path</th><th>Role</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><a href="providers/conn-bigcommerce.html">BigCommerce</a></td><td><code>E-commerce/BigCommerceDataSource/</code></td><td>v3 catalog, orders, customers.</td></tr>
+                            <tr><td>Ecwid</td><td><code>E-commerce/EcwidDataSource/</code></td><td>Instant site / embedded store API.</td></tr>
+                            <tr><td>Etsy</td><td><code>E-commerce/EtsyDataSource/</code></td><td>Shops, listings, receipts.</td></tr>
+                            <tr><td>Magento</td><td><code>E-commerce/MagentoDataSource/</code></td><td>Adobe Commerce REST.</td></tr>
+                            <tr><td>OpenCart</td><td><code>E-commerce/OpenCartDataSource/</code></td><td>PHP storefront REST layer.</td></tr>
+                            <tr><td><a href="providers/conn-shopify.html">Shopify</a></td><td><code>E-commerce/ShopifyDataSource/</code></td><td>Admin API products, orders, GraphQL-ready patterns.</td></tr>
+                            <tr><td>Squarespace</td><td><code>E-commerce/SquarespaceDataSource/</code></td><td>Commerce APIs where exposed.</td></tr>
+                            <tr><td>Volusion</td><td><code>E-commerce/VolusionDataSource/</code></td><td>Legacy hosted store API.</td></tr>
+                            <tr><td>Wix</td><td><code>E-commerce/WixDataSource/</code></td><td>Wix Stores / headless patterns.</td></tr>
+                            <tr><td>WooCommerce</td><td><code>E-commerce/WooCommerceDataSource/</code></td><td>WordPress Woo REST.</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="note">Flagship <code>conn-*</code> provider pages for this category appear in the <a href="impl-connectors.html#flagship-provider-pages">phase 09 index table</a> on the REST / SaaS overview.</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="connectors-customer-support.html"><i class="bi bi-arrow-left"></i> Customer support</a>
+                    <a href="connectors-forms.html">Forms <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="index.html">Home</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

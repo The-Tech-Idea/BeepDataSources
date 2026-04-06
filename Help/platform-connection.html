@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection lifecycle — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <span>BeepDM platform</span>
+                    <span>›</span>
+                    <span>Connection</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Connection lifecycle</h1>
+                    <p class="page-subtitle">Driver resolution, connection-string processing, validation, normalization, and masking after <a href="platform-connection-properties.html"><code>ConnectionProperties</code></a> are populated. Full detail: <code>BeepDM/.cursor/connection/SKILL.md</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Helper façade</h2>
+                    <p><code>ConnectionHelper</code> coordinates driver linking, placeholder replacement, path normalization, validation, and masking (see skill for sub-helpers).</p>
+                </section>
+
+                <section class="section">
+                    <h2>Typical workflow</h2>
+                    <ol>
+                        <li>Start from populated <code>ConnectionProperties</code>.</li>
+                        <li>Resolve driver (<code>GetBestMatchingDriver</code> / linking helpers).</li>
+                        <li>Replace template placeholders; normalize file paths for file-based providers.</li>
+                        <li>Validate; mask secrets in logs; persist through <code>ConfigEditor</code>.</li>
+                    </ol>
+                </section>
+
+                <section class="section">
+                    <h2>Family-specific notes</h2>
+                    <p>Validation and URL shapes differ by <code>DataSourceType</code> (RDBMS host/database, warehouse OAuth, <a href="platform-connection-properties.html"><code>WebAPIConnectionProperties</code></a> for SaaS, …). See <a href="phased-implementations.html">Implementations (phased)</a> and, for REST connectors, <a href="impl-connectors.html#flagship-provider-pages">flagship <code>conn-*</code> pages</a>.</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="platform-connection-properties.html"><i class="bi bi-arrow-left"></i> ConnectionProperties</a>
+                    <a href="platform-idatasource.html">IDataSource <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

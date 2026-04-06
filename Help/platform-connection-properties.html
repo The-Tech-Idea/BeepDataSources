@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnectionProperties — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <span>BeepDM platform</span>
+                    <span>›</span>
+                    <span>ConnectionProperties</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>ConnectionProperties</h1>
+                    <p class="page-subtitle">The connection definition stored in <code>ConfigEditor.DataConnections</code> and consumed by <code>IDMEEditor</code>. Full detail: <code>BeepDM/.cursor/connectionproperties/SKILL.md</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Property groups</h2>
+                    <ul>
+                        <li><strong>Identity</strong> — name, GUID, composite layer.</li>
+                        <li><strong>Provider</strong> — <code>DatabaseType</code>, <code>Category</code>, <code>DriverName</code>, <code>DriverVersion</code>.</li>
+                        <li><strong>Endpoint / storage</strong> — host, port, database, file path, URL, delimiters.</li>
+                        <li><strong>Credentials &amp; flags</strong> — consistent flags for UI grouping and lifecycle.</li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>Next step</h2>
+                    <p>After building properties, run <a href="platform-connection.html">connection validation and normalization</a> before save and open.</p>
+                </section>
+
+                <section class="section">
+                    <h2>REST / SaaS (Web API) shape</h2>
+                    <p>Connectors under <code>Connectors/</code> often use <strong><code>WebAPIConnectionProperties</code></strong> (base URL, headers, OAuth or API keys) instead of RDBMS host/database fields. See <a href="impl-connectors.html">REST / SaaS connectors</a> for the pattern and <a href="impl-connectors.html#flagship-provider-pages">flagship <code>conn-*</code> provider pages</a> for worked examples.</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="platform-configeditor.html"><i class="bi bi-arrow-left"></i> ConfigEditor</a>
+                    <a href="platform-connection.html">Connection lifecycle <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

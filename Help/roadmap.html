@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roadmap &amp; phases — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <span>Roadmap</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Roadmap &amp; phases</h1>
+                    <p class="page-subtitle">HTML help is built in layers: framework and platform first, then provider families one phase at a time. Authoritative checklists live under <code>BeepDataSources/.plans/</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Phase index (markdown)</h2>
+                    <table>
+                        <thead>
+                            <tr><th>Phase</th><th>Plan file</th><th>Focus</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>01</td><td><code>.plans/phase-01-html-framework.md</code></td><td>Help shell, navigation, conventions</td></tr>
+                            <tr><td>02</td><td><code>.plans/phase-02-beepdm-platform.md</code></td><td>beepdm, beepservice, configeditor, connection, connectionproperties, idatasource</td></tr>
+                            <tr><td>03</td><td><code>.plans/phase-03-local-inmemory.md</code></td><td>ILocalDB / IInMemoryDB, LiteDB, Sqlite, DuckDB, …</td></tr>
+                            <tr><td>04</td><td><code>.plans/phase-04-rdbms.md</code></td><td>RDBMS plugin + SQL cores</td></tr>
+                            <tr><td>05</td><td><code>.plans/phase-05-nosql-doc-graph.md</code></td><td>Mongo, Redis, Raven, …</td></tr>
+                            <tr><td>06</td><td><code>.plans/phase-06-cloud-analytics.md</code></td><td>BigQuery, Snowflake, Databricks, …</td></tr>
+                            <tr><td>07</td><td><code>.plans/phase-07-messaging-vector.md</code></td><td>Messaging, VectorDatabase</td></tr>
+                            <tr><td>08</td><td><code>.plans/phase-08-connectors-rest.md</code></td><td>Connectors by category (REST/SaaS)</td></tr>
+                            <tr><td>09</td><td><code>.plans/phase-09-connectors-flagship.md</code></td><td>Flagship <code>conn-*</code> provider pages</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Current HTML status</h2>
+                    <ul>
+                        <li><strong>Shipped:</strong> Home, getting started, roadmap, six BeepDM platform pages (each cross-links <a href="phased-implementations.html">phased rollout</a> and/or <a href="impl-connectors.html#flagship-provider-pages">flagship REST index</a> where useful), phased implementation hub, repository layout.</li>
+                        <li><strong>Phase 03:</strong> <a href="impl-local-inmemory.html">Local &amp; in-memory</a>, <a href="providers/sqlite.html">SQLite</a>, <a href="providers/litedb.html">LiteDB</a>, <a href="providers/duckdb.html">DuckDB</a>.</li>
+                        <li><strong>Phase 04 (first wave):</strong> <a href="impl-rdbms.html">RDBMS overview</a>, <a href="providers/rdbms-sqlserver.html">SQL Server</a>, <a href="providers/rdbms-postgresql.html">PostgreSQL</a>, <a href="providers/rdbms-mysql.html">MySQL</a>, <a href="providers/rdbms-oracle.html">Oracle</a>. More engines (Firebird, …) incrementally.</li>
+                        <li><strong>Phase 05 (first wave):</strong> <a href="impl-nosql.html">NoSQL overview</a>, <a href="providers/mongodb.html">MongoDB</a>, <a href="providers/redis.html">Redis</a>, <a href="providers/ravendb.html">RavenDB</a>, <a href="providers/couchdb.html">CouchDB</a>, <a href="providers/influxdb.html">InfluxDB</a>; <a href="providers/litedb.html">LiteDB</a> cross-linked as embedded NOSQL.</li>
+                        <li><strong>Phase 06 (first wave):</strong> <a href="impl-cloud-analytics.html">Cloud &amp; analytics overview</a>, <a href="providers/cloud-bigquery.html">BigQuery</a>, <a href="providers/cloud-snowflake.html">Snowflake</a>, <a href="providers/cloud-spanner.html">Spanner</a>, <a href="providers/cloud-kusto.html">Kusto</a>, <a href="providers/cloud-presto.html">Presto</a>. More CLOUD cores incrementally.</li>
+                        <li><strong>Phase 07 (first wave):</strong> <a href="impl-messaging-vector.html">Messaging &amp; vector overview</a>; <a href="providers/msg-kafka.html">Kafka</a>, <a href="providers/msg-rabbitmq.html">RabbitMQ</a>, <a href="providers/msg-nats.html">NATS</a>, <a href="providers/msg-masstransit.html">MassTransit</a>, <a href="providers/msg-redis-streams.html">Redis Streams</a>, <a href="providers/msg-google-pubsub.html">Pub/Sub</a>; <a href="providers/vector-qdrant.html">Qdrant</a>, <a href="providers/vector-milvus.html">Milvus</a>, <a href="providers/vector-chromadb.html">ChromaDB</a>.</li>
+                        <li><strong>Phase 08 (first wave):</strong> <a href="impl-connectors.html">REST / SaaS connectors</a> — sixteen category hubs under <code>Connectors/</code> (Accounting … Task management). Eight hubs that list flagship <code>conn-*</code> rows include a post-table note to <a href="impl-connectors.html#flagship-provider-pages">the phase 09 index</a>.</li>
+                        <li><strong>Phase 09 (waves A–D):</strong> Thirteen flagship <code>conn-*</code> pages (wave D: <a href="providers/conn-asana.html">Asana</a>, <a href="providers/conn-bigcommerce.html">BigCommerce</a>, <a href="providers/conn-gmail.html">Gmail</a>); full index table on <a href="impl-connectors.html#flagship-provider-pages">connectors overview → flagship list</a>.</li>
+                        <li><strong>Next:</strong> Additional <code>conn-*.html</code> or OAuth/rate-limit notes per <code>.plans/phase-09-connectors-flagship.md</code>.</li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>BeepDM skills</h2>
+                    <p>Cross-repo documentation: <code>BeepDM/.cursor/</code> (e.g. <code>idatasource</code>, <code>localdb</code>, <code>inmemorydb</code>, <code>connection</code>, <code>connectionproperties</code>, <code>configeditor</code>, <code>beepservice</code>, <code>beepdm</code>).</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="getting-started.html"><i class="bi bi-arrow-left"></i> Getting started</a>
+                    <a href="phased-implementations.html">Provider rollout <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="index.html">Home</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

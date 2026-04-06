@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConfigEditor — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <span>BeepDM platform</span>
+                    <span>›</span>
+                    <span>ConfigEditor</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>ConfigEditor</h1>
+                    <p class="page-subtitle">Persisted configuration for connections, queries, mappings, drivers, and related metadata. Full detail: <code>BeepDM/.cursor/configeditor/SKILL.md</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Managers (façade)</h2>
+                    <ul>
+                        <li><strong>ConfigPathManager</strong> — config root layout.</li>
+                        <li><strong>DataConnectionManager</strong> — <code>DataConnections</code> CRUD.</li>
+                        <li><strong>QueryManager</strong>, <strong>EntityMappingManager</strong>, <strong>ComponentConfigManager</strong>, <strong>MigrationHistoryManager</strong>.</li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>Workflow</h2>
+                    <p>Use <code>editor.ConfigEditor</code> after the editor exists. Load collections, update via façade methods (e.g. <code>AddDataConnection</code>, saves for queries/mappings), refresh in-memory state when other code depends on what was just persisted.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Documented datasource families</h2>
+                    <p>Saved <code>DataConnections</code> can target any registered <code>IDataSource</code>. Browser help for projects in this repository is phased by family on <a href="phased-implementations.html">Implementations (phased)</a>; SaaS REST command catalogs: <a href="impl-connectors.html#flagship-provider-pages">flagship <code>conn-*</code> index</a>.</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="platform-beepservice.html"><i class="bi bi-arrow-left"></i> BeepService</a>
+                    <a href="platform-connection-properties.html">ConnectionProperties <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

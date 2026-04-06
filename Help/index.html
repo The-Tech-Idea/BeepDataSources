@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beep DataSources — Documentation</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <div class="page-header">
+                    <h1><i class="bi bi-database-fill-gear" style="color:var(--color-brand-primary)"></i> Beep DataSources</h1>
+                    <p class="page-subtitle">
+                        Static HTML help for datasource plugins and connectors in this repository, tied to
+                        <strong>BeepDM</strong> orchestration (<code>IDMEEditor</code>, <code>ConfigEditor</code>, <code>IDataSource</code>).
+                        Deep reference material lives in <code>BeepDM/.cursor/</code> skills referenced from each topic.
+                    </p>
+                </div>
+
+                <section class="section">
+                    <div class="feature-grid">
+
+                        <div class="feature-card">
+                            <div class="feature-card-icon"><i class="bi bi-box-seam"></i></div>
+                            <h3>BeepDM platform</h3>
+                            <p>Editor, startup, persisted config, connections, and the <code>IDataSource</code> contract.</p>
+                            <p><a href="platform-beepdm.html">Editor →</a> &nbsp; <a href="platform-idatasource.html">Contract →</a></p>
+                        </div>
+
+                        <div class="feature-card">
+                            <div class="feature-card-icon"><i class="bi bi-diagram-3"></i></div>
+                            <h3>Roadmap</h3>
+                            <p>Phased rollout: platform first, then local/RDBMS/NoSQL/cloud/messaging/connectors.</p>
+                            <p><a href="roadmap.html">Phases →</a> &nbsp; <code>.plans/README.md</code></p>
+                        </div>
+
+                        <div class="feature-card">
+                            <div class="feature-card-icon"><i class="bi bi-layers"></i></div>
+                            <h3>Implementations</h3>
+                            <p>Provider documentation is added incrementally per phase (see <code>.plans/phase-03</code> … <code>phase-09</code>).</p>
+                            <p><a href="phased-implementations.html">Rollout →</a> &nbsp; <a href="impl-local-inmemory.html">Local DBs →</a> &nbsp; <a href="impl-rdbms.html">RDBMS →</a> &nbsp; <a href="impl-nosql.html">NoSQL →</a> &nbsp; <a href="impl-cloud-analytics.html">Cloud →</a> &nbsp; <a href="impl-messaging-vector.html">Msg / vector →</a> &nbsp; <a href="impl-connectors.html">Connectors →</a> &nbsp; <a href="impl-connectors.html#flagship-provider-pages">Flagship connectors →</a></p>
+                        </div>
+
+                        <div class="feature-card">
+                            <div class="feature-card-icon"><i class="bi bi-folder2-open"></i></div>
+                            <h3>Repository layout</h3>
+                            <p><code>DataSourcesPluginsCore</code>, <code>Connectors</code>, <code>InMemoryDB</code>, <code>Messaging</code>, and more.</p>
+                            <p><a href="repo-layout.html">Layout map →</a></p>
+                        </div>
+
+                    </div>
+                </section>
+
+                <p class="note"><strong>Note:</strong> Open <code>.plans/README.md</code> in an editor or Git viewer for the phase index. Raw markdown links from the browser may not render when opening <code>file://</code> pages.</p>
+
+                <section class="section">
+                    <h2>Quick start</h2>
+                    <div class="quick-start-buttons">
+                        <a href="getting-started.html" class="btn-beep"><i class="bi bi-book"></i> How to use this help</a>
+                        <a href="platform-connection-properties.html" class="btn-beep btn-beep-outline"><i class="bi bi-link-45deg"></i> ConnectionProperties</a>
+                    </div>
+                </section>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div>
+                            <p>© 2026 The Tech Idea — Beep DataSources Help</p>
+                        </div>
+                        <div class="footer-links">
+                            <a href="getting-started.html">Getting started</a>
+                            <a href="roadmap.html">Roadmap</a>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

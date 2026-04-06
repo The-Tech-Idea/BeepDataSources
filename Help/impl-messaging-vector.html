@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaging &amp; vector — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <span>Implementations</span>
+                    <span>›</span>
+                    <span>Messaging &amp; vector</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Messaging queues &amp; vector databases</h1>
+                    <p class="page-subtitle">Cores under <code>Messaging/</code> (solution <code>Messaging/Messaging.sln</code>) and <code>VectorDatabase/</code>. They still implement <a href="platform-idatasource.html"><code>IDataSource</code></a>, but “entities” often map to <strong>topics</strong>, <strong>queues</strong>, <strong>subscriptions</strong>, or <strong>collections</strong>—not relational tables. RDBMS CRUD/migration helpers usually do not apply.</p>
+                </div>
+
+                <section class="section">
+                    <h2><code>IDataSource</code> on messaging</h2>
+                    <ul>
+                        <li><strong>Entity list</strong> may reflect topic/queue names or consumer group metadata, depending on the core.</li>
+                        <li><strong>Reads</strong> are often pull/poll or subscription-based; “current record” semantics differ from scrollable cursors.</li>
+                        <li><strong>Writes</strong> are publishes or enqueue operations; idempotency and ordering are broker-specific.</li>
+                        <li>Kafka registers as <code>DatasourceCategory.QUEUE</code>; other messaging cores in this repo use <code>MessageQueue</code>.</li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>Vector databases</h2>
+                    <p>Cores use <code>DatasourceCategory.VectorDB</code>. Operations center on <strong>collections</strong>/<strong>indexes</strong>, <strong>embedding dimensions</strong>, and <strong>similarity search</strong> rather than SQL <code>SELECT</code>. Upstream <strong>embedding models</strong> produce vectors; this repository’s datasources focus on storage and retrieval APIs.</p>
+                    <p class="note">In <code>VectorDatabase/</code>, some add-in attributes are commented out (e.g. Pinecone, SharpVector alternate entry types); the pages below reflect cores with an active <code>[AddinAttribute]</code> in source at documentation time.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Messaging (documented, phase 07)</h2>
+                    <ul>
+                        <li><a href="providers/msg-kafka.html">Apache Kafka</a> — <code>Messaging/KafkaDataSourceCore/</code> — <code>QUEUE</code> / <code>Kafka</code></li>
+                        <li><a href="providers/msg-rabbitmq.html">RabbitMQ</a> — <code>Messaging/RabbitMQDataSourceCore/</code></li>
+                        <li><a href="providers/msg-nats.html">NATS</a> — <code>Messaging/NATSDataSourceCore/</code></li>
+                        <li><a href="providers/msg-masstransit.html">MassTransit</a> — <code>Messaging/MassTransitDataSource/</code></li>
+                        <li><a href="providers/msg-redis-streams.html">Redis Streams</a> — <code>Messaging/RedisStreamsDataSourceCore/</code> (distinct from <a href="providers/redis.html">Redis KV</a>)</li>
+                        <li><a href="providers/msg-google-pubsub.html">Google Pub/Sub</a> — <code>Messaging/GooglePubSubDataSourceCore/</code></li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>Vector (documented, phase 07)</h2>
+                    <ul>
+                        <li><a href="providers/vector-qdrant.html">Qdrant</a> — <code>VectorDatabase/TheTechIdea.Beep.QdrantDatasource/</code> (<code>QdrantDatasourceGeneric</code>)</li>
+                        <li><a href="providers/vector-milvus.html">Milvus</a> — <code>VectorDatabase/TheTechIdea.Beep.MilvusDatasource/</code></li>
+                        <li><a href="providers/vector-chromadb.html">ChromaDB</a> — <code>VectorDatabase/TheTechIdea.Beep.ChromaDBDatasource/</code></li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>Contrast: product REST in <code>Connectors/</code></h2>
+                    <p>Messaging and vector cores live under <code>Messaging/</code> and <code>VectorDatabase/</code> with queue/topic/collection semantics—not the CRM, e-commerce, or chat product APIs shipped under <code>Connectors/&lt;Category&gt;/</code> as <code>WebAPIDataSource</code>. For Slack, Salesforce, Shopify-style HTTP operations, see <a href="impl-connectors.html">REST / SaaS connectors</a> and <a href="impl-connectors.html#flagship-provider-pages">flagship <code>conn-*</code> index</a>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>BeepDM skills</h2>
+                    <ul>
+                        <li><code>BeepDM/.cursor/idatasource/SKILL.md</code></li>
+                    </ul>
+                    <p>Next: Phase 08 <a href="impl-connectors.html">REST / SaaS connectors</a> (overview and category hubs) per <code>.plans/phase-08-connectors-rest.md</code>; phase 09 <a href="impl-connectors.html#flagship-provider-pages">flagship <code>conn-*</code> index</a> per <code>.plans/phase-09-connectors-flagship.md</code>.</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="impl-cloud-analytics.html"><i class="bi bi-arrow-left"></i> Cloud &amp; analytics</a>
+                    <a href="providers/msg-kafka.html">Kafka <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

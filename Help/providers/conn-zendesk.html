@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zendesk (connector) — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-connectors.html">Connectors</a>
+                    <span>›</span>
+                    <a href="../connectors-customer-support.html">Customer support</a>
+                    <span>›</span>
+                    <span>Zendesk</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Zendesk</h1>
+                    <p class="page-subtitle">Project <code>Connectors/CustomerSupport/Zendesk/</code>. <code>ZendeskDataSource : WebAPIDataSource</code>, aligned with the Twitter-style entity map pattern. Namespace <code>TheTechIdea.Beep.Connectors.Zendesk</code>. <code>DataSourceType.Zendesk</code>, <code>DatasourceCategory.Connector</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Entities</h2>
+                    <p>Resources are defined in the static <code>Map</code> (<code>EntityDefinition</code>: endpoint, JSON root, required filters, model type). Inspect <code>ZendeskDataSource.cs</code> for tickets, users, and related entities.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Source &amp; <code>IDataSource</code></h2>
+                    <p><strong>Implementation:</strong> <code>Connectors/CustomerSupport/Zendesk/ZendeskDataSource.cs</code> — <code>ZendeskDataSource</code> : <code>WebAPIDataSource</code>. Strongly typed commands call <code>GetEntity</code> with logical keys (<code>tickets</code>, <code>users</code>, …) defined in the static entity map.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Command methods (<code>CommandAttribute</code>)</h2>
+                    <p>Read operations below omit <code>Name</code> on the attribute; editor metadata uses <code>ObjectType</code> / <code>misc</code>. Mutations set <code>Name</code> explicitly.</p>
+                    <table>
+                        <thead><tr><th><code>Name</code></th><th>Method</th><th>Returns</th><th><code>ObjectType</code></th></tr></thead>
+                        <tbody>
+                            <tr><td>—</td><td><code>GetTickets()</code></td><td><code>List&lt;ZendeskTicket&gt;</code></td><td>ZendeskTicket</td></tr>
+                            <tr><td>—</td><td><code>GetTicket(long id)</code></td><td><code>ZendeskTicket</code></td><td>ZendeskTicket</td></tr>
+                            <tr><td>—</td><td><code>GetTicketComments(long ticketId)</code></td><td><code>List&lt;ZendeskComment&gt;</code></td><td>ZendeskComment</td></tr>
+                            <tr><td>—</td><td><code>GetUsers()</code></td><td><code>List&lt;ZendeskUser&gt;</code></td><td>ZendeskUser</td></tr>
+                            <tr><td>—</td><td><code>GetUser(long id)</code></td><td><code>ZendeskUser</code></td><td>ZendeskUser</td></tr>
+                            <tr><td>—</td><td><code>GetOrganizations()</code></td><td><code>List&lt;ZendeskOrganization&gt;</code></td><td>ZendeskOrganization</td></tr>
+                            <tr><td>—</td><td><code>GetOrganization(long id)</code></td><td><code>ZendeskOrganization</code></td><td>ZendeskOrganization</td></tr>
+                            <tr><td>—</td><td><code>GetGroups()</code></td><td><code>List&lt;ZendeskGroup&gt;</code></td><td>ZendeskGroup</td></tr>
+                            <tr><td>—</td><td><code>GetGroup(long id)</code></td><td><code>ZendeskGroup</code></td><td>ZendeskGroup</td></tr>
+                            <tr><td>—</td><td><code>GetMacros()</code></td><td><code>List&lt;ZendeskMacro&gt;</code></td><td>ZendeskMacro</td></tr>
+                            <tr><td>—</td><td><code>GetViews()</code></td><td><code>List&lt;ZendeskView&gt;</code></td><td>ZendeskView</td></tr>
+                            <tr><td>—</td><td><code>GetSatisfactionRatings()</code></td><td><code>List&lt;ZendeskSatisfactionRating&gt;</code></td><td>ZendeskSatisfactionRating</td></tr>
+                            <tr><td>—</td><td><code>SearchTickets(string query)</code></td><td><code>List&lt;ZendeskTicket&gt;</code></td><td>ZendeskTicket</td></tr>
+                            <tr><td>CreateTicket</td><td><code>CreateTicketAsync(ZendeskTicket ticket)</code></td><td><code>Task&lt;IEnumerable&lt;ZendeskTicket&gt;&gt;</code></td><td>ZendeskTicket</td></tr>
+                            <tr><td>UpdateTicket</td><td><code>UpdateTicketAsync(ZendeskTicket ticket)</code></td><td><code>Task&lt;IEnumerable&lt;ZendeskTicket&gt;&gt;</code></td><td>ZendeskTicket</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Model types</h2>
+                    <p><code>TheTechIdea.Beep.Connectors.Zendesk.Models</code> — <code>ZendeskTicket</code>, <code>ZendeskComment</code>, <code>ZendeskUser</code>, <code>ZendeskOrganization</code>, <code>ZendeskGroup</code>, <code>ZendeskMacro</code>, <code>ZendeskView</code>, <code>ZendeskSatisfactionRating</code>, and related DTOs.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Connection</h2>
+                    <p>Subdomain and API token or OAuth map to <a href="../platform-connection-properties.html"><code>WebAPIConnectionProperties</code></a>. Zendesk subdomain URLs follow <code>https://&lt;subdomain&gt;.zendesk.com/api/v2/…</code> patterns in implementation.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Also read</h2>
+                    <ul>
+                        <li><a href="../impl-connectors.html">REST / SaaS connectors overview</a></li>
+                        <li><a href="../impl-connectors.html#flagship-provider-pages">Flagship <code>conn-*</code> index (table)</a></li>
+                        <li><a href="../connectors-customer-support.html">Customer support category hub</a></li>
+                    </ul>
+                </section>
+
+                <div class="nav-links">
+                    <a href="conn-hubspot.html"><i class="bi bi-arrow-left"></i> HubSpot</a>
+                    <a href="conn-microsoft-teams.html">Microsoft Teams <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="../roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="../navigation.js"></script>
+</body>
+</html>

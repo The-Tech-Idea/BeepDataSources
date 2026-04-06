@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connectors — Communication — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <a href="impl-connectors.html">Connectors</a>
+                    <span>›</span>
+                    <span>Communication</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Communication connectors</h1>
+                    <p class="page-subtitle">Team chat, video, and messaging APIs under <code>Connectors/Communication/</code>. Namespace examples use <code>TheTechIdea.Beep.Connectors.Communication.*</code> per <code>EXECUTION_SUMMARY.md</code>.</p>
+                </div>
+
+                <section class="section">
+                    <table>
+                        <thead>
+                            <tr><th>Connector</th><th>Path</th><th>Role</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Chanty</td><td><code>Communication/ChantyDataSource/</code></td><td>Team chat and tasks.</td></tr>
+                            <tr><td>Discord</td><td><code>Communication/DiscordDataSource/</code></td><td>Bots, channels, guilds (API v10 patterns).</td></tr>
+                            <tr><td>Flock</td><td><code>Communication/FlockDataSource/</code></td><td>Team collaboration messaging.</td></tr>
+                            <tr><td><a href="providers/conn-google-chat.html">Google Chat</a></td><td><code>Communication/GoogleChatDataSource/</code></td><td>Spaces, messages, Chat API.</td></tr>
+                            <tr><td><a href="providers/conn-microsoft-teams.html">Microsoft Teams</a></td><td><code>Communication/MicrosoftTeamsDataSource/</code></td><td>Graph-backed teams/channels/meetings.</td></tr>
+                            <tr><td>Rocket.Chat</td><td><code>Communication/RocketChatDataSource/</code></td><td>Self-hosted chat REST.</td></tr>
+                            <tr><td><a href="providers/conn-slack.html">Slack</a></td><td><code>Communication/SlackDataSource/</code></td><td>Channels, users, conversations Web API.</td></tr>
+                            <tr><td>Telegram</td><td><code>Communication/TelegramDataSource/</code></td><td>Bot API messaging.</td></tr>
+                            <tr><td>Twist</td><td><code>Communication/TwistDataSource/</code></td><td>Async team threads.</td></tr>
+                            <tr><td>WhatsApp Business</td><td><code>Communication/WhatsAppBusinessDataSource/</code></td><td>Meta Cloud API messages/templates.</td></tr>
+                            <tr><td>Zoom</td><td><code>Communication/ZoomDataSource/</code></td><td>Meetings, users, reports.</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="note">Flagship <code>conn-*</code> provider pages for this category appear in the <a href="impl-connectors.html#flagship-provider-pages">phase 09 index table</a> on the REST / SaaS overview.</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="connectors-cloud-storage.html"><i class="bi bi-arrow-left"></i> Cloud storage</a>
+                    <a href="connectors-content-management.html">Content management <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="index.html">Home</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

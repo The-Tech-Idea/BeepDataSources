@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NATS — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-messaging-vector.html">Messaging &amp; vector</a>
+                    <span>›</span>
+                    <span>NATS</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>NATS</h1>
+                    <p class="page-subtitle">Project: <code>Messaging/NATSDataSourceCore/</code>. Class <code>NATSDataSource</code>. <code>MessageQueue</code> / <code>NATS</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Registration</h2>
+                    <ul>
+                        <li><strong><code>DataSourceType</code></strong>: <code>NATS</code></li>
+                        <li><strong>Category</strong>: <code>MessageQueue</code></li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>Connection</h2>
+                    <p>Server URLs, credentials, and JetStream vs core NATS behavior are defined in <code>NATSDataSource.cs</code>.</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="msg-rabbitmq.html"><i class="bi bi-arrow-left"></i> RabbitMQ</a>
+                    <a href="msg-masstransit.html">MassTransit <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="../roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="../navigation.js"></script>
+</body>
+</html>

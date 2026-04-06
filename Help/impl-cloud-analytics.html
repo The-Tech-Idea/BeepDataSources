@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud &amp; analytics — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <span>Implementations</span>
+                    <span>›</span>
+                    <span>Cloud &amp; analytics</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Cloud warehouses &amp; analytics engines</h1>
+                    <p class="page-subtitle">Cores that register with <code>DatasourceCategory.CLOUD</code> in this repo: managed SQL warehouses, federated query engines, and hosted analytics APIs. Some inherit <a href="impl-rdbms.html"><code>RDBSource</code></a> (Snowflake, Spanner, Presto); others implement <a href="platform-idatasource.html"><code>IDataSource</code></a> directly (BigQuery, Kusto).</p>
+                </div>
+
+                <section class="section">
+                    <h2>Authentication vs target</h2>
+                    <p>Keep <strong>identity</strong> (OAuth client, service account JSON path, personal access token, API key) separate in your head from <strong>warehouse routing</strong> (project/dataset, account/region/warehouse/database, cluster URI). In Beep, both are usually captured on <a href="platform-connection-properties.html"><code>ConnectionProperties</code></a> but map to different fields—mirror vendor wizards when in doubt, then <a href="platform-connection.html">validate</a> with a read-only probe.</p>
+                    <p class="note">Never commit live secrets. Examples in docs use placeholders such as <code>&lt;ACCOUNT&gt;</code>, <code>&lt;TOKEN&gt;</code>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Billing, latency, staging</h2>
+                    <ul>
+                        <li>Large scans and long-running queries can incur cost; prefer filtered queries and limits when exploring metadata.</li>
+                        <li>Network RTT dominates; cache connection objects where the datasource supports it.</li>
+                        <li>For ETL, stage extracts in a cheaper store when the platform recommends it (vendor-specific).</li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>Vendor authentication references</h2>
+                    <p>Use official guides for credential rotation and least-privilege roles (links open vendor / Microsoft documentation):</p>
+                    <table>
+                        <thead>
+                            <tr><th>Engine</th><th>Documentation</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Google BigQuery</td><td><a href="https://cloud.google.com/bigquery/docs/authentication">Authentication overview</a></td></tr>
+                            <tr><td>Snowflake</td><td><a href="https://docs.snowflake.com/en/user-guide/security-authentication">Authentication</a></td></tr>
+                            <tr><td>Google Cloud Spanner</td><td><a href="https://cloud.google.com/spanner/docs/authentication">Authentication</a></td></tr>
+                            <tr><td>Azure Data Explorer (Kusto)</td><td><a href="https://learn.microsoft.com/en-us/azure/data-explorer/net-sdk-advanced-authentication">Application authentication</a></td></tr>
+                            <tr><td>Presto / Trino</td><td><a href="https://trino.io/docs/current/security/authentication.html">Trino security: authentication</a></td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Documented providers (phase 06, first wave)</h2>
+                    <ul>
+                        <li><a href="providers/cloud-bigquery.html">Google BigQuery</a> — <code>GoogleBigQuery/</code></li>
+                        <li><a href="providers/cloud-snowflake.html">Snowflake</a> — <code>SnowFlakeDataSource/</code></li>
+                        <li><a href="providers/cloud-spanner.html">Google Cloud Spanner</a> — <code>SpannerDataSourceCore/</code></li>
+                        <li><a href="providers/cloud-kusto.html">Azure Data Explorer (Kusto)</a> — <code>KustoDataSource/</code></li>
+                        <li><a href="providers/cloud-presto.html">Presto</a> — <code>PrestoDatasource/</code></li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>More CLOUD cores in this repo</h2>
+                    <p>Additional projects under <code>DataSourcesPluginsCore</code> use <code>DatasourceCategory.CLOUD</code> (e.g. Rockset, Firebolt, Firebase, Amazon S3/Dynamo wrappers, Azure Cosmos/Document, Google Sheets, RealIM). Add <code>Help/providers/cloud-*.html</code> pages when you document them.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Contrast: CRM / marketing REST in <code>Connectors/</code></h2>
+                    <p>This family targets <strong>warehouses and analytics</strong> (<code>DatasourceCategory.CLOUD</code>). Product APIs such as Salesforce, HubSpot, or Slack are separate projects under <code>Connectors/&lt;Category&gt;/</code> with <code>WebAPIDataSource</code> and <code>CommandAttribute</code>-driven operations. Overview: <a href="impl-connectors.html">REST / SaaS connectors</a>; command catalogs: <a href="impl-connectors.html#flagship-provider-pages">flagship <code>conn-*</code> index</a>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>BeepDM skills</h2>
+                    <ul>
+                        <li><code>BeepDM/.cursor/connectionproperties/SKILL.md</code></li>
+                        <li><code>BeepDM/.cursor/idatasource/SKILL.md</code></li>
+                    </ul>
+                    <p>Next implementation family: <a href="impl-messaging-vector.html">Messaging &amp; vector</a>.</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="impl-nosql.html"><i class="bi bi-arrow-left"></i> NoSQL</a>
+                    <a href="providers/cloud-bigquery.html">BigQuery <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

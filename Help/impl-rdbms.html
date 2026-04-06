@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RDBMS family — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <span>Implementations</span>
+                    <span>›</span>
+                    <span>RDBMS</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Relational (RDBMS) datasources</h1>
+                    <p class="page-subtitle">Shared logic lives in <code>DataSourcesPlugins/RDBMSDataSource</code> (<code>RDBSource</code> partial classes: connection, CRUD, schema, DML helpers, bulk, transactions). Each engine is a thin <code>*DataSourceCore</code> project that inherits <code>RDBSource</code> and sets <code>DataSourceType</code>. Dialect-specific SQL flows through <code>IDataSourceHelper</code> / RDBMS helpers in BeepDM.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Architecture</h2>
+                    <table>
+                        <thead>
+                            <tr><th>Layer</th><th>Location</th><th>Role</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Shared RDBMS plugin</td><td><code>DataSourcesPlugins/RDBMSDataSource/</code></td><td><code>RDBSource</code>, Dapper usage, entity cache, pagination, resilience partials</td></tr>
+                            <tr><td>Engine core</td><td><code>DataSourcesPluginsCore/&lt;Engine&gt;DataSourceCore/</code></td><td>Add-in registration, <code>DataSourceType</code>, optional overrides</td></tr>
+                            <tr><td>Helpers (BeepDM)</td><td>Resolved by <code>DataSourceType</code></td><td>DDL/DML templates, capability checks — see <code>BeepDM/.cursor/universal-rdbms-helper</code>, <code>rdbms-helper-facade</code></td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Types that inherit <code>RDBSource</code></h2>
+                    <p>All SQL execution, Dapper wiring, schema/CRUD partials, and transaction hooks live on <code>RDBSource</code> in the shared plugin. Engine projects are thin: they set delimiters, optional overrides, and <code>AddinAttribute</code> (<code>DatasourceCategory</code> + <code>DataSourceType</code>).</p>
+                    <table>
+                        <thead>
+                            <tr><th>Implementation</th><th>Project folder</th><th>Category</th><th>Help</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>SQLServerDataSource</code></td><td><code>DataSourcesPluginsCore/SQlServerDataSourceCore/</code></td><td><code>RDBMS</code></td><td><a href="providers/rdbms-sqlserver.html">SQL Server</a></td></tr>
+                            <tr><td><code>PostgreDataSource</code></td><td><code>DataSourcesPluginsCore/PostgreDataSourceCore/</code></td><td><code>RDBMS</code></td><td><a href="providers/rdbms-postgresql.html">PostgreSQL</a></td></tr>
+                            <tr><td><code>MySQLDataSource</code></td><td><code>DataSourcesPluginsCore/MySqlDataSourceCore/</code></td><td><code>RDBMS</code></td><td><a href="providers/rdbms-mysql.html">MySQL</a></td></tr>
+                            <tr><td><code>OracleDataSource</code></td><td><code>DataSourcesPluginsCore/OracleDataSourceCore/</code></td><td><code>RDBMS</code></td><td><a href="providers/rdbms-oracle.html">Oracle</a></td></tr>
+                            <tr><td><code>SnowFlakeDataSource</code></td><td><code>DataSourcesPluginsCore/SnowFlakeDataSource/</code></td><td><code>CLOUD</code></td><td><a href="providers/cloud-snowflake.html">Snowflake</a> — see also <a href="impl-cloud-analytics.html">Cloud &amp; analytics</a></td></tr>
+                            <tr><td><code>SpannerDataSource</code></td><td><code>DataSourcesPluginsCore/SpannerDataSourceCore/</code></td><td><code>CLOUD</code></td><td><a href="providers/cloud-spanner.html">Spanner</a></td></tr>
+                            <tr><td><code>PrestoDataSource</code></td><td><code>DataSourcesPluginsCore/PrestoDatasource/</code></td><td><code>CLOUD</code></td><td><a href="providers/cloud-presto.html">Presto</a></td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section" id="inmemory-rdb-duckdb-sqlite">
+                    <h2><code>InMemoryRDBSource</code> (DuckDB &amp; SQLite)</h2>
+                    <p><code>InMemoryRDBSource</code> lives in the same plugin (<code>DataSourcesPlugins/RDBMSDataSource/InMemoryRDBSource.cs</code>): it extends <code>RDBSource</code> and implements <code>IInMemoryDB</code> for structure/load workflows. Two shipped cores build on it:</p>
+                    <ul>
+                        <li><strong><a href="providers/duckdb.html"><code>DuckDBDataSource</code></a></strong> — <code>InMemoryDB/DuckDBDataSourceCore/</code>, <code>DatasourceCategory.INMEMORY</code>, <code>DataSourceType.DuckDB</code>. Uses DuckDB.NET; documented under <a href="impl-local-inmemory.html">Local &amp; in-memory</a>.</li>
+                        <li><strong><a href="providers/sqlite.html"><code>SQLiteDataSource</code></a></strong> — <code>DataSourcesPluginsCore/SqliteDatasourceCore/</code>, also implements <code>ILocalDB</code>; <code>AddinAttribute</code> category <code>RDBMS</code>, type <code>SqlLite</code>. File lifecycle stays on the local-db path even though SQL behavior comes from the RDBMS stack.</li>
+                    </ul>
+                    <p class="note">LiteDB does <strong>not</strong> inherit <code>RDBSource</code>; it is a document store with its own core. See <a href="providers/litedb.html">LiteDB</a>.</p>
+                </section>
+
+                <section class="section">
+                    <h2><code>IDataSourceHelper</code> boundary</h2>
+                    <p>Runtime CRUD and metadata on <code>RDBSource</code> delegate dialect work to the helper for the active <code>DataSourceType</code>. Do not duplicate vendor SQL in the core when a helper already exposes the same operation; extend the helper or the shared <code>RDBSource</code> path so all RDBMS drivers stay consistent.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Configuration</h2>
+                    <p>Use <a href="platform-connection-properties.html"><code>ConnectionProperties</code></a> with server fields (<code>Host</code>, <code>Port</code>, <code>Database</code>, <code>SchemaName</code>, Oracle SID/service where applicable), then <a href="platform-connection.html">validate and open</a>. Same editor flow as other datasources (<a href="platform-beepdm.html"><code>IDMEEditor</code></a>).</p>
+                </section>
+
+                <section class="section">
+                    <h2>SQLite note</h2>
+                    <p>SQLite inherits <code>InMemoryRDBSource</code> (see <a href="#inmemory-rdb-duckdb-sqlite">DuckDB &amp; SQLite</a> above), is registered as <code>RDBMS</code> with <code>DataSourceType.SqlLite</code>, and adds <code>ILocalDB</code> for file lifecycle. See <a href="providers/sqlite.html">SQLite provider</a> and <a href="impl-local-inmemory.html">local &amp; in-memory overview</a>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Contrast: NOSQL</h2>
+                    <p>Document, key-value, and time-series cores use <code>DatasourceCategory.NOSQL</code> and do not inherit <code>RDBSource</code>. See <a href="impl-nosql.html">NoSQL overview</a>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Contrast: REST / SaaS connectors</h2>
+                    <p>Vendors under <code>Connectors/</code> expose HTTP APIs via <code>WebAPIDataSource</code> and typically <a href="platform-connection-properties.html"><code>WebAPIConnectionProperties</code></a> rather than SQL connection strings. Overview: <a href="impl-connectors.html">REST / SaaS connectors</a>; per-vendor command catalogs: <a href="impl-connectors.html#flagship-provider-pages">flagship <code>conn-*</code> index</a>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Documented engines (phase 04)</h2>
+                    <ul>
+                        <li><a href="providers/rdbms-sqlserver.html">SQL Server</a> — <code>SQlServerDataSourceCore/</code></li>
+                        <li><a href="providers/rdbms-postgresql.html">PostgreSQL</a> — <code>PostgreDataSourceCore/</code></li>
+                        <li><a href="providers/rdbms-mysql.html">MySQL</a> — <code>MySqlDataSourceCore/</code></li>
+                        <li><a href="providers/rdbms-oracle.html">Oracle</a> — <code>OracleDataSourceCore/</code></li>
+                    </ul>
+                    <p class="note">Additional cores (Firebird, Timescale, etc.) follow the same pattern; add HTML pages when you document them.</p>
+                </section>
+
+                <section class="section">
+                    <h2>BeepDM skills</h2>
+                    <ul>
+                        <li><code>BeepDM/.cursor/idatasource/SKILL.md</code></li>
+                        <li><code>BeepDM/.cursor/universal-helper-factory/SKILL.md</code></li>
+                        <li><code>BeepDM/.cursor/universal-rdbms-helper/SKILL.md</code></li>
+                        <li><code>BeepDM/.cursor/rdbms-helper-facade/SKILL.md</code></li>
+                    </ul>
+                </section>
+
+                <div class="nav-links">
+                    <a href="impl-local-inmemory.html"><i class="bi bi-arrow-left"></i> Local &amp; in-memory</a>
+                    <a href="providers/rdbms-sqlserver.html">SQL Server <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

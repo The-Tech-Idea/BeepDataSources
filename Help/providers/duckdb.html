@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuckDB — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-local-inmemory.html">Local &amp; in-memory</a>
+                    <span>›</span>
+                    <span>DuckDB</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>DuckDB (in-memory RDB)</h1>
+                    <p class="page-subtitle">Analytic SQL engine with optional file-backed catalog. Project <code>InMemoryDB/DuckDBDataSourceCore/</code>. Class <code>DuckDBDataSource</code> (namespace <code>DuckDBDataSourceCore</code>) inherits <code>InMemoryRDBSource</code>, which inherits <code>RDBSource</code> from <code>DataSourcesPlugins/RDBMSDataSource</code> — so CRUD, schema, Dapper, and transactions follow the same shared RDBMS plugin path as SQL Server or PostgreSQL, with <code>IInMemoryDB</code> structure/load behavior on top. <code>AddinAttribute</code>: category <code>INMEMORY</code>, type <code>DuckDB</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Inheritance &amp; shared plugin</h2>
+                    <p><strong>Chain:</strong> <code>DuckDBDataSource</code> → <code>InMemoryRDBSource</code> → <code>RDBSource</code> (partial classes under <code>RDBMSDataSource/PartialClasses/RDBSource/</code>). Dialect-specific SQL still flows through <code>IDataSourceHelper</code> for <code>DataSourceType.DuckDB</code> where BeepDM registers templates.</p>
+                    <p>For the full list of engines on <code>RDBSource</code> and how helpers fit in, read <a href="../impl-rdbms.html">RDBMS family overview</a>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Registration</h2>
+                    <ul>
+                        <li><strong><code>DataSourceType</code></strong>: <code>DuckDB</code></li>
+                        <li><strong>Category</strong>: <code>INMEMORY</code></li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>NuGet (see csproj)</h2>
+                    <p><code>DuckDB.NET.Bindings.Full</code>, <code>DuckDB.NET.Data.Full</code>, plus Beep packages in <code>DuckDBDataSourceCore.csproj</code>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Delimiters &amp; connection wiring</h2>
+                    <p>The constructor sets <code>ColumnDelimiter = "[]"</code> and <code>ParameterDelimiter = "$"</code> (DuckDB-style). It uses <code>RDBDataConnection</code> from the shared plugin and binds <code>ConnectionProperties</code> from the editor by connection name, with <code>DatabaseType = DataSourceType.DuckDB</code>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>File readers</h2>
+                    <p>The project registers DuckDB-backed readers for several file types (for example Parquet, JSON, TSV). Registration helpers live in <code>FileReaders/DuckDbFileReaderRegistration.cs</code> (<code>RegisterNonConflicting</code>, <code>RegisterAllPrimaryFormats</code>). NDJSON/JSONL uses <code>DataSourceType.FlatFile</code> so it does not replace the default JSON reader—see in-repo comments on <code>DuckDbNdjsonFileReader</code>.</p>
+                </section>
+
+                <section class="section" id="duckdb-extended-commands">
+                    <h2>Extended commands (<code>DuckDbExtendedFunctions</code>)</h2>
+                    <p>Discoverable UI functions are defined on a <strong>partial</strong> <code>DuckDBDataSource</code> in <code>InMemoryDB/DuckDBDataSourceCore/DuckDbExtendedFunctions.cs</code>. Each method uses <code>[CommandAttribute(..., DatasourceType = DataSourceType.DuckDB, ClassType = "DuckDbExtendedFunctions")]</code> so the editor can list them alongside standard <code>IDataSource</code> operations. The table below is the full set as of the current source (36 commands).</p>
+                    <table>
+                        <thead>
+                            <tr><th><code>Name</code> (attribute)</th><th>C# method</th><th>Return</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>CreateSequence</td><td><code>CreateSequence(sequenceName, start, increment, minValue, maxValue, cycle)</code></td><td>void</td></tr>
+                            <tr><td>CreateOrReplaceView</td><td><code>CreateOrReplaceView(viewName, viewQuerySql)</code></td><td>void</td></tr>
+                            <tr><td>ImportFromMultipleCsvFiles</td><td><code>ImportFromMultipleCsvFiles(tableName, filePattern, union_by_name)</code></td><td>void — <code>read_csv_auto</code> glob</td></tr>
+                            <tr><td>ImportFromMultipleParquetFiles</td><td><code>ImportFromMultipleParquetFiles(tableName, filePattern)</code></td><td>void — <code>parquet_scan</code></td></tr>
+                            <tr><td>ImportCSV</td><td><code>ImportCSV(filePath, tableName, createTable)</code></td><td>void — COPY or CREATE AS <code>read_csv_auto</code></td></tr>
+                            <tr><td>ExportToCSV</td><td><code>ExportToCSV(tableName, filePath)</code></td><td>void</td></tr>
+                            <tr><td>ImportParquetIntoExistingTable</td><td><code>ImportParquetIntoExistingTable(filePath, tableName)</code></td><td>void</td></tr>
+                            <tr><td>ImportParquet</td><td><code>ImportParquet(filePath, tableName)</code></td><td>void — CREATE TABLE AS <code>read_parquet</code></td></tr>
+                            <tr><td>ImportJson</td><td><code>ImportJson(filePath, tableName, parameters)</code></td><td>void</td></tr>
+                            <tr><td>ExportJson</td><td><code>ExportJson(filePath, tableName)</code></td><td>void — see source SQL</td></tr>
+                            <tr><td>ImportJsonIntoExistingTable</td><td><code>ImportJsonIntoExistingTable(filePath, tableName)</code></td><td>void</td></tr>
+                            <tr><td>ExportToParquet</td><td><code>ExportToParquet(tableName, filePath)</code></td><td>void</td></tr>
+                            <tr><td>ExportQueryResultToParquet</td><td><code>ExportQueryResultToParquet(query, filePath)</code></td><td>void</td></tr>
+                            <tr><td>ExecuteParameterizedQuery</td><td><code>ExecuteParameterizedQuery(sql, parameters)</code></td><td><code>DataTable</code></td></tr>
+                            <tr><td>ExportToPartitionedParquet</td><td><code>ExportToPartitionedParquet(tableName, directoryPath, partitionColumn)</code></td><td>void</td></tr>
+                            <tr><td>ExportQueryToPartitionedParquet</td><td><code>ExportQueryToPartitionedParquet(query, directoryPath, partitionColumns)</code></td><td>void</td></tr>
+                            <tr><td>ExecuteNonQuery</td><td><code>ExecuteNonQuery(sql)</code></td><td><code>int</code></td></tr>
+                            <tr><td>GetScalarValue</td><td><code>GetScalarValue(sql)</code></td><td><code>object</code></td></tr>
+                            <tr><td>TableExists</td><td><code>TableExists(tableName)</code></td><td><code>bool</code></td></tr>
+                            <tr><td>DropTable</td><td><code>DropTable(tableName)</code></td><td>void</td></tr>
+                            <tr><td>PrintQueryResults</td><td><code>PrintQueryResults(queryResult)</code></td><td>void — console; <code>DuckDBResult</code></td></tr>
+                            <tr><td>ParquetMetaData</td><td><code>ParquetMetaData(filePath)</code></td><td><code>DataTable</code> — <code>parquet_metadata</code></td></tr>
+                            <tr><td>ReadTextFile</td><td><code>ReadTextFile(filePath)</code></td><td><code>DataTable</code> — <code>read_text</code></td></tr>
+                            <tr><td>ReadParquetFile</td><td><code>ReadParquetFile(filepath, binaryAsString, filename, fileRowNumber, hivePartitioning, unionByName)</code></td><td><code>DataTable</code></td></tr>
+                            <tr><td>ReadMultipleCSVFiles</td><td><code>ReadMultipleCSVFiles(filePaths, union_by_name, filename)</code></td><td><code>DataTable</code></td></tr>
+                            <tr><td>JSONLoad</td><td><code>JSONLoad(filepath, …many options…)</code></td><td><code>DataTable</code> — <code>json_read</code></td></tr>
+                            <tr><td>CSVLoad</td><td><code>CSVLoad(filepath, …many options…)</code></td><td><code>DataTable</code> — <code>read_csv_auto</code></td></tr>
+                            <tr><td>InstallExtension</td><td><code>InstallExtension(extensionName)</code></td><td>void — <code>INSTALL</code></td></tr>
+                            <tr><td>LoadExtension</td><td><code>LoadExtension(extensionName)</code></td><td>void — <code>LOAD</code></td></tr>
+                            <tr><td>AttachDatabase</td><td><code>AttachDatabase(dbPath, alias, type)</code></td><td>void — <code>ATTACH</code></td></tr>
+                            <tr><td>DetachDatabase</td><td><code>DetachDatabase(alias)</code></td><td>void</td></tr>
+                            <tr><td>ExportDatabase</td><td><code>ExportDatabase(directoryPath)</code></td><td>void — <code>EXPORT DATABASE</code></td></tr>
+                            <tr><td>ImportDatabase</td><td><code>ImportDatabase(directoryPath)</code></td><td>void — <code>IMPORT DATABASE</code></td></tr>
+                            <tr><td>SniffCSV</td><td><code>SniffCSV(filepath)</code></td><td><code>DataTable</code> — <code>sniff_csv</code></td></tr>
+                            <tr><td>SummarizeTable</td><td><code>SummarizeTable(tableName)</code></td><td><code>DataTable</code> — <code>SUMMARIZE</code></td></tr>
+                            <tr><td>SetMemoryLimit</td><td><code>SetMemoryLimit(limit)</code></td><td>void — <code>PRAGMA memory_limit</code></td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3><code>Caption</code> and <code>ObjectType</code> (from <code>CommandAttribute</code>)</h3>
+                    <p>Same commands as above, in <code>Order</code> sequence as declared in <code>DuckDbExtendedFunctions.cs</code> (for UI grouping / discovery).</p>
+                    <table>
+                        <thead>
+                            <tr><th><code>Order</code></th><th><code>Name</code></th><th><code>Caption</code></th><th><code>ObjectType</code></th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>1</td><td>CreateSequence</td><td>Create Sequence</td><td>Sequence</td></tr>
+                            <tr><td>2</td><td>CreateOrReplaceView</td><td>Create Or Replace View</td><td>View</td></tr>
+                            <tr><td>3</td><td>ImportFromMultipleCsvFiles</td><td>Import Multiple CSVs</td><td>Table</td></tr>
+                            <tr><td>4</td><td>ImportFromMultipleParquetFiles</td><td>Import Multiple Parquets</td><td>Table</td></tr>
+                            <tr><td>5</td><td>ImportCSV</td><td>Import CSV</td><td>Table</td></tr>
+                            <tr><td>6</td><td>ExportToCSV</td><td>Export To CSV</td><td>File</td></tr>
+                            <tr><td>7</td><td>ImportParquetIntoExistingTable</td><td>Import Parquet To Table</td><td>Table</td></tr>
+                            <tr><td>8</td><td>ImportParquet</td><td>Import Parquet</td><td>Table</td></tr>
+                            <tr><td>9</td><td>ImportJson</td><td>Import JSON</td><td>Table</td></tr>
+                            <tr><td>10</td><td>ExportJson</td><td>Export JSON</td><td>Table</td></tr>
+                            <tr><td>11</td><td>ImportJsonIntoExistingTable</td><td>Import JSON To Table</td><td>Table</td></tr>
+                            <tr><td>12</td><td>ExportToParquet</td><td>Export To Parquet</td><td>Table</td></tr>
+                            <tr><td>13</td><td>ExportQueryResultToParquet</td><td>Export Query To Parquet</td><td>Query</td></tr>
+                            <tr><td>14</td><td>ExecuteParameterizedQuery</td><td>Execute Parameterized Query</td><td>Query</td></tr>
+                            <tr><td>15</td><td>ExportToPartitionedParquet</td><td>Export To Partitioned Parquet</td><td>Table</td></tr>
+                            <tr><td>16</td><td>ExportQueryToPartitionedParquet</td><td>Export Query To Partitioned Parquet</td><td>Query</td></tr>
+                            <tr><td>17</td><td>ExecuteNonQuery</td><td>Execute Non Query</td><td>Query</td></tr>
+                            <tr><td>18</td><td>GetScalarValue</td><td>Get Scalar Value</td><td>Query</td></tr>
+                            <tr><td>19</td><td>TableExists</td><td>Table Exists</td><td>Table</td></tr>
+                            <tr><td>20</td><td>DropTable</td><td>Drop Table</td><td>Table</td></tr>
+                            <tr><td>21</td><td>PrintQueryResults</td><td>Print Query Results</td><td>Query</td></tr>
+                            <tr><td>22</td><td>ParquetMetaData</td><td>Parquet Meta Data</td><td>Table</td></tr>
+                            <tr><td>23</td><td>ReadTextFile</td><td>Read Text File</td><td>Table</td></tr>
+                            <tr><td>24</td><td>ReadParquetFile</td><td>Read Parquet File</td><td>Table</td></tr>
+                            <tr><td>25</td><td>ReadMultipleCSVFiles</td><td>Read Multiple CSV Files</td><td>Table</td></tr>
+                            <tr><td>26</td><td>JSONLoad</td><td>JSON Load</td><td>Table</td></tr>
+                            <tr><td>27</td><td>CSVLoad</td><td>CSV Load</td><td>Table</td></tr>
+                            <tr><td>28</td><td>InstallExtension</td><td>Install Extension</td><td>Extension</td></tr>
+                            <tr><td>29</td><td>LoadExtension</td><td>Load Extension</td><td>Extension</td></tr>
+                            <tr><td>30</td><td>AttachDatabase</td><td>Attach Database</td><td>Database</td></tr>
+                            <tr><td>31</td><td>DetachDatabase</td><td>Detach Database</td><td>Database</td></tr>
+                            <tr><td>32</td><td>ExportDatabase</td><td>Export Database</td><td>Database</td></tr>
+                            <tr><td>33</td><td>ImportDatabase</td><td>Import Database</td><td>Database</td></tr>
+                            <tr><td>34</td><td>SniffCSV</td><td>Sniff CSV</td><td>Table</td></tr>
+                            <tr><td>35</td><td>SummarizeTable</td><td>Summarize Table</td><td>Table</td></tr>
+                            <tr><td>36</td><td>SetMemoryLimit</td><td>Set Memory Limit</td><td>Memory</td></tr>
+                        </tbody>
+                    </table>
+
+                    <p class="note">Parameter names and defaults match the C# signatures in <code>DuckDbExtendedFunctions.cs</code>. For full argument lists (especially <code>JSONLoad</code> and <code>CSVLoad</code>), use the source file. Standard entity CRUD and metadata still come from <code>RDBSource</code> / <code>IDataSource</code>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>In-memory workflow</h2>
+                    <p>Follow <code>IInMemoryDB</code> patterns from <code>BeepDM/.cursor/inmemorydb</code>: open store, load/create structure, then load or sync data. Validate <code>ConnectionStatus</code> before heavy ETL.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Also read</h2>
+                    <ul>
+                        <li><a href="../impl-rdbms.html"><code>RDBSource</code> / RDBMS plugin family</a> (inheritance and helpers)</li>
+                        <li><a href="../impl-local-inmemory.html">Local &amp; in-memory overview</a></li>
+                        <li><a href="sqlite.html">SQLite</a> (sibling <code>InMemoryRDBSource</code> + <code>ILocalDB</code>)</li>
+                        <li><code>BeepDM/.cursor/inmemorydb/SKILL.md</code></li>
+                    </ul>
+                </section>
+
+                <div class="nav-links">
+                    <a href="litedb.html"><i class="bi bi-arrow-left"></i> LiteDB</a>
+                    <a href="../phased-implementations.html">Rollout plan <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="../roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="../navigation.js"></script>
+</body>
+</html>

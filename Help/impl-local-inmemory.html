@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local &amp; in-memory — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <span>Implementations</span>
+                    <span>›</span>
+                    <span>Local &amp; in-memory</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Local file &amp; in-memory engines</h1>
+                    <p class="page-subtitle">How embedded providers in this repo relate to <code>ILocalDB</code> and <code>IInMemoryDB</code> in BeepDM. Authoritative workflows: <code>BeepDM/.cursor/localdb</code> and <code>BeepDM/.cursor/inmemorydb</code>.</p>
+                </div>
+
+                <p class="note">Client/server SQL engines (SQL Server, PostgreSQL, MySQL, Oracle) share the <a href="impl-rdbms.html">RDBMS plugin family</a> via <code>RDBSource</code>. <strong>DuckDB</strong> and <strong>SQLite</strong> also use that stack through <code>InMemoryRDBSource</code> (<code>InMemoryRDBSource</code> → <code>RDBSource</code> in <code>DataSourcesPlugins/RDBMSDataSource</code>): DuckDB is <code>INMEMORY</code>; SQLite adds <code>ILocalDB</code> and <code>RDBMS</code> registration — see the <a href="impl-rdbms.html#inmemory-rdb-duckdb-sqlite"><code>InMemoryRDBSource</code> section</a> on the RDBMS page.</p>
+
+                <section class="section">
+                    <h2>When to use which</h2>
+                    <table>
+                        <thead>
+                            <tr><th>Pattern</th><th>Typical use</th><th>BeepDM interface</th><th>Examples in this repo</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Local file DB</strong></td>
+                                <td>Single-user or bundled store; backup/copy file</td>
+                                <td><code>ILocalDB</code> (+ <code>IDataSource</code>)</td>
+                                <td><a href="providers/sqlite.html">SQLite</a>, <a href="providers/litedb.html">LiteDB</a></td>
+                            </tr>
+                            <tr>
+                                <td><strong>In-memory analytic</strong></td>
+                                <td>Fast analytics, ETL staging, optional file readers</td>
+                                <td><code>IInMemoryDB</code> patterns via <code>InMemoryRDBSource</code></td>
+                                <td><a href="providers/duckdb.html">DuckDB</a></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Remote / server RDBMS</strong></td>
+                                <td>Shared database, HA, large concurrency</td>
+                                <td><code>IDataSource</code> only (phase 04)</td>
+                                <td>SQL Server, PostgreSQL, …</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="note">SaaS REST vendors are not file engines: they live under <code>Connectors/</code> as <code>WebAPIDataSource</code>. See <a href="impl-connectors.html">REST / SaaS connectors</a> and the <a href="impl-connectors.html#flagship-provider-pages">flagship <code>conn-*</code> index</a>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Configuration flow</h2>
+                    <p>Define <a href="platform-connection-properties.html"><code>ConnectionProperties</code></a> (file path, extension, driver identity), validate with <a href="platform-connection.html">connection helpers</a>, persist in <a href="platform-configeditor.html"><code>ConfigEditor</code></a>, then open through <a href="platform-beepdm.html"><code>IDMEEditor</code></a>. Honor <a href="platform-idatasource.html"><code>IDataSource</code></a> error and metadata rules.</p>
+                </section>
+
+                <section class="section">
+                    <h2>ILocalDB (file operations)</h2>
+                    <p>Create/copy/delete database files and drop entities; close connections before file IO. See skill examples for <code>CreateDB</code>, <code>CopyDB</code>, <code>DeleteDB</code>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>IInMemoryDB (structure &amp; load)</h2>
+                    <p>Open in-memory store, <code>LoadStructure</code>, <code>CreateStructure</code>, then <code>LoadData</code> / <code>SyncData</code>. Track structure and loaded flags to avoid empty entity lists.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Documented providers (phase 03)</h2>
+                    <ul>
+                        <li><a href="providers/sqlite.html">SQLite</a> — <code>DataSourcesPluginsCore/SqliteDatasourceCore</code></li>
+                        <li><a href="providers/litedb.html">LiteDB</a> — <code>DataSourcesPluginsCore/LiteDBDataSourceCore</code></li>
+                        <li><a href="providers/duckdb.html">DuckDB</a> — <code>InMemoryDB/DuckDBDataSourceCore</code>; <a href="providers/duckdb.html#duckdb-extended-commands">36 <code>CommandAttribute</code> helpers</a> in <code>DuckDbExtendedFunctions.cs</code></li>
+                    </ul>
+                </section>
+
+                <div class="nav-links">
+                    <a href="phased-implementations.html"><i class="bi bi-arrow-left"></i> Provider rollout</a>
+                    <a href="providers/sqlite.html">SQLite <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

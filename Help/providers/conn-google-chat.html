@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Chat (connector) — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-connectors.html">Connectors</a>
+                    <span>›</span>
+                    <a href="../connectors-communication.html">Communication</a>
+                    <span>›</span>
+                    <span>Google Chat</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Google Chat</h1>
+                    <p class="page-subtitle">Project <code>Connectors/Communication/GoogleChatDataSource/</code>. <code>GoogleChatDataSource : WebAPIDataSource</code>. Namespace <code>TheTechIdea.Beep.Connectors.Communication.GoogleChat</code> (<code>…GoogleChat.Models</code>). <code>DataSourceType.GoogleChat</code>, <code>DatasourceCategory.Connector</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Entities</h2>
+                    <p>The static <code>Map</code> lists Chat API resources: spaces, messages, members, and related paths with required filters such as <code>space_name</code>. Align base URL and bearer token with Google’s Chat API host.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Source &amp; <code>IDataSource</code></h2>
+                    <p><strong>Implementation:</strong> <code>Connectors/Communication/GoogleChatDataSource/GoogleChatDataSource.cs</code> — <code>GoogleChatDataSource</code> : <code>WebAPIDataSource</code>. Read helpers call <code>GetEntityAsync</code> synchronously (<code>.GetAwaiter().GetResult()</code>) and attach the datasource to each entity; create/update helpers call <code>PostAsync</code>, <code>PutAsync</code>, or <code>PatchAsync</code> on documented path templates.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Command methods (<code>CommandAttribute</code>)</h2>
+                    <table>
+                        <thead><tr><th><code>Name</code></th><th>Method</th><th>Returns</th><th><code>ObjectType</code></th></tr></thead>
+                        <tbody>
+                            <tr><td>GetSpaces</td><td><code>GetSpaces()</code></td><td><code>IEnumerable&lt;GoogleChatSpace&gt;</code></td><td>GoogleChatSpace</td></tr>
+                            <tr><td>GetSpace</td><td><code>GetSpace(string spaceName)</code></td><td><code>IEnumerable&lt;GoogleChatSpace&gt;</code></td><td>GoogleChatSpace</td></tr>
+                            <tr><td>GetSpaceMessages</td><td><code>GetSpaceMessages(string spaceName)</code></td><td><code>IEnumerable&lt;GoogleChatMessage&gt;</code></td><td>GoogleChatMessage</td></tr>
+                            <tr><td>GetMessage</td><td><code>GetMessage(string spaceName, string messageName)</code></td><td><code>IEnumerable&lt;GoogleChatMessage&gt;</code></td><td>GoogleChatMessage</td></tr>
+                            <tr><td>GetSpaceMembers</td><td><code>GetSpaceMembers(string spaceName)</code></td><td><code>IEnumerable&lt;GoogleChatMember&gt;</code></td><td>GoogleChatMember</td></tr>
+                            <tr><td>GetUserSpaces</td><td><code>GetUserSpaces()</code></td><td><code>IEnumerable&lt;GoogleChatUserSpace&gt;</code></td><td>GoogleChatUserSpace</td></tr>
+                            <tr><td>GetUserMemberships</td><td><code>GetUserMemberships(string userName)</code></td><td><code>IEnumerable&lt;GoogleChatUserMembership&gt;</code></td><td>GoogleChatUserMembership</td></tr>
+                            <tr><td>CreateMessageAsync</td><td><code>CreateMessageAsync(GoogleChatMessage message)</code></td><td><code>Task&lt;IEnumerable&lt;GoogleChatMessage&gt;&gt;</code></td><td>GoogleChatMessage</td></tr>
+                            <tr><td>CreateSpaceAsync</td><td><code>CreateSpaceAsync(GoogleChatSpace space)</code></td><td><code>Task&lt;IEnumerable&lt;GoogleChatSpace&gt;&gt;</code></td><td>GoogleChatSpace</td></tr>
+                            <tr><td>UpdateMessageAsync</td><td><code>UpdateMessageAsync(GoogleChatMessage message)</code></td><td><code>Task&lt;IEnumerable&lt;GoogleChatMessage&gt;&gt;</code></td><td>GoogleChatMessage</td></tr>
+                            <tr><td>UpdateSpaceAsync</td><td><code>UpdateSpaceAsync(GoogleChatSpace space)</code></td><td><code>Task&lt;IEnumerable&lt;GoogleChatSpace&gt;&gt;</code></td><td>GoogleChatSpace</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Model types</h2>
+                    <p><code>TheTechIdea.Beep.Connectors.Communication.GoogleChat.Models</code> — <code>GoogleChatSpace</code>, <code>GoogleChatMessage</code>, <code>GoogleChatMember</code>, <code>GoogleChatUser</code>, <code>GoogleChatUserSpace</code>, <code>GoogleChatUserMembership</code>, <code>GoogleChatMessageAttachment</code>, <code>GoogleChatMessageThread</code>, <code>GoogleChatMediaLink</code>, <code>GoogleChatSpaceDetails</code>, <code>GoogleChatCardWithId</code>, and <code>GoogleChatEntityBase</code> in <code>Models.cs</code>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Connection</h2>
+                    <p>Source summary: set <code>WebAPIConnectionProperties.Url</code> to the Google Chat API base and configure the <code>Authorization</code> header (service account or user OAuth, per your deployment).</p>
+                </section>
+
+                <section class="section">
+                    <h2>Also read</h2>
+                    <ul>
+                        <li><a href="../impl-connectors.html">REST / SaaS connectors overview</a></li>
+                        <li><a href="../impl-connectors.html#flagship-provider-pages">Flagship <code>conn-*</code> index (table)</a></li>
+                        <li><a href="../connectors-communication.html">Communication category hub</a></li>
+                    </ul>
+                </section>
+
+                <div class="nav-links">
+                    <a href="conn-mailchimp.html"><i class="bi bi-arrow-left"></i> Mailchimp</a>
+                    <a href="conn-asana.html">Asana <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="../roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="../navigation.js"></script>
+</body>
+</html>

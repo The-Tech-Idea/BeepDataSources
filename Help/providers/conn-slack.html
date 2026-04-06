@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slack (connector) — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-connectors.html">Connectors</a>
+                    <span>›</span>
+                    <a href="../connectors-communication.html">Communication</a>
+                    <span>›</span>
+                    <span>Slack</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Slack</h1>
+                    <p class="page-subtitle">Project <code>Connectors/Communication/SlackDataSource/</code>. <code>SlackDataSource : WebAPIDataSource</code>. <code>DataSourceType.Slack</code>, <code>DatasourceCategory.Connector</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Pattern</h2>
+                    <p>Follows the standard connector layout: <code>WebAPIConnectionProperties</code>, entity names mapped to Slack Web API methods, and <code>CommandAttribute</code> for editor-visible operations. Models live under <code>TheTechIdea.Beep.Connectors.Slack.Models</code> (see <code>EXECUTION_SUMMARY.md</code> example).</p>
+                </section>
+
+                <section class="section">
+                    <h2>Source &amp; <code>IDataSource</code></h2>
+                    <p><strong>Implementation:</strong> <code>Connectors/Communication/SlackDataSource/SlackDataSource.cs</code> — <code>SlackDataSource</code> : <code>WebAPIDataSource</code>. Entity keys (e.g. <code>channels</code>, <code>messages</code>) map to Slack Web API methods; some entities require filters (e.g. <code>channel</code> for messages). See <a href="../platform-idatasource.html"><code>IDataSource</code></a> for generic access.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Command methods (<code>CommandAttribute</code>)</h2>
+                    <table>
+                        <thead><tr><th><code>Name</code></th><th>Method</th><th>Returns</th><th><code>ObjectType</code></th></tr></thead>
+                        <tbody>
+                            <tr><td>GetChannels</td><td><code>GetChannels(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;SlackChannel&gt;&gt;</code></td><td>SlackChannel</td></tr>
+                            <tr><td>GetMessages</td><td><code>GetMessages(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;SlackMessage&gt;&gt;</code></td><td>SlackMessage</td></tr>
+                            <tr><td>GetUsers</td><td><code>GetUsers(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;SlackUser&gt;&gt;</code></td><td>SlackUser</td></tr>
+                            <tr><td>GetFiles</td><td><code>GetFiles(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;SlackFile&gt;&gt;</code></td><td>SlackFile</td></tr>
+                            <tr><td>GetTeam</td><td><code>GetTeam(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;SlackTeam&gt;&gt;</code></td><td>SlackTeam</td></tr>
+                            <tr><td>GetUserGroups</td><td><code>GetUserGroups(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;SlackUserGroup&gt;&gt;</code></td><td>SlackUserGroup</td></tr>
+                            <tr><td>PostMessage</td><td><code>PostMessageAsync(SlackMessage message)</code></td><td><code>Task&lt;IEnumerable&lt;SlackMessage&gt;&gt;</code></td><td>SlackMessage</td></tr>
+                            <tr><td>CreateChannel</td><td><code>CreateChannelAsync(SlackChannel channel)</code></td><td><code>Task&lt;IEnumerable&lt;SlackChannel&gt;&gt;</code></td><td>SlackChannel</td></tr>
+                            <tr><td>CreateUserGroup</td><td><code>CreateUserGroupAsync(SlackUserGroup userGroup)</code></td><td><code>Task&lt;IEnumerable&lt;SlackUserGroup&gt;&gt;</code></td><td>SlackUserGroup</td></tr>
+                            <tr><td>UpdateUserGroup</td><td><code>UpdateUserGroupAsync(SlackUserGroup userGroup)</code></td><td><code>Task&lt;IEnumerable&lt;SlackUserGroup&gt;&gt;</code></td><td>SlackUserGroup</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Model types</h2>
+                    <p><code>TheTechIdea.Beep.Connectors.Slack.Models</code> — <code>SlackChannel</code>, <code>SlackMessage</code>, <code>SlackUser</code>, <code>SlackFile</code>, <code>SlackTeam</code>, <code>SlackUserGroup</code>, and related DTOs used for API JSON.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Connection</h2>
+                    <p>Bot tokens or workspace OAuth tokens are supplied through connection properties; scopes must match the methods you call. Details vary by Slack app configuration.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Also read</h2>
+                    <ul>
+                        <li><a href="../impl-connectors.html">REST / SaaS connectors overview</a></li>
+                        <li><a href="../impl-connectors.html#flagship-provider-pages">Flagship <code>conn-*</code> index (table)</a></li>
+                        <li><a href="../connectors-communication.html">Communication category hub</a></li>
+                    </ul>
+                </section>
+
+                <div class="nav-links">
+                    <a href="conn-salesforce.html"><i class="bi bi-arrow-left"></i> Salesforce</a>
+                    <a href="conn-shopify.html">Shopify <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="../roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="../navigation.js"></script>
+</body>
+</html>

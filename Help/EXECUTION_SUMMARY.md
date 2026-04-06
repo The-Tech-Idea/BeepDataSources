@@ -17,6 +17,12 @@ Comprehensive analysis and refactoring of 105+ connector implementations across 
 
 **Only 8 connectors require minor consolidation/creation work.**
 
+### Static HTML help (flagship API docs)
+
+Browser help under `Help/` complements this summary: **thirteen** `Help/providers/conn-*.html` pages list each vendor’s **Source**, **CommandAttribute** surface, **Models**, and **Connection** (aligned to `.plans/phase-09-connectors-flagship.md`). A single **index table** (category hub links, `Connectors/…` folder, `DataSourceType` enum name) lives on `Help/impl-connectors.html` — open that file and use the in-page anchor **`#flagship-provider-pages`** (or follow **Flagship connectors** from `Help/index.html`). Several family and platform pages link that anchor when contrasting local file engines, warehouses, messaging/vector cores, or platform topics with SaaS REST (e.g. `impl-local-inmemory.html`, `impl-cloud-analytics.html`, `impl-messaging-vector.html`, `platform-idatasource.html`, `platform-beepdm.html`, `platform-beepservice.html`, `platform-configeditor.html`, `platform-connection.html`, `platform-connection-properties.html`).
+
+**Help maintenance:** from the BeepDataSources repo root, run `python Help/tools/check-nav-mapping.py` to verify that every `Help/**/*.html` basename has a matching entry in `Help/navigation.js` `createNavigationMapping()` (and no orphan mapping keys). Run `python Help/tools/check-help-links.py` to catch broken relative `href` and local `src=` paths (HTTP(S), `mailto:`, `data:`/`blob:`, and fragment-only links are ignored). Run `python Help/tools/verify-help.py` for nav mapping + links in one command.
+
 ---
 
 ## Analysis Completed
@@ -253,5 +259,4 @@ All necessary documentation, examples, and step-by-step instructions have been p
 ---
 
 **Analysis Date:** January 16, 2026  
-**Completion Status:** Phase 1 ✅ | Phase 2 Remaining (8 tasks)  
-**
+**Completion Status:** Phase 1 ✅ | Phase 2 Remaining (8 tasks)

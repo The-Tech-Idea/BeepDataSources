@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CouchDB — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-nosql.html">NoSQL</a>
+                    <span>›</span>
+                    <span>CouchDB</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Apache CouchDB</h1>
+                    <p class="page-subtitle">Core project: <code>DataSourcesPluginsCore/CouchDBDataSourceCore/</code>. Class <code>CouchDBDataSource</code> (<code>TheTechIdea.Beep.NOSQL.CouchDB</code>) implements <code>IDataSource</code> via CouchDB .NET driver.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Registration</h2>
+                    <ul>
+                        <li><strong><code>DataSourceType</code></strong>: <code>CouchDB</code></li>
+                        <li><strong>Category</strong>: <code>NOSQL</code></li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>Connection</h2>
+                    <p>Base URL, database name, credentials. Revision-aware updates are inherent to CouchDB; forms that assume blind overwrite may need provider-specific handling.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Capabilities</h2>
+                    <p>See <code>CouchDBDataSource.cs</code> for CRUD and view/query exposure through the Beep datasource surface.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Also read</h2>
+                    <ul>
+                        <li><a href="../impl-nosql.html">NoSQL overview</a></li>
+                        <li><a href="../platform-idatasource.html"><code>IDataSource</code></a></li>
+                    </ul>
+                </section>
+
+                <div class="nav-links">
+                    <a href="ravendb.html"><i class="bi bi-arrow-left"></i> RavenDB</a>
+                    <a href="influxdb.html">InfluxDB <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="../roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="../navigation.js"></script>
+</body>
+</html>

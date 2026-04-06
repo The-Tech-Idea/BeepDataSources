@@ -9,7 +9,12 @@ You are an expert software engineer assisting with the BeepDataSources repositor
 - **VectorDatabase/** — Vector DB implementations (Qdrant, Sharp Vector, etc.)
 - **InMemoryDB/** — In-memory cache and storage systems
 - **Messaging/** — Message queue implementations (Kafka, RabbitMQ, etc.)
-- **DataSourcesPluginsCore/** — Core RDBMS, file-based, and cache implementations
+- **DataSourcesPlugins/RDBMSDataSource/** — Shared **`RDBSource`** (Dapper, CRUD, schema, transactions). Engine projects inherit **`RDBSource`** directly (e.g. SQL Server, PostgreSQL, MySQL, Oracle, Snowflake, Spanner, Presto) or **`InMemoryRDBSource`** → **`RDBSource`** for **DuckDB** and **SQLite** (`IInMemoryDB` / `ILocalDB`). Help: **`Help/impl-rdbms.html`**, **`Help/providers/duckdb.html`**
+- **DataSourcesPluginsCore/** — Per-engine cores (many reference the RDBMS plugin above), file-based, and cache implementations
+
+## Static HTML documentation (`Help/`)
+
+Browser help lives under **`Help/`** (open `Help/index.html`; no build step). **Flagship REST/SaaS** command and model write-ups: thirteen `Help/providers/conn-*.html` files, indexed from **`Help/impl-connectors.html`** at anchor **`#flagship-provider-pages`**. Category hubs: `Help/connectors-*.html`. Phased authoring checklists: **`.plans/`** (`README.md`, `00-MASTER-PLAN.md`). After adding or renaming Help pages, run **`python Help/tools/check-nav-mapping.py`** from the repo root to confirm every `*.html` basename under `Help/` has a matching `createNavigationMapping()` entry (and no orphan keys). For relative `href` and local `src=` targets, run **`python Help/tools/check-help-links.py`** (same root); it flags missing files (external URLs, `data:`/`blob:`, and same-page `#` anchors are skipped). **`python Help/tools/verify-help.py`** runs the nav-mapping check and the link check in one step.
 
 ## Critical Architecture Concepts
 

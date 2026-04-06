@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REST &amp; SaaS connectors — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <span>Implementations</span>
+                    <span>›</span>
+                    <span>REST / SaaS connectors</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>REST &amp; SaaS connectors</h1>
+                    <p class="page-subtitle">Projects under <code>Connectors/&lt;Category&gt;/&lt;Vendor&gt;/</code> implement vendor REST (or HTTP) APIs as <a href="platform-idatasource.html"><code>IDataSource</code></a> instances. They are not RDBMS engines: entities map to <strong>API resources</strong> and <strong>command-annotated operations</strong>, often backed by <code>TheTechIdea.Beep.WebAPI</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Standard pattern (<code>WebAPIDataSource</code>)</h2>
+                    <ul>
+                        <li><strong>Base type:</strong> Most connectors derive from <code>WebAPIDataSource</code> (namespace <code>TheTechIdea.Beep.WebAPI</code>), which centralizes HTTP, auth scaffolding, and editor integration.</li>
+                        <li><strong>Registration:</strong> <code>[AddinAttribute(Category = DatasourceCategory.Connector, DatasourceType = DataSourceType.&lt;Vendor&gt;)]</code> on the concrete datasource class.</li>
+                        <li><strong>Connection:</strong> <code>WebAPIConnectionProperties</code> is applied when the connection is not already typed; base URL, headers, and OAuth/API-key fields vary by vendor.</li>
+                        <li><strong>Entities:</strong> Logical names (e.g. <code>tweets.search</code>, <code>users.by_id</code>) are listed in <code>EntitiesNames</code> / <code>Entities</code> and map to endpoint templates or route fragments.</li>
+                        <li><strong>Commands:</strong> Operations exposed to the editor/runtime use <code>CommandAttribute</code> (and related metadata) so CRUD-like calls route to the correct HTTP method and path.</li>
+                        <li><strong>Models:</strong> DTOs and enums live in <code>Models.cs</code> (or a <code>Models</code> folder) under namespace <code>TheTechIdea.Beep.Connectors.&lt;Category&gt;.&lt;Service&gt;.Models</code>.</li>
+                    </ul>
+                    <p class="note">Refactoring inventory and conventions: <a href="EXECUTION_SUMMARY.md">Help/EXECUTION_SUMMARY.md</a> (open from repo; raw markdown in browser may be plain text). Rough scale: <strong>105+</strong> connectors analyzed, high coverage of <code>CommandAttribute</code> and <code>Models</code>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>How flagship provider pages document APIs</h2>
+                    <p>Each <code><a href="providers/conn-salesforce.html">conn-*.html</a></code> file under <code>Help/providers/</code> documents that connector’s <strong>command surface</strong>: public methods decorated with <code>CommandAttribute</code>, with <code>Name</code>, <code>Caption</code>, and <code>ObjectType</code> when the source sets them (some connectors omit <code>Name</code>; the editor then keys off the method name). A <strong>Model types</strong> subsection lists the main DTO classes and namespace; <strong>Connection</strong> (or auth) is typically last before <em>Also read</em>. Cross-cutting <code>IDataSource</code> behavior is described in <a href="platform-idatasource.html">IDataSource</a>. The master index with hubs and <code>DataSourceType</code> is in <a href="#flagship-provider-pages">Flagship provider pages (phase 09)</a> below.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Flagship reference in repo</h2>
+                    <p><strong>Twitter / X</strong> (<code>Connectors/SocialMedia/Twitter/</code>) is called out in the refactoring summary as a reference layout: <code>TwitterDataSource : WebAPIDataSource</code>, entity endpoint dictionaries, required filters, and JSON handling. Use it when aligning a new connector with the shared pattern. Help: <a href="providers/conn-twitter.html">Twitter / X</a>.</p>
+                </section>
+
+                <section class="section" id="flagship-provider-pages">
+                    <h2>Flagship provider pages (phase 09)</h2>
+                    <p>Deeper one-page notes under <code>Help/providers/conn-*.html</code> (OAuth, entities, and <strong>full command + model catalogs</strong> aligned to source). <code>DataSourceType</code> values match <code>[AddinAttribute(… DatasourceType = …)]</code> on each datasource class.</p>
+                    <table>
+                        <thead>
+                            <tr><th>Connector</th><th>Help</th><th>Category hub</th><th>Repo folder</th><th><code>DataSourceType</code></th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Salesforce</td><td><a href="providers/conn-salesforce.html">conn-salesforce</a></td><td><a href="connectors-crm.html">CRM</a></td><td><code>Connectors/CRM/SalesforceDataSource/</code></td><td><code>Salesforce</code></td></tr>
+                            <tr><td>Slack</td><td><a href="providers/conn-slack.html">conn-slack</a></td><td><a href="connectors-communication.html">Communication</a></td><td><code>Connectors/Communication/SlackDataSource/</code></td><td><code>Slack</code></td></tr>
+                            <tr><td>Shopify</td><td><a href="providers/conn-shopify.html">conn-shopify</a></td><td><a href="connectors-ecommerce.html">E-commerce</a></td><td><code>Connectors/E-commerce/ShopifyDataSource/</code></td><td><code>Shopify</code></td></tr>
+                            <tr><td>Twitter / X</td><td><a href="providers/conn-twitter.html">conn-twitter</a></td><td><a href="connectors-social-media.html">Social media</a></td><td><code>Connectors/SocialMedia/Twitter/</code></td><td><code>Twitter</code></td></tr>
+                            <tr><td>HubSpot</td><td><a href="providers/conn-hubspot.html">conn-hubspot</a></td><td><a href="connectors-crm.html">CRM</a></td><td><code>Connectors/CRM/HubSpotDataSource/</code></td><td><code>HubSpot</code></td></tr>
+                            <tr><td>Zendesk</td><td><a href="providers/conn-zendesk.html">conn-zendesk</a></td><td><a href="connectors-customer-support.html">Customer support</a></td><td><code>Connectors/CustomerSupport/Zendesk/</code></td><td><code>Zendesk</code></td></tr>
+                            <tr><td>Microsoft Teams</td><td><a href="providers/conn-microsoft-teams.html">conn-microsoft-teams</a></td><td><a href="connectors-communication.html">Communication</a></td><td><code>Connectors/Communication/MicrosoftTeamsDataSource/</code></td><td><code>MicrosoftTeams</code></td></tr>
+                            <tr><td>Dynamics 365</td><td><a href="providers/conn-dynamics365.html">conn-dynamics365</a></td><td><a href="connectors-crm.html">CRM</a></td><td><code>Connectors/CRM/Dynamics365DataSource/</code></td><td><code>MicrosoftDynamics365</code></td></tr>
+                            <tr><td>Mailchimp</td><td><a href="providers/conn-mailchimp.html">conn-mailchimp</a></td><td><a href="connectors-marketing.html">Marketing</a></td><td><code>Connectors/Marketing/MailchimpDataSource/</code></td><td><code>Mailchimp</code></td></tr>
+                            <tr><td>Google Chat</td><td><a href="providers/conn-google-chat.html">conn-google-chat</a></td><td><a href="connectors-communication.html">Communication</a></td><td><code>Connectors/Communication/GoogleChatDataSource/</code></td><td><code>GoogleChat</code></td></tr>
+                            <tr><td>Asana</td><td><a href="providers/conn-asana.html">conn-asana</a></td><td><a href="connectors-task-management.html">Task management</a></td><td><code>Connectors/TaskManagement/AsanaDataSource/</code></td><td><code>Asana</code></td></tr>
+                            <tr><td>BigCommerce</td><td><a href="providers/conn-bigcommerce.html">conn-bigcommerce</a></td><td><a href="connectors-ecommerce.html">E-commerce</a></td><td><code>Connectors/E-commerce/BigCommerceDataSource/</code></td><td><code>BigCommerce</code></td></tr>
+                            <tr><td>Gmail</td><td><a href="providers/conn-gmail.html">conn-gmail</a></td><td><a href="connectors-mail-services.html">Mail services</a></td><td><code>Connectors/MailServices/Gmail/</code></td><td><code>Gmail</code></td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Connector categories (phase 08 hubs)</h2>
+                    <p>Each row links to a category page listing child connector folders under <code>Connectors/</code>.</p>
+                    <p class="note">Eight hubs that already surface flagship <code>conn-*</code> help links include a post-table note pointing at <a href="#flagship-provider-pages">the flagship index above</a>. Other category pages list folders only until additional <code>conn-*.html</code> pages are authored.</p>
+                    <table>
+                        <thead>
+                            <tr><th>Category</th><th>Hub</th><th>Repo path</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Accounting</td><td><a href="connectors-accounting.html">Hub</a></td><td><code>Connectors/Accounting/</code></td></tr>
+                            <tr><td>Business intelligence</td><td><a href="connectors-business-intelligence.html">Hub</a></td><td><code>Connectors/BusinessIntelligence/</code></td></tr>
+                            <tr><td>Cloud storage</td><td><a href="connectors-cloud-storage.html">Hub</a></td><td><code>Connectors/Cloud-Storage/</code></td></tr>
+                            <tr><td>Communication</td><td><a href="connectors-communication.html">Hub</a></td><td><code>Connectors/Communication/</code></td></tr>
+                            <tr><td>Content management</td><td><a href="connectors-content-management.html">Hub</a></td><td><code>Connectors/ContentManagement/</code></td></tr>
+                            <tr><td>CRM</td><td><a href="connectors-crm.html">Hub</a></td><td><code>Connectors/CRM/</code></td></tr>
+                            <tr><td>Customer support</td><td><a href="connectors-customer-support.html">Hub</a></td><td><code>Connectors/CustomerSupport/</code></td></tr>
+                            <tr><td>E-commerce</td><td><a href="connectors-ecommerce.html">Hub</a></td><td><code>Connectors/E-commerce/</code></td></tr>
+                            <tr><td>Forms</td><td><a href="connectors-forms.html">Hub</a></td><td><code>Connectors/Forms/</code></td></tr>
+                            <tr><td>IoT</td><td><a href="connectors-iot.html">Hub</a></td><td><code>Connectors/IoT/</code></td></tr>
+                            <tr><td>Mail services</td><td><a href="connectors-mail-services.html">Hub</a></td><td><code>Connectors/MailServices/</code></td></tr>
+                            <tr><td>Marketing</td><td><a href="connectors-marketing.html">Hub</a></td><td><code>Connectors/Marketing/</code></td></tr>
+                            <tr><td>Meeting tools</td><td><a href="connectors-meeting-tools.html">Hub</a></td><td><code>Connectors/MeetingTools/</code></td></tr>
+                            <tr><td>SMS</td><td><a href="connectors-sms.html">Hub</a></td><td><code>Connectors/SMS/</code></td></tr>
+                            <tr><td>Social media</td><td><a href="connectors-social-media.html">Hub</a></td><td><code>Connectors/SocialMedia/</code></td></tr>
+                            <tr><td>Task management</td><td><a href="connectors-task-management.html">Hub</a></td><td><code>Connectors/TaskManagement/</code></td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Contrast with other families</h2>
+                    <ul>
+                        <li><a href="impl-rdbms.html">RDBMS</a> — SQL, shared <code>RDBSource</code>, dialect helpers.</li>
+                        <li><a href="impl-nosql.html">NoSQL</a> — document/KV/graph/TSDB wire protocols.</li>
+                        <li><a href="impl-cloud-analytics.html">Cloud analytics</a> — warehouse/query engines under <code>DataSourcesPluginsCore</code>.</li>
+                        <li><a href="impl-messaging-vector.html">Messaging &amp; vector</a> — brokers and vector DB cores outside <code>Connectors/</code>.</li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>BeepDM skills</h2>
+                    <ul>
+                        <li><code>BeepDM/.cursor/idatasource/SKILL.md</code></li>
+                    </ul>
+                    <p>Additional <code>Help/providers/conn-*.html</code> pages can cover OAuth setup, scopes, and rate limits; category hubs stay stable as the folder list changes. Shipped flagship list: <a href="#flagship-provider-pages">index table</a> above. Plan: <code>.plans/phase-09-connectors-flagship.md</code>.</p>
+                </section>
+
+                <div class="nav-links">
+                    <a href="impl-messaging-vector.html"><i class="bi bi-arrow-left"></i> Messaging &amp; vector</a>
+                    <a href="connectors-crm.html">CRM hub <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HubSpot (connector) — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-connectors.html">Connectors</a>
+                    <span>›</span>
+                    <a href="../connectors-crm.html">CRM</a>
+                    <span>›</span>
+                    <span>HubSpot</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>HubSpot</h1>
+                    <p class="page-subtitle">Project <code>Connectors/CRM/HubSpotDataSource/</code>. <code>HubSpotDataSource : WebAPIDataSource</code>. Namespace <code>TheTechIdea.Beep.Connectors.HubSpot</code> (<code>…HubSpot.Models</code>). <code>DataSourceType.HubSpot</code>, <code>DatasourceCategory.Connector</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Entities</h2>
+                    <p>Known CRM API v3 object names are registered as entities (see <code>KnownEntities</code> in <code>HubSpotDataSource.cs</code>)—contacts, companies, deals, and related objects as implemented in source.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Source &amp; <code>IDataSource</code></h2>
+                    <p><strong>Implementation:</strong> <code>Connectors/CRM/HubSpotDataSource/HubSpotDataSource.cs</code> — <code>HubSpotDataSource</code> : <code>WebAPIDataSource</code>. CRM v3 object keys (e.g. <code>contacts</code>, <code>companies</code>) are resolved through <code>GetEntityAsync</code>; strongly typed commands deserialize to models under <code>TheTechIdea.Beep.Connectors.HubSpot.Models</code>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Command methods (<code>CommandAttribute</code>)</h2>
+                    <table>
+                        <thead><tr><th><code>Name</code></th><th>Method</th><th>Returns</th><th><code>ObjectType</code></th></tr></thead>
+                        <tbody>
+                            <tr><td>GetContacts</td><td><code>GetContacts(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;Contact&gt;&gt;</code></td><td>Contact</td></tr>
+                            <tr><td>GetCompanies</td><td><code>GetCompanies(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;Company&gt;&gt;</code></td><td>Company</td></tr>
+                            <tr><td>GetDeals</td><td><code>GetDeals(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;Deal&gt;&gt;</code></td><td>Deal</td></tr>
+                            <tr><td>GetTickets</td><td><code>GetTickets(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;Ticket&gt;&gt;</code></td><td>Ticket</td></tr>
+                            <tr><td>GetProducts</td><td><code>GetProducts(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;Product&gt;&gt;</code></td><td>Product</td></tr>
+                            <tr><td>GetLineItems</td><td><code>GetLineItems(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;LineItem&gt;&gt;</code></td><td>LineItem</td></tr>
+                            <tr><td>GetQuotes</td><td><code>GetQuotes(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;Quote&gt;&gt;</code></td><td>Quote</td></tr>
+                            <tr><td>GetOwners</td><td><code>GetOwners(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;Owner&gt;&gt;</code></td><td>Owner</td></tr>
+                            <tr><td>CreateContact</td><td><code>CreateContactAsync(Contact contact)</code></td><td><code>Task&lt;IEnumerable&lt;Contact&gt;&gt;</code></td><td>Contact</td></tr>
+                            <tr><td>UpdateContact</td><td><code>UpdateContactAsync(string contactId, Contact contact)</code></td><td><code>Task&lt;IEnumerable&lt;Contact&gt;&gt;</code></td><td>Contact</td></tr>
+                            <tr><td>CreateCompany</td><td><code>CreateCompanyAsync(Company company)</code></td><td><code>Task&lt;IEnumerable&lt;Company&gt;&gt;</code></td><td>Company</td></tr>
+                            <tr><td>UpdateCompany</td><td><code>UpdateCompanyAsync(string companyId, Company company)</code></td><td><code>Task&lt;IEnumerable&lt;Company&gt;&gt;</code></td><td>Company</td></tr>
+                            <tr><td>CreateDeal</td><td><code>CreateDealAsync(Deal deal)</code></td><td><code>Task&lt;IEnumerable&lt;Deal&gt;&gt;</code></td><td>Deal</td></tr>
+                            <tr><td>UpdateDeal</td><td><code>UpdateDealAsync(string dealId, Deal deal)</code></td><td><code>Task&lt;IEnumerable&lt;Deal&gt;&gt;</code></td><td>Deal</td></tr>
+                            <tr><td>CreateTicket</td><td><code>CreateTicketAsync(Ticket ticket)</code></td><td><code>Task&lt;IEnumerable&lt;Ticket&gt;&gt;</code></td><td>Ticket</td></tr>
+                            <tr><td>UpdateTicket</td><td><code>UpdateTicketAsync(string ticketId, Ticket ticket)</code></td><td><code>Task&lt;IEnumerable&lt;Ticket&gt;&gt;</code></td><td>Ticket</td></tr>
+                            <tr><td>CreateProduct</td><td><code>CreateProductAsync(Product product)</code></td><td><code>Task&lt;IEnumerable&lt;Product&gt;&gt;</code></td><td>Product</td></tr>
+                            <tr><td>UpdateProduct</td><td><code>UpdateProductAsync(string productId, Product product)</code></td><td><code>Task&lt;IEnumerable&lt;Product&gt;&gt;</code></td><td>Product</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Model types</h2>
+                    <p><code>TheTechIdea.Beep.Connectors.HubSpot.Models</code> — primary CRM DTOs include <code>Contact</code>, <code>Company</code>, <code>Deal</code>, <code>Ticket</code>, <code>Product</code>, <code>LineItem</code>, <code>Quote</code>, <code>Owner</code> (plus any nested types defined alongside them in the HubSpot connector project).</p>
+                </section>
+
+                <section class="section">
+                    <h2>Connection</h2>
+                    <p>Private app or OAuth access tokens map through <a href="../platform-connection-properties.html"><code>WebAPIConnectionProperties</code></a>. HubSpot rate limits and scope requirements apply per portal.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Also read</h2>
+                    <ul>
+                        <li><a href="../impl-connectors.html">REST / SaaS connectors overview</a></li>
+                        <li><a href="../impl-connectors.html#flagship-provider-pages">Flagship <code>conn-*</code> index (table)</a></li>
+                        <li><a href="../connectors-crm.html">CRM category hub</a></li>
+                    </ul>
+                </section>
+
+                <div class="nav-links">
+                    <a href="conn-twitter.html"><i class="bi bi-arrow-left"></i> Twitter / X</a>
+                    <a href="conn-zendesk.html">Zendesk <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="../roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="../navigation.js"></script>
+</body>
+</html>

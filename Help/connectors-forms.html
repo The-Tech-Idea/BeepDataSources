@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connectors — Forms — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <a href="impl-connectors.html">Connectors</a>
+                    <span>›</span>
+                    <span>Forms</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Form builders</h1>
+                    <p class="page-subtitle">Survey and form APIs under <code>Connectors/Forms/</code>.</p>
+                </div>
+
+                <section class="section">
+                    <table>
+                        <thead>
+                            <tr><th>Connector</th><th>Path</th><th>Role</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Jotform</td><td><code>Forms/JotformDataSource/</code></td><td>Forms, submissions, reports.</td></tr>
+                            <tr><td>Typeform</td><td><code>Forms/TypeformDataSource/</code></td><td>Interactive forms and responses.</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <div class="nav-links">
+                    <a href="connectors-ecommerce.html"><i class="bi bi-arrow-left"></i> E-commerce</a>
+                    <a href="connectors-iot.html">IoT <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="index.html">Home</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

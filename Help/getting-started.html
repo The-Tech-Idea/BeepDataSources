@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to use this help — Beep DataSources</title>
+    <link rel="stylesheet" href="sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="index.html">Home</a>
+                    <span>›</span>
+                    <span>Getting started</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>How to use this help</h1>
+                    <p class="page-subtitle">Reading order, relationship to BeepDM skills, and how phased provider docs will land.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Open locally</h2>
+                    <p>Open <code>Help/index.html</code> in a browser, or serve the <code>Help</code> folder with any static file server. Scripts are plain ES5 classes; no build step is required.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Suggested reading order</h2>
+                    <ol>
+                        <li><a href="platform-beepdm.html">Editor &amp; orchestration</a> — where <code>IDataSource</code> instances live in an app.</li>
+                        <li><a href="platform-beepservice.html">BeepService startup</a> — desktop/bootstrap patterns.</li>
+                        <li><a href="platform-configeditor.html">ConfigEditor</a> — persisted connections and metadata.</li>
+                        <li><a href="platform-connection-properties.html">ConnectionProperties</a> — building a definition.</li>
+                        <li><a href="platform-connection.html">Connection lifecycle</a> — validation, normalization, masking.</li>
+                        <li><a href="platform-idatasource.html">IDataSource contract</a> — CRUD, metadata, errors.</li>
+                        <li><a href="impl-local-inmemory.html">Local &amp; in-memory</a> — SQLite, LiteDB, DuckDB (phase 03).</li>
+                        <li><a href="impl-rdbms.html">RDBMS (SQL Server, PostgreSQL, MySQL, Oracle)</a> — shared <code>RDBSource</code> / helpers (phase 04).</li>
+                        <li><a href="impl-nosql.html">NoSQL / document / KV / TSDB</a> — MongoDB, Redis, RavenDB, CouchDB, InfluxDB (phase 05).</li>
+                        <li><a href="impl-cloud-analytics.html">Cloud &amp; analytics</a> — BigQuery, Snowflake, Spanner, Kusto, Presto (phase 06).</li>
+                        <li><a href="impl-messaging-vector.html">Messaging &amp; vector</a> — Kafka, RabbitMQ, NATS, MassTransit, Redis Streams, Pub/Sub; Qdrant, Milvus, ChromaDB (phase 07).</li>
+                        <li><a href="impl-connectors.html">REST / SaaS connectors</a> — <code>Connectors/</code> by category, <code>WebAPIDataSource</code> pattern (phase 08); phase 09 <a href="impl-connectors.html#flagship-provider-pages">flagship <code>conn-*</code> index table</a>.</li>
+                        <li><a href="phased-implementations.html">Provider rollout</a> — all phases.</li>
+                    </ol>
+                </section>
+
+                <section class="section">
+                    <h2>BeepDM skills (authoritative)</h2>
+                    <p>This HTML summarizes behavior; the canonical guides are markdown skills under <strong><code>BeepDM/.cursor/</code></strong> (e.g. <code>idatasource</code>, <code>connection</code>, <code>configeditor</code>). When instructions conflict, prefer the BeepDM repo and code.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Phased plans</h2>
+                    <p>Execution checklists live in <code>BeepDataSources/.plans/</code>. Start with <code>00-MASTER-PLAN.md</code> and <code>phase-01-html-framework.md</code>.</p>
+                    <p>Phase 09 adds thirteen <code>Help/providers/conn-*.html</code> flagship connector write-ups; the single index table is on <a href="impl-connectors.html#flagship-provider-pages">REST / SaaS overview → flagship list</a>.</p>
+                    <p><a href="roadmap.html">Roadmap (HTML summary) →</a> &nbsp; <a href="phased-implementations.html">Provider rollout (phase map) →</a></p>
+                </section>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="index.html">Home</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="navigation.js"></script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft Teams (connector) — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-connectors.html">Connectors</a>
+                    <span>›</span>
+                    <a href="../connectors-communication.html">Communication</a>
+                    <span>›</span>
+                    <span>Microsoft Teams</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>Microsoft Teams</h1>
+                    <p class="page-subtitle">Project <code>Connectors/Communication/MicrosoftTeamsDataSource/</code>. <code>MicrosoftTeamsDataSource : WebAPIDataSource</code>. Namespace <code>TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams</code> (models in nested <code>Models</code>). <code>DataSourceType.MicrosoftTeams</code>, <code>DatasourceCategory.Connector</code>.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Microsoft Graph</h2>
+                    <p>Entities map to Graph paths (e.g. <code>teams</code>, <code>channels</code>, <code>team</code> with <code>team_id</code>) via the static <code>Map</code> in <code>MicrosoftTeamsDataSource.cs</code>. Configure base URL to the Graph host and supply authorization per Azure AD app registration.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Source &amp; <code>IDataSource</code></h2>
+                    <p><strong>Implementation:</strong> <code>Connectors/Communication/MicrosoftTeamsDataSource/MicrosoftTeamsDataSource.cs</code> — <code>MicrosoftTeamsDataSource</code> : <code>WebAPIDataSource</code>. Commands use <code>GetEntityAsync</code> with keys such as <code>teams</code>, <code>channels</code>, <code>chats</code>; filters carry <code>team_id</code>, <code>channel_id</code>, etc., per the static map in source.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Command methods (<code>CommandAttribute</code>)</h2>
+                    <table>
+                        <thead><tr><th><code>Name</code></th><th>Method</th><th>Returns</th><th><code>ObjectType</code></th></tr></thead>
+                        <tbody>
+                            <tr><td>GetTeams</td><td><code>GetTeams(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsTeam&gt;&gt;</code></td><td>TeamsTeam</td></tr>
+                            <tr><td>GetTeam</td><td><code>GetTeam(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsTeam&gt;&gt;</code></td><td>TeamsTeam</td></tr>
+                            <tr><td>GetChannels</td><td><code>GetChannels(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsChannel&gt;&gt;</code></td><td>TeamsChannel</td></tr>
+                            <tr><td>GetChannel</td><td><code>GetChannel(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsChannel&gt;&gt;</code></td><td>TeamsChannel</td></tr>
+                            <tr><td>GetChannelMessages</td><td><code>GetChannelMessages(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsMessage&gt;&gt;</code></td><td>TeamsMessage</td></tr>
+                            <tr><td>GetChannelMessage</td><td><code>GetChannelMessage(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsMessage&gt;&gt;</code></td><td>TeamsMessage</td></tr>
+                            <tr><td>GetTeamMembers</td><td><code>GetTeamMembers(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsTeamMember&gt;&gt;</code></td><td>TeamsTeamMember</td></tr>
+                            <tr><td>GetChats</td><td><code>GetChats(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsChat&gt;&gt;</code></td><td>TeamsChat</td></tr>
+                            <tr><td>GetChat</td><td><code>GetChat(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsChat&gt;&gt;</code></td><td>TeamsChat</td></tr>
+                            <tr><td>GetChatMessages</td><td><code>GetChatMessages(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsMessage&gt;&gt;</code></td><td>TeamsMessage</td></tr>
+                            <tr><td>GetUsers</td><td><code>GetUsers(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsUser&gt;&gt;</code></td><td>TeamsUser</td></tr>
+                            <tr><td>GetMe</td><td><code>GetMe(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsUser&gt;&gt;</code></td><td>TeamsMe</td></tr>
+                            <tr><td>GetMyJoinedTeams</td><td><code>GetMyJoinedTeams(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsTeam&gt;&gt;</code></td><td>TeamsJoinedTeam</td></tr>
+                            <tr><td>GetMyChats</td><td><code>GetMyChats(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsChat&gt;&gt;</code></td><td>TeamsMeChat</td></tr>
+                            <tr><td>GetApps</td><td><code>GetApps(List&lt;AppFilter&gt; filters = null)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsApp&gt;&gt;</code></td><td>TeamsApp</td></tr>
+                            <tr><td>CreateMessageAsync</td><td><code>CreateMessageAsync(TeamsMessage message)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsMessage&gt;&gt;</code></td><td>TeamsMessage</td></tr>
+                            <tr><td>CreateChannelAsync</td><td><code>CreateChannelAsync(TeamsChannel channel)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsChannel&gt;&gt;</code></td><td>TeamsChannel</td></tr>
+                            <tr><td>CreateTeamAsync</td><td><code>CreateTeamAsync(TeamsTeam team)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsTeam&gt;&gt;</code></td><td>TeamsTeam</td></tr>
+                            <tr><td>UpdateTeamAsync</td><td><code>UpdateTeamAsync(TeamsTeam team)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsTeam&gt;&gt;</code></td><td>TeamsTeam</td></tr>
+                            <tr><td>CreateChatAsync</td><td><code>CreateChatAsync(TeamsChat chat)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsChat&gt;&gt;</code></td><td>TeamsChat</td></tr>
+                            <tr><td>UpdateChannelAsync</td><td><code>UpdateChannelAsync(TeamsChannel channel)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsChannel&gt;&gt;</code></td><td>TeamsChannel</td></tr>
+                            <tr><td>UpdateMessageAsync</td><td><code>UpdateMessageAsync(TeamsMessage message)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsMessage&gt;&gt;</code></td><td>TeamsMessage</td></tr>
+                            <tr><td>UpdateChatAsync</td><td><code>UpdateChatAsync(TeamsChat chat)</code></td><td><code>Task&lt;IEnumerable&lt;TeamsChat&gt;&gt;</code></td><td>TeamsChat</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Model types</h2>
+                    <p><code>TheTechIdea.Beep.Connectors.Communication.MicrosoftTeams.Models</code> — <code>TeamsTeam</code>, <code>TeamsChannel</code>, <code>TeamsMessage</code>, <code>TeamsChat</code>, <code>TeamsUser</code>, <code>TeamsTeamMember</code>, <code>TeamsApp</code>, <code>TeamsApplication</code>, <code>TeamsBody</code>, <code>TeamsFrom</code>, and related Graph-shaped DTOs in <code>Models.cs</code>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Connection</h2>
+                    <p>Source comments: set <code>WebAPIConnectionProperties.Url</code> to the Microsoft Graph base URL and set the <code>Authorization</code> header (delegated or application permissions per your scenario). See <a href="../platform-connection-properties.html">ConnectionProperties</a>.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Also read</h2>
+                    <ul>
+                        <li><a href="../impl-connectors.html">REST / SaaS connectors overview</a></li>
+                        <li><a href="../impl-connectors.html#flagship-provider-pages">Flagship <code>conn-*</code> index (table)</a></li>
+                        <li><a href="../connectors-communication.html">Communication category hub</a></li>
+                    </ul>
+                </section>
+
+                <div class="nav-links">
+                    <a href="conn-zendesk.html"><i class="bi bi-arrow-left"></i> Zendesk</a>
+                    <a href="conn-dynamics365.html">Dynamics 365 <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
+                        <div class="footer-links"><a href="../roadmap.html">Roadmap</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="../navigation.js"></script>
+</body>
+</html>
