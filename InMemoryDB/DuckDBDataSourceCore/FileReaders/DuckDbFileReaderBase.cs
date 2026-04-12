@@ -7,6 +7,7 @@ using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.FileManager.Readers;
+using TheTechIdea.Beep.Utilities;
 
 namespace DuckDBDataSourceCore.FileReaders
 {
@@ -25,6 +26,8 @@ namespace DuckDBDataSourceCore.FileReaders
         public ParseMode ParseMode { get; set; } = ParseMode.Lenient;
 
         public IReadOnlyList<RowDiagnostic> LastDiagnostics => _diagnostics;
+
+        DataSourceType IFileFormatReader.SupportedType => throw new NotImplementedException();
 
         public void ClearDiagnostics() => _diagnostics.Clear();
 
@@ -59,23 +62,31 @@ namespace DuckDBDataSourceCore.FileReaders
                 yield break;
 
             ClearDiagnostics();
-            var sql = BuildSelectSql(filePath);
+
+            foreach (var row in CollectRows(filePath))
+                yield return row;
+        }
+
+        private List<string[]> CollectRows(string filePath)
+        {
+            var rows = new List<string[]>();
+            var sql  = BuildSelectSql(filePath);
             DuckDBConnection? conn = null;
             try
             {
                 conn = new DuckDBConnection("DataSource=:memory:");
                 conn.Open();
-                using var cmd = conn.CreateCommand();
-                cmd.CommandText = sql;
+                using var cmd    = conn.CreateCommand();
+                cmd.CommandText  = sql;
                 using var reader = cmd.ExecuteReader();
-                long rowIndex = 0;
+                long rowIndex    = 0;
                 while (reader.Read())
                 {
                     rowIndex++;
                     var row = new string[reader.FieldCount];
                     for (int i = 0; i < reader.FieldCount; i++)
                         row[i] = reader.IsDBNull(i) ? string.Empty : ConvertToCellString(reader.GetValue(i));
-                    yield return row;
+                    rows.Add(row);
                 }
             }
             catch (Exception ex)
@@ -83,8 +94,8 @@ namespace DuckDBDataSourceCore.FileReaders
                 _diagnostics.Add(new RowDiagnostic
                 {
                     RowIndex = -1,
-                    Code = "DUCKDB_READ_ERROR",
-                    Message = ex.Message,
+                    Code     = "DUCKDB_READ_ERROR",
+                    Message  = ex.Message,
                     Severity = DiagnosticSeverity.Error
                 });
 
@@ -95,6 +106,7 @@ namespace DuckDBDataSourceCore.FileReaders
             {
                 conn?.Dispose();
             }
+            return rows;
         }
 
         private static string ConvertToCellString(object? value)
@@ -156,5 +168,15 @@ namespace DuckDBDataSourceCore.FileReaders
       
       
         public virtual bool RewriteFile(string filePath, IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows) => false;
+
+        public bool CreateFile(string filePath, IReadOnlyList<string> headers)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool AppendRow(string filePath, IReadOnlyList<string> headers, IReadOnlyList<string> values)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

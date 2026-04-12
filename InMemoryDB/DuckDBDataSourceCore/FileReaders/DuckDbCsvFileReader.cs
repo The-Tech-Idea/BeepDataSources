@@ -1,5 +1,6 @@
 using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.FileManager.Attributes;
+using TheTechIdea.Beep.Utilities;
 
 namespace DuckDBDataSourceCore.FileReaders
 {
