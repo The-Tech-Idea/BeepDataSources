@@ -32,10 +32,10 @@
 	<ItemGroup>
 	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="1.5.0" />
 	  <PackageReference Include="DuckDB.NET.Data.Full" Version="1.5.0" />
-	  <PackageReference Include="System.Data.Odbc" Version="10.0.5" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.86" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.139" />
-	  <PackageReference Include="TheTechIdea.Beep.Vis.Modules" Version="2.0.38" />
+	  <PackageReference Include="System.Data.Odbc" Version="10.0.6" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.87" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.140" />
+	  <PackageReference Include="TheTechIdea.Beep.Vis.Modules" Version="2.0.39" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Folder Include="gfx\" />

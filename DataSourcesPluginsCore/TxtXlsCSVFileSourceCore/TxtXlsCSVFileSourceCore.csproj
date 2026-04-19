@@ -29,10 +29,11 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="NPOI" Version="2.7.6" />
-	  <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.5" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.86" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.139" />
+	  <PackageReference Include="NPOI" Version="2.8.0" />
+	  <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.6" />
+	  <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.6" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.87" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.140" />
 	</ItemGroup>
 
 
