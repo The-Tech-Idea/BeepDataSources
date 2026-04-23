@@ -37,10 +37,10 @@
   <Compile Remove="..\..\DataSourcesPlugins\SQLServerDataSource\SQLServerDataSource.cs" />
 </ItemGroup>
 <ItemGroup>
-  <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.6" />
+  <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
   <PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.89" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.1443" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.96" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.1444" />
   <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.20" />
 </ItemGroup>
 <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
