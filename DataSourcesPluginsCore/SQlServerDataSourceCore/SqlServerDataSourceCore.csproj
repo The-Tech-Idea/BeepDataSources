@@ -37,9 +37,9 @@
   <Compile Remove="..\..\DataSourcesPlugins\SQLServerDataSource\SQLServerDataSource.cs" />
 </ItemGroup>
 <ItemGroup>
-  <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
+  <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.8" />
   <PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
-  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.96" />
+  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.97" />
   <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.1444" />
   <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.21" />
 </ItemGroup>
