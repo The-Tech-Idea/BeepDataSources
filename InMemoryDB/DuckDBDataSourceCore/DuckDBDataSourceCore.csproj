@@ -30,8 +30,8 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="1.5.2" />
-	  <PackageReference Include="DuckDB.NET.Data.Full" Version="1.5.2" />
+	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="1.5.3" />
+	  <PackageReference Include="DuckDB.NET.Data.Full" Version="1.5.3" />
 	  <PackageReference Include="System.Data.Odbc" Version="10.0.8" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.0.0" />
 	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="3.0.0" />
