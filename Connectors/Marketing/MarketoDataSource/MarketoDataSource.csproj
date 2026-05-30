@@ -1,5 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+		<Title>TheTechIdea.Beep.Connectors.MarketoDataSource</Title>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageIcon>SimpleODM.png</PackageIcon>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RepositoryUrl>https://github.com/The-Tech-Idea/BeepDataSources</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
+		<Copyright>2024</Copyright>
+		<Company>The Tech Idea</Company>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -16,4 +24,16 @@
     <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.61" />
     <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.119" />
   </ItemGroup>
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName).dll" DestinationFolder="$(ProjectDir)..\..\..\..\outputDLL\DataSources\MarketoDataSource\$(TargetFramework)" SkipUnchangedFiles="false" />
+	</Target>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\..\LocalNugetFiles\DataSources" />
+	</Target>
+	<ItemGroup>
+		<None Include="..\..\..\..\InstallationScripts\LogoGFx\128\SimpleODM.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 </Project>

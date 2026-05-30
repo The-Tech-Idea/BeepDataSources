@@ -1,13 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+		<Title>TheTechIdea.Beep.Connectors.AnyDo</Title>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageIcon>SimpleODM.png</PackageIcon>
+		<PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
+		<Copyright>2024</Copyright>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>TheTechIdea.Beep.Connectors.AnyDo</PackageId>
     <Version>1.0.0</Version>
-    <Authors>The-Tech-Idea</Authors>
-    <Company>The-Tech-Idea</Company>
+    <Authors>The Tech Idea</Authors>
+    <Company>The Tech Idea</Company>
     <Description>Any.do data source connector for Beep Data Connectors framework</Description>
     <PackageTags>beep,datasource,connector,anydo,tasks,todo,productivity</PackageTags>
     <RepositoryUrl>https://github.com/The-Tech-Idea/BeepDataSources</RepositoryUrl>
@@ -24,4 +29,16 @@
 
 
 
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName).dll" DestinationFolder="$(ProjectDir)..\..\..\..\outputDLL\DataSources\AnyDoDataSource\$(TargetFramework)" SkipUnchangedFiles="false" />
+	</Target>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\..\LocalNugetFiles\DataSources" />
+	</Target>
+	<ItemGroup>
+		<None Include="..\..\..\..\InstallationScripts\LogoGFx\128\SimpleODM.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 </Project>

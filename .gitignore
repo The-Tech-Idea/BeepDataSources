@@ -364,3 +364,9 @@ FodyWeavers.xsd
 
 DataSourcesPluginsCore/OutputDLL/
 DataSourcesPlugins/OutputDLL/
+outputDLL/
+LocalNugetFiles/
+.cursor/
+normalize-csproj.ps1
+publish-nuget.ps1
+unfinished-projects.txt

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
@@ -8,10 +8,10 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>The Tech Idea</Authors>
     <Company>The Tech Idea</Company>
-    <Copyright>2022</Copyright>
+    <Copyright>2024</Copyright>
     <PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
     <PackageIcon>SimpleODM.png</PackageIcon>
-    <RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
+    <RepositoryUrl>https://github.com/The-Tech-Idea/BeepDataSources</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Title>TheTechIdea.Beep.CouchBaseLiteDataSourceCore</Title>
     <PackageId>TheTechIdea.Beep.CouchBaseLiteDataSourceCore</PackageId>

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
@@ -7,10 +7,10 @@
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Authors>The Tech Idea</Authors>
 		<Company>The Tech Idea</Company>
-		<Copyright>2022</Copyright>
+		<Copyright>2024</Copyright>
 		<PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
 		<PackageIcon>SimpleODM.png</PackageIcon>
-		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
+		<RepositoryUrl>https://github.com/The-Tech-Idea/BeepDataSources</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Title>TheTechIdea.Beep.RavenDBDataSourceCore</Title>
 		<PackageId>TheTechIdea.Beep.RavenDBDataSourceCore</PackageId>
@@ -576,10 +576,10 @@
     <None Remove="C:\Users\f_ald\.nuget\packages\ravendb.embedded\6.0.0\contentFiles\any\any\RavenDBServer\ZstdSharp.dll" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="RavenDB.Client" Version="7.1.5" />
-    <PackageReference Include="RavenDB.Embedded" Version="7.1.5" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.62" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.119" />
+    <PackageReference Include="RavenDB.Client" Version="7.2.2" />
+    <PackageReference Include="RavenDB.Embedded" Version="7.2.2" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.0.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="3.0.0" />
   </ItemGroup>
 
 

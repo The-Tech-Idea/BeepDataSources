@@ -1,6 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+		<Title>TheTechIdea.Beep.Connectors.Loomly</Title>
+		<PackageIcon>SimpleODM.png</PackageIcon>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
+		<Copyright>2024</Copyright>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -9,12 +14,12 @@
     <RootNamespace>TheTechIdea.Beep.Connectors.Loomly</RootNamespace>
     <PackageId>TheTechIdea.Beep.Connectors.Loomly</PackageId>
     <Version>1.0.0</Version>
-    <Authors>TheTechIdea</Authors>
-    <Company>TheTechIdea</Company>
+    <Authors>The Tech Idea</Authors>
+    <Company>The Tech Idea</Company>
     <Description>Loomly Social Media Management API Data Source Connector for Beep Framework</Description>
     <RepositoryUrl>https://github.com/The-Tech-Idea/BeepDataSources</RepositoryUrl>
     <PackageTags>beep, datasource, connector, loomly, social-media, social-media-management, api</PackageTags>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,4 +31,16 @@
 
  
 
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName).dll" DestinationFolder="$(ProjectDir)..\..\..\..\outputDLL\DataSources\LoomlyDataSource\$(TargetFramework)" SkipUnchangedFiles="false" />
+	</Target>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\..\LocalNugetFiles\DataSources" />
+	</Target>
+	<ItemGroup>
+		<None Include="..\..\..\..\InstallationScripts\LogoGFx\128\SimpleODM.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 </Project>

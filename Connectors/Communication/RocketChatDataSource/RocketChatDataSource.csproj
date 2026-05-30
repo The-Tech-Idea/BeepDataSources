@@ -1,13 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+		<Title>TheTechIdea.Beep.Connectors.RocketChatDataSource</Title>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageIcon>SimpleODM.png</PackageIcon>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
+		<Copyright>2024</Copyright>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PackageId>Beep.Connectors.Communication.RocketChat</PackageId>
+    <PackageId>TheTechIdea.Beep.Connectors.RocketChatDataSource</PackageId>
     <Version>1.0.0</Version>
-    <Authors>The-Tech-Idea</Authors>
-    <Company>The-Tech-Idea</Company>
+    <Authors>The Tech Idea</Authors>
+    <Company>The Tech Idea</Company>
     <Description>Rocket.Chat communication platform data source for Beep Data Connectors</Description>
     <RepositoryUrl>https://github.com/The-Tech-Idea/BeepDataSources</RepositoryUrl>
     <PackageTags>beep, data-connector, rocket-chat, communication, api</PackageTags>
@@ -21,4 +27,16 @@
     <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.119" />
   </ItemGroup>
 
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName).dll" DestinationFolder="$(ProjectDir)..\..\..\..\outputDLL\DataSources\RocketChatDataSource\$(TargetFramework)" SkipUnchangedFiles="false" />
+	</Target>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\..\LocalNugetFiles\DataSources" />
+	</Target>
+	<ItemGroup>
+		<None Include="..\..\..\..\InstallationScripts\LogoGFx\128\SimpleODM.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 </Project>

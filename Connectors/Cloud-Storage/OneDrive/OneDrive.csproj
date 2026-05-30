@@ -1,12 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+		<Title>TheTechIdea.Beep.Connectors.OneDrive</Title>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageIcon>SimpleODM.png</PackageIcon>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
+		<Copyright>2024</Copyright>
+		<Company>The Tech Idea</Company>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PackageId>BeepDataSources.OneDrive</PackageId>
+    <PackageId>TheTechIdea.Beep.Connectors.OneDrive</PackageId>
     <Version>1.0.0</Version>
-    <Authors>The-Tech-Idea</Authors>
+    <Authors>The Tech Idea</Authors>
     <Description>OneDrive data source for Beep Data Connectors framework</Description>
     <RepositoryUrl>https://github.com/The-Tech-Idea/BeepDataSources</RepositoryUrl>
     <PackageTags>Beep;DataSource;OneDrive;Microsoft;CloudStorage</PackageTags>
@@ -22,4 +29,16 @@
     <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.119" />
   </ItemGroup>
 
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName).dll" DestinationFolder="$(ProjectDir)..\..\..\..\outputDLL\DataSources\OneDrive\$(TargetFramework)" SkipUnchangedFiles="false" />
+	</Target>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\..\LocalNugetFiles\DataSources" />
+	</Target>
+	<ItemGroup>
+		<None Include="..\..\..\..\InstallationScripts\LogoGFx\128\SimpleODM.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 </Project>

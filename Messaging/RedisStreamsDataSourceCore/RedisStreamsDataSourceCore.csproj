@@ -10,7 +10,7 @@
 		<Copyright>2024</Copyright>
 		<PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
 		<PackageIcon>SimpleODM.png</PackageIcon>
-		<RepositoryUrl>https://github.com/The-Tech-Idea/</RepositoryUrl>
+		<RepositoryUrl>https://github.com/The-Tech-Idea/BeepDataSources</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Version>1.0.0</Version>
 		<Title>TheTechIdea.Beep.RedisStreamsDataSourceCore</Title>
@@ -35,4 +35,3 @@
 		<PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.107" />
 	</ItemGroup>
 </Project>
-

@@ -1,13 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+		<Title>TheTechIdea.Beep.Connectors.ZohoDesk</Title>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageIcon>SimpleODM.png</PackageIcon>
+		<PackageProjectUrl>https://github.com/The-Tech-Idea/</PackageProjectUrl>
+		<Copyright>2024</Copyright>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PackageId>BeepDataSources.ZohoDesk</PackageId>
+    <PackageId>TheTechIdea.Beep.Connectors.ZohoDesk</PackageId>
     <Version>1.0.0</Version>
-    <Authors>The-Tech-Idea</Authors>
-    <Company>The-Tech-Idea</Company>
+    <Authors>The Tech Idea</Authors>
+    <Company>The Tech Idea</Company>
     <Description>ZohoDesk data source for Beep Data Connectors framework</Description>
     <RepositoryUrl>https://github.com/The-Tech-Idea/BeepDataSources</RepositoryUrl>
     <PackageTags>ZohoDesk;DataSource;Beep;Connectors;CustomerSupport;HelpDesk</PackageTags>
@@ -22,4 +27,16 @@
     <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.101" />
   </ItemGroup>
 
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName).dll" DestinationFolder="$(ProjectDir)..\..\..\..\outputDLL\DataSources\ZohoDesk\$(TargetFramework)" SkipUnchangedFiles="false" />
+	</Target>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\..\LocalNugetFiles\DataSources" />
+	</Target>
+	<ItemGroup>
+		<None Include="..\..\..\..\InstallationScripts\LogoGFx\128\SimpleODM.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 </Project>
