@@ -370,3 +370,6 @@ LocalNugetFiles/
 normalize-csproj.ps1
 publish-nuget.ps1
 unfinished-projects.txt
+
+# Accidentally created nul (Windows reserved device name) file
+nul
