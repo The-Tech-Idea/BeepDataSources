@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Operations — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><i class="bi bi-sun-fill" id="theme-icon"></i></button>
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="content">
+            <div class="content-wrapper">
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a><span>›</span>
+                    <a href="../impl-rdbms.html">RDBMS</a><span>›</span>
+                    <a href="rdbms-architecture.html">Architecture</a><span>›</span>
+                    <span>Bulk Operations</span>
+                </nav>
+                <div class="page-header">
+                    <h1>Bulk Operations</h1>
+                    <p class="page-subtitle">High-performance batch insert and update strategies in <code>RDBSource.BulkOperations</code></p>
+                </div>
+
+                <section class="section">
+                    <h2>Overview</h2>
+                    <p><code>RDBSource.BulkOperations.cs</code> (1,080 lines) provides optimized batch data operations that are 10-100x faster than row-by-row inserts. The implementation auto-selects the best strategy based on database capabilities.</p>
+                    <div class="stats-grid">
+                        <div class="stat-card"><span class="stat-number">3</span><span class="stat-label">Strategies</span></div>
+                        <div class="stat-card"><span class="stat-number">6</span><span class="stat-label">DB Engines</span></div>
+                        <div class="stat-card"><span class="stat-number">1000</span><span class="stat-label">Default Batch Size</span></div>
+                        <div class="stat-card"><span class="stat-number">2000</span><span class="stat-label">Max Params/Batch</span></div>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Strategy Selection</h2>
+                    <table>
+                        <thead><tr><th>Strategy</th><th>Method</th><th>Engines</th><th>Performance</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Multi-Row INSERT</strong></td><td><code>BulkInsertMultiRow&lt;T&gt;</code></td><td>SQL Server, MySQL, PostgreSQL, SQLite</td><td>🚀 Fastest — single statement with multiple value tuples</td></tr>
+                            <tr><td><strong>Temp-Table MERGE</strong></td><td><code>BulkUpdateWithTempTable&lt;T&gt;</code></td><td>SQL Server, MySQL, PostgreSQL</td><td>🚀 Fast — bulk load into temp, single MERGE/UPDATE JOIN</td></tr>
+                            <tr><td><strong>Batched Fallback</strong></td><td><code>BulkInsertBatched&lt;T&gt;</code></td><td>Oracle, DB2, all others</td><td>🐢 Slower — individual statements in transaction</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Usage</h2>
+                    <div class="code-example"><h3>Bulk Insert</h3>
+                        <pre><code class="language-csharp">var orders = new List&lt;Order&gt; { /* 10,000 records */ };
+await rdbSource.BulkInsertEntitiesAsync(orders, cancellationToken);
+// Auto-selects multi-row INSERT for SQL Server/MySQL/PostgreSQL/SQLite
+// Falls back to batched inserts for Oracle</code></pre>
+                    </div>
+                    <div class="code-example"><h3>Bulk Update</h3>
+                        <pre><code class="language-csharp">await rdbSource.BulkUpdateEntitiesAsync(updatedOrders, cancellationToken);
+// SQL Server: creates #temp table → MERGE
+// MySQL: creates TEMPORARY TABLE → UPDATE JOIN
+// PostgreSQL: creates TEMP TABLE → UPDATE FROM
+// Oracle: batched individual UPDATEs in transaction</code></pre>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Configuration</h2>
+                    <table>
+                        <thead><tr><th>Setting</th><th>Default</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>DefaultBatchSize</code></td><td>1000</td><td>Rows per batch. Reduce for wide tables or Oracle (parameter limits)</td></tr>
+                            <tr><td><code>MaxParametersPerBatch</code></td><td>2000</td><td>Hard limit. Oracle has 1000-expression IN clause limit</td></tr>
+                            <tr><td><code>EnableBulkOptimizations</code></td><td>true</td><td>Use multi-row INSERT when available</td></tr>
+                            <tr><td><code>UseBulkTransactions</code></td><td>true</td><td>Wrap batches in transactions for atomicity</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="warning"><strong>Oracle Note</strong><p>Reduce <code>DefaultBatchSize</code> below 1000 for Oracle to avoid <code>ORA-01795</code> (max 1000 expressions). Oracle uses the batched fallback — multi-row INSERT is not supported.</p></div>
+                </section>
+
+                <section class="section">
+                    <h2>Temp-Table Strategy (Updates)</h2>
+                    <p>For bulk updates, the temp-table strategy is:</p>
+                    <ol>
+                        <li>Create temp table matching target schema</li>
+                        <li>Bulk insert all updated rows into temp table</li>
+                        <li>Execute MERGE (SQL Server) or UPDATE JOIN (MySQL/PostgreSQL) from temp→target</li>
+                        <li>Drop temp table</li>
+                    </ol>
+                    <table>
+                        <thead><tr><th>Engine</th><th>Temp Table Syntax</th><th>Merge/Update Syntax</th></tr></thead>
+                        <tbody>
+                            <tr><td>SQL Server</td><td><code>CREATE TABLE #temp (...)</code></td><td><code>MERGE target USING #temp ON ... WHEN MATCHED THEN UPDATE</code></td></tr>
+                            <tr><td>MySQL</td><td><code>CREATE TEMPORARY TABLE temp (...)</code></td><td><code>UPDATE target JOIN temp ON ... SET target.col = temp.col</code></td></tr>
+                            <tr><td>PostgreSQL</td><td><code>CREATE TEMP TABLE temp (...)</code></td><td><code>UPDATE target SET ... FROM temp WHERE ...</code></td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Progress Reporting</h2>
+                    <p>All bulk methods accept <code>IProgress&lt;PassedArgs&gt;</code> and <code>CancellationToken</code>:</p>
+                    <div class="code-example"><h3>With Progress</h3>
+                        <pre><code class="language-csharp">var progress = new Progress&lt;PassedArgs&gt;(p => {
+    Console.WriteLine($"Batch {p.ParameterInt1}/{p.ParameterInt2}");
+});
+await rdbSource.BulkInsertEntitiesAsync(data, progress, token);</code></pre>
+                    </div>
+                </section>
+
+                <div class="nav-links">
+                    <a href="rdbms-architecture.html"><i class="bi bi-arrow-left"></i> Architecture</a>
+                    <a href="rdbms-resilience.html">Resilience Patterns <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div class="footer-copyright"><p>&copy; 2024 The Tech Idea</p></div>
+                        <div class="footer-links"><a href="../index.html">Home</a><a href="rdbms-architecture.html">Architecture</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+    <script src="../navigation.js"></script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RDBMS Configuration — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-rdbms.html">RDBMS</a>
+                    <span>›</span>
+                    <span>Configuration</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>RDBMS Configuration</h1>
+                    <p class="page-subtitle">Connection properties, driver setup, and database-specific settings for <code>RDBSource</code> and its provider-specific subclasses.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Connection Properties</h2>
+                    <p>All RDBMS data sources use <code>ConnectionProperties</code> (<code>TheTechIdea.Beep.ConfigUtil</code>). Required fields:</p>
+                    <table>
+                        <thead><tr><th>Property</th><th>Required</th><th>Example</th><th>Notes</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>DataSourceType</code></td><td>✅</td><td><code>SqlServer</code></td><td>Must match an <code>[AddinAttribute]</code> DataSourceType</td></tr>
+                            <tr><td><code>ConnectionName</code></td><td>✅</td><td><code>MyProdDB</code></td><td>Display name in Beep tree</td></tr>
+                            <tr><td><code>Host</code></td><td>✅</td><td><code>localhost</code> or IP</td><td>Omit for file-based DBs (SQLite)</td></tr>
+                            <tr><td><code>Port</code></td><td>🟡</td><td><code>1433</code></td><td>Default varies by engine</td></tr>
+                            <tr><td><code>Database</code></td><td>✅</td><td><code>AdventureWorks</code></td><td>Database/catalog name</td></tr>
+                            <tr><td><code>UserID</code></td><td>🟡</td><td><code>sa</code></td><td>Omit for integrated/windows auth</td></tr>
+                            <tr><td><code>Password</code></td><td>🟡</td><td>—</td><td>Stored encrypted in Beep config</td></tr>
+                            <tr><td><code>SchemaName</code></td><td>🟡</td><td><code>dbo</code></td><td>Defaults to engine-specific (dbo, public, etc.)</td></tr>
+                            <tr><td><code>ConnectionString</code></td><td>🟡</td><td>Full ADO.NET string</td><td>Overrides host/port/db/user/password if set</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Driver Configuration</h2>
+                    <p>Database drivers are resolved via <code>DataSourceDriver</code> entries in Beep config. The <code>RDBSource</code> uses <code>DMEEditor.assemblyHandler.GetInstance(DataSourceDriver.DbConnectionType)</code> to instantiate the ADO.NET connection at runtime.</p>
+                    <table>
+                        <thead><tr><th>Engine</th><th>DbConnectionType</th><th>Default Port</th></tr></thead>
+                        <tbody>
+                            <tr><td>SQL Server</td><td><code>Microsoft.Data.SqlClient.SqlConnection</code></td><td>1433</td></tr>
+                            <tr><td>MySQL</td><td><code>MySql.Data.MySqlClient.MySqlConnection</code></td><td>3306</td></tr>
+                            <tr><td>PostgreSQL</td><td><code>Npgsql.NpgsqlConnection</code></td><td>5432</td></tr>
+                            <tr><td>Oracle</td><td><code>Oracle.ManagedDataAccess.Client.OracleConnection</code></td><td>1521</td></tr>
+                            <tr><td>SQLite</td><td><code>Microsoft.Data.Sqlite.SqliteConnection</code></td><td>—</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Resilience Settings</h2>
+                    <p>Configured via properties on <code>RDBSource</code>:</p>
+                    <table>
+                        <thead><tr><th>Setting</th><th>Default</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>EnableResilience</code></td><td><code>true</code></td><td>Enable Polly retry + circuit breaker</td></tr>
+                            <tr><td><code>MaxRetryAttempts</code></td><td><code>3</code></td><td>Exponential backoff retries</td></tr>
+                            <tr><td><code>RetryBaseDelay</code></td><td><code>1s</code></td><td>Base delay before first retry</td></tr>
+                            <tr><td><code>CircuitBreakerThreshold</code></td><td><code>5</code></td><td>Failures before opening circuit</td></tr>
+                            <tr><td><code>CircuitBreakerDuration</code></td><td><code>30s</code></td><td>Time circuit stays open</td></tr>
+                            <tr><td><code>HealthCheckTimeout</code></td><td><code>5s</code></td><td>Timeout for connection health ping</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Cache Settings</h2>
+                    <table>
+                        <thead><tr><th>Setting</th><th>Default</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>EnableResultCache</code></td><td><code>false</code></td><td>Enable MemoryCache for query results</td></tr>
+                            <tr><td>Result cache TTL</td><td>5 min</td><td>Sliding expiration per cached entry</td></tr>
+                            <tr><td>Result cache size limit</td><td>1024 entries</td><td>MemoryCache size limit</td></tr>
+                            <tr><td>Query cache</td><td>Always on</td><td>ConcurrentDictionary for compiled queries</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="note">
+                        <strong>Note</strong>
+                        <p><code>EnableResultCache</code> is <code>false</code> by default for backward compatibility. Enable it for read-heavy workloads where stale data is acceptable within the TTL window.</p>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Bulk Operation Settings</h2>
+                    <table>
+                        <thead><tr><th>Setting</th><th>Default</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>DefaultBatchSize</code></td><td><code>1000</code></td><td>Rows per batch in bulk operations</td></tr>
+                            <tr><td><code>MaxParametersPerBatch</code></td><td><code>2000</code></td><td>Max parameters per SQL batch (DB limits vary)</td></tr>
+                            <tr><td><code>EnableBulkOptimizations</code></td><td><code>—</code></td><td>Use multi-row INSERT when available</td></tr>
+                            <tr><td><code>UseBulkTransactions</code></td><td><code>—</code></td><td>Wrap batch operations in transactions</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="warning">
+                        <strong>Transaction Warning</strong>
+                        <p>Bulk operations can use transactions for atomicity, but the <code>Commit()</code> method is currently a stub. Verify transaction support before relying on <code>UseBulkTransactions</code>.</p>
+                    </div>
+                </section>
+
+                <div class="nav-links">
+                    <a href="rdbms-architecture.html"><i class="bi bi-arrow-left"></i> Architecture</a>
+                    <a href="rdbms-troubleshooting.html">Troubleshooting <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div class="footer-copyright">
+                            <p>&copy; 2024 The Tech Idea — Beep DataSources Documentation</p>
+                        </div>
+                        <div class="footer-links">
+                            <a href="../index.html">Home</a>
+                            <a href="../platform-connection-properties.html">Connection Properties</a>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+    <script src="../navigation.js"></script>
+</body>
+</html>

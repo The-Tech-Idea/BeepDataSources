@@ -299,7 +299,7 @@ namespace TheTechIdea.Beep.DataBase
                             {
                                 object r = srcList[i];
 
-                                DMEEditor.ErrorObject = InsertEntity(EntityName, r);
+                                DMEEditor.ErrorObject = UpdateEntity(EntityName, r);
                                 CurrentRecord = i;
 
 

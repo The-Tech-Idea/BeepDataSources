@@ -37,6 +37,13 @@ namespace TheTechIdea.Beep.DataBase
         private MemoryCache? _resultCache;
 
         /// <summary>
+        /// Tracks entity→cache-key relationships for targeted result cache invalidation.
+        /// Key: entity name (lowercase), Value: set of cache keys belonging to that entity.
+        /// Solves the MemoryCache key-enumeration limitation.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, HashSet<string>> _entityResultKeys = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
         /// Default time-to-live for cached results (5 minutes).
         /// </summary>
         private readonly TimeSpan _defaultCacheTTL = TimeSpan.FromMinutes(5);
@@ -153,7 +160,7 @@ namespace TheTechIdea.Beep.DataBase
         /// <typeparam name="T">The type of the result to cache.</typeparam>
         /// <param name="cacheKey">The cache key.</param>
         /// <param name="result">The result to cache.</param>
-        private void CacheResult<T>(string cacheKey, T result)
+        private void CacheResult<T>(string cacheKey, T result, string? entityName = null)
         {
             if (!EnableResultCache || string.IsNullOrEmpty(cacheKey) || result == null)
                 return;
@@ -163,7 +170,29 @@ namespace TheTechIdea.Beep.DataBase
                 .SetSlidingExpiration(ResultCacheTTL == default ? _defaultCacheTTL : ResultCacheTTL)
                 .SetPriority(CacheItemPriority.Normal);
 
+            // Register post-eviction callback to clean up the entity→key tracking
+            cacheEntryOptions.RegisterPostEvictionCallback((key, value, reason, state) =>
+            {
+                if (state is string entity && !string.IsNullOrEmpty(entity))
+                {
+                    if (_entityResultKeys.TryGetValue(entity, out var keys))
+                    {
+                        keys.Remove(key as string ?? string.Empty);
+                    }
+                }
+            }, entityName);
+
             ResultCache.Set(cacheKey, result, cacheEntryOptions);
+
+            // Track entity→cache-key for targeted invalidation
+            if (!string.IsNullOrEmpty(entityName))
+            {
+                _entityResultKeys.AddOrUpdate(
+                    entityName.ToLowerInvariant(),
+                    _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase) { cacheKey },
+                    (_, keys) => { lock (keys) { keys.Add(cacheKey); } return keys; }
+                );
+            }
         }
 
         /// <summary>
@@ -193,13 +222,21 @@ namespace TheTechIdea.Beep.DataBase
                 _queryCache.TryRemove(key, out _);
             }
 
-            // If result caching is enabled, clear result cache entries for this entity
-            if (EnableResultCache)
+            // Remove result cache entries for this entity using the tracking dictionary
+            if (EnableResultCache && _entityResultKeys.TryGetValue(entityKey, out var resultKeys))
             {
-                // MemoryCache doesn't provide key enumeration, so we rely on TTL expiration
-                // For explicit invalidation, consider using a more sophisticated cache key strategy
-                DMEEditor?.AddLogMessage("Beep", $"Cache invalidated for entity: {entityName}", DateTime.Now, 0, null, Errors.Ok);
+                lock (resultKeys)
+                {
+                    foreach (var resultKey in resultKeys.ToList())
+                    {
+                        ResultCache.Remove(resultKey);
+                    }
+                    resultKeys.Clear();
+                }
+                _entityResultKeys.TryRemove(entityKey, out _);
             }
+
+            DMEEditor?.AddLogMessage("Beep", $"Cache invalidated for entity: {entityName}", DateTime.Now, 0, null, Errors.Ok);
         }
 
         /// <summary>
@@ -209,7 +246,8 @@ namespace TheTechIdea.Beep.DataBase
         {
             _queryCache.Clear();
             _preparedStatementCache.Clear();
-            
+            _entityResultKeys.Clear();
+
             if (_resultCache != null)
             {
                 _resultCache.Dispose();

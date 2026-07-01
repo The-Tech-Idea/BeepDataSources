@@ -33,6 +33,11 @@ class NavigationManager {
             'rdbms-postgresql.html': { activeId: 'nav-rdbms-postgresql', openSection: 'nav-impl' },
             'rdbms-mysql.html': { activeId: 'nav-rdbms-mysql', openSection: 'nav-impl' },
             'rdbms-oracle.html': { activeId: 'nav-rdbms-oracle', openSection: 'nav-impl' },
+            'rdbms-architecture.html': { activeId: 'nav-rdbms-architecture', openSection: 'nav-impl' },
+            'rdbms-configuration.html': { activeId: 'nav-rdbms-configuration', openSection: 'nav-impl' },
+            'rdbms-troubleshooting.html': { activeId: 'nav-rdbms-troubleshooting', openSection: 'nav-impl' },
+            'rdbms-bulk-operations.html': { activeId: 'nav-rdbms-bulk', openSection: 'nav-impl' },
+            'rdbms-resilience.html': { activeId: 'nav-rdbms-resilience', openSection: 'nav-impl' },
             'impl-nosql.html': { activeId: 'nav-impl-nosql', openSection: 'nav-impl' },
             'mongodb.html': { activeId: 'nav-mongodb', openSection: 'nav-impl' },
             'redis.html': { activeId: 'nav-redis', openSection: 'nav-impl' },
@@ -142,6 +147,11 @@ class NavigationManager {
                             <li><a href="${b}providers/rdbms-postgresql.html" id="nav-rdbms-postgresql">PostgreSQL</a></li>
                             <li><a href="${b}providers/rdbms-mysql.html" id="nav-rdbms-mysql">MySQL</a></li>
                             <li><a href="${b}providers/rdbms-oracle.html" id="nav-rdbms-oracle">Oracle</a></li>
+                            <li style="border-top:1px solid var(--color-background-border);margin-top:4px;padding-top:4px"><a href="${b}providers/rdbms-architecture.html" id="nav-rdbms-architecture">RDBMS Architecture</a></li>
+                            <li><a href="${b}providers/rdbms-configuration.html" id="nav-rdbms-configuration">RDBMS Configuration</a></li>
+                            <li><a href="${b}providers/rdbms-troubleshooting.html" id="nav-rdbms-troubleshooting">RDBMS Troubleshooting</a></li>
+                            <li><a href="${b}providers/rdbms-bulk-operations.html" id="nav-rdbms-bulk">Bulk Operations</a></li>
+                            <li><a href="${b}providers/rdbms-resilience.html" id="nav-rdbms-resilience">Resilience Patterns</a></li>
                             <li><a href="${b}impl-nosql.html" id="nav-impl-nosql">NoSQL (overview)</a></li>
                             <li><a href="${b}providers/mongodb.html" id="nav-mongodb">MongoDB</a></li>
                             <li><a href="${b}providers/redis.html" id="nav-redis">Redis</a></li>

@@ -114,9 +114,8 @@ namespace TheTechIdea.Beep
                     DMEEditor.AddLogMessage("Beep", $"Connection is not established for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
                     return DMEEditor.ErrorObject;
                 }
-                var entityNamesFromDb = GetEntitesList();
+                GetEntitesList(); // Refresh entity list from database
                 SyncEntitiesNameandEntities();
-                // Step 2: Ensure Entities collection contains all the entities from the database
 
                 SaveEntites(DatasourceName);
 
@@ -490,13 +489,22 @@ namespace TheTechIdea.Beep
         public override bool CreateEntityAs(EntityStructure entity)
         {
             string ds = entity.DataSourceID;
-            entity.EntityName = entity.EntityName.Trim().ToUpper();
-            entity.DatasourceEntityName = entity.EntityName.Trim().ToUpper();
+            // Oracle stores identifiers in uppercase by default; other databases preserve case.
+            if (DatasourceType == DataSourceType.Oracle)
+            {
+                entity.EntityName = entity.EntityName.Trim().ToUpper();
+                entity.DatasourceEntityName = entity.EntityName;
+            }
+            else
+            {
+                entity.EntityName = entity.EntityName.Trim();
+                entity.DatasourceEntityName = entity.EntityName;
+            }
             if (EntitiesNames.Contains(entity.EntityName))
             {
                 return false;
             }
-            if (Entities.Where(c => c.EntityName == entity.EntityName).Count() > 0)
+            if (Entities != null && Entities.Any(c => c.EntityName == entity.EntityName))
             {
                 return false;
             }
@@ -520,35 +528,28 @@ namespace TheTechIdea.Beep
        
         #endregion
         #region "Dispose"
-        private bool disposedValue;
-        protected virtual void Dispose(bool disposing)
+        private bool _inMemoryDisposed;
+
+        protected override void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_inMemoryDisposed)
             {
                 if (disposing)
                 {
-                    SaveStructure();
-                    // TODO: dispose managed state (managed objects)
+                    try
+                    {
+                        SaveStructure();
+                    }
+                    catch
+                    {
+                        // Ignore errors during disposal — connection may already be closed
+                    }
+                    InMemoryStructures?.Clear();
                 }
 
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
-                disposedValue = true;
+                _inMemoryDisposed = true;
             }
-        }
-
-        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~InMemoryDataSource()
-        // {
-        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        //     Dispose(disposing: false);
-        // }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            base.Dispose(disposing);
         }
 
 

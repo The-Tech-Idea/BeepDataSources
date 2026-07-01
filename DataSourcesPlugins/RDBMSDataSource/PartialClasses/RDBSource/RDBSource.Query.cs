@@ -937,7 +937,10 @@ namespace TheTechIdea.Beep.DataBase
         /// <returns>A task representing the asynchronous operation, which, when completed, will return an object representing the data retrieved.</returns>
         public virtual Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            return Task.FromResult(GetEntity(EntityName, Filter));
+            // Offload synchronous GetEntity to thread pool to avoid blocking the calling thread.
+            // The sync implementation uses IDataReader which doesn't support true async I/O;
+            // for true async streaming, use GetEntityStreamAsync<T>() from Modernization.cs.
+            return Task.Run(() => GetEntity(EntityName, Filter));
         }
 
         // Helper method to extract WHERE clause from a query
@@ -982,7 +985,11 @@ namespace TheTechIdea.Beep.DataBase
             if (!ObjectsCreated || Entityname != lastentityname)
             {
                 DataStruct = GetEntityStructure(Entityname, false);
-                command = RDBMSConnection.DbConn.CreateCommand();
+                if (DataStruct == null)
+                {
+                    DMEEditor?.AddLogMessage("Fail", $"Entity structure not found for '{Entityname}'", DateTime.Now, 0, null, Errors.Failed);
+                }
+                command = RDBMSConnection.DbConn?.CreateCommand();
                 enttype = GetEntityType(Entityname);
                 ObjectsCreated = true;
                 lastentityname = Entityname;

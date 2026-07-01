@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RDBMS Troubleshooting — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-rdbms.html">RDBMS</a>
+                    <span>›</span>
+                    <span>Troubleshooting</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>RDBMS Troubleshooting</h1>
+                    <p class="page-subtitle">Common issues, error patterns, and resolution steps for <code>RDBSource</code> connections and operations.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Connection Issues</h2>
+
+                    <h3>Driver Not Found</h3>
+                    <div class="error">
+                        <strong>Symptom</strong>
+                        <p><code>DMEEditor.assemblyHandler.GetInstance()</code> returns null or throws. The ADO.NET driver assembly is not loaded.</p>
+                    </div>
+                    <div class="success">
+                        <strong>Resolution</strong>
+                        <ul>
+                            <li>Verify the driver NuGet package is installed in the Beep host application</li>
+                            <li>Check <code>DataSourceDriver.DbConnectionType</code> in Beep config matches the installed driver version</li>
+                            <li>For SQL Server: <code>Microsoft.Data.SqlClient</code> (not System.Data.SqlClient)</li>
+                            <li>For MySQL: <code>MySql.Data</code> or <code>MySqlConnector</code></li>
+                            <li>For PostgreSQL: <code>Npgsql</code></li>
+                            <li>For Oracle: <code>Oracle.ManagedDataAccess.Core</code></li>
+                        </ul>
+                    </div>
+
+                    <h3>Connection String Errors</h3>
+                    <div class="error">
+                        <strong>Symptom</strong>
+                        <p>Connection opens but queries fail with login/schema errors, or <code>OpenConn()</code> throws <code>ArgumentException</code>.</p>
+                    </div>
+                    <div class="success">
+                        <strong>Resolution</strong>
+                        <ul>
+                            <li>Use <code>ConnectionProperties</code> (host, port, database, userid, password) instead of raw connection strings when possible</li>
+                            <li>If using a raw <code>ConnectionString</code>, it takes precedence and must be a complete ADO.NET connection string</li>
+                            <li>Oracle: verify <code>ALTER SESSION SET CURRENT_SCHEMA</code> succeeds — check schema name spelling</li>
+                            <li>SQL Server: verify <code>ALTER LOGIN</code> or database-level user mapping</li>
+                        </ul>
+                    </div>
+
+                    <h3>Health Check Failures</h3>
+                    <div class="error">
+                        <strong>Symptom</strong>
+                        <p>Circuit breaker opens repeatedly. <code>CheckConnectionHealth()</code> returns false even though the database is reachable.</p>
+                    </div>
+                    <div class="success">
+                        <strong>Resolution</strong>
+                        <ul>
+                            <li>Verify the health check query is correct for your database:
+                                <ul><li>SQL Server/MySQL/PostgreSQL/SQLite: <code>SELECT 1</code></li>
+                                <li>Oracle: <code>SELECT 1 FROM DUAL</code></li>
+                                <li>DB2: <code>SELECT 1 FROM SYSIBM.SYSDUMMY1</code></li></ul>
+                            </li>
+                            <li>Check <code>HealthCheckTimeout</code> — increase if network latency is high</li>
+                            <li>Reset resilience policies with <code>ResetResiliencePolicies()</code> after fixing the underlying issue</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Query Issues</h2>
+
+                    <h3>Schema Not Found / Table Not Found</h3>
+                    <div class="error">
+                        <strong>Symptom</strong>
+                        <p>Queries fail with "invalid object name" or "table does not exist" even though the table is visible in the database.</p>
+                    </div>
+                    <div class="success">
+                        <strong>Resolution</strong>
+                        <ul>
+                            <li>Check <code>SchemaName</code> in ConnectionProperties — it's used to prefix table names in generated SQL</li>
+                            <li>For SQL Server: default is <code>dbo</code></li>
+                            <li>For PostgreSQL: default is <code>public</code></li>
+                            <li>For Oracle: schema = username (uppercase)</li>
+                            <li>Use <code>GetTableName()</code> to see how schema is being injected</li>
+                        </ul>
+                    </div>
+
+                    <h3>Paging Errors (Oracle)</h3>
+                    <div class="error">
+                        <strong>Symptom</strong>
+                        <p>Oracle paged queries fail with <code>ORA-00904</code> or invalid identifier.</p>
+                    </div>
+                    <div class="success">
+                        <strong>Resolution</strong>
+                        <ul>
+                            <li>Oracle uses a three-level ROWNUM subquery for paging — this fails if columns contain reserved words</li>
+                            <li>Use column delimiters (quotes) for columns that match Oracle reserved words</li>
+                            <li>Check <code>BuildOraclePagingQuery()</code> output in logs</li>
+                        </ul>
+                    </div>
+
+                    <h3>Parameter Limit Exceeded (Oracle)</h3>
+                    <div class="error">
+                        <strong>Symptom</strong>
+                        <p><code>ORA-01795</code>: maximum number of expressions in a list is 1000.</p>
+                    </div>
+                    <div class="success">
+                        <strong>Resolution</strong>
+                        <ul>
+                            <li>Reduce <code>DefaultBatchSize</code> below 1000</li>
+                            <li>Oracle also has a 30-character identifier limit — <code>GetUniqueParameterName()</code> handles this automatically</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Known Bugs to Watch For</h2>
+
+                    <table>
+                        <thead><tr><th>Issue</th><th>Impact</th><th>Workaround</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><code>UpdateEntities()</code> calls <code>InsertEntity()</code></td>
+                                <td>Bulk updates create duplicate rows</td>
+                                <td>Use individual <code>UpdateEntity()</code> calls in a loop</td>
+                            </tr>
+                            <tr>
+                                <td><code>Commit()</code> / <code>EndTransaction()</code> are stubs</td>
+                                <td>Transactions never commit</td>
+                                <td>Manage transactions at the ADO.NET level via <code>RDBMSConnection.DbConn</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>MemoryCache</code> can't enumerate keys</td>
+                                <td>Stale cached results</td>
+                                <td>Set <code>EnableResultCache = false</code> or use short TTL</td>
+                            </tr>
+                            <tr>
+                                <td>Thread-safety gaps with instance fields</td>
+                                <td>Concurrent operations may corrupt state</td>
+                                <td>Avoid concurrent entity operations on same RDBSource instance</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Performance Tuning</h2>
+
+                    <div class="tip">
+                        <strong>Bulk Operations</strong>
+                        <p>For large datasets (10K+ rows), enable <code>EnableBulkOptimizations</code> and use <code>BulkInsertEntities&lt;T&gt;()</code> or <code>BulkUpdateEntities&lt;T&gt;()</code>. These use multi-row INSERT or temp-table MERGE strategies that are 10-100x faster than row-by-row operations.</p>
+                    </div>
+
+                    <div class="tip">
+                        <strong>Result Caching</strong>
+                        <p>For read-heavy dashboards, set <code>EnableResultCache = true</code>. The 5-minute sliding TTL means frequently accessed queries stay cached while unused entries expire. Use <code>InvalidateEntityCache(entityName)</code> after writes to prevent stale reads.</p>
+                    </div>
+
+                    <div class="tip">
+                        <strong>Connection Pooling</strong>
+                        <p>ADO.NET connection pooling is enabled by default for most drivers. Avoid calling <code>Closeconnection()</code> between operations — keep the connection open during a user session. Use <code>CheckConnectionHealth()</code> to detect broken connections.</p>
+                    </div>
+
+                    <div class="tip">
+                        <strong>Schema Caching</strong>
+                        <p>Entity structures are cached via <code>EntityStructureCache</code> (ConcurrentDictionary). Call <code>GetEntityStructure(name, refresh: true)</code> only when schema changes are expected. Normal reads use <code>refresh: false</code>.</p>
+                    </div>
+                </section>
+
+                <div class="nav-links">
+                    <a href="rdbms-configuration.html"><i class="bi bi-arrow-left"></i> Configuration</a>
+                    <a href="../impl-rdbms.html">RDBMS Overview <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div class="footer-copyright">
+                            <p>&copy; 2024 The Tech Idea — Beep DataSources Documentation</p>
+                        </div>
+                        <div class="footer-links">
+                            <a href="../index.html">Home</a>
+                            <a href="rdbms-architecture.html">Architecture</a>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+    <script src="../navigation.js"></script>
+</body>
+</html>

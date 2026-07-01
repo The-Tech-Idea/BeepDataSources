@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resilience Patterns — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><i class="bi bi-sun-fill" id="theme-icon"></i></button>
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="content">
+            <div class="content-wrapper">
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a><span>›</span>
+                    <a href="../impl-rdbms.html">RDBMS</a><span>›</span>
+                    <a href="rdbms-architecture.html">Architecture</a><span>›</span>
+                    <span>Resilience</span>
+                </nav>
+                <div class="page-header">
+                    <h1>Resilience Patterns</h1>
+                    <p class="page-subtitle">Polly v8 retry + circuit breaker in <code>RDBSource.Resilience</code></p>
+                </div>
+
+                <section class="section">
+                    <h2>Pipeline Architecture</h2>
+                    <div class="feature-grid">
+                        <div class="feature-card"><h3>Retry Pipeline</h3><p>Exponential backoff: 1s → 2s → 4s. Max 3 attempts. Only retries transient errors (timeout, network, deadlock).</p></div>
+                        <div class="feature-card"><h3>Circuit Breaker</h3><p>Opens after 5 failures (50% ratio). Stays open 30s, then half-open for probing. Auto-resets on success.</p></div>
+                        <div class="feature-card"><h3>Health Checks</h3><p>Database-specific ping queries. Auto-reopens broken connections. 5s timeout per check.</p></div>
+                        <div class="feature-card"><h3>Combined Pipeline</h3><p>Circuit breaker wraps retry: circuit opens → fast-fail; circuit closed → retry with backoff.</p></div>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Configuration</h2>
+                    <table>
+                        <thead><tr><th>Setting</th><th>Default</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>EnableResilience</code></td><td>true</td><td>Master switch for all resilience</td></tr>
+                            <tr><td><code>MaxRetryAttempts</code></td><td>3</td><td>Retries before giving up</td></tr>
+                            <tr><td><code>RetryBaseDelay</code></td><td>1s</td><td>Base delay (doubles each retry)</td></tr>
+                            <tr><td><code>CircuitBreakerThreshold</code></td><td>5</td><td>Consecutive failures to open circuit</td></tr>
+                            <tr><td><code>CircuitBreakerDuration</code></td><td>30s</td><td>Time circuit stays open</td></tr>
+                            <tr><td><code>HealthCheckTimeout</code></td><td>5s</td><td>Max time for ping query</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Transient Error Detection</h2>
+                    <p>The <code>IsTransientException</code> predicate identifies errors worth retrying:</p>
+                    <ul>
+                        <li><strong>Timeout</strong> — query/connection timeout, command timeout</li>
+                        <li><strong>Network</strong> — transport-level errors, broken pipe, connection reset</li>
+                        <li><strong>Deadlock</strong> — SQL Server 1205, PostgreSQL 40P01, MySQL 1213</li>
+                        <li><strong>Connection</strong> — pool exhausted, connection refused, server unavailable</li>
+                    </ul>
+                    <div class="tip"><strong>Non-transient errors</strong> (syntax errors, constraint violations, permission denied) are NOT retried — they would fail every time.</div>
+                </section>
+
+                <section class="section">
+                    <h2>Health Check Queries</h2>
+                    <table>
+                        <thead><tr><th>Engine</th><th>Ping Query</th></tr></thead>
+                        <tbody>
+                            <tr><td>SQL Server, MySQL, PostgreSQL, SQLite</td><td><code>SELECT 1</code></td></tr>
+                            <tr><td>Oracle</td><td><code>SELECT 1 FROM DUAL</code></td></tr>
+                            <tr><td>DB2</td><td><code>SELECT 1 FROM SYSIBM.SYSDUMMY1</code></td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Usage</h2>
+                    <div class="code-example"><h3>Resilient Connection</h3>
+                        <pre><code class="language-csharp">// Auto-retries transient failures with backoff
+await rdbSource.OpenConnectionResilientAsync();
+// If circuit is open, throws immediately instead of waiting</code></pre>
+                    </div>
+                    <div class="code-example"><h3>Health Check</h3>
+                        <pre><code class="language-csharp">bool healthy = await rdbSource.CheckConnectionHealthAsync();
+if (!healthy) {
+    // Circuit is open or connection is dead
+    rdbSource.ResetResiliencePolicies(); // Manual reset after fixing
+}</code></pre>
+                    </div>
+                </section>
+
+                <div class="nav-links">
+                    <a href="rdbms-bulk-operations.html"><i class="bi bi-arrow-left"></i> Bulk Operations</a>
+                    <a href="rdbms-configuration.html">Configuration <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div class="footer-copyright"><p>&copy; 2024 The Tech Idea</p></div>
+                        <div class="footer-links"><a href="../index.html">Home</a></div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+    <script src="../navigation.js"></script>
+</body>
+</html>

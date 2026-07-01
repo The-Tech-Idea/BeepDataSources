@@ -69,6 +69,13 @@ namespace TheTechIdea.Beep.DataBase
             SetObjects(entityName);
             ErrorObject.Flag = Errors.Ok;
 
+            if (DataStruct == null || DataStruct.Fields == null)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"Entity structure not found for '{entityName}'";
+                return ErrorObject;
+            }
+
             var entitiesList = entities.ToList();
             if (!entitiesList.Any())
             {
@@ -77,7 +84,6 @@ namespace TheTechIdea.Beep.DataBase
             }
 
             int totalRows = entitiesList.Count;
-            int processedRows = 0;
             int successfulRows = 0;
 
             try

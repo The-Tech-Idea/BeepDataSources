@@ -165,7 +165,7 @@ namespace TheTechIdea.Beep.DataBase
                         ConnectionStatus = DbConn.State;
                         if (ConnectionStatus == ConnectionState.Open)
                         {
-                            // Check if need to change schema name
+                            // Check if need to change schema/database context
                             if (ConnectionProp.DatabaseType == DataSourceType.Oracle || ConnectionProp.DatabaseType == DataSourceType.SqlServer)
                             {
                                 if (ConnectionProp.SchemaName != null)
@@ -174,28 +174,21 @@ namespace TheTechIdea.Beep.DataBase
                                     switch (ConnectionProp.DatabaseType)
                                     {
                                         case DataSourceType.Oracle:
-
                                             cmd.CommandText = $"ALTER SESSION SET CURRENT_SCHEMA = {ConnectionProp.SchemaName}";
-
                                             break;
                                         case DataSourceType.SqlServer:
                                             cmd.CommandText = $"ALTER LOGIN {ConnectionProp.UserID} with DEFAULT_DATABASE = {ConnectionProp.Database}";
                                             break;
-
                                     }
                                     try
                                     {
-                                        var x = cmd.ExecuteNonQuery();
-
+                                        cmd.ExecuteNonQuery();
                                         ConnectionStatus = DbConn.State;
                                     }
-
                                     catch (Exception e)
                                     {
-                                        DMEEditor.AddLogMessage("Fail", $"Could not alter Schema for RDBMS  to {ConnectionProp.ConnectionName}", DateTime.Now, 0, ConnectionProp.ConnectionName, Errors.Failed);
-
+                                        DMEEditor.AddLogMessage("Warning", $"Could not alter schema/database context for {ConnectionProp.ConnectionName}: {e.Message}", DateTime.Now, 0, ConnectionProp.ConnectionName, Errors.Warning);
                                     }
-
                                 }
                             }
                         }
@@ -212,7 +205,7 @@ namespace TheTechIdea.Beep.DataBase
             catch (Exception e)
             {
                 DMEEditor.AddLogMessage("Fail", $"Could not Open RDBMS Connection to {ConnectionProp.ConnectionName}- {e.Message}", DateTime.Now, 0, ConnectionProp.ConnectionName, Errors.Failed);
-                ConnectionStatus = DbConn.State;
+                ConnectionStatus = DbConn?.State ?? ConnectionState.Broken;
             }
 
             return ConnectionStatus;
@@ -247,7 +240,6 @@ namespace TheTechIdea.Beep.DataBase
             else
             {
                 ConnectionStatus = ConnectionState.Closed;
-                DMEEditor.AddLogMessage("Fail", $"Closing RDBMS Connection  {ConnectionProp.ConnectionName}", DateTime.Now, 0, ConnectionProp.ConnectionName, Errors.Ok);
                 return ConnectionStatus;
             }
 

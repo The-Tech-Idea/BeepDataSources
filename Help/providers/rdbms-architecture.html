@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RDBMS Architecture — Beep DataSources</title>
+    <link rel="stylesheet" href="../sphinx-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="bi bi-sun-fill" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="content">
+            <div class="content-wrapper">
+
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../impl-rdbms.html">RDBMS</a>
+                    <span>›</span>
+                    <span>Architecture</span>
+                </nav>
+
+                <div class="page-header">
+                    <h1>RDBMSDataSource Architecture</h1>
+                    <p class="page-subtitle">Internal design of <code>RDBSource</code> — the core RDBMS plugin with 16 partial class files, 5 helper classes, and support for 8+ database engines.</p>
+                </div>
+
+                <section class="section">
+                    <h2>Class Hierarchy</h2>
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <h3>IRDBSource</h3>
+                            <p>Framework interface defining the RDBMS contract: CRUD, schema loading, query execution, DDL generation, and transaction management.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>RDBSource</h3>
+                            <p>Main implementation — a partial class split across 16 files organized by responsibility. ~5,400 lines total. Database-agnostic via ADO.NET abstraction.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>InMemoryRDBSource</h3>
+                            <p>Extends <code>RDBSource</code> with <code>IInMemoryDB</code>. Adds ETL-based data sync, lifecycle management (IsCreated, IsLoaded, IsSynced), and structure creation.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>RDBDataConnection</h3>
+                            <p>Wraps <code>IDbConnection</code>. Handles driver instantiation via <code>DMEEditor.assemblyHandler</code>, connection string building, schema alteration.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Partial Class Breakdown (16 Files)</h2>
+                    <table>
+                        <thead><tr><th>File</th><th>Lines</th><th>Responsibility</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>RDBSource.cs</code></td><td>164</td><td>Core properties, constructor, EntityStructureCache, events</td></tr>
+                            <tr><td><code>RDBSource.Connection.cs</code></td><td>33</td><td>Open/close delegation to RDBDataConnection</td></tr>
+                            <tr><td><code>RDBSource.Transaction.cs</code></td><td>66</td><td>Begin/End/Commit transaction (⚠️ Commit stub)</td></tr>
+                            <tr><td><code>RDBSource.CRUD.cs</code></td><td>585</td><td>InsertEntity, UpdateEntity, DeleteEntity + async variants</td></tr>
+                            <tr><td><code>RDBSource.Query.cs</code></td><td>1,004</td><td>GetEntity, RunQuery, ExecuteSql, BuildQuery, SQL parsing</td></tr>
+                            <tr><td><code>RDBSource.DMLGeneration.cs</code></td><td>911</td><td>INSERT/UPDATE/DELETE SQL generation, DDL, parameter creation</td></tr>
+                            <tr><td><code>RDBSource.Schema.cs</code></td><td>830</td><td>Entity structure loading, FK detection, Oracle FLOAT mapping</td></tr>
+                            <tr><td><code>RDBSource.BulkOperations.cs</code></td><td>1,080</td><td>Bulk insert/update, temp-table strategies, multi-row optimization</td></tr>
+                            <tr><td><code>RDBSource.Cache.cs</code></td><td>252</td><td>Query cache, result cache (MemoryCache), prepared statements</td></tr>
+                            <tr><td><code>RDBSource.Modernization.cs</code></td><td>497</td><td>IAsyncEnumerable streaming, async paging, scalar/non-query</td></tr>
+                            <tr><td><code>RDBSource.Resilience.cs</code></td><td>426</td><td>Polly v8 retry + circuit breaker, health checks</td></tr>
+                            <tr><td><code>RDBSource.Dapper.cs</code></td><td>38</td><td>Dapper Query&lt;T&gt; + ExecuteAsync&lt;T&gt; wrappers</td></tr>
+                            <tr><td><code>RDBSource.TypeMapping.cs</code></td><td>108</td><td>DbType conversion + value conversion (all .NET types)</td></tr>
+                            <tr><td><code>RDBSource.Utilities.cs</code></td><td>297</td><td>Error handling, GetDataCommand, GetDataAdapter, naming</td></tr>
+                            <tr><td><code>RDBSource.Pagination.cs</code></td><td>12</td><td>⚠️ Empty stub — paging logic lives in Modernization.cs</td></tr>
+                            <tr><td><code>RDBSource.Dispose.cs</code></td><td>45</td><td>IDisposable pattern, connection cleanup</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Helper Classes</h2>
+                    <table>
+                        <thead><tr><th>Class</th><th>Lines</th><th>Purpose</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>DataStreamer</code></td><td>109</td><td>Streams IDataReader → Dictionary&lt;string,object&gt; or typed objects with cached property mapping</td></tr>
+                            <tr><td><code>DbTypeMapper</code></td><td>38</td><td>Static dictionary mapping .NET type strings → DbType</td></tr>
+                            <tr><td><code>EntityStructureCache</code></td><td>27</td><td>Thread-safe ConcurrentDictionary with refresh-on-demand loader</td></tr>
+                            <tr><td><code>PagedQueryExecutor</code></td><td>118</td><td>Builds count query + paged query, executes both, returns (rows, total)</td></tr>
+                            <tr><td><code>PaginationHelper</code></td><td>15</td><td>Delegates to RDBMSHelper.GetPagingSyntax for DB-specific paging</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="section">
+                    <h2>Key Design Patterns</h2>
+
+                    <h3>Provider Abstraction</h3>
+                    <p>Database drivers are loaded dynamically via <code>DMEEditor.assemblyHandler.GetInstance(typeName)</code>. The plugin has no compile-time dependency on any specific ADO.NET provider. Supported engines:</p>
+                    <table>
+                        <thead><tr><th>Engine</th><th>Paging Syntax</th><th>Temp Tables</th><th>Health Check</th></tr></thead>
+                        <tbody>
+                            <tr><td>SQL Server</td><td>OFFSET/FETCH</td><td>#temp</td><td>SELECT 1</td></tr>
+                            <tr><td>MySQL</td><td>LIMIT/OFFSET</td><td>CREATE TEMPORARY TABLE</td><td>SELECT 1</td></tr>
+                            <tr><td>PostgreSQL</td><td>LIMIT/OFFSET</td><td>CREATE TEMP TABLE</td><td>SELECT 1</td></tr>
+                            <tr><td>Oracle</td><td>ROWNUM subquery</td><td>—</td><td>SELECT 1 FROM DUAL</td></tr>
+                            <tr><td>SQLite</td><td>LIMIT/OFFSET</td><td>—</td><td>SELECT 1</td></tr>
+                            <tr><td>DB2</td><td>—</td><td>—</td><td>SELECT 1 FROM SYSIBM.SYSDUMMY1</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Resilience Pipeline</h3>
+                    <p>Polly v8 <code>ResiliencePipeline</code> combines circuit breaker (50% failure ratio, 30s duration) + retry (exponential backoff, 3 attempts). Health checks issue database-specific ping queries and auto-reopen connections.</p>
+
+                    <h3>Multi-Level Caching</h3>
+                    <ul>
+                        <li><strong>Query cache</strong> — <code>ConcurrentDictionary&lt;string,string&gt;</code> for compiled query strings</li>
+                        <li><strong>Result cache</strong> — <code>MemoryCache</code> with configurable TTL (default 5 min, size limit 1024 entries)</li>
+                        <li><strong>Prepared statement cache</strong> — <code>ConcurrentDictionary</code> for command text reuse</li>
+                        <li><strong>Entity structure cache</strong> — <code>EntityStructureCache</code> (ConcurrentDictionary with refresh)</li>
+                        <li><strong>Property mapping cache</strong> — <code>DataStreamer</code> caches reflected property info per type</li>
+                    </ul>
+
+                    <h3>Bulk Operation Strategies</h3>
+                    <ul>
+                        <li><strong>Multi-row INSERT</strong> — <code>INSERT INTO t VALUES (...), (...), (...)</code> for SQL Server/MySQL/PostgreSQL/SQLite</li>
+                        <li><strong>Temp-table MERGE</strong> — Create temp table → bulk insert → MERGE/UPDATE JOIN for SQL Server/MySQL/PostgreSQL</li>
+                        <li><strong>Batched fallback</strong> — Individual INSERT/UPDATE wrapped in transaction for Oracle/DB2</li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>Known Issues</h2>
+                    <table>
+                        <thead><tr><th>Severity</th><th>Issue</th><th>Location</th></tr></thead>
+                        <tbody>
+                            <tr><td>🔴 Critical</td><td><code>UpdateEntities()</code> calls <code>InsertEntity()</code> instead of <code>UpdateEntity()</code></td><td>CRUD.cs:302</td></tr>
+                            <tr><td>🔴 Critical</td><td><code>Commit()</code> and <code>EndTransaction()</code> are empty stubs</td><td>Transaction.cs</td></tr>
+                            <tr><td>🟡 High</td><td><code>usedParameterNames</code> HashSet is not thread-safe across concurrent operations</td><td>RDBSource.cs</td></tr>
+                            <tr><td>🟡 High</td><td><code>MemoryCache</code> cannot enumerate keys — result cache stale until TTL expires</td><td>Cache.cs</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <div class="nav-links">
+                    <a href="../impl-rdbms.html"><i class="bi bi-arrow-left"></i> RDBMS Overview</a>
+                    <a href="rdbms-configuration.html">Configuration <i class="bi bi-arrow-right"></i></a>
+                </div>
+
+                <footer class="documentation-footer">
+                    <div class="footer-content">
+                        <div class="footer-copyright">
+                            <p>&copy; 2024 The Tech Idea — Beep DataSources Documentation</p>
+                        </div>
+                        <div class="footer-links">
+                            <a href="../index.html">Home</a>
+                            <a href="../roadmap.html">Roadmap</a>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+    <script src="../navigation.js"></script>
+</body>
+</html>

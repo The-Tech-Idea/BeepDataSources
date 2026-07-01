@@ -47,6 +47,8 @@ namespace TheTechIdea.Beep.DataBase
 
         private int GetCtorForAdapter(List<ConstructorInfo> ls)
         {
+            if (ls == null || ls.Count == 0)
+                return -1;
 
             int i = 0;
             foreach (ConstructorInfo c in ls)
@@ -54,22 +56,24 @@ namespace TheTechIdea.Beep.DataBase
                 ParameterInfo[] d = c.GetParameters();
                 if (d.Length == 2)
                 {
-                    if (d[0].ParameterType == System.Type.GetType("System.String"))
+                    if (d[0].ParameterType == typeof(string))
                     {
-                        if (d[1].ParameterType != System.Type.GetType("System.String"))
+                        if (d[1].ParameterType != typeof(string))
                         {
                             return i;
                         }
                     }
                 }
-
                 i += 1;
             }
-            return i;
-
+            // No matching constructor found — return 0 as safe default
+            return 0;
         }
+
         private int GetCtorForCommandBuilder(List<ConstructorInfo> ls)
         {
+            if (ls == null || ls.Count == 0)
+                return -1;
 
             int i = 0;
             foreach (ConstructorInfo c in ls)
@@ -78,13 +82,11 @@ namespace TheTechIdea.Beep.DataBase
                 if (d.Length == 1)
                 {
                     return i;
-
                 }
-
                 i += 1;
             }
-            return i;
-
+            // No matching constructor found — return 0 as safe default
+            return 0;
         }
         public virtual IDbCommand GetDataCommand()
         {
@@ -130,16 +132,38 @@ namespace TheTechIdea.Beep.DataBase
                 {
                     return null;
                 }
-                Type adcbuilderType = DMEEditor.assemblyHandler.GetType(cmdbuildername);
-                List<ConstructorInfo> lsc = DMEEditor.assemblyHandler.GetInstance(adtype).GetType().GetConstructors().ToList(); ;
-                List<ConstructorInfo> lsc2 = DMEEditor.assemblyHandler.GetInstance(cmdbuildername).GetType().GetConstructors().ToList(); ;
+                Type? adcbuilderType = DMEEditor.assemblyHandler.GetType(cmdbuildername);
+                if (adcbuilderType == null)
+                {
+                    DMEEditor.AddLogMessage("Fail", $"CommandBuilder type '{cmdbuildername}' not found", DateTime.Now, -1, DatasourceName, Errors.Failed);
+                    return null;
+                }
 
-                ConstructorInfo ctor = lsc[GetCtorForAdapter(lsc)];
-                ConstructorInfo BuilderConstructer = lsc2[GetCtorForCommandBuilder(adcbuilderType.GetConstructors().ToList())];
+                var adapterInstance = DMEEditor.assemblyHandler.GetInstance(adtype);
+                var builderInstance = DMEEditor.assemblyHandler.GetInstance(cmdbuildername);
+                if (adapterInstance == null || builderInstance == null)
+                {
+                    DMEEditor.AddLogMessage("Fail", "Failed to create adapter or command builder instance", DateTime.Now, -1, DatasourceName, Errors.Failed);
+                    return null;
+                }
+
+                List<ConstructorInfo> lsc = adapterInstance.GetType().GetConstructors().ToList();
+                List<ConstructorInfo> lsc2 = builderInstance.GetType().GetConstructors().ToList();
+
+                int adapterIdx = GetCtorForAdapter(lsc);
+                int builderIdx = GetCtorForCommandBuilder(adcbuilderType.GetConstructors().ToList());
+                if (adapterIdx < 0 || builderIdx < 0 || adapterIdx >= lsc.Count || builderIdx >= lsc2.Count)
+                {
+                    DMEEditor.AddLogMessage("Fail", "No suitable constructor found for adapter or command builder", DateTime.Now, -1, DatasourceName, Errors.Failed);
+                    return null;
+                }
+
+                ConstructorInfo ctor = lsc[adapterIdx];
+                ConstructorInfo BuilderConstructer = lsc2[builderIdx];
                 ObjectActivator<IDbDataAdapter> adpActivator = GetActivator<IDbDataAdapter>(ctor);
                 ObjectActivator<DbCommandBuilder> cmdbuilderActivator = GetActivator<DbCommandBuilder>(BuilderConstructer);
 
-                //create an instance:
+                // create an instance:
                 adp = (IDbDataAdapter)adpActivator(Sql, RDBMSConnection.DbConn);
                 try
                 {
