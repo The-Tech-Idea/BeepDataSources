@@ -14,10 +14,7 @@ namespace TheTechIdea.Beep.DataBase
     public partial class SQLiteDataSource : InMemoryRDBSource, ILocalDB, IDataSource, IDisposable
     {
         private bool disposedValue;
-        private readonly string dateformat = "yyyy-MM-dd HH:mm:ss";
         private bool _transactionStarted;
-        private SQLiteConnection sQLiteConnection;
-        private string dbpath;
 
         public bool CanCreateLocal { get; set; }
         public bool InMemory { get; set; } = false;
@@ -40,7 +37,7 @@ namespace TheTechIdea.Beep.DataBase
             DMEEditor = pDMEEditor;
             DatasourceName = pdatasourcename;
 
-            if (!string.IsNullOrEmpty(pdatasourcename))
+            if (!string.IsNullOrEmpty(pdatasourcename) && DMEEditor?.ConfigEditor != null)
             {
                 Dataconnection ??= new RDBDataConnection(DMEEditor);
                 Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections
@@ -51,14 +48,8 @@ namespace TheTechIdea.Beep.DataBase
                 Dataconnection.DataSourceDriver = ConnectionHelper.LinkConnection2Drivers(Dataconnection.ConnectionProp, DMEEditor.ConfigEditor);
             }
 
-            Dataconnection.ConnectionProp.DatabaseType = DataSourceType.SqlLite;
-            Dataconnection.ConnectionProp.Category = DatasourceCategory.RDBMS;
-            Dataconnection.ConnectionProp.IsLocal = true;
-            Dataconnection.ConnectionProp.IsDatabase = true;
-            Dataconnection.ConnectionProp.IsFile = true;
-
-            ColumnDelimiter = "[]";
-            ParameterDelimiter = "$";
+            // Defaults — EnsureConnectionProp may override during Open. Don't set IsLocal here; that
+            // belongs to EnsureConnectionProp which is the single source of truth for connection-prop defaults.
         }
 
         public void Dispose()

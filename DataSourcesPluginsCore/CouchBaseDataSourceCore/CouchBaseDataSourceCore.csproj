@@ -30,8 +30,8 @@
 	</ItemGroup>
   <ItemGroup>
     <PackageReference Include="CouchbaseNetClient" Version="3.7.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.35" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.69" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.1.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="3.1.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\DataSourcesPlugins\CouchBaseDataSource\*.cs" />

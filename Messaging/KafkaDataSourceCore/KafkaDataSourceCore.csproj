@@ -31,12 +31,12 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.12.2" />
-	  <PackageReference Include="Confluent.Kafka" Version="2.14.0" />
-	  <PackageReference Include="Confluent.SchemaRegistry" Version="2.14.0" />
-	  <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.8" />
-	  <PackageReference Include="System.IO.Pipelines" Version="10.0.8" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.0.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="3.0.0" />
+	  <PackageReference Include="Confluent.Kafka" Version="2.15.0" />
+	  <PackageReference Include="Confluent.SchemaRegistry" Version="2.15.0" />
+	  <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.9" />
+	  <PackageReference Include="System.IO.Pipelines" Version="10.0.9" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.1.0" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="3.1.0" />
 	</ItemGroup>
 
 </Project>

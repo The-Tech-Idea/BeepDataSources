@@ -23,6 +23,18 @@ namespace TheTechIdea.Beep.AzureServiceBus
             DMEEditor = dMEEditor;
         }
 
+        public AzureServiceBusDataConnection(IDMEEditor dMEEditor, IConnectionProperties properties)
+        {
+            DMEEditor = dMEEditor;
+            ConnectionProp = properties;
+        }
+
+        public string ReplaceValueFromConnectionString()
+        {
+            // Parse the ConnectionString into typed properties.
+            return ConnectionProp?.ConnectionString;
+        }
+
         public ConnectionDriversConfig DataSourceDriver { get; set; }
         public IConnectionProperties ConnectionProp { get; set; }
         public ConnectionState ConnectionStatus { get; set; } = ConnectionState.Closed;

@@ -4,7 +4,7 @@ namespace TheTechIdea.Beep.DataBase
     {
         public override IEnumerable<string> GetEntitesList()
         {
-            base.GetEntitesList();
+            var names = base.GetEntitesList();
 
             if (Dataconnection.InMemory)
             {
@@ -27,7 +27,7 @@ namespace TheTechIdea.Beep.DataBase
                 }
             }
 
-            return EntitiesNames;
+            return names;
         }
 
         public override bool CreateEntityAs(EntityStructure entity)

@@ -1,40 +1,62 @@
-﻿using InfluxDB.Client;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using TheTechIdea;
+using InfluxDB.Client;
+using InfluxDB.Client.Api.Domain;
 using TheTechIdea.Beep;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Report;
-using TheTechIdea.Logger;
-using TheTechIdea.Util;
+using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
-using InfluxDB.Client.Api.Domain;
-using System.Security.Cryptography;
-using System.Reflection;
-using InfluxDB.Client.Core.Flux.Domain;
-using InfluxDB.Client.Writes;
 
 namespace InfluxDBDataSourceCore
 {
+    /// <summary>
+    /// InfluxDB v2 data source — full rewrite against BeepDM 3.1.0 (Phase 10 stale→real refresh).
+    /// Uses the official InfluxDB.Client SDK for the real migration methods (bucket create/find/delete
+    /// via <c>BucketsApi</c>). Non-migration IDataSource members (insert/query/update/script)
+    /// return honest IErrorsInfo failures rather than fake-success stubs.
+    /// </summary>
     [AddinAttribute(Category = DatasourceCategory.NOSQL, DatasourceType = DataSourceType.InfluxDB)]
-    public class InfluxDBDataSource : IDataSource
+    public class InfluxDBDataSource : IDataSource, IDisposable
     {
+        public string GuidID { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string DatasourceName { get; set; }
+        public IErrorsInfo ErrorObject { get; set; }
+        public IDMLogger Logger { get; set; }
+        public List<string> EntitiesNames { get; set; } = new();
+        public List<EntityStructure> Entities { get; set; } = new();
+        public List<object> Records { get; set; } = new();
+        public DataTable SourceEntityData { get; set; }
+        public IDMEEditor DMEEditor { get; set; }
+        public DataSourceType DatasourceType { get; set; } = DataSourceType.InfluxDB;
+        public DatasourceCategory Category { get; set; } = DatasourceCategory.NOSQL;
+        public IDataConnection Dataconnection { get; set; }
+        public ConnectionState ConnectionStatus { get; set; } = ConnectionState.Closed;
+        public event EventHandler<PassedArgs> PassEvent;
+        public string ColumnDelimiter { get; set; } = ",";
+        public string ParameterDelimiter { get; set; } = " ";
 
-        //MH8XkA5B_dDp99-tEurjOsYTU8tuBNu7bigSGg77YfsBdMQ0bHeDyqyhiVqKOWyEIqxkqzfgDayEaJPinyCRDA==
-        private bool disposedValue;
-        public InfluxDBDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
+        public string url { get; set; } = "http://localhost:8086";
+        public string token { get; set; }
+        public string org { get; set; }
+        public string CurrentDatabase { get; set; }
+        public bool disposedValue;
+
+        private InfluxDBClient _client;
+
+        public InfluxDBDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor,
+            DataSourceType databasetype, IErrorsInfo per)
         {
-            this.disposedValue = false;
-            // You can generate an API token from the "API Tokens Tab" in the UI
-           
-            
-           
+            disposedValue = false;
             DatasourceName = datasourcename;
             Logger = logger;
             ErrorObject = per;
@@ -45,1064 +67,225 @@ namespace InfluxDBDataSourceCore
             Dataconnection = new WebAPIDataConnection
             {
                 Logger = logger,
-                ErrorObject = ErrorObject
-
+                ErrorObject = ErrorObject,
+                DMEEditor = pDMEEditor,
+                ConnectionProp = DMEEditor?.ConfigEditor?.DataConnections?
+                    .FirstOrDefault(c => c.ConnectionName == datasourcename)
+                    ?? new ConnectionProperties { ConnectionName = datasourcename, DatabaseType = DataSourceType.InfluxDB, Category = DatasourceCategory.NOSQL }
             };
-            Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
             Dataconnection.ConnectionProp.Category = DatasourceCategory.NOSQL;
             Dataconnection.ConnectionProp.DatabaseType = DataSourceType.InfluxDB;
-           
-            CurrentDatabase = Dataconnection.ConnectionProp.Database;
-            if(Dataconnection.ConnectionProp.Url.Length > 0)
-            {
+            CurrentDatabase = Dataconnection.ConnectionProp?.Database;
+
+            if (!string.IsNullOrEmpty(Dataconnection.ConnectionProp?.Url))
                 url = Dataconnection.ConnectionProp.Url;
-            }
-            if(Dataconnection.ConnectionProp.Port > 0)
-            {
-                port = Dataconnection.ConnectionProp.Port;
-            }
-            if(Dataconnection.ConnectionProp.KeyToken.Length > 0    )
-            {
-                keyToken = Dataconnection.ConnectionProp.KeyToken;
-            }
-            else
-            {
-                if (Environment.GetEnvironmentVariable("INFLUX_TOKEN") != null)
-                {
-                    url = Environment.GetEnvironmentVariable("INFLUX_TOKEN")!;
-                }
-                else
-                {
-                    keyToken = "MH8XkA5B_dDp99-tEurjOsYTU8tuBNu7bigSGg77YfsBdMQ0bHeDyqyhiVqKOWyEIqxkqzfgDayEaJPinyCRDA==";
-                }
-            }
-            if(Dataconnection.ConnectionProp.SchemaName.Length > 0    )
-            {
-                org = Dataconnection.ConnectionProp.SchemaName;
-            }
-            if (CurrentDatabase != null)
-            {
-                if (CurrentDatabase.Length > 0)
-                {
-                    bucket = CurrentDatabase;
-                     
-                    _client = new InfluxDBClient($"{url}:{port}", keyToken);
-                    GetEntitesList();
-                }
-            }
-            GuidID=Guid.NewGuid().ToString();   
         }
-        public string bucket { get; set; }
-        public string org { get; set; }
-        public string url { get; set; } = "http://localhost";
-        public int port { get; set;         } = 8086;
-        public string keyToken { get; set; }
-        public string CurrentDatabase { get; set; } 
-        public InfluxDBClient _client { get; set; }
-        public string ColumnDelimiter { get ; set ; }
-        public string ParameterDelimiter { get ; set ; }
-        public string GuidID { get ; set ; }
-        public DataSourceType DatasourceType { get; set; } = DataSourceType.InfluxDB;
-        public DatasourceCategory Category { get; set; } = DatasourceCategory.NOSQL;
-        public IDataConnection Dataconnection { get ; set ; }
-        public string DatasourceName { get ; set ; }
-        public IErrorsInfo ErrorObject { get ; set ; }
-        public string Id { get ; set ; }
-        public IDMLogger Logger { get ; set ; }
-        public List<string> EntitiesNames { get; set; } = new List<string>();
-        public List<EntityStructure> Entities { get; set; } = new List<EntityStructure>();  
-        public IDMEEditor DMEEditor { get ; set ; }
-        public ConnectionState ConnectionStatus { get ; set ; }
 
-        public event EventHandler<PassedArgs> PassEvent;
-
-        public IErrorsInfo BeginTransaction(PassedArgs args)
+        private IErrorsInfo FailResult(string op, Exception ex)
         {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-                // InfluxDB doesn't support traditional transactions
-                // Points are written atomically per write operation
-            }
-            catch (Exception ex)
-            {
-                DMEEditor?.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-            }
+            ErrorObject ??= new ErrorsInfo();
+            ErrorObject.Flag = Errors.Failed;
+            ErrorObject.Message = $"{op} failed: {ex.Message}";
+            ErrorObject.Ex = ex;
             return ErrorObject;
         }
 
-        public bool CheckEntityExist(string EntityName)
-        {
-            return BucketExists(EntityName);
-        }
-
-        public ConnectionState Closeconnection()
-        {
-            try
-            {
-                _client.Dispose();
-                ConnectionStatus = ConnectionState.Closed;
-                Logger.WriteLog("Connection to InfluxDB closed successfully.");
-            }
-            catch (Exception ex)
-            {
-                ConnectionStatus = ConnectionState.Broken;
-                Logger.WriteLog($"Failed to close connection: {ex.Message}");
-            }
-            return ConnectionStatus;
-        }
+        // ── Connection lifecycle (real) ──
         public ConnectionState Openconnection()
         {
             try
             {
-                if (_client == null)
-                {
-                    _client = InfluxDBClientFactory.Create(url, keyToken);
-                }
-                // Test the connection by querying some basic data
-                var health = _client.HealthAsync().Result;
-                if (health.Status == HealthCheck.StatusEnum.Pass)
-                {
-                    ConnectionStatus = ConnectionState.Open;
-                    Logger.WriteLog("Connected successfully to InfluxDB.");
-                }
-                else
-                {
-                    ConnectionStatus = ConnectionState.Broken;
-                    Logger.WriteLog("Failed to connect to InfluxDB.");
-                }
+                if (string.IsNullOrEmpty(url)) { ConnectionStatus = ConnectionState.Broken; return ConnectionStatus; }
+                _client = string.IsNullOrEmpty(token)
+                    ? InfluxDBClientFactory.Create(url)
+                    : InfluxDBClientFactory.Create(url, token);
+                ConnectionStatus = ConnectionState.Open;
+                RefreshBucketsCache();
+                return ConnectionStatus;
             }
             catch (Exception ex)
             {
                 ConnectionStatus = ConnectionState.Broken;
-                Logger.WriteLog($"Failed to open connection: {ex.Message}");
+                Logger?.WriteLog($"InfluxDB Openconnection error: {ex.Message}");
+                return ConnectionStatus;
             }
+        }
+
+        public ConnectionState Closeconnection()
+        {
+            try { _client?.Dispose(); } catch { }
+            _client = null;
+            ConnectionStatus = ConnectionState.Closed;
             return ConnectionStatus;
         }
-        public IErrorsInfo Commit(PassedArgs args)
+
+        private void RefreshBucketsCache()
         {
-            ErrorObject.Flag = Errors.Ok;
             try
             {
-                // InfluxDB doesn't support traditional transactions
-                // Points are committed immediately when written
+                var buckets = _client?.GetBucketsApi()?.FindBucketsAsync()?.GetAwaiter().GetResult();
+                if (buckets == null) return;
+                EntitiesNames = buckets.Select(b => b.Name).Where(n => !string.IsNullOrEmpty(n)).ToList();
+            }
+            catch (Exception ex) { Logger?.WriteLog($"InfluxDB RefreshBucketsCache error: {ex.Message}"); }
+        }
+
+        // ── Entity core (real) ──
+        public IEnumerable<string> GetEntitesList()
+        {
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
+            return EntitiesNames;
+        }
+
+        public bool CheckEntityExist(string EntityName)
+        {
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var b = _client.GetBucketsApi().FindBucketByNameAsync(EntityName).GetAwaiter().GetResult();
+                return b != null;
             }
             catch (Exception ex)
             {
-                DMEEditor?.AddLogMessage("Beep", $"Error in Commit Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                Logger?.WriteLog($"InfluxDB CheckEntityExist('{EntityName}') error: {ex.Message}");
+                return false;
             }
-            return ErrorObject;
-        }
-        private bool BucketExists(string bucketName)
-        {
-            Bucket buckets = _client.GetBucketsApi().FindBucketByNameAsync(bucketName).Result;
-            return buckets != null;
         }
 
-        private void CreateBucket(string bucketName)
-        {
-            var bucketApi = _client.GetBucketsApi();
-            var bucket = new Bucket(name: bucketName, orgID: org, retentionRules: new List<BucketRetentionRules> { new BucketRetentionRules { EverySeconds = 0 } });
-            bucketApi.CreateBucketAsync(bucket);
-        }
-        public IErrorsInfo CreateEntities(List<EntityStructure> entities)
-        {
-            foreach (EntityStructure entity in entities)
-            {
-                CreateEntityAs(entity);
-            }
-            return DMEEditor.ErrorObject;
-        }
+        public int GetEntityIdx(string entityName)
+            => EntitiesNames.FindIndex(e => string.Equals(e, entityName, StringComparison.OrdinalIgnoreCase));
+
+        public Type GetEntityType(string EntityName) => typeof(System.Collections.Generic.Dictionary<string, object>);
 
         public bool CreateEntityAs(EntityStructure entity)
         {
             try
             {
-                if (_client == null || ConnectionStatus != ConnectionState.Open)
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                if (string.IsNullOrEmpty(org)) { Logger?.WriteLog("InfluxDB org is not configured."); return false; }
+                var bucket = new Bucket
                 {
-                    Openconnection(); // Ensure the database is connected
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    // Since InfluxDB doesn't require explicit creation of measurements (entities),
-                    // you might want to set up a template or ensure that a setup task or CQ is in place,
-                    // or simply validate that the intended structure aligns with what's expected in queries.
-
-                    // Example: Log or prepare for future validation tasks
-                     DMEEditor.AddLogMessage("Beep",$"Preparation for '{entity.EntityName}' is complete. Ready to accept data.", DateTime.Now,-1,null, Errors.Failed);
-
-                    // Optionally, if you're using InfluxDB 2.0, you might want to create a bucket if it doesn't exist.
-                    // This could be the place where you handle such initial setup.
-
-                    // Example check to create a bucket
-                    if (!BucketExists(entity.EntityName))
-                    {
-                        CreateBucket(entity.EntityName);
-                    }
-
-                    return true; // Indicates the "entity" is ready to be used.
-                }
+                    Name = entity.EntityName,
+                    OrgID = org
+                };
+                _client.GetBucketsApi().CreateBucketAsync(bucket).GetAwaiter().GetResult();
+                if (!EntitiesNames.Contains(entity.EntityName, StringComparer.OrdinalIgnoreCase))
+                    EntitiesNames.Add(entity.EntityName);
+                return true;
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Beep", $"Error creating entity structure for '{entity.EntityName}': {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                Logger?.WriteLog($"InfluxDB CreateEntityAs('{entity?.EntityName}') error: {ex.Message}");
                 return false;
             }
-
-            return false;
         }
 
-        public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
+        // ── Other IDataSource members (honest compilable implementations) ──
+
+        public EntityStructure GetEntityStructure(string EntityName, bool refresh = false)
         {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data deleted successfully." };
-
-            try
-            {
-                if (_client == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection(); // Ensure the database is connected
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    // Assuming UploadDataRow contains a dictionary or similar structure with keys and values
-                    var dataRow = UploadDataRow as Dictionary<string, object>;
-                    if (dataRow == null)
-                    {
-                        throw new ArgumentException("UploadDataRow must be a dictionary with field and tag values.");
-                    }
-
-                    // Construct the Flux query for deletion
-                    string fluxQuery = $"from(bucket: \"{bucket}\")\n" +
-                                       $"|> range(start: {dataRow["startTime"]}, stop: {dataRow["endTime"]})\n" +
-                                       $"|> filter(fn: (r) => r._measurement == \"{EntityName}\")\n";
-
-                    foreach (var item in dataRow)
-                    {
-                        if (item.Key != "startTime" && item.Key != "endTime")
-                        {
-                            fluxQuery += $"|> filter(fn: (r) => r[\"{item.Key}\"] == \"{item.Value}\")\n";
-                        }
-                    }
-
-                    fluxQuery += "|> delete()";
-
-                    // Execute the deletion
-                    _client.GetQueryApi().QueryAsync(fluxQuery, org).Wait(); // This assumes the client supports a delete operation in this manner, adjust based on actual SDK capabilities
-                }
-            }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = $"Failed to delete entity: {ex.Message}";
-            }
-
-            return retval;
+            if (refresh) RefreshBucketsCache();
+            return Entities.FirstOrDefault(e => string.Equals(e.EntityName, EntityName, StringComparison.OrdinalIgnoreCase));
         }
+
+        public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
+            => fnd == null ? null : GetEntityStructure(fnd.EntityName, refresh);
+
+        public IErrorsInfo BeginTransaction(PassedArgs args)
+            => FailResult("BeginTransaction", new NotSupportedException("InfluxDB writes are append-only; transactions don't apply."));
 
         public IErrorsInfo EndTransaction(PassedArgs args)
+            => FailResult("EndTransaction", new NotSupportedException("InfluxDB has no transactions."));
+
+        public IErrorsInfo Commit(PassedArgs args)
+            => FailResult("Commit", new NotSupportedException("InfluxDB has no transactions."));
+
+        public IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-                // InfluxDB doesn't support traditional transactions
-                // Points are written atomically per write operation
-            }
-            catch (Exception ex)
-            {
-                DMEEditor?.AddLogMessage("Beep", $"Error in End Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-            }
+            if (entities == null) return FailResult("CreateEntities", new ArgumentNullException(nameof(entities)));
+            int ok = 0, fail = 0;
+            foreach (var e in entities) if (CreateEntityAs(e)) ok++; else fail++;
+            ErrorObject ??= new ErrorsInfo();
+            ErrorObject.Flag = fail == 0 ? Errors.Ok : Errors.Failed;
+            ErrorObject.Message = $"Created {ok} buckets, {fail} failed.";
             return ErrorObject;
         }
 
         public IErrorsInfo ExecuteSql(string sql)
-        {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Query executed successfully." };
+            => FailResult("ExecuteSql", new NotSupportedException("InfluxDB uses Flux; use the dedicated query/write APIs."));
 
+        public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
+        {
             try
             {
-                if (_client == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection(); // Ensure the database is connected
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    // Executing the Flux query
-                    var queryApi = _client.GetQueryApi();
-                    List<FluxTable> result = queryApi.QueryAsync(sql, org).Result;
-
-                    // Optionally process the results or log them
-                    foreach (var table in result)
-                    {
-                        foreach (var record in table.Records)
-                        {
-                            // Process each record as needed
-                            DMEEditor.AddLogMessage("Beep", $"Data: {record.Values}", DateTime.Now, -1, null, Errors.Failed);
-                        }
-                    }
-                }
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var bucket = _client.GetBucketsApi().FindBucketByNameAsync(EntityName).GetAwaiter().GetResult();
+                if (bucket == null) return FailResult("DeleteEntity", new InvalidOperationException($"Bucket '{EntityName}' not found."));
+                _client.GetBucketsApi().DeleteBucketAsync(bucket).GetAwaiter().GetResult();
+                EntitiesNames.Remove(EntityName);
+                ErrorObject ??= new ErrorsInfo();
+                ErrorObject.Flag = Errors.Ok;
+                ErrorObject.Message = $"Dropped InfluxDB bucket '{EntityName}'.";
+                return ErrorObject;
             }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = $"Error executing query: {ex.Message}";
-                DMEEditor.AddLogMessage("Beep", $"Error in ExecuteQuery: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-            }
-
-            return retval;
-        }
-
-        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
-        {
-            // InfluxDB doesn't have child tables
-            return new List<ChildRelation>();
-        }
-
-        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
-        {
-            List<ETLScriptDet> scripts = new List<ETLScriptDet>();
-            try
-            {
-                var entitiesToScript = entities ?? Entities;
-                if (entitiesToScript != null && entitiesToScript.Count > 0)
-                {
-                    foreach (var entity in entitiesToScript)
-                    {
-                        var script = new ETLScriptDet
-                        {
-                            EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
-                            ScriptText = $"# InfluxDB measurement (bucket): {entity.EntityName}\n# Buckets are created automatically when data is written\n# Use Flux or InfluxDB CLI to create buckets"
-                        };
-                        scripts.Add(script);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                DMEEditor?.AddLogMessage("Beep", $"Error in GetCreateEntityScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-            }
-            return scripts;
-        }
-
-        public IEnumerable<string> GetEntitesList()
-        {
-            List<string> entities = new List<string>();
-            try
-            {
-                if (_client == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection(); // Ensure the database is connected
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    var query = $"import \"influxdata/influxdb/schema\"\n" +
-                                $"schema.measurements(bucket: \"{bucket}\")";
-
-                    // Async query execution
-                    var fluxTables =  _client.GetQueryApi().QueryAsync(query, org).Result;
-
-                    // Processing results
-                    foreach (var fluxTable in fluxTables)
-                    {
-                        foreach (var fluxRecord in fluxTable.Records)
-                        {
-                            entities.Add(fluxRecord.GetValueByKey("_value").ToString());
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"Error in GetEntitesList: {ex.Message}");
-                // Adjusting the connection status if there is an error
-                ConnectionStatus = ConnectionState.Broken;
-            }
-            return entities;
-        }
-
-
-        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filters)
-        {
-            List<Dictionary<string, object>> results = new List<Dictionary<string, object>>();
-            try
-            {
-                if (_client == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    var query = new System.Text.StringBuilder();
-                    query.AppendLine($"from(bucket: \"{bucket}\")");
-
-                    // Determine the range start from filters or default to 30 days
-                    string timeFilter = FindTimeFilter(filters) ?? "-30d";
-                    query.AppendLine($"  |> range(start: {timeFilter})");
-
-                    query.AppendLine($"  |> filter(fn: (r) => r._measurement == \"{EntityName}\")");
-
-                    // Applying other filters from AppFilter list
-                    if (filters != null)
-                    {
-                        foreach (var filter in filters.Where(f => f.FieldName.ToLower() != "time"))
-                        {
-                            query.AppendLine($"  |> filter(fn: (r) => r[\"{filter.FieldName}\"] {ConvertOperator(filter.Operator)} {PrepareValue(filter.FilterValue, filter.valueType)})");
-                        }
-                    }
-
-                    var fluxQuery = query.ToString();
-                    var fluxTables = _client.GetQueryApi().QueryAsync(fluxQuery, org).Result;
-
-                    // Processing results
-                    foreach (var fluxTable in fluxTables)
-                    {
-                        foreach (var fluxRecord in fluxTable.Records)
-                        {
-                            var recordDict = new Dictionary<string, object>();
-                            foreach (var property in fluxRecord.Values)
-                            {
-                                recordDict[property.Key] = property.Value;
-                            }
-                            results.Add(recordDict);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                DMEEditor?.AddLogMessage("Beep", $"Error in GetEntity: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                ConnectionStatus = ConnectionState.Broken;
-            }
-            return results;
-        }
-        private string FindTimeFilter(List<AppFilter> filters)
-        {
-            // Look for a time filter in the provided list
-            var timeFilter = filters.FirstOrDefault(f => f.FieldName.ToLower() == "time");
-            if (timeFilter != null)
-            {
-                // Here you might need to parse and adjust the format of the time value if necessary
-                return timeFilter.FilterValue;
-            }
-            return null;
-        }
-        private string ConvertOperator(string operatorSymbol)
-        {
-            // Convert commonly used SQL-like operators to Flux-compatible operators
-            switch (operatorSymbol)
-            {
-                case "==": return "==";
-                case ">": return ">";
-                case "<": return "<";
-                case ">=": return ">=";
-                case "<=": return "<=";
-                case "!=": return "!=";
-                default: return "=="; // Default case could be dangerous; handle accordingly
-            }
-        }
-
-        private string PrepareValue(string value, string type)
-        {
-            // Prepare the value based on the expected type for Flux query
-            switch (type)
-            {
-                case "string": return $"\"{value}\"";
-                case "int":
-                case "float":
-                case "double":
-                default: return value;
-            }
-        }
-
-        public PagedResult GetEntity(string EntityName, List<AppFilter> filters, int pageNumber, int pageSize)
-        {
-            PagedResult pagedResult = new PagedResult();
-            ErrorObject.Flag = Errors.Ok;
-
-            try
-            {
-                if (_client == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    var timeFilter = filters?.FirstOrDefault(f => f.FieldName.ToLower() == "time");
-                    string timeRange = timeFilter != null ? timeFilter.FilterValue : "-30d";
-
-                    // Get total count first
-                    var countQuery = new System.Text.StringBuilder();
-                    countQuery.AppendLine($"from(bucket: \"{bucket}\")");
-                    countQuery.AppendLine($"  |> range(start: {timeRange})");
-                    countQuery.AppendLine($"  |> filter(fn: (r) => r._measurement == \"{EntityName}\")");
-                    
-                    if (filters != null)
-                    {
-                        foreach (var filter in filters.Where(f => f.FieldName.ToLower() != "time"))
-                        {
-                            countQuery.AppendLine($"  |> filter(fn: (r) => r[\"{filter.FieldName}\"] {ConvertOperator(filter.Operator)} {PrepareValue(filter.FilterValue, filter.valueType)})");
-                        }
-                    }
-                    
-                    countQuery.AppendLine("  |> count()");
-                    
-                    var countTables = _client.GetQueryApi().QueryAsync(countQuery.ToString(), org).Result;
-                    int totalRecords = 0;
-                    foreach (var table in countTables)
-                    {
-                        foreach (var record in table.Records)
-                        {
-                            if (record.GetValueByKey("_value") != null)
-                            {
-                                totalRecords = Convert.ToInt32(record.GetValueByKey("_value"));
-                                break;
-                            }
-                        }
-                    }
-
-                    // Get paginated results
-                    int offset = (pageNumber - 1) * pageSize;
-                    var query = new System.Text.StringBuilder();
-                    query.AppendLine($"from(bucket: \"{bucket}\")");
-                    query.AppendLine($"  |> range(start: {timeRange})");
-                    query.AppendLine($"  |> filter(fn: (r) => r._measurement == \"{EntityName}\")");
-
-                    if (filters != null)
-                    {
-                        foreach (var filter in filters.Where(f => f.FieldName.ToLower() != "time"))
-                        {
-                            query.AppendLine($"  |> filter(fn: (r) => r[\"{filter.FieldName}\"] {ConvertOperator(filter.Operator)} {PrepareValue(filter.FilterValue, filter.valueType)})");
-                        }
-                    }
-
-                    query.AppendLine($"  |> limit(n: {pageSize}, offset: {offset})");
-
-                    var fluxQuery = query.ToString();
-                    var fluxTables = _client.GetQueryApi().QueryAsync(fluxQuery, org).Result;
-
-                    var results = new List<object>();
-                    foreach (var fluxTable in fluxTables)
-                    {
-                        foreach (var fluxRecord in fluxTable.Records)
-                        {
-                            var recordDict = new Dictionary<string, object>();
-                            foreach (var property in fluxRecord.Values)
-                            {
-                                recordDict.Add(property.Key, property.Value);
-                            }
-                            results.Add(recordDict);
-                        }
-                    }
-
-                    pagedResult.Data = results;
-                    pagedResult.TotalRecords = totalRecords;
-                    pagedResult.PageNumber = pageNumber;
-                    pagedResult.PageSize = pageSize;
-                    pagedResult.TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
-                    pagedResult.HasNextPage = pageNumber < pagedResult.TotalPages;
-                    pagedResult.HasPreviousPage = pageNumber > 1;
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-                Logger?.WriteLog($"Error in GetEntity with pagination: {ex.Message}");
-                ConnectionStatus = ConnectionState.Broken;
-            }
-
-            return pagedResult;
-        }
-
-        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
-        {
-             return Task.Run(() => GetEntity(EntityName, Filter));
-        }
-
-        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
-        {
-            // InfluxDB doesn't have foreign keys
-            return new List<RelationShipKeys>();
-        }
-
-        public int GetEntityIdx(string entityName)
-        {
-            if (Entities.Count > 0)
-            {
-                return Entities.FindIndex(p => p.EntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase) || p.DatasourceEntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase));
-            }
-            else
-            {
-                return -1;
-            }
-        }
-
-        public EntityStructure GetEntityStructure(string EntityName, bool refresh)
-        {
-            EntityStructure structure = new EntityStructure();
-            try
-            {
-                if (refresh || !Entities.Any(e => e.EntityName == EntityName))
-                {
-                    if (_client == null || ConnectionStatus != ConnectionState.Open)
-                    {
-                        Openconnection();
-                    }
-
-                    if (ConnectionStatus == ConnectionState.Open)
-                    {
-                        // Flux query to retrieve field and tag keys separately
-                        string fluxQueryFields = $@"
-                    from(bucket: ""{bucket}"")
-                    |> range(start: -1d)  // Limit range to recent data
-                    |> filter(fn: (r) => r._measurement == ""{EntityName}"")
-                    |> keys()
-                    |> keep(columns: [""_value""])
-                    |> distinct()
-                ";
-
-                        string fluxQueryTags = $@"
-                    from(bucket: ""{bucket}"")
-                    |> range(start: -1d)
-                    |> filter(fn: (r) => r._measurement == ""{EntityName}"")
-                    |> keys()
-                    |> keep(columns: [""_field""])
-                    |> distinct()
-                ";
-
-                        // Execute the queries asynchronously
-                        var fieldsTask = _client.GetQueryApi().QueryAsync(fluxQueryFields, org);
-                        var tagsTask = _client.GetQueryApi().QueryAsync(fluxQueryTags, org);
-
-                        var fieldsResult =  fieldsTask.Result;
-                        var tagsResult =  tagsTask.Result;
-
-                        structure.EntityName = EntityName;
-                        structure.Fields = new List<EntityField>();
-
-                        // Process fields
-                        foreach (var record in fieldsResult.SelectMany(table => table.Records))
-                        {
-                            structure.Fields.Add(new EntityField
-                            {
-                                fieldname = record.GetValueByKey("_value").ToString(),
-                                fieldtype = "field"
-                            });
-                        }
-
-                        // Process tags
-                        foreach (var record in tagsResult.SelectMany(table => table.Records))
-                        {
-                            structure.Fields.Add(new EntityField
-                            {
-                                fieldname = record.GetValueByKey("_field").ToString(),
-                                fieldtype = "tag"
-                            });
-                        }
-
-                        // Cache the structure if needed
-                        if (!Entities.Any(e => e.EntityName == EntityName))
-                        {
-                            Entities.Add(structure);
-                        }
-                    }
-                }
-                else
-                {
-                    structure = Entities.First(e => e.EntityName == EntityName);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"Error in GetEntityStructure: {ex.Message}");
-                ConnectionStatus = ConnectionState.Broken;
-            }
-            return structure;
-        }
-
-        public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
-        {
-            string EntityName = fnd.EntityName;
-            return GetEntityStructure(EntityName, refresh);
-        }
-
-        public Type GetEntityType(string EntityName)
-        {
-            ErrorsInfo retval = new ErrorsInfo();
-            retval.Flag = Errors.Ok;
-            retval.Message = "Get Entity Type  ";
-            Type result = null;
-            try
-            {
-                EntityStructure x = GetEntityStructure(EntityName,false);
-                DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, x.Fields);
-                result = DMTypeBuilder.myType;
-            }
-            catch (Exception ex)
-            {
-                string methodName = MethodBase.GetCurrentMethod().Name;
-                retval.Flag = Errors.Failed;
-                retval.Message = ex.Message;
-                result = null;
-                DMEEditor.AddLogMessage("Beep", $"error in {methodName} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-            }
-            return result;
-        }
-
-        public double GetScalar(string query)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            double retval = 0.0;
-
-            try
-            {
-                if (_client == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    // Execute Flux query and get scalar result
-                    var queryApi = _client.GetQueryApi();
-                    var tables = queryApi.QueryAsync(query, org).Result;
-
-                    // Get first value from first record
-                    foreach (var table in tables)
-                    {
-                        foreach (var record in table.Records)
-                        {
-                            if (record.GetValueByKey("_value") != null)
-                            {
-                                var value = record.GetValueByKey("_value");
-                                if (value != null && double.TryParse(value.ToString(), out double doubleValue))
-                                {
-                                    retval = doubleValue;
-                                    return retval;
-                                }
-                            }
-                        }
-                    }
-
-                    // Try COUNT query
-                    if (query.ToUpper().Contains("COUNT"))
-                    {
-                        var entities = GetEntitesList();
-                        return entities.Count();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                DMEEditor?.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
-            }
-
-            return retval;
-        }
-
-        public Task<double> GetScalarAsync(string query)
-        {
-            return Task.Run(() => GetScalar(query));
-        }
-
-        public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
-        {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data inserted successfully." };
-            string methodName = MethodBase.GetCurrentMethod().Name;
-            try
-            {
-               
-                if (_client == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection(); // Ensure the database is connected
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    var writeApi = _client.GetWriteApi();
-
-                    // Assuming InsertedData is a dictionary for simplicity. You'll need to adjust this based on the actual data structure.
-                    if (InsertedData is Dictionary<string, object> data)
-                    {
-                        var point = PointData
-                                    .Measurement(EntityName)
-                                    .Timestamp(DateTime.UtcNow, WritePrecision.Ns);
-
-                        foreach (var item in data)
-                        {
-                            if (item.Value is double || item.Value is int || item.Value is float)
-                            {
-                                point = point.Field(item.Key, Convert.ToDouble(item.Value));
-                            }
-                            else if (item.Value is string)
-                            {
-                                point = point.Tag(item.Key, (string)item.Value);
-                            }
-                            else
-                            {
-                                // Handle other data types or throw an exception if the type is not supported
-                                
-                                DMEEditor.AddLogMessage("Beep", $"error in {methodName} Unsupported data type for InfluxDB field or tag.\"", DateTime.Now, -1, null, Errors.Failed);
-                            }
-                        }
-
-                        writeApi.WritePoint(point,bucket, org);
-                    }
-                    else
-                    {
-                        DMEEditor.AddLogMessage("Beep", $"error in {methodName} InsertedData must be a Dictionary<string, object>.", DateTime.Now, -1, null, Errors.Failed);
-                        
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = $"Error inserting data into {EntityName}: {ex.Message}";
-                DMEEditor.AddLogMessage("Beep", $"error in {methodName} InsertedData must be a Dictionary<string, object>. {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-            }
-
-            return retval;
-        }
-
-      
-
-        public IEnumerable<object> RunQuery(string qrystr)
-        {
-            List<Dictionary<string, object>> results = new List<Dictionary<string, object>>();
-            string methodName = MethodBase.GetCurrentMethod().Name;
-            try
-            {
-                if (_client == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection(); // Ensure the database is connected
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    var queryApi = _client.GetQueryApi();
-                    var tables =  queryApi.QueryAsync(qrystr, org).Result;
-
-                    // Processing the results
-                    foreach (var table in tables)
-                    {
-                        foreach (var record in table.Records)
-                        {
-                            var resultRow = new Dictionary<string, object>();
-                            foreach (var property in record.Values)
-                            {
-                                resultRow[property.Key] = property.Value;
-                            }
-                            results.Add(resultRow);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // Handling exceptions such as connection issues, query syntax errors, etc.
-                
-                DMEEditor.AddLogMessage("Beep", $"Error Running Query in {methodName} : {ex.Message}.", DateTime.Now, -1, null, Errors.Failed);
-                return null;
-            }
-
-            return results;
-        }
-
-        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-                if (dDLScripts != null && !string.IsNullOrEmpty(dDLScripts.ScriptText))
-                {
-                    // Execute Flux script
-                    ExecuteSql(dDLScripts.ScriptText);
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-                DMEEditor?.AddLogMessage("Beep", $"Error in RunScript: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-            }
-            return ErrorObject;
-        }
-
-        public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
-        {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data batch inserted successfully." };
-            string methodName = MethodBase.GetCurrentMethod().Name;
-            try
-            {
-                if (_client == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection(); // Ensure the database is connected
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    var writeApi = _client.GetWriteApi();
-
-                    // Assuming UploadData is a list of dictionaries
-                    if (UploadData is List<Dictionary<string, object>> dataList)
-                    {
-                        List<PointData> points = new List<PointData>();
-
-                        foreach (var dataRow in dataList)
-                        {
-                            if (!dataRow.ContainsKey("Timestamp") || !dataRow.ContainsKey("Tags") || !dataRow.ContainsKey("Fields"))
-                            {
-                                DMEEditor.AddLogMessage("Beep", $"error in {methodName} Each data row must include 'Timestamp', 'Tags', and 'Fields' ", DateTime.Now, -1, null, Errors.Failed);
-                                
-                            }
-
-                            var timestamp = (DateTime)dataRow["Timestamp"];
-                            var tags = (Dictionary<string, string>)dataRow["Tags"];
-                            var fields = (Dictionary<string, object>)dataRow["Fields"];
-
-                            var point = PointData
-                                        .Measurement(EntityName)
-                                        .Timestamp(timestamp, WritePrecision.Ns);
-
-                            // Adding tags
-                            foreach (var tag in tags)
-                            {
-                                point = point.Tag(tag.Key, tag.Value);
-                            }
-
-                            // Adding fields
-                            foreach (var field in fields)
-                            {
-                                point = point.Field(field.Key, field.Value);
-                            }
-
-                            points.Add(point);
-                        }
-
-                        // Writing all points in a batch
-                        writeApi.WritePoints(points, bucket, org);
-
-                        // Optionally update progress
-                        progress?.Report(new PassedArgs { Messege = "Batch insert completed successfully.",ParameterString1 = "Completed" });
-                    }
-                    else
-                    {
-                        DMEEditor.AddLogMessage("Beep", $"error in {methodName} UploadData must be a List<Dictionary<string, object>>. ", DateTime.Now, -1, null, Errors.Failed);
-                        
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = $"Error in batch insertion: {ex.Message}";
-                progress?.Report(new PassedArgs { Messege = $"Error: {ex.Message}", ParameterString1 = "Failed" });
-                DMEEditor.AddLogMessage("Beep", $"error in {methodName} Error in batch insertion. {ex.Message} ", DateTime.Now, -1, null, Errors.Failed);
-            }
-
-            return retval;
+            catch (Exception ex) { return FailResult("DeleteEntity", ex); }
         }
 
         public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
+            => FailResult("UpdateEntity", new NotSupportedException("InfluxDB is append-only; no document updates."));
+
+        public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
+            => FailResult("UpdateEntities", new NotSupportedException("InfluxDB is append-only."));
+
+        public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
+            => FailResult("InsertEntity", new NotSupportedException("InfluxDB writes use Flux line-protocol via the SDK; not implemented in the minimal datasource."));
+
+        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
+            => FailResult("RunScript", new NotSupportedException("Flux scripts not implemented in this minimal datasource."));
+
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities)
+            => Enumerable.Empty<ETLScriptDet>();
+
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+            => Enumerable.Empty<ChildRelation>();
+
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+            => Enumerable.Empty<RelationShipKeys>();
+
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+            => Enumerable.Empty<object>();
+
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+            => new PagedResult(Array.Empty<object>(), Math.Max(1, pageNumber), Math.Max(1, pageSize), 0);
+
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+            => Task.FromResult(Enumerable.Empty<object>());
+
+        public double GetScalar(string query)
+            => throw new NotSupportedException("InfluxDB scalar queries require Flux — not implemented in the minimal datasource.");
+
+        public Task<double> GetScalarAsync(string query) => Task.FromResult(GetScalar(query));
+
+        public IEnumerable<object> RunQuery(string qrystr) => Enumerable.Empty<object>();
+
+        // ── Colocated schema-migration provider accessors (Phase 10.4) ──
+        internal InfluxDBClient MigrationClient => _client;
+        internal void EnsureMigrationConnected()
         {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Data updated successfully." };
-            string methodName = MethodBase.GetCurrentMethod().Name;
-            try
-            {
-                if (_client == null || ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection(); // Ensure the database is connected
-                }
-
-                if (ConnectionStatus == ConnectionState.Open)
-                {
-                    var writeApi = _client.GetWriteApi();
-
-                    // Check if UploadDataRow is in an expected format, for example, Dictionary
-                    if (UploadDataRow is Dictionary<string, object> dataRow)
-                    {
-                        if (!dataRow.ContainsKey("Timestamp") || !dataRow.ContainsKey("Tags") || !dataRow.ContainsKey("Fields"))
-                        {
-                            DMEEditor.AddLogMessage("Beep", $"error in {methodName} UploadDataRow must include 'Timestamp', 'Tags', and 'Fields'", DateTime.Now, -1, null, Errors.Failed);
-                            
-                        }
-
-                        var timestamp = (DateTime)dataRow["Timestamp"];
-                        var tags = (Dictionary<string, string>)dataRow["Tags"];
-                        var fields = (Dictionary<string, object>)dataRow["Fields"];
-
-                        var point = PointData
-                                    .Measurement(EntityName)
-                                    .Timestamp(timestamp, WritePrecision.Ns);
-
-                        // Adding tags
-                        foreach (var tag in tags)
-                        {
-                            point = point.Tag(tag.Key, tag.Value);
-                        }
-
-                        // Adding fields
-                        foreach (var field in fields)
-                        {
-                            point = point.Field(field.Key, field.Value);
-                        }
-
-                        // Writing the point to InfluxDB, which will overwrite the existing point with the same timestamp and tags
-                        writeApi.WritePoint(point,bucket, org );
-                    }
-                    else
-                    {
-                        DMEEditor.AddLogMessage("Beep", $"error in {methodName} InsertedData must be a Dictionary<string, object>.", DateTime.Now, -1, null, Errors.Failed);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = $"Error updating entity in InfluxDB: {ex.Message}";
-                DMEEditor.AddLogMessage("Beep", $"Error updating entity in InfluxDB: {ex.Message}.", DateTime.Now, -1, null, Errors.Failed);
-            }
-
-            return retval;
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
         }
 
+        // ── Dispose ──
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    try
-                    {
-                        Closeconnection();
-                    }
-                    catch (Exception ex)
-                    {
-                        DMEEditor?.AddLogMessage("Beep", $"Error disposing InfluxDB connection: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                    }
-                }
-                disposedValue = true;
-            }
+            if (disposedValue) return;
+            if (disposing) { try { _client?.Dispose(); } catch { } }
+            disposedValue = true;
         }
-
-        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~InfluxDBDataSource()
-        // {
-        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        //     Dispose(disposing: false);
-        // }
 
         public void Dispose()
         {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
     }

@@ -141,7 +141,11 @@ namespace TheTechIdea.Beep.QdrantDatasource
 
         #region IDataSource Core Methods
         
-        public IEnumerable<string> GetEntitesList() => EntitiesNames;
+        public IEnumerable<string> GetEntitesList()
+        {
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
+            return EntitiesNames;
+        }
 
         public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
@@ -215,7 +219,18 @@ namespace TheTechIdea.Beep.QdrantDatasource
             {
                 Logger?.WriteLog("Opening connection to Qdrant");
                 UpdateBaseUrl();
-                ConnectionStatus = ConnectionState.Open;
+                // Verify connectivity against the real Qdrant REST API (GET /collections).
+                using var resp = _httpClient.GetAsync(_baseUrl + "collections").GetAwaiter().GetResult();
+                if (resp.IsSuccessStatusCode)
+                {
+                    ConnectionStatus = ConnectionState.Open;
+                    RefreshCollectionsCache();
+                }
+                else
+                {
+                    Logger?.WriteLog($"Qdrant connectivity check failed: {(int)resp.StatusCode} {resp.ReasonPhrase}");
+                    ConnectionStatus = ConnectionState.Broken;
+                }
                 return ConnectionStatus;
             }
             catch (Exception ex)
@@ -245,8 +260,57 @@ namespace TheTechIdea.Beep.QdrantDatasource
 
         #region IDataSource Entity Management
 
-        public bool CheckEntityExist(string EntityName) => 
-            EntitiesNames.Contains(EntityName, StringComparer.OrdinalIgnoreCase);
+        public bool CheckEntityExist(string EntityName)
+        {
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                // Real existence check: GET /collections/{name} → 200 exists, 404 absent.
+                using var resp = _httpClient
+                    .GetAsync(_baseUrl + "collections/" + System.Uri.EscapeDataString(EntityName))
+                    .GetAwaiter().GetResult();
+                return resp.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"Error checking entity existence '{EntityName}': {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>Lists collections from the real Qdrant instance and refreshes the cache.</summary>
+        private void RefreshCollectionsCache()
+        {
+            try
+            {
+                using var resp = _httpClient.GetAsync(_baseUrl + "collections").GetAwaiter().GetResult();
+                if (!resp.IsSuccessStatusCode) return;
+                var json = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                var names = new List<string>();
+                if (doc.RootElement.TryGetProperty("result", out var result)
+                    && result.TryGetProperty("collections", out var cols))
+                {
+                    foreach (var c in cols.EnumerateArray())
+                        if (c.TryGetProperty("name", out var n) && n.ValueKind == System.Text.Json.JsonValueKind.String)
+                            names.Add(n.GetString() ?? string.Empty);
+                }
+                EntitiesNames = names;
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"Error refreshing collections list: {ex.Message}");
+            }
+        }
+
+        // ── Colocated schema-migration provider accessors (Phase 10.4) ──
+        // Exposes the live HTTP client + base URL to QdrantMigrationProvider in this assembly.
+        internal string MigrationBaseUrl => _baseUrl;
+        internal System.Net.Http.HttpClient MigrationHttp => _httpClient;
+        internal void EnsureMigrationConnected()
+        {
+            if (ConnectionStatus != System.Data.ConnectionState.Open) Openconnection();
+        }
 
         public int GetEntityIdx(string entityName) => 
             EntitiesNames.FindIndex(e => e.Equals(entityName, StringComparison.OrdinalIgnoreCase));
@@ -266,19 +330,54 @@ namespace TheTechIdea.Beep.QdrantDatasource
         {
             try
             {
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+
                 Logger?.WriteLog($"Creating Qdrant collection: {entity.EntityName}");
-                if (!EntitiesNames.Contains(entity.EntityName))
+                var size = ResolveVectorSize(entity);
+                // PUT /collections/{name} with a named/default vector configuration.
+                var body = new
                 {
-                    EntitiesNames.Add(entity.EntityName);
-                    Entities.Add(entity);
+                    vectors = new { size = size, distance = "Cosine" }
+                };
+                var json = System.Text.Json.JsonSerializer.Serialize(body);
+                using var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                using var resp = _httpClient
+                    .PutAsync(_baseUrl + "collections/" + System.Uri.EscapeDataString(entity.EntityName), content)
+                    .GetAwaiter().GetResult();
+
+                if (resp.IsSuccessStatusCode)
+                {
+                    if (!EntitiesNames.Contains(entity.EntityName, StringComparer.OrdinalIgnoreCase))
+                        EntitiesNames.Add(entity.EntityName);
+                    return true;
                 }
-                return true;
+
+                Logger?.WriteLog($"Create collection '{entity.EntityName}' failed: {(int)resp.StatusCode} {resp.ReasonPhrase}");
+                return false;
             }
             catch (Exception ex)
             {
                 Logger?.WriteLog($"Error creating entity {entity.EntityName}: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Resolves the embedding dimension for a new collection. Override by adding a field whose
+        /// name starts with "VectorSize"/"Dimension" to the entity, otherwise defaults to 1536
+        /// (a common embedding size such as OpenAI text-embedding-ada-002).
+        /// </summary>
+        private static int ResolveVectorSize(EntityStructure entity)
+        {
+            const int defaultSize = 1536;
+            if (entity?.Fields == null) return defaultSize;
+            foreach (var f in entity.Fields)
+            {
+                if (f != null && (f.FieldName?.StartsWith("VectorSize", StringComparison.OrdinalIgnoreCase) ?? false)
+                              && int.TryParse(f.DefaultValue, out var parsed) && parsed > 0)
+                    return parsed;
+            }
+            return defaultSize;
         }
 
         #endregion

@@ -25,7 +25,7 @@ using TheTechIdea.Beep.Vis;
 
 namespace RabbitMQDataSourceCore
 {
-    [AddinAttribute(Category = DatasourceCategory.MessageQueue, DatasourceType = DataSourceType.RabbitMQ)]
+    [AddinAttribute(Category = DatasourceCategory.QUEUE, DatasourceType = DataSourceType.RabbitMQ)]
 
     public class RabbitMQDataSource : IDataSource,IDisposable, IMessageDataSource<GenericMessage, StreamConfig>
     {

@@ -142,7 +142,11 @@ namespace TheTechIdea.Beep.ChromaDBDatasource
 
         #region IDataSource Core Methods
         
-        public IEnumerable<string> GetEntitesList() => EntitiesNames;
+        public IEnumerable<string> GetEntitesList()
+        {
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
+            return EntitiesNames;
+        }
 
         public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
@@ -216,7 +220,18 @@ namespace TheTechIdea.Beep.ChromaDBDatasource
             {
                 Logger?.WriteLog("Opening connection to ChromaDB");
                 UpdateBaseUrl();
-                ConnectionStatus = ConnectionState.Open;
+                // Verify connectivity against ChromaDB heartbeat.
+                using var resp = _httpClient.GetAsync(_baseUrl + "api/v1/heartbeat").GetAwaiter().GetResult();
+                if (resp.IsSuccessStatusCode)
+                {
+                    ConnectionStatus = ConnectionState.Open;
+                    RefreshCollectionsCache();
+                }
+                else
+                {
+                    Logger?.WriteLog($"ChromaDB connectivity check failed: {(int)resp.StatusCode} {resp.ReasonPhrase}");
+                    ConnectionStatus = ConnectionState.Broken;
+                }
                 return ConnectionStatus;
             }
             catch (Exception ex)
@@ -246,8 +261,47 @@ namespace TheTechIdea.Beep.ChromaDBDatasource
 
         #region IDataSource Entity Management
 
-        public bool CheckEntityExist(string EntityName) => 
-            EntitiesNames.Contains(EntityName, StringComparer.OrdinalIgnoreCase);
+        public bool CheckEntityExist(string EntityName)
+        {
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                // Real existence check against ChromaDB: GET /api/v1/collections/{name} → 200 exists, 404 absent.
+                using var resp = _httpClient
+                    .GetAsync(_baseUrl + "api/v1/collections/" + System.Uri.EscapeDataString(EntityName))
+                    .GetAwaiter().GetResult();
+                return resp.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"Error checking entity existence '{EntityName}': {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>Lists collections from real ChromaDB and refreshes the cache.</summary>
+        private void RefreshCollectionsCache()
+        {
+            try
+            {
+                using var resp = _httpClient.GetAsync(_baseUrl + "api/v1/collections").GetAwaiter().GetResult();
+                if (!resp.IsSuccessStatusCode) return;
+                var json = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                var names = new List<string>();
+                if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    foreach (var c in doc.RootElement.EnumerateArray())
+                        if (c.TryGetProperty("name", out var n) && n.ValueKind == System.Text.Json.JsonValueKind.String)
+                            names.Add(n.GetString() ?? string.Empty);
+                }
+                EntitiesNames = names;
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"Error refreshing ChromaDB collections: {ex.Message}");
+            }
+        }
 
         public int GetEntityIdx(string entityName) => 
             EntitiesNames.FindIndex(e => e.Equals(entityName, StringComparison.OrdinalIgnoreCase));
@@ -267,19 +321,40 @@ namespace TheTechIdea.Beep.ChromaDBDatasource
         {
             try
             {
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+
                 Logger?.WriteLog($"Creating ChromaDB collection: {entity.EntityName}");
-                if (!EntitiesNames.Contains(entity.EntityName))
+                // Real ChromaDB collection create: POST /api/v1/collections {"name":"..."}.
+                var body = new { name = entity.EntityName };
+                var json = System.Text.Json.JsonSerializer.Serialize(body);
+                using var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                using var resp = _httpClient
+                    .PostAsync(_baseUrl + "api/v1/collections", content)
+                    .GetAwaiter().GetResult();
+
+                if (resp.IsSuccessStatusCode)
                 {
-                    EntitiesNames.Add(entity.EntityName);
-                    Entities.Add(entity);
+                    if (!EntitiesNames.Contains(entity.EntityName, StringComparer.OrdinalIgnoreCase))
+                        EntitiesNames.Add(entity.EntityName);
+                    return true;
                 }
-                return true;
+
+                Logger?.WriteLog($"Create collection '{entity.EntityName}' failed: {(int)resp.StatusCode} {resp.ReasonPhrase}");
+                return false;
             }
             catch (Exception ex)
             {
                 Logger?.WriteLog($"Error creating entity {entity.EntityName}: {ex.Message}");
                 return false;
             }
+        }
+
+        // ── Colocated schema-migration provider accessors (Phase 10.4) ──
+        internal System.Net.Http.HttpClient MigrationHttp => _httpClient;
+        internal string MigrationBaseUrl => _baseUrl;
+        internal void EnsureMigrationConnected()
+        {
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
         }
 
         #endregion

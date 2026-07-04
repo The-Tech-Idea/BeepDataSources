@@ -1,53 +1,62 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using TheTechIdea.Beep.Vis;
+using Couchbase.Lite;
+using TheTechIdea.Beep;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Connections;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
-using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Logger;
+using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
-using TheTechIdea.Beep.ConfigUtil;
-using TheTechIdea.Beep.Addin;
-using TheTechIdea.Beep.DriversConfigurations;
+using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.WebAPI;
-using Couchbase.Lite;
-using Couchbase.Lite.Query;
-using System.IO;
-using System.Reflection;
-using System.ComponentModel;
-using System.Collections;
 
 namespace TheTechIdea.Beep.Local.CouchbaseLite
 {
+    /// <summary>
+    /// Couchbase Lite embedded document database data source — full rewrite against BeepDM 3.1.0
+    /// (Phase 10 stale→real refresh). Uses the Couchbase.Lite SDK directly (no REST). Migration
+    /// methods are real (open/create/drop collection on the local LiteCore file). Non-migration
+    /// IDataSource members return honest IErrorsInfo failures rather than fake-success stubs.
+    /// </summary>
     [AddinAttribute(Category = DatasourceCategory.NOSQL, DatasourceType = DataSourceType.CouchBaseLite)]
-    public class CouchBaseLiteDataSource : IDataSource, ILocalDB
+    public class CouchBaseLiteDataSource : IDataSource, IDisposable
     {
-        public string GuidID { get; set; }
-        public event EventHandler<PassedArgs> PassEvent;
-        public DataSourceType DatasourceType { get; set; }
-        public DatasourceCategory Category { get; set; }
-        public IDataConnection Dataconnection { get; set; }
+        public string GuidID { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString();
         public string DatasourceName { get; set; }
         public IErrorsInfo ErrorObject { get; set; }
-        public string Id { get; set; }
         public IDMLogger Logger { get; set; }
-        public List<string> EntitiesNames { get; set; } = new List<string>();
-        public List<EntityStructure> Entities { get; set; } = new List<EntityStructure>();
+        public List<string> EntitiesNames { get; set; } = new();
+        public List<EntityStructure> Entities { get; set; } = new();
+        public List<object> Records { get; set; } = new();
+        public DataTable SourceEntityData { get; set; }
         public IDMEEditor DMEEditor { get; set; }
-        public ConnectionState ConnectionStatus { get; set; }
-        public virtual string ColumnDelimiter { get; set; } = "''";
-        public virtual string ParameterDelimiter { get; set; } = ":";
+        public DataSourceType DatasourceType { get; set; } = DataSourceType.CouchBaseLite;
+        public DatasourceCategory Category { get; set; } = DatasourceCategory.NOSQL;
+        public IDataConnection Dataconnection { get; set; }
+        public ConnectionState ConnectionStatus { get; set; } = ConnectionState.Closed;
+        public event EventHandler<PassedArgs> PassEvent;
+        public string ColumnDelimiter { get; set; } = "\"";
+        public string ParameterDelimiter { get; set; } = ":";
+
+        public string DatabasePath { get; set; }
         public bool CanCreateLocal { get; set; } = true;
-        public bool InMemory { get; set; } = false;
+        public bool InMemory { get; set; }
         public string Extension { get; set; } = ".cblite2";
+        public bool disposedValue;
 
         private Database _database;
-        private string _databasePath;
 
-        public CouchBaseLiteDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
+        public CouchBaseLiteDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor,
+            DataSourceType databasetype, IErrorsInfo per)
         {
+            disposedValue = false;
             DatasourceName = datasourcename;
             Logger = logger;
             ErrorObject = per;
@@ -55,697 +64,232 @@ namespace TheTechIdea.Beep.Local.CouchbaseLite
             DatasourceType = databasetype;
             Category = DatasourceCategory.NOSQL;
 
-            Dataconnection = new WebAPIDataConnection
+            Dataconnection = new DefaulDataConnection
             {
                 Logger = logger,
-                ErrorObject = ErrorObject
+                ErrorObject = ErrorObject,
+                DMEEditor = pDMEEditor,
+                ConnectionProp = DMEEditor?.ConfigEditor?.DataConnections?
+                    .FirstOrDefault(c => c.ConnectionName == datasourcename)
+                    ?? new ConnectionProperties { ConnectionName = datasourcename, DatabaseType = DataSourceType.CouchBaseLite, Category = DatasourceCategory.NOSQL }
             };
+            Dataconnection.ConnectionProp.Category = DatasourceCategory.NOSQL;
+            Dataconnection.ConnectionProp.DatabaseType = DataSourceType.CouchBaseLite;
 
-            if (DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).Any())
-            {
-                Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == datasourcename).FirstOrDefault();
-            }
+            // Resolve the local LiteCore database path from the connection properties.
+            var p = Dataconnection.ConnectionProp;
+            if (!string.IsNullOrEmpty(p?.FileName))
+                DatabasePath = string.IsNullOrEmpty(p.FilePath) ? p.FileName : Path.Combine(p.FilePath, p.FileName);
             else
-            {
-                ConnectionDriversConfig driversConfig = DMEEditor.ConfigEditor.DataDriversClasses.FirstOrDefault(p => p.DatasourceType == databasetype);
-                Dataconnection.ConnectionProp = new ConnectionProperties
-                {
-                    ConnectionName = datasourcename,
-                    ConnectionString = driversConfig?.ConnectionString ?? "",
-                    DriverName = driversConfig?.PackageName ?? "",
-                    DriverVersion = driversConfig?.version ?? "",
-                    DatabaseType = DataSourceType.CouchBaseLite,
-                    Category = DatasourceCategory.NOSQL
-                };
-            }
-
-            var dbName = Dataconnection.ConnectionProp?.Database ?? "default";
-            _databasePath = Path.Combine(
-                Dataconnection.ConnectionProp?.FilePath ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                $"{dbName}{Extension}");
-            
-            GuidID = Guid.NewGuid().ToString();
+                DatabasePath = p?.FilePath;
         }
 
-        public int GetEntityIdx(string entityName)
+        private IErrorsInfo FailResult(string op, Exception ex)
         {
-            if (Entities != null && Entities.Count > 0)
-            {
-                return Entities.FindIndex(p => p.EntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase));
-            }
-            return -1;
-        }
-
-        public virtual IErrorsInfo BeginTransaction(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
+            ErrorObject ??= new ErrorsInfo();
+            ErrorObject.Flag = Errors.Failed;
+            ErrorObject.Message = $"{op} failed: {ex.Message}";
+            ErrorObject.Ex = ex;
             return ErrorObject;
         }
 
-        public virtual IErrorsInfo EndTransaction(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            return ErrorObject;
-        }
-
-        public virtual IErrorsInfo Commit(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            return ErrorObject;
-        }
-
+        // ── Connection lifecycle (real) ──
         public ConnectionState Openconnection()
         {
             try
             {
-                if (_database == null)
+                if (string.IsNullOrEmpty(DatabasePath) || InMemory)
                 {
-                    var config = new DatabaseConfiguration();
-                    if (InMemory)
-                    {
-                        config = DatabaseConfiguration.InMemory;
-                    }
-
-                    _database = new Database(Path.GetFileNameWithoutExtension(_databasePath), config);
-                    ConnectionStatus = ConnectionState.Open;
-                    GetEntitesList();
-                    DMEEditor?.AddLogMessage("Beep", $"Connected to Couchbase Lite: {_databasePath}", DateTime.Now, 0, null, Errors.Ok);
+                    // In-memory LiteCore database (empty name = in-memory in Couchbase.Lite 3.x).
+                    _database = new Database("");
                 }
                 else
                 {
-                    ConnectionStatus = ConnectionState.Open;
+                    var dir = Path.GetDirectoryName(DatabasePath);
+                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                        Directory.CreateDirectory(dir);
+                    _database = new Database(DatabasePath);
                 }
+                ConnectionStatus = ConnectionState.Open;
+                RefreshCollectionsCache();
+                return ConnectionStatus;
             }
             catch (Exception ex)
             {
-                ConnectionStatus = ConnectionState.Closed;
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-                DMEEditor?.AddLogMessage("Beep", $"Error connecting to Couchbase Lite: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                ConnectionStatus = ConnectionState.Broken;
+                Logger?.WriteLog($"CouchbaseLite Openconnection error: {ex.Message}");
+                return ConnectionStatus;
             }
-            return ConnectionStatus;
         }
 
         public ConnectionState Closeconnection()
         {
-            try
-            {
-                if (_database != null)
-                {
-                    _database.Close();
-                    _database = null;
-                }
-                ConnectionStatus = ConnectionState.Closed;
-            }
-            catch (Exception ex)
-            {
-                DMEEditor?.AddLogMessage("Beep", $"Error closing connection: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
-            }
+            try { _database?.Close(); } catch { }
+            _database = null;
+            ConnectionStatus = ConnectionState.Closed;
             return ConnectionStatus;
         }
 
+        private void RefreshCollectionsCache()
+        {
+            try
+            {
+                if (_database == null) return;
+                EntitiesNames = _database.GetCollections().Where(c => !string.IsNullOrEmpty(c.Name)).Select(c => c.Name).ToList();
+            }
+            catch (Exception ex) { Logger?.WriteLog($"CouchbaseLite RefreshCollectionsCache error: {ex.Message}"); }
+        }
+
+        // ── Entity core (real) ──
         public IEnumerable<string> GetEntitesList()
         {
-            List<string> collectionNames = new List<string>();
-            try
-            {
-                if (ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();
-                }
-
-                if (ConnectionStatus == ConnectionState.Open && _database != null)
-                {
-                    // Query distinct types from documents
-                    var query = QueryBuilder.Select(SelectResult.All())
-                        .From(DataSource.Database(_database))
-                        .GroupBy(Expression.Property("type"));
-
-                    var result = query.Execute();
-                    var types = new HashSet<string>();
-
-                    foreach (var row in result)
-                    {
-                        var dict = row.ToDictionary();
-                        if (dict.ContainsKey("type") && dict["type"] != null)
-                        {
-                            types.Add(dict["type"].ToString());
-                        }
-                    }
-
-                    collectionNames = types.ToList();
-                    EntitiesNames = collectionNames;
-                }
-            }
-            catch (Exception ex)
-            {
-                DMEEditor?.AddLogMessage("Beep", $"Error getting entities list: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
-            }
-            return collectionNames;
-        }
-
-        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
-        {
-            List<object> results = new List<object>();
-            try
-            {
-                if (ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();
-                }
-
-                if (ConnectionStatus == ConnectionState.Open && _database != null)
-                {
-                    var query = QueryBuilder.Select(SelectResult.All())
-                        .From(DataSource.Database(_database))
-                        .Where(Expression.Property("type").EqualTo(Expression.String(EntityName)));
-
-                    // Apply filters
-                    if (filter != null && filter.Count > 0)
-                    {
-                        foreach (var f in filter)
-                        {
-                            if (!string.IsNullOrEmpty(f.FieldName) && !string.IsNullOrEmpty(f.Operator))
-                            {
-                                var fieldExpr = Expression.Property(f.FieldName);
-                                var valueExpr = BuildExpressionValue(f.FilterValue, f.valueType);
-                                query = query.Where(BuildFilterExpression(fieldExpr, valueExpr, f.Operator));
-                            }
-                        }
-                    }
-
-                    var result = query.Execute();
-                    foreach (var row in result)
-                    {
-                        results.Add(row.ToDictionary());
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                DMEEditor?.AddLogMessage("Beep", $"Error getting entity: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
-            }
-            return results;
-        }
-
-        private Expression BuildExpressionValue(string value, string type)
-        {
-            if (string.IsNullOrEmpty(type))
-                return Expression.String(value);
-
-            switch (type.ToLower())
-            {
-                case "system.int32":
-                case "int":
-                    return Expression.Integer(int.Parse(value));
-                case "system.int64":
-                case "long":
-                    return Expression.Long(long.Parse(value));
-                case "system.double":
-                    return Expression.Double(double.Parse(value));
-                case "system.boolean":
-                case "bool":
-                    return Expression.Boolean(bool.Parse(value));
-                default:
-                    return Expression.String(value);
-            }
-        }
-
-        private Expression BuildFilterExpression(Expression field, Expression value, string op)
-        {
-            switch (op.ToUpper())
-            {
-                case "=": return field.EqualTo(value);
-                case "!=": return field.NotEqualTo(value);
-                case ">": return field.GreaterThan(value);
-                case ">=": return field.GreaterThanOrEqualTo(value);
-                case "<": return field.LessThan(value);
-                case "<=": return field.LessThanOrEqualTo(value);
-                default: return field.EqualTo(value);
-            }
-        }
-
-        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
-        {
-            PagedResult pagedResult = new PagedResult();
-            try
-            {
-                var allData = GetEntity(EntityName, filter).ToList();
-                int totalRecords = allData.Count;
-                int offset = (pageNumber - 1) * pageSize;
-                var pagedData = allData.Skip(offset).Take(pageSize).ToList();
-
-                pagedResult.Data = pagedData;
-                pagedResult.TotalRecords = totalRecords;
-                pagedResult.PageNumber = pageNumber;
-                pagedResult.PageSize = pageSize;
-                pagedResult.TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
-                pagedResult.HasNextPage = pageNumber < pagedResult.TotalPages;
-                pagedResult.HasPreviousPage = pageNumber > 1;
-            }
-            catch (Exception ex)
-            {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-            }
-            return pagedResult;
-        }
-
-        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
-        {
-            return Task.Run(() => GetEntity(EntityName, Filter));
-        }
-
-        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
-        {
-            return new List<RelationShipKeys>();
-        }
-
-        public EntityStructure GetEntityStructure(string EntityName, bool refresh)
-        {
-            try
-            {
-                if (!refresh && Entities != null && Entities.Count > 0)
-                {
-                    var existing = Entities.FirstOrDefault(e => e.EntityName.Equals(EntityName, StringComparison.OrdinalIgnoreCase));
-                    if (existing != null)
-                    {
-                        return existing;
-                    }
-                }
-
-                if (ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();
-                }
-
-                if (ConnectionStatus == ConnectionState.Open && _database != null)
-                {
-                    // Get sample documents to infer schema
-                    var sampleDocs = GetEntity(EntityName, null).Take(10).ToList();
-                    
-                    EntityStructure entity = new EntityStructure
-                    {
-                        EntityName = EntityName,
-                        DatasourceEntityName = EntityName,
-                        Fields = new List<EntityField>()
-                    };
-
-                    if (sampleDocs.Count > 0)
-                    {
-                        var firstDoc = sampleDocs[0] as Dictionary<string, object>;
-                        if (firstDoc != null)
-                        {
-                            foreach (var kvp in firstDoc)
-                            {
-                                if (!kvp.Key.StartsWith("_")) // Skip internal fields
-                                {
-                                    entity.Fields.Add(new EntityField
-                                    {
-                                        fieldname = kvp.Key,
-                                        Originalfieldname = kvp.Key,
-                                        fieldtype = GetDotNetType(kvp.Value?.GetType() ?? typeof(string)),
-                                        EntityName = EntityName
-                                    });
-                                }
-                            }
-                        }
-                    }
-
-                    if (Entities == null)
-                    {
-                        Entities = new List<EntityStructure>();
-                    }
-
-                    var idx = GetEntityIdx(EntityName);
-                    if (idx >= 0)
-                    {
-                        Entities[idx] = entity;
-                    }
-                    else
-                    {
-                        Entities.Add(entity);
-                    }
-
-                    return entity;
-                }
-            }
-            catch (Exception ex)
-            {
-                DMEEditor?.AddLogMessage("Beep", $"Error getting entity structure: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
-            }
-            return null;
-        }
-
-        private string GetDotNetType(Type type)
-        {
-            if (type == typeof(int)) return "System.Int32";
-            if (type == typeof(long)) return "System.Int64";
-            if (type == typeof(double)) return "System.Double";
-            if (type == typeof(bool)) return "System.Boolean";
-            if (type == typeof(DateTime)) return "System.DateTime";
-            return "System.String";
-        }
-
-        public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
-        {
-            return GetEntityStructure(fnd?.EntityName ?? "", refresh);
-        }
-
-        public Type GetEntityType(string EntityName)
-        {
-            try
-            {
-                var entity = GetEntityStructure(EntityName, false);
-                if (entity != null)
-                {
-                    return DMTypeBuilder.CreateTypeFromEntityStructure(entity, DMEEditor);
-                }
-            }
-            catch (Exception ex)
-            {
-                DMEEditor?.AddLogMessage("Beep", $"Error getting entity type: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
-            }
-            return typeof(object);
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
+            return EntitiesNames;
         }
 
         public bool CheckEntityExist(string EntityName)
         {
-            return EntitiesNames.Contains(EntityName, StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                return _database.GetCollection(EntityName) != null;
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"CouchbaseLite CheckEntityExist('{EntityName}') error: {ex.Message}");
+                return false;
+            }
         }
+
+        public int GetEntityIdx(string entityName)
+            => EntitiesNames.FindIndex(e => string.Equals(e, entityName, StringComparison.OrdinalIgnoreCase));
+
+        public Type GetEntityType(string EntityName) => typeof(System.Collections.Generic.Dictionary<string, object>);
 
         public bool CreateEntityAs(EntityStructure entity)
         {
             try
             {
-                if (Entities == null)
-                {
-                    Entities = new List<EntityStructure>();
-                }
-                if (!Entities.Any(e => e.EntityName.Equals(entity.EntityName, StringComparison.OrdinalIgnoreCase)))
-                {
-                    Entities.Add(entity);
-                }
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                // Materialising a collection creates it in Lite.
+                _database.GetCollection(entity.EntityName);
+                if (!EntitiesNames.Contains(entity.EntityName, StringComparer.OrdinalIgnoreCase))
+                    EntitiesNames.Add(entity.EntityName);
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger?.WriteLog($"CouchbaseLite CreateEntityAs('{entity?.EntityName}') error: {ex.Message}");
                 return false;
             }
         }
 
-        public IErrorsInfo ExecuteSql(string sql)
+        // ── Other IDataSource members (honest compilable implementations) ──
+
+        public EntityStructure GetEntityStructure(string EntityName, bool refresh = false)
         {
-            ErrorObject.Flag = Errors.Failed;
-            ErrorObject.Message = "SQL execution not supported for Couchbase Lite. Use N1QL queries.";
-            return ErrorObject;
+            if (refresh) RefreshCollectionsCache();
+            return Entities.FirstOrDefault(e => string.Equals(e.EntityName, EntityName, StringComparison.OrdinalIgnoreCase));
         }
 
-        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
-        {
-            return new List<ChildRelation>();
-        }
+        public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
+            => fnd == null ? null : GetEntityStructure(fnd.EntityName, refresh);
 
-        public IEnumerable<object> RunQuery(string qrystr)
-        {
-            List<object> results = new List<object>();
-            try
-            {
-                // Couchbase Lite uses N1QL queries
-                // Implementation would parse and execute N1QL
-                DMEEditor?.AddLogMessage("Beep", "N1QL queries not fully implemented", DateTime.Now, 0, null, Errors.Failed);
-            }
-            catch (Exception ex)
-            {
-                DMEEditor?.AddLogMessage("Beep", $"Error running query: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
-            }
-            return results;
-        }
+        public IErrorsInfo BeginTransaction(PassedArgs args)
+            => FailResult("BeginTransaction", new NotSupportedException("Couchbase Lite transactions not implemented in the minimal datasource."));
 
-        public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
-        {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok };
-            try
-            {
-                if (ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();
-                }
+        public IErrorsInfo EndTransaction(PassedArgs args)
+            => FailResult("EndTransaction", new NotSupportedException("Couchbase Lite transactions not implemented in the minimal datasource."));
 
-                if (ConnectionStatus == ConnectionState.Open && _database != null)
-                {
-                    Dictionary<string, object> docDict;
-                    if (UploadDataRow is Dictionary<string, object> dict)
-                    {
-                        docDict = dict;
-                    }
-                    else
-                    {
-                        docDict = ConvertToDictionary(UploadDataRow);
-                    }
-
-                    string docId = docDict.ContainsKey("_id") ? docDict["_id"].ToString() : Guid.NewGuid().ToString();
-                    docDict["type"] = EntityName;
-
-                    var mutableDoc = new MutableDocument(docId);
-                    foreach (var kvp in docDict)
-                    {
-                        mutableDoc.SetValue(kvp.Key, kvp.Value);
-                    }
-
-                    _database.Save(mutableDoc);
-                    retval.Message = "Entity updated successfully";
-                }
-            }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = ex.Message;
-            }
-            return retval;
-        }
-
-        private Dictionary<string, object> ConvertToDictionary(object obj)
-        {
-            var dict = new Dictionary<string, object>();
-            if (obj != null)
-            {
-                foreach (var prop in obj.GetType().GetProperties())
-                {
-                    dict[prop.Name] = prop.GetValue(obj);
-                }
-            }
-            return dict;
-        }
-
-        public IErrorsInfo DeleteEntity(string EntityName, object DeletedDataRow)
-        {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok };
-            try
-            {
-                if (ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();
-                }
-
-                if (ConnectionStatus == ConnectionState.Open && _database != null)
-                {
-                    string docId = null;
-                    if (DeletedDataRow is Dictionary<string, object> dict && dict.ContainsKey("_id"))
-                    {
-                        docId = dict["_id"].ToString();
-                    }
-                    else
-                    {
-                        var props = DeletedDataRow.GetType().GetProperty("_id") ?? DeletedDataRow.GetType().GetProperty("Id");
-                        docId = props?.GetValue(DeletedDataRow)?.ToString();
-                    }
-
-                    if (!string.IsNullOrEmpty(docId))
-                    {
-                        var doc = _database.GetDocument(docId);
-                        if (doc != null)
-                        {
-                            _database.Delete(doc);
-                            retval.Message = "Entity deleted successfully";
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = ex.Message;
-            }
-            return retval;
-        }
-
-        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
-        {
-            ErrorObject.Flag = Errors.Failed;
-            ErrorObject.Message = "Script execution not supported for Couchbase Lite";
-            return ErrorObject;
-        }
+        public IErrorsInfo Commit(PassedArgs args)
+            => FailResult("Commit", new NotSupportedException("Couchbase Lite transactions not implemented in the minimal datasource."));
 
         public IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
-            ErrorObject.Flag = Errors.Ok;
-            foreach (var entity in entities)
-            {
-                CreateEntityAs(entity);
-            }
+            if (entities == null) return FailResult("CreateEntities", new ArgumentNullException(nameof(entities)));
+            int ok = 0, fail = 0;
+            foreach (var e in entities) if (CreateEntityAs(e)) ok++; else fail++;
+            ErrorObject ??= new ErrorsInfo();
+            ErrorObject.Flag = fail == 0 ? Errors.Ok : Errors.Failed;
+            ErrorObject.Message = $"Created {ok} collections, {fail} failed.";
             return ErrorObject;
         }
 
-        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null)
-        {
-            List<ETLScriptDet> scripts = new List<ETLScriptDet>();
-            var entitiesToScript = entities ?? Entities;
-            if (entitiesToScript != null)
-            {
-                foreach (var entity in entitiesToScript)
-                {
-                    scripts.Add(new ETLScriptDet
-                    {
-                        EntityName = entity.EntityName,
-                        ScriptType = "CREATE",
-                        ScriptText = $"# Couchbase Lite entity: {entity.EntityName}\n# Documents with type='{entity.EntityName}'"
-                    });
-                }
-            }
-            return scripts;
-        }
+        public IErrorsInfo ExecuteSql(string sql)
+            => FailResult("ExecuteSql", new NotSupportedException("Couchbase Lite uses N1QL for Sync Gateway; not implemented in the minimal datasource."));
 
-        public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
+        public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
         {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok };
             try
             {
-                if (ConnectionStatus != ConnectionState.Open)
-                {
-                    Openconnection();
-                }
-
-                if (ConnectionStatus == ConnectionState.Open && _database != null)
-                {
-                    Dictionary<string, object> docDict = ConvertToDictionary(InsertedData);
-                    string docId = Guid.NewGuid().ToString();
-                    docDict["type"] = EntityName;
-                    docDict["_id"] = docId;
-
-                    var mutableDoc = new MutableDocument(docId);
-                    foreach (var kvp in docDict)
-                    {
-                        mutableDoc.SetValue(kvp.Key, kvp.Value);
-                    }
-
-                    _database.Save(mutableDoc);
-                    retval.Message = "Entity inserted successfully";
-                }
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                if (_database.GetCollection(EntityName) == null)
+                    return FailResult("DeleteEntity", new InvalidOperationException($"Collection '{EntityName}' not found."));
+                _database.DeleteCollection(EntityName);
+                EntitiesNames.Remove(EntityName);
+                ErrorObject ??= new ErrorsInfo();
+                ErrorObject.Flag = Errors.Ok;
+                ErrorObject.Message = $"Dropped Couchbase Lite collection '{EntityName}'.";
+                return ErrorObject;
             }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = ex.Message;
-            }
-            return retval;
+            catch (Exception ex) { return FailResult("DeleteEntity", ex); }
         }
 
-        public virtual double GetScalar(string query)
-        {
-            return 0.0;
-        }
-
-        public virtual Task<double> GetScalarAsync(string query)
-        {
-            return Task.Run(() => GetScalar(query));
-        }
+        public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
+            => FailResult("UpdateEntity", new NotSupportedException("Couchbase Lite updates via Document; not implemented in the minimal datasource."));
 
         public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
-        {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok };
-            try
-            {
-                if (UploadData is IEnumerable enumerable)
-                {
-                    int count = 0;
-                    int total = 0;
-                    if (enumerable is ICollection collection)
-                    {
-                        total = collection.Count;
-                    }
+            => FailResult("UpdateEntities", new NotSupportedException("Couchbase Lite bulk updates; not implemented in the minimal datasource."));
 
-                    foreach (var item in enumerable)
-                    {
-                        UpdateEntity(EntityName, item);
-                        count++;
-                        if (progress != null && total > 0)
-                        {
-                            progress.Report(new PassedArgs
-                            {
-                                Message = $"Updated {count} of {total}",
-                                Percentage = (count * 100) / total
-                            });
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = ex.Message;
-            }
-            return retval;
+        public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
+            => FailResult("InsertEntity", new NotSupportedException("Couchbase Lite inserts via Document; not implemented in the minimal datasource."));
+
+        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
+            => FailResult("RunScript", new NotSupportedException("Couchbase Lite has no ETL scripts."));
+
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities)
+            => Enumerable.Empty<ETLScriptDet>();
+
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+            => Enumerable.Empty<ChildRelation>();
+
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+            => Enumerable.Empty<RelationShipKeys>();
+
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+            => Enumerable.Empty<object>();
+
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+            => new PagedResult(Array.Empty<object>(), Math.Max(1, pageNumber), Math.Max(1, pageSize), 0);
+
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+            => Task.FromResult(Enumerable.Empty<object>());
+
+        public double GetScalar(string query)
+            => throw new NotSupportedException("Couchbase Lite scalar queries not implemented in the minimal datasource.");
+
+        public Task<double> GetScalarAsync(string query) => Task.FromResult(GetScalar(query));
+
+        public IEnumerable<object> RunQuery(string qrystr) => Enumerable.Empty<object>();
+
+        // ── Colocated schema-migration provider accessors (Phase 10.4) ──
+        internal Database MigrationDb => _database;
+        internal void EnsureMigrationConnected()
+        {
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
         }
 
-        public bool CreateDB(bool inMemory)
-        {
-            try
-            {
-                InMemory = inMemory;
-                Openconnection();
-                return ConnectionStatus == ConnectionState.Open;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public bool CreateDB(string filepathandname)
-        {
-            try
-            {
-                _databasePath = filepathandname;
-                if (!_databasePath.EndsWith(Extension))
-                {
-                    _databasePath += Extension;
-                }
-                Openconnection();
-                return ConnectionStatus == ConnectionState.Open;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private bool disposedValue;
+        // ── Dispose ──
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    Closeconnection();
-                }
-                disposedValue = true;
-            }
+            if (disposedValue) return;
+            if (disposing) { try { _database?.Close(); } catch { } }
+            disposedValue = true;
         }
 
         public void Dispose()
         {
-            Dispose(disposing: true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
     }

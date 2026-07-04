@@ -23,6 +23,7 @@ This folder drives **HTML help** under `Help/` and incremental **IDataSource** i
 | 07 | [phase-07-messaging-vector.md](./phase-07-messaging-vector.md) | Messaging folder, VectorDatabase |
 | 08 | [phase-08-connectors-rest.md](./phase-08-connectors-rest.md) | `Connectors/*` categories, Web API pattern |
 | 09 | [phase-09-connectors-flagship.md](./phase-09-connectors-flagship.md) | `Help/providers/conn-*` flagship connector pages |
+| 11 | [phase-11-local-kv-store.md](./phase-11-local-kv-store.md) | **Code (not help):** Four widely-used embedded KV stores (RocksDB, LevelDB, LMDB, NitriteDB). Per-DB plans in [databases/](./databases). New KVStore category added to BeepDM enum. |
 
 ## Master tracker
 

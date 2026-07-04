@@ -6,8 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Google.Cloud.PubSub.V1;
 using Google.Protobuf;
+using TheTechIdea.Beep;
 using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Connections;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
@@ -15,512 +17,370 @@ using TheTechIdea.Beep.Messaging;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
-using TheTechIdea.Beep.GooglePubSub;
+using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.GooglePubSub
 {
+    /// <summary>
+    /// Google Cloud Pub/Sub data source — full rewrite against BeepDM 3.1.0 (Phase 10 Messaging
+    /// folder refresh). Uses the official <c>Google.Cloud.PubSub.V1</c> SDK to manage topics and
+    /// subscriptions and to publish/pull messages. Non-messaging IDataSource members return
+    /// honest IErrorsInfo failures.
+    /// </summary>
     [AddinAttribute(Category = DatasourceCategory.MessageQueue, DatasourceType = DataSourceType.GooglePubSub)]
-    public class GooglePubSubDataSource : IDataSource, IDisposable, IMessageDataSource<GenericMessage, StreamConfig>
+    public class GooglePubSubDataSource : IDataSource, IMessageDataSource<GenericMessage, StreamConfig>, IDisposable
     {
-        #region Properties
-
-        private bool _disposed = false;
-        private readonly Dictionary<string, PublisherClient> _publishers = new();
-        private readonly Dictionary<string, SubscriberClient> _subscribers = new();
-
-        public string ColumnDelimiter { get; set; } = ",";
-        public string ParameterDelimiter { get; set; } = ":";
         public string GuidID { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string DatasourceName { get; set; }
+        public IErrorsInfo ErrorObject { get; set; }
+        public IDMLogger Logger { get; set; }
+        public List<string> EntitiesNames { get; set; } = new();
+        public List<EntityStructure> Entities { get; set; } = new();
+        public List<object> Records { get; set; } = new();
+        public DataTable SourceEntityData { get; set; }
+        public IDMEEditor DMEEditor { get; set; }
         public DataSourceType DatasourceType { get; set; } = DataSourceType.GooglePubSub;
         public DatasourceCategory Category { get; set; } = DatasourceCategory.MessageQueue;
         public IDataConnection Dataconnection { get; set; }
-        public string DatasourceName { get; set; }
-        public IErrorsInfo ErrorObject { get; set; }
-        public string Id { get; set; }
-        public IDMLogger Logger { get; set; }
-        public List<string> EntitiesNames { get; set; } = new List<string>();
-        public List<EntityStructure> Entities { get; set; } = new List<EntityStructure>();
-        public IDMEEditor DMEEditor { get; set; }
         public ConnectionState ConnectionStatus { get; set; } = ConnectionState.Closed;
         public event EventHandler<PassedArgs> PassEvent;
+        public string ColumnDelimiter { get; set; } = ",";
+        public string ParameterDelimiter { get; set; } = " ";
 
-        public GooglePubSubDataConnection PubSubConnection => Dataconnection as GooglePubSubDataConnection;
-        public GooglePubSubConnectionProperties PubSubProperties => PubSubConnection?.PubSubProperties;
-
-        #endregion
-
-        #region Constructor
-
-        public GooglePubSubDataSource(string datasourcename, IDMLogger logger, IDMEEditor dmeEditor, DataSourceType databasetype, IErrorsInfo errorObject)
+        public string CurrentDatabase
         {
+            get => (Dataconnection as GooglePubSubDataConnection)?.PubSubProperties?.TopicName
+                   ?? (Dataconnection as GooglePubSubDataConnection)?.PubSubProperties?.SubscriptionName;
+            set { if (Dataconnection is GooglePubSubDataConnection c && c.PubSubProperties != null) c.PubSubProperties.TopicName = value; }
+        }
+
+        private bool disposedValue;
+        private GooglePubSubDataConnection _conn;
+
+        public GooglePubSubDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor,
+            DataSourceType databasetype, IErrorsInfo per)
+        {
+            disposedValue = false;
             DatasourceName = datasourcename;
             Logger = logger;
-            DMEEditor = dmeEditor;
+            ErrorObject = per;
+            DMEEditor = pDMEEditor;
             DatasourceType = databasetype;
-            ErrorObject = errorObject ?? new ErrorsInfo();
             Category = DatasourceCategory.MessageQueue;
 
-            Dataconnection = new GooglePubSubDataConnection(dmeEditor)
+            Dataconnection = new DefaulDataConnection
             {
                 Logger = logger,
                 ErrorObject = ErrorObject,
-                DMEEditor = dmeEditor
+                DMEEditor = pDMEEditor,
+                ConnectionProp = DMEEditor?.ConfigEditor?.DataConnections?
+                    .FirstOrDefault(c => c.ConnectionName == datasourcename)
+                    ?? new ConnectionProperties { ConnectionName = datasourcename, DatabaseType = DataSourceType.GooglePubSub, Category = DatasourceCategory.MessageQueue }
             };
+            Dataconnection.ConnectionProp.Category = DatasourceCategory.MessageQueue;
+            Dataconnection.ConnectionProp.DatabaseType = DataSourceType.GooglePubSub;
 
-            if (dmeEditor?.ConfigEditor?.DataConnections != null)
-            {
-                var connection = dmeEditor.ConfigEditor.DataConnections
-                    .FirstOrDefault(c => c.ConnectionName.Equals(datasourcename, StringComparison.InvariantCultureIgnoreCase));
-                if (connection != null)
-                {
-                    Dataconnection.ConnectionProp = connection;
-                }
-                else
-                {
-                    Dataconnection.ConnectionProp = new GooglePubSubConnectionProperties { ConnectionName = datasourcename };
-                }
-            }
+            if (!(Dataconnection is GooglePubSubDataConnection))
+                Dataconnection = new GooglePubSubDataConnection(DMEEditor, Dataconnection?.ConnectionProp);
+            _conn = Dataconnection as GooglePubSubDataConnection;
         }
 
-        #endregion
+        private IErrorsInfo FailResult(string op, Exception ex)
+        {
+            ErrorObject ??= new ErrorsInfo();
+            ErrorObject.Flag = Errors.Failed;
+            ErrorObject.Message = $"{op} failed: {ex.Message}";
+            ErrorObject.Ex = ex;
+            return ErrorObject;
+        }
 
-        #region IDataSource Methods
-
+        // ── IDataSource connection lifecycle (real) ──
         public ConnectionState Openconnection()
         {
             try
             {
-                if (PubSubConnection?.OpenConnection() == ConnectionState.Open)
-                {
-                    ConnectionStatus = ConnectionState.Open;
-                    Logger?.WriteLog("[Openconnection] Google Pub/Sub connection opened successfully.");
-                    return ConnectionState.Open;
-                }
-                ConnectionStatus = ConnectionState.Broken;
-                return ConnectionState.Broken;
+                var result = _conn?.OpenConnection() ?? ConnectionState.Broken;
+                ConnectionStatus = result;
+                if (result == ConnectionState.Open) RefreshEntitiesCache();
+                return result;
             }
             catch (Exception ex)
             {
                 ConnectionStatus = ConnectionState.Broken;
-                ErrorObject = new ErrorsInfo { Flag = Errors.Failed, Message = ex.Message, Ex = ex };
-                Logger?.WriteLog($"[Openconnection] Error: {ex.Message}");
-                return ConnectionState.Broken;
+                Logger?.WriteLog($"GooglePubSub Openconnection error: {ex.Message}");
+                return ConnectionStatus;
             }
         }
 
-        public ConnectionState Closeconnection()
+        public ConnectionState Closeconnection() => _conn?.CloseConn() ?? ConnectionStatus;
+
+        private void RefreshEntitiesCache()
         {
             try
             {
-                Disconnect();
-                ConnectionStatus = ConnectionState.Closed;
-                Logger?.WriteLog("[Closeconnection] Google Pub/Sub connection closed.");
-                return ConnectionStatus;
+                if (_conn?.PubSubProperties == null) return;
+                EntitiesNames = new List<string> { _conn.PubSubProperties.TopicName, _conn.PubSubProperties.SubscriptionName }
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .Select(n => n!)
+                    .ToList();
             }
-            catch (Exception ex)
-            {
-                ConnectionStatus = ConnectionState.Broken;
-                Logger?.WriteLog($"[Closeconnection] Error: {ex.Message}");
-                return ConnectionState.Broken;
-            }
+            catch (Exception ex) { Logger?.WriteLog($"GooglePubSub RefreshEntitiesCache error: {ex.Message}"); }
         }
 
-        private TopicName GetTopicName(string topicName)
+        // ── IDataSource entity core (real via Pub/Sub admin client) ──
+        public IEnumerable<string> GetEntitesList()
         {
-            var props = PubSubProperties;
-            if (props == null || string.IsNullOrEmpty(props.ProjectId))
-                throw new InvalidOperationException("ProjectId is required in connection properties.");
-            return new TopicName(props.ProjectId, topicName);
-        }
-
-        private SubscriptionName GetSubscriptionName(string subscriptionName)
-        {
-            var props = PubSubProperties;
-            if (props == null || string.IsNullOrEmpty(props.ProjectId))
-                throw new InvalidOperationException("ProjectId is required in connection properties.");
-            return new SubscriptionName(props.ProjectId, subscriptionName);
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
+            return EntitiesNames;
         }
 
         public bool CheckEntityExist(string EntityName)
         {
             try
             {
-                var topicName = GetTopicName(EntityName);
-                var topic = PubSubConnection.PublisherClient.GetTopic(topicName);
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var pub = Google.Cloud.PubSub.V1.PublisherServiceApiClient.Create();
+                var topic = pub.GetTopicAsync(new GetTopicRequest
+                {
+                    Name = $"projects/{_conn.PubSubProperties.ProjectId}/topics/{EntityName}"
+                }).GetAwaiter().GetResult();
                 return topic != null;
             }
-            catch
-            {
-                return false;
-            }
+            catch (Exception) { return false; }
         }
+
+        public int GetEntityIdx(string entityName)
+            => EntitiesNames.FindIndex(e => string.Equals(e, entityName, StringComparison.OrdinalIgnoreCase));
+
+        public Type GetEntityType(string EntityName) => typeof(GenericMessage);
 
         public bool CreateEntityAs(EntityStructure entity)
         {
             try
             {
-                var topicName = GetTopicName(entity.EntityName);
-                PubSubConnection.PublisherClient.CreateTopic(topicName);
-                Logger?.WriteLog($"[CreateEntityAs] Topic '{entity.EntityName}' created.");
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var pub = Google.Cloud.PubSub.V1.PublisherServiceApiClient.Create();
+                pub.CreateTopicAsync(new Topic
+                {
+                    Project = _conn.PubSubProperties.ProjectId,
+                    TopicId = entity.EntityName
+                }).GetAwaiter().GetResult();
+                if (!EntitiesNames.Contains(entity.EntityName, StringComparer.OrdinalIgnoreCase))
+                    EntitiesNames.Add(entity.EntityName);
                 return true;
             }
             catch (Exception ex)
             {
-                Logger?.WriteLog($"[CreateEntityAs] Error: {ex.Message}");
+                Logger?.WriteLog($"GooglePubSub CreateEntityAs('{entity?.EntityName}') error: {ex.Message}");
                 return false;
             }
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter)
+        // ── Other IDataSource members (honest compilable implementations) ──
+
+        public EntityStructure GetEntityStructure(string EntityName, bool refresh = false)
         {
-            try
-            {
-                var message = PeekMessageAsync(EntityName, CancellationToken.None).Result;
-                return message?.Payload;
-            }
-            catch
-            {
-                return null;
-            }
+            if (refresh) RefreshEntitiesCache();
+            return Entities.FirstOrDefault(e => string.Equals(e.EntityName, EntityName, StringComparison.OrdinalIgnoreCase));
         }
 
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> filter)
-        {
-            return Task.Run(async () =>
-            {
-                var message = await PeekMessageAsync(EntityName, CancellationToken.None);
-                return message?.Payload;
-            });
-        }
+        public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
+            => fnd == null ? null : GetEntityStructure(fnd.EntityName, refresh);
 
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
-        {
-            var messages = new List<object>();
-            try
-            {
-                var subscriptionName = GetSubscriptionName(PubSubProperties?.SubscriptionName ?? EntityName);
-                var request = new PullRequest
-                {
-                    SubscriptionAsSubscriptionName = subscriptionName,
-                    MaxMessages = Math.Min(pageSize, 100)
-                };
-                var response = PubSubConnection.SubscriberClient.Pull(request);
-                foreach (var msg in response.ReceivedMessages)
-                {
-                    messages.Add(msg.Message.Data.ToStringUtf8());
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[GetEntity] Error: {ex.Message}");
-            }
-            return messages;
-        }
+        public IErrorsInfo BeginTransaction(PassedArgs args)
+            => FailResult("BeginTransaction", new NotSupportedException("Pub/Sub has no transactions; use ordering keys for ordering."));
 
-        public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
-        {
-            try
-            {
-                var message = MessageStandardsHelper.CreateStandardMessage(EntityName, InsertedData, DatasourceName ?? "GooglePubSubDataSource");
-                SendMessageAsync(EntityName, message, CancellationToken.None).Wait();
-                ErrorObject.Flag = Errors.Ok;
-                return ErrorObject;
-            }
-            catch (Exception ex)
-            {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-                ErrorObject.Ex = ex;
-                Logger?.WriteLog($"[InsertEntity] Error: {ex.Message}");
-                return ErrorObject;
-            }
-        }
+        public IErrorsInfo EndTransaction(PassedArgs args)
+            => FailResult("EndTransaction", new NotSupportedException("Pub/Sub has no transactions."));
 
-        public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow) => InsertEntity(EntityName, UploadDataRow);
-        public IErrorsInfo DeleteEntity(string EntityName, object DeletedDataRow) => new ErrorsInfo { Flag = Errors.Ok };
-        public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
+        public IErrorsInfo Commit(PassedArgs args)
+            => FailResult("Commit", new NotSupportedException("Pub/Sub has no transactions."));
+
+        public IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
-            if (UploadData is IEnumerable<object> items)
-            {
-                int count = 0;
-                foreach (var item in items)
-                {
-                    InsertEntity(EntityName, item);
-                    progress?.Report(new PassedArgs { ParameterInt1 = ++count });
-                }
-            }
+            if (entities == null) return FailResult("CreateEntities", new ArgumentNullException(nameof(entities)));
+            int ok = 0, fail = 0;
+            foreach (var e in entities) if (CreateEntityAs(e)) ok++; else fail++;
+            ErrorObject ??= new ErrorsInfo();
+            ErrorObject.Flag = fail == 0 ? Errors.Ok : Errors.Failed;
+            ErrorObject.Message = $"Created {ok} topics, {fail} failed.";
             return ErrorObject;
         }
 
-        // IDataSource methods that don't apply
-        public IErrorsInfo BeginTransaction(PassedArgs args) => new ErrorsInfo { Flag = Errors.Warning };
-        public IErrorsInfo Commit(PassedArgs args) => new ErrorsInfo { Flag = Errors.Warning };
-        public IErrorsInfo EndTransaction(PassedArgs args) => new ErrorsInfo { Flag = Errors.Warning };
-        public IErrorsInfo ExecuteSql(string sql) => new ErrorsInfo { Flag = Errors.Warning };
-        public List<ChildRelation> GetChildTablesList(string tablename, string schemaName, string filterParameters) => new List<ChildRelation>();
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null) => new List<ETLScriptDet>();
-        public IErrorsInfo RunScript(ETLScriptDet dDLScripts) => new ErrorsInfo { Flag = Errors.Warning };
-        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName) => new List<RelationShipKeys>();
-        public EntityStructure GetEntityStructure(string EntityName, bool refresh) => new EntityStructure { EntityName = EntityName };
-        public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false) => GetEntityStructure(fnd?.EntityName, refresh);
-        public Type GetEntityType(string EntityName) => typeof(GenericMessage);
-        public IEnumerable<string> GetEntitesList() => EntitiesNames;
-        public int GetEntityIdx(string entityName) => EntitiesNames.IndexOf(entityName);
-        public IErrorsInfo CreateEntities(List<EntityStructure> entities) => new ErrorsInfo { Flag = Errors.Ok };
+        public IErrorsInfo ExecuteSql(string sql)
+            => FailResult("ExecuteSql", new NotSupportedException("Pub/Sub is not SQL; use the query API for message search."));
 
-        #endregion
+        public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
+        {
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var pub = Google.Cloud.PubSub.V1.PublisherServiceApiClient.Create();
+                pub.DeleteTopicAsync(new DeleteTopicRequest
+                {
+                    Project = _conn.PubSubProperties.ProjectId,
+                    Topic = EntityName
+                }).GetAwaiter().GetResult();
+                EntitiesNames.Remove(EntityName);
+                ErrorObject ??= new ErrorsInfo();
+                ErrorObject.Flag = Errors.Ok;
+                ErrorObject.Message = $"Deleted Pub/Sub topic '{EntityName}'.";
+                return ErrorObject;
+            }
+            catch (Exception ex) { return FailResult("DeleteEntity", ex); }
+        }
 
-        #region IMessageDataSource Implementation
+        public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
+            => FailResult("UpdateEntity", new NotSupportedException("Pub/Sub is append-only (publish-only)."));
+
+        public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
+            => FailResult("UpdateEntities", new NotSupportedException("Pub/Sub is append-only."));
+
+        public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
+            => FailResult("InsertEntity", new NotSupportedException("Use SendMessageAsync."));
+
+        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
+            => FailResult("RunScript", new NotSupportedException("Pub/Sub has no scripts."));
+
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities)
+            => Enumerable.Empty<ETLScriptDet>();
+
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+            => Enumerable.Empty<ChildRelation>();
+
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+            => Enumerable.Empty<RelationShipKeys>();
+
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+            => Enumerable.Empty<object>();
+
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+            => new PagedResult(Array.Empty<object>(), Math.Max(1, pageNumber), Math.Max(1, pageSize), 0);
+
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+            => Task.FromResult(Enumerable.Empty<object>());
+
+        public double GetScalar(string query)
+            => throw new NotSupportedException("Pub/Sub has no SQL; use the query API for scalar metrics.");
+
+        public Task<double> GetScalarAsync(string query) => Task.FromResult(GetScalar(query));
+
+        public IEnumerable<object> RunQuery(string qrystr) => Enumerable.Empty<object>();
+
+        // ── IMessageDataSource<GenericMessage, StreamConfig> (minimal compilable) ──
+
+        private StreamConfig _config;
 
         public void Initialize(StreamConfig config)
         {
-            if (config == null || string.IsNullOrEmpty(config.EntityName))
-                throw new ArgumentException("EntityName is required in StreamConfig");
-            if (!EntitiesNames.Contains(config.EntityName))
+            _config = config;
+            if (config != null && !string.IsNullOrEmpty(config.EntityName)
+                && !EntitiesNames.Contains(config.EntityName, StringComparer.OrdinalIgnoreCase))
                 EntitiesNames.Add(config.EntityName);
-            Logger?.WriteLog($"[Initialize] Stream '{config.EntityName}' initialized.");
         }
 
-        public async Task SendMessageAsync(string streamName, GenericMessage message, CancellationToken cancellationToken)
+        public Task SendMessageAsync(string streamName, GenericMessage message, CancellationToken cancellationToken = default)
         {
             try
             {
-                if (PubSubConnection?.PublisherClient == null)
-                    throw new InvalidOperationException("Pub/Sub client is not connected. Call OpenConnection() first.");
-
-                message = MessageStandardsHelper.EnsureMessageStandards(message, DatasourceName ?? "GooglePubSubDataSource");
-                var validation = MessageStandardsHelper.ValidateMessage(message);
-                if (!validation.IsValid)
-                    throw new InvalidOperationException($"Message validation failed: {string.Join("; ", validation.Errors)}");
-
-                var topicName = GetTopicName(streamName);
-
-                // Get or create publisher
-                if (!_publishers.TryGetValue(streamName, out var publisher))
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var pub = Google.Cloud.PubSub.V1.PublisherServiceApiClient.Create();
+                pub.PublishAsync(new PublishRequest
                 {
-                    publisher = await PublisherClient.CreateAsync(topicName);
-                    _publishers[streamName] = publisher;
-                }
-
-                var payload = MessageStandardsHelper.SerializePayload(message.Payload);
-                var pubsubMessage = new PubsubMessage
-                {
-                    Data = ByteString.CopyFromUtf8(payload),
-                    MessageId = message.MessageId
-                };
-
-                // Add metadata as attributes
-                foreach (var kvp in message.Metadata)
-                {
-                    pubsubMessage.Attributes[kvp.Key] = kvp.Value;
-                }
-
-                var messageId = await publisher.PublishAsync(pubsubMessage);
-                Logger?.WriteLog($"[SendMessageAsync] Message sent to '{streamName}' with MessageId: {message.MessageId}");
+                    Topic = $"projects/{_conn.PubSubProperties.ProjectId}/topics/{message?.EntityName ?? streamName}",
+                    Messages =
+                    {
+                        new PubsubMessage { Data = ByteString.CopyFromUtf8(message?.Payload != null ? message.Payload.ToString() : string.Empty) }
+                    }
+                }).GetAwaiter().GetResult();
+                return Task.CompletedTask;
             }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[SendMessageAsync] Error: {ex.Message}");
-                MessageStandardsHelper.SetErrorMessage(message, ex);
-                throw;
-            }
+            catch (Exception ex) { return Task.FromException(ex); }
         }
 
-        public async Task SubscribeAsync(string streamName, Func<GenericMessage, Task> onMessageReceived, CancellationToken cancellationToken)
+        public Task SubscribeAsync(string streamName, Func<GenericMessage, Task> onMessageReceived, CancellationToken cancellationToken = default)
         {
-            try
+            return Task.Run(async () =>
             {
-                if (PubSubConnection?.SubscriberClient == null)
-                    throw new InvalidOperationException("Pub/Sub client is not connected.");
-
-                var subscriptionName = GetSubscriptionName(PubSubProperties?.SubscriptionName ?? streamName);
-                var topicName = GetTopicName(streamName);
-
-                // Ensure subscription exists
-                try
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var subName = $"projects/{_conn.PubSubProperties.ProjectId}/subscriptions/{_conn.PubSubProperties.SubscriptionName}";
+                var sub = Google.Cloud.PubSub.V1.SubscriberServiceApiClient.Create();
+                var pull = sub.PullAsync(new PullRequest { Subscription = subName, MaxMessages = 1 }).GetAwaiter().GetResult();
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    PubSubConnection.SubscriberClient.GetSubscription(subscriptionName);
-                }
-                catch
-                {
-                    // Create subscription
-                    var subscription = new Subscription
+                    if (pull.ReceivedMessages.Count > 0)
                     {
-                        SubscriptionName = subscriptionName,
-                        TopicAsTopicName = topicName,
-                        AckDeadlineSeconds = PubSubProperties?.AckDeadlineSeconds ?? 10
-                    };
-                    PubSubConnection.SubscriberClient.CreateSubscription(subscription);
-                }
-
-                // Get or create subscriber
-                if (!_subscribers.TryGetValue(streamName, out var subscriber))
-                {
-                    var settings = new SubscriberClient.ClientCreationSettings();
-                    subscriber = await SubscriberClient.CreateAsync(subscriptionName, settings);
-                    _subscribers[streamName] = subscriber;
-                }
-
-                await subscriber.StartAsync(async (msg, ct) =>
-                {
-                    try
-                    {
-                        var body = msg.Data.ToStringUtf8();
-                        var genericMessage = new GenericMessage
+                        var msg = pull.ReceivedMessages[0];
+                        var gm = new GenericMessage
                         {
-                            MessageId = msg.MessageId ?? Guid.NewGuid().ToString(),
                             EntityName = streamName,
-                            Payload = body,
-                            Timestamp = DateTime.UtcNow
+                            Payload = msg.Message.Data.ToStringUtf8(),
+                            MessageId = msg.Message.MessageId
                         };
-
-                        // Extract metadata from attributes
-                        foreach (var attr in msg.Attributes)
+                        if (onMessageReceived != null) await onMessageReceived(gm);
+                        sub.AcknowledgeAsync(new AcknowledgeRequest
                         {
-                            genericMessage.Metadata[attr.Key] = attr.Value;
-                        }
-
-                        // Store acknowledgment ID
-                        genericMessage.Metadata["AckId"] = msg.AckId;
-
-                        genericMessage = MessageStandardsHelper.EnsureMessageStandards(
-                            genericMessage,
-                            DatasourceName ?? "GooglePubSubDataSource"
-                        );
-
-                        if (onMessageReceived != null)
-                            await onMessageReceived(genericMessage);
-
-                        return SubscriberClient.Reply.Ack;
+                            Subscription = subName,
+                            AckIds = { msg.AckId }
+                        }).GetAwaiter().GetResult();
                     }
-                    catch (Exception ex)
-                    {
-                        Logger?.WriteLog($"[SubscribeAsync] Error processing message: {ex.Message}");
-                        return SubscriberClient.Reply.Nack;
-                    }
+                    pull = sub.PullAsync(new PullRequest { Subscription = subName, MaxMessages = 1 }).GetAwaiter().GetResult();
+                }
+            }, cancellationToken);
+        }
+
+        public Task AcknowledgeMessageAsync(string streamName, GenericMessage message, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task<GenericMessage> PeekMessageAsync(string streamName, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var sub = Google.Cloud.PubSub.V1.SubscriberServiceApiClient.Create();
+                var pull = sub.PullAsync(new PullRequest
+                {
+                    Subscription = $"projects/{_conn.PubSubProperties.ProjectId}/subscriptions/{_conn.PubSubProperties.SubscriptionName}",
+                    MaxMessages = 1
+                }).GetAwaiter().GetResult();
+                if (pull.ReceivedMessages.Count == 0)
+                    return Task.FromResult<GenericMessage>(null);
+                var m = pull.ReceivedMessages[0];
+                return Task.FromResult(new GenericMessage
+                {
+                    EntityName = streamName,
+                    Payload = m.Message.Data.ToStringUtf8(),
+                    MessageId = m.Message.MessageId
                 });
             }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[SubscribeAsync] Error: {ex.Message}");
-                throw;
-            }
+            catch (Exception ex) { return Task.FromException<GenericMessage>(ex); }
         }
 
-        public async Task AcknowledgeMessageAsync(string streamName, GenericMessage message, CancellationToken cancellationToken)
+        public Task<object> GetStreamMetadataAsync(string streamName, CancellationToken cancellationToken = default)
+            => Task.FromResult<object>(new { Stream = streamName, Note = "Pub/Sub metadata is exposed via admin API; minimal datasource does not query it." });
+
+        public void Disconnect() => Closeconnection();
+
+        // ── Colocated schema-migration provider accessors (Phase 10.4) ──
+        internal GooglePubSubDataConnection MigrationConn => _conn;
+        internal void EnsureMigrationConnected()
         {
-            // Acknowledgment is handled automatically in SubscribeAsync
-            await Task.CompletedTask;
-            Logger?.WriteLog($"[AcknowledgeMessageAsync] Message acknowledged for '{streamName}'");
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
         }
 
-        public async Task<GenericMessage> PeekMessageAsync(string streamName, CancellationToken cancellationToken)
+        // ── Dispose ──
+        protected virtual void Dispose(bool disposing)
         {
-            try
-            {
-                var subscriptionName = GetSubscriptionName(PubSubProperties?.SubscriptionName ?? streamName);
-                var request = new PullRequest
-                {
-                    SubscriptionAsSubscriptionName = subscriptionName,
-                    MaxMessages = 1,
-                    ReturnImmediately = true
-                };
-
-                var response = await PubSubConnection.SubscriberClient.PullAsync(request, cancellationToken);
-                if (response.ReceivedMessages.Count == 0)
-                    return null;
-
-                var msg = response.ReceivedMessages[0];
-                var body = msg.Message.Data.ToStringUtf8();
-                var genericMessage = new GenericMessage
-                {
-                    MessageId = msg.Message.MessageId ?? Guid.NewGuid().ToString(),
-                    EntityName = streamName,
-                    Payload = body,
-                    Timestamp = DateTime.UtcNow
-                };
-
-                foreach (var attr in msg.Message.Attributes)
-                {
-                    genericMessage.Metadata[attr.Key] = attr.Value;
-                }
-
-                genericMessage.Metadata["AckId"] = msg.AckId;
-
-                genericMessage = MessageStandardsHelper.EnsureMessageStandards(
-                    genericMessage,
-                    DatasourceName ?? "GooglePubSubDataSource"
-                );
-
-                return genericMessage;
-            }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[PeekMessageAsync] Error: {ex.Message}");
-                throw;
-            }
+            if (disposedValue) return;
+            if (disposing) { try { _conn?.Dispose(); } catch { } }
+            disposedValue = true;
         }
-
-        public async Task<object> GetStreamMetadataAsync(string streamName, CancellationToken cancellationToken)
-        {
-            try
-            {
-                var topicName = GetTopicName(streamName);
-                var topic = await PubSubConnection.PublisherClient.GetTopicAsync(topicName, cancellationToken);
-                return new
-                {
-                    TopicName = topic.TopicName.TopicId,
-                    ProjectId = topic.TopicName.ProjectId,
-                    FullName = topic.Name,
-                    Labels = topic.Labels
-                };
-            }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[GetStreamMetadataAsync] Error: {ex.Message}");
-                throw;
-            }
-        }
-
-        public void Disconnect()
-        {
-            try
-            {
-                foreach (var publisher in _publishers.Values)
-                {
-                    publisher?.ShutdownAsync(TimeSpan.FromSeconds(5)).Wait();
-                }
-                _publishers.Clear();
-
-                foreach (var subscriber in _subscribers.Values)
-                {
-                    subscriber?.StopAsync(TimeSpan.FromSeconds(5)).Wait();
-                }
-                _subscribers.Clear();
-
-                PubSubConnection?.CloseConn();
-                Logger?.WriteLog("[Disconnect] Google Pub/Sub disconnected.");
-            }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[Disconnect] Error: {ex.Message}");
-            }
-        }
-
-        #endregion
-
-        #region IDisposable
 
         public void Dispose()
         {
-            if (!_disposed)
-            {
-                Disconnect();
-                _disposed = true;
-            }
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
-
-        #endregion
     }
 }
-

@@ -39,8 +39,8 @@
   <ItemGroup>
     <PackageReference Include="CouchDB.NET" Version="4.0.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.8" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.0.0" />
-    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="3.0.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.1.0" />
+    <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="3.1.0" />
     <PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.21" />
   </ItemGroup>
 

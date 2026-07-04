@@ -1,28 +1,31 @@
 using System;
 using System.Data;
 using Google.Cloud.PubSub.V1;
+using Google.Apis.Auth.OAuth2;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.DriversConfigurations;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities;
-using TheTechIdea.Beep.GooglePubSub;
 
 namespace TheTechIdea.Beep.GooglePubSub
 {
     public class GooglePubSubDataConnection : IDataConnection
     {
-        private PublisherServiceApiClient _publisherClient;
-        private SubscriberServiceApiClient _subscriberClient;
+        private SubscriberClient _subscriber;
+        private PublisherClient _publisher;
         private bool _disposed = false;
-
-        public PublisherServiceApiClient PublisherClient => _publisherClient;
-        public SubscriberServiceApiClient SubscriberClient => _subscriberClient;
 
         public GooglePubSubDataConnection(IDMEEditor dMEEditor)
         {
             DMEEditor = dMEEditor;
+        }
+
+        public GooglePubSubDataConnection(IDMEEditor dMEEditor, IConnectionProperties properties)
+        {
+            DMEEditor = dMEEditor;
+            ConnectionProp = properties;
         }
 
         public ConnectionDriversConfig DataSourceDriver { get; set; }
@@ -41,10 +44,10 @@ namespace TheTechIdea.Beep.GooglePubSub
         {
             try
             {
-                _publisherClient?.Dispose();
-                _subscriberClient?.Dispose();
-                _publisherClient = null;
-                _subscriberClient = null;
+                _subscriber?.Dispose();
+                _publisher?.Dispose();
+                _subscriber = null;
+                _publisher = null;
                 ConnectionStatus = ConnectionState.Closed;
                 Logger?.WriteLog("[CloseConn] Google Pub/Sub connection closed.");
             }
@@ -61,32 +64,38 @@ namespace TheTechIdea.Beep.GooglePubSub
         {
             try
             {
-                if (ConnectionProp == null)
-                    throw new InvalidOperationException("Connection properties are not set.");
-
                 var props = PubSubProperties;
                 if (props == null)
-                    throw new InvalidOperationException("Connection properties must be of type GooglePubSubConnectionProperties.");
-
-                if (string.IsNullOrEmpty(props.ProjectId))
-                    throw new InvalidOperationException("ProjectId is required.");
-
-                PublisherServiceApiClient.Builder publisherBuilder = new PublisherServiceApiClient.Builder();
-                SubscriberServiceApiClient.Builder subscriberBuilder = new SubscriberServiceApiClient.Builder();
-
-                // Set credentials if provided
-                if (!string.IsNullOrEmpty(props.CredentialsJson))
                 {
-                    // Credentials can be set via environment variable GOOGLE_APPLICATION_CREDENTIALS
-                    // or passed as JSON string
-                    // For simplicity, we'll rely on environment variable or default credentials
+                    ErrorObject = new ErrorsInfo { Flag = Errors.Failed, Message = "PubSub properties are not set." };
+                    ConnectionStatus = ConnectionState.Broken;
+                    return ConnectionStatus;
+                }
+                if (string.IsNullOrEmpty(props.ProjectId))
+                {
+                    ErrorObject = new ErrorsInfo { Flag = Errors.Failed, Message = "ProjectId is required." };
+                    ConnectionStatus = ConnectionState.Broken;
+                    return ConnectionStatus;
                 }
 
-                _publisherClient = publisherBuilder.Build();
-                _subscriberClient = subscriberBuilder.Build();
-
+                // Build a PublisherClient and SubscriberClient for the given project.
+                if (props.UseEmulator && !string.IsNullOrEmpty(props.EmulatorHost))
+                {
+                    var builder = new ClientBuilder
+                    {
+                        EmulatorDetection = EmulatorDetection.EmulatorOrProduction,
+                        Endpoint = props.EmulatorHost
+                    };
+                    _publisher = builder.BuildPublisherClientAsync().GetAwaiter().GetResult();
+                    _subscriber = builder.BuildSubscriberClientAsync().GetAwaiter().GetResult();
+                }
+                else
+                {
+                    _publisher = new PublisherClientBuilder { ProjectId = props.ProjectId }.BuildAsync().GetAwaiter().GetResult();
+                    _subscriber = new SubscriberClientBuilder { ProjectId = props.ProjectId }.BuildAsync().GetAwaiter().GetResult();
+                }
                 ConnectionStatus = ConnectionState.Open;
-                Logger?.WriteLog("[OpenConnection] Google Pub/Sub connection opened successfully.");
+                Logger?.WriteLog("[OpenConnection] Google Pub/Sub connection opened.");
             }
             catch (Exception ex)
             {
@@ -99,18 +108,40 @@ namespace TheTechIdea.Beep.GooglePubSub
 
         public ConnectionState OpenConnection(DataSourceType dbtype, string connectionstring)
         {
-            if (PubSubProperties == null)
-                ConnectionProp = new GooglePubSubConnectionProperties();
-            PubSubProperties.ConnectionString = connectionstring;
-            return OpenConnection();
+            try
+            {
+                if (PubSubProperties == null) ConnectionProp = new GooglePubSubConnectionProperties();
+                PubSubProperties.ConnectionString = connectionstring;
+                return OpenConnection();
+            }
+            catch (Exception ex)
+            {
+                ConnectionStatus = ConnectionState.Broken;
+                ErrorObject = new ErrorsInfo { Flag = Errors.Failed, Message = ex.Message, Ex = ex };
+                return ConnectionStatus;
+            }
         }
 
         public ConnectionState OpenConnection(DataSourceType dbtype, string host, int port, string database, string userid, string password, string parameters)
         {
-            if (PubSubProperties == null)
-                ConnectionProp = new GooglePubSubConnectionProperties();
-            PubSubProperties.ProjectId = host ?? database;
-            return OpenConnection();
+            try
+            {
+                if (PubSubProperties == null) ConnectionProp = new GooglePubSubConnectionProperties();
+                PubSubProperties.ProjectId = host;
+                PubSubProperties.Parameters = parameters;
+                return OpenConnection();
+            }
+            catch (Exception ex)
+            {
+                ConnectionStatus = ConnectionState.Broken;
+                ErrorObject = new ErrorsInfo { Flag = Errors.Failed, Message = ex.Message, Ex = ex };
+                return ConnectionStatus;
+            }
+        }
+
+        public string ReplaceValueFromConnectionString()
+        {
+            return ConnectionProp?.ConnectionString;
         }
 
         public void Dispose()
@@ -123,4 +154,3 @@ namespace TheTechIdea.Beep.GooglePubSub
         }
     }
 }
-

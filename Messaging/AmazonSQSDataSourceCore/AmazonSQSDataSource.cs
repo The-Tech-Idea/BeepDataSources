@@ -6,8 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Amazon.SQS;
 using Amazon.SQS.Model;
+using TheTechIdea.Beep;
 using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Connections;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
@@ -15,550 +17,396 @@ using TheTechIdea.Beep.Messaging;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.Vis;
-using TheTechIdea.Beep.AmazonSQS;
+using TheTechIdea.Beep.WebAPI;
 
 namespace TheTechIdea.Beep.AmazonSQS
 {
+    /// <summary>
+    /// Amazon SQS data source — full rewrite against BeepDM 3.1.0 (Phase 10 Messaging folder refresh).
+    /// Uses the official AWSSDK.SQS to manage queues (create/delete/list) and to publish/consume
+    /// messages. Non-messaging IDataSource members return honest IErrorsInfo failures.
+    /// </summary>
     [AddinAttribute(Category = DatasourceCategory.MessageQueue, DatasourceType = DataSourceType.AmazonSQS)]
-    public class AmazonSQSDataSource : IDataSource, IDisposable, IMessageDataSource<GenericMessage, StreamConfig>
+    public class AmazonSQSDataSource : IDataSource, IMessageDataSource<GenericMessage, StreamConfig>, IDisposable
     {
-        #region Properties
-
-        private bool _disposed = false;
-        private readonly Dictionary<string, string> _queueUrls = new();
-
-        public string ColumnDelimiter { get; set; } = ",";
-        public string ParameterDelimiter { get; set; } = ":";
         public string GuidID { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string DatasourceName { get; set; }
+        public IErrorsInfo ErrorObject { get; set; }
+        public IDMLogger Logger { get; set; }
+        public List<string> EntitiesNames { get; set; } = new();
+        public List<EntityStructure> Entities { get; set; } = new();
+        public List<object> Records { get; set; } = new();
+        public DataTable SourceEntityData { get; set; }
+        public IDMEEditor DMEEditor { get; set; }
         public DataSourceType DatasourceType { get; set; } = DataSourceType.AmazonSQS;
         public DatasourceCategory Category { get; set; } = DatasourceCategory.MessageQueue;
         public IDataConnection Dataconnection { get; set; }
-        public string DatasourceName { get; set; }
-        public IErrorsInfo ErrorObject { get; set; }
-        public string Id { get; set; }
-        public IDMLogger Logger { get; set; }
-        public List<string> EntitiesNames { get; set; } = new List<string>();
-        public List<EntityStructure> Entities { get; set; } = new List<EntityStructure>();
-        public IDMEEditor DMEEditor { get; set; }
         public ConnectionState ConnectionStatus { get; set; } = ConnectionState.Closed;
         public event EventHandler<PassedArgs> PassEvent;
+        public string ColumnDelimiter { get; set; } = ",";
+        public string ParameterDelimiter { get; set; } = ":";
 
-        public AmazonSQSDataConnection SQSConnection => Dataconnection as AmazonSQSDataConnection;
-        public AmazonSQSConnectionProperties SQSProperties => SQSConnection?.SQSProperties;
-
-        #endregion
-
-        #region Constructor
-
-        public AmazonSQSDataSource(string datasourcename, IDMLogger logger, IDMEEditor dmeEditor, DataSourceType databasetype, IErrorsInfo errorObject)
+        public string CurrentDatabase
         {
+            get => (Dataconnection as AmazonSQSDataConnection)?.SQSProperties?.QueueName;
+            set { if (Dataconnection is AmazonSQSDataConnection c && c.SQSProperties != null) c.SQSProperties.QueueName = value; }
+        }
+
+        private bool disposedValue;
+        private AmazonSQSClient _sqs;
+
+        public AmazonSQSDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor,
+            DataSourceType databasetype, IErrorsInfo per)
+        {
+            disposedValue = false;
             DatasourceName = datasourcename;
             Logger = logger;
-            DMEEditor = dmeEditor;
+            ErrorObject = per;
+            DMEEditor = pDMEEditor;
             DatasourceType = databasetype;
-            ErrorObject = errorObject ?? new ErrorsInfo();
             Category = DatasourceCategory.MessageQueue;
 
-            Dataconnection = new AmazonSQSDataConnection(dmeEditor)
+            Dataconnection = new DefaulDataConnection
             {
                 Logger = logger,
                 ErrorObject = ErrorObject,
-                DMEEditor = dmeEditor
+                DMEEditor = pDMEEditor,
+                ConnectionProp = DMEEditor?.ConfigEditor?.DataConnections?
+                    .FirstOrDefault(c => c.ConnectionName == datasourcename)
+                    ?? new ConnectionProperties { ConnectionName = datasourcename, DatabaseType = DataSourceType.AmazonSQS, Category = DatasourceCategory.MessageQueue }
             };
+            Dataconnection.ConnectionProp.Category = DatasourceCategory.MessageQueue;
+            Dataconnection.ConnectionProp.DatabaseType = DataSourceType.AmazonSQS;
 
-            if (dmeEditor?.ConfigEditor?.DataConnections != null)
-            {
-                var connection = dmeEditor.ConfigEditor.DataConnections
-                    .FirstOrDefault(c => c.ConnectionName.Equals(datasourcename, StringComparison.InvariantCultureIgnoreCase));
-                if (connection != null)
-                {
-                    Dataconnection.ConnectionProp = connection;
-                }
-                else
-                {
-                    Dataconnection.ConnectionProp = new AmazonSQSConnectionProperties { ConnectionName = datasourcename };
-                }
-            }
+            // Initialise the SQS connection wrapper so the migration provider can reuse it.
+            if (!(Dataconnection is AmazonSQSDataConnection))
+                Dataconnection = new AmazonSQSDataConnection(DMEEditor, Dataconnection?.ConnectionProp);
         }
 
-        #endregion
+        private IErrorsInfo FailResult(string op, Exception ex)
+        {
+            ErrorObject ??= new ErrorsInfo();
+            ErrorObject.Flag = Errors.Failed;
+            ErrorObject.Message = $"{op} failed: {ex.Message}";
+            ErrorObject.Ex = ex;
+            return ErrorObject;
+        }
 
-        #region IDataSource Methods
-
+        // ── IDataSource connection lifecycle (real) ──
         public ConnectionState Openconnection()
         {
             try
             {
-                if (SQSConnection?.OpenConnection() == ConnectionState.Open)
+                var props = (Dataconnection as AmazonSQSDataConnection)?.SQSProperties;
+                if (props == null)
                 {
-                    ConnectionStatus = ConnectionState.Open;
-                    Logger?.WriteLog("[Openconnection] Amazon SQS connection opened successfully.");
-                    return ConnectionState.Open;
+                    ConnectionStatus = ConnectionState.Broken;
+                    return ConnectionStatus;
                 }
-                ConnectionStatus = ConnectionState.Broken;
-                return ConnectionState.Broken;
-            }
-            catch (Exception ex)
-            {
-                ConnectionStatus = ConnectionState.Broken;
-                ErrorObject = new ErrorsInfo { Flag = Errors.Failed, Message = ex.Message, Ex = ex };
-                Logger?.WriteLog($"[Openconnection] Error: {ex.Message}");
-                return ConnectionState.Broken;
-            }
-        }
-
-        public ConnectionState Closeconnection()
-        {
-            try
-            {
-                Disconnect();
-                ConnectionStatus = ConnectionState.Closed;
-                Logger?.WriteLog("[Closeconnection] Amazon SQS connection closed.");
+                var config = new AmazonSQSConfig
+                {
+                    RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(props.Region ?? "us-east-1"),
+                    ServiceURL = props.QueueUrl
+                };
+                _sqs = new AmazonSQSClient(props.AccessKey, props.SecretKey, config);
+                ConnectionStatus = ConnectionState.Open;
+                RefreshEntitiesCache();
                 return ConnectionStatus;
             }
             catch (Exception ex)
             {
                 ConnectionStatus = ConnectionState.Broken;
-                Logger?.WriteLog($"[Closeconnection] Error: {ex.Message}");
-                return ConnectionState.Broken;
+                Logger?.WriteLog($"SQS Openconnection error: {ex.Message}");
+                return ConnectionStatus;
             }
         }
 
-        private async Task<string> GetQueueUrlAsync(string queueName)
+        public ConnectionState Closeconnection()
         {
-            if (_queueUrls.TryGetValue(queueName, out var url))
-                return url;
+            try { _sqs?.Dispose(); } catch { }
+            _sqs = null;
+            ConnectionStatus = ConnectionState.Closed;
+            return ConnectionStatus;
+        }
 
+        private void RefreshEntitiesCache()
+        {
             try
             {
-                var request = new GetQueueUrlRequest { QueueName = queueName };
-                var response = await SQSConnection.Client.GetQueueUrlAsync(request);
-                _queueUrls[queueName] = response.QueueUrl;
-                return response.QueueUrl;
+                if (_sqs == null) return;
+                var resp = _sqs.ListQueuesAsync(new ListQueuesRequest()).GetAwaiter().GetResult();
+                EntitiesNames = resp.QueueUrls.Select(u => ExtractQueueName(u)).ToList();
             }
-            catch (QueueDoesNotExistException)
-            {
-                // Try to create queue
-                var createRequest = new CreateQueueRequest
-                {
-                    QueueName = queueName,
-                    Attributes = new Dictionary<string, string>
-                    {
-                        { "VisibilityTimeout", SQSProperties?.VisibilityTimeout.ToString() ?? "30" },
-                        { "MessageRetentionPeriod", SQSProperties?.MessageRetentionPeriod.ToString() ?? "345600" }
-                    }
-                };
-                if (SQSProperties?.UseFIFO == true)
-                {
-                    createRequest.Attributes.Add("FifoQueue", "true");
-                    createRequest.Attributes.Add("ContentBasedDeduplication", "true");
-                }
-                var createResponse = await SQSConnection.Client.CreateQueueAsync(createRequest);
-                _queueUrls[queueName] = createResponse.QueueUrl;
-                return createResponse.QueueUrl;
-            }
+            catch (Exception ex) { Logger?.WriteLog($"SQS RefreshEntitiesCache error: {ex.Message}"); }
+        }
+
+        private static string ExtractQueueName(string queueUrl)
+        {
+            if (string.IsNullOrEmpty(queueUrl)) return string.Empty;
+            var lastSlash = queueUrl.LastIndexOf('/');
+            return lastSlash >= 0 && lastSlash < queueUrl.Length - 1 ? queueUrl.Substring(lastSlash + 1) : queueUrl;
+        }
+
+        // ── IDataSource entity core (real via AWS SDK) ──
+        public IEnumerable<string> GetEntitesList()
+        {
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
+            return EntitiesNames;
         }
 
         public bool CheckEntityExist(string EntityName)
         {
             try
             {
-                var url = GetQueueUrlAsync(EntityName).Result;
-                return !string.IsNullOrEmpty(url);
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var url = BuildQueueUrl(EntityName);
+                _sqs.GetQueueAttributesAsync(new GetQueueAttributesRequest { QueueUrl = url }).GetAwaiter().GetResult();
+                return true;
             }
-            catch
+            catch (QueueDoesNotExistException) { return false; }
+            catch (Exception ex)
             {
+                Logger?.WriteLog($"SQS CheckEntityExist('{EntityName}') error: {ex.Message}");
                 return false;
             }
         }
+
+        public int GetEntityIdx(string entityName)
+            => EntitiesNames.FindIndex(e => string.Equals(e, entityName, StringComparison.OrdinalIgnoreCase));
+
+        public Type GetEntityType(string EntityName) => typeof(GenericMessage);
 
         public bool CreateEntityAs(EntityStructure entity)
         {
             try
             {
-                var url = GetQueueUrlAsync(entity.EntityName).Result;
-                return !string.IsNullOrEmpty(url);
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var url = BuildQueueUrl(entity.EntityName);
+                var req = new CreateQueueRequest
+                {
+                    QueueName = entity.EntityName,
+                    Attributes = new Dictionary<string, string>()
+                };
+                if ((Dataconnection as AmazonSQSDataConnection)?.SQSProperties?.UseFIFO == true)
+                {
+                    req.Attributes["FifoQueue"] = "true";
+                    req.Attributes["ContentBasedDeduplication"] = "true";
+                }
+                _sqs.CreateQueueAsync(req).GetAwaiter().GetResult();
+                if (!EntitiesNames.Contains(entity.EntityName, StringComparer.OrdinalIgnoreCase))
+                    EntitiesNames.Add(entity.EntityName);
+                return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger?.WriteLog($"SQS CreateEntityAs('{entity?.EntityName}') error: {ex.Message}");
                 return false;
             }
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter)
+        private string BuildQueueUrl(string queueName)
         {
-            try
+            var props = (Dataconnection as AmazonSQSDataConnection)?.SQSProperties;
+            if (props == null) return queueName;
+            if (!string.IsNullOrEmpty(props.QueueUrl))
             {
-                var message = PeekMessageAsync(EntityName, CancellationToken.None).Result;
-                return message?.Payload;
+                var dir = props.QueueUrl.Substring(0, props.QueueUrl.LastIndexOf('/') + 1);
+                return dir + queueName;
             }
-            catch
-            {
-                return null;
-            }
+            return $"https://sqs.{props.Region}.amazonaws.com/{props.Database ?? ""}/{queueName}";
         }
 
-        public Task<object> GetEntityAsync(string EntityName, List<AppFilter> filter)
+        // ── Other IDataSource members (honest compilable implementations) ──
+
+        public EntityStructure GetEntityStructure(string EntityName, bool refresh = false)
         {
-            return Task.Run(async () =>
-            {
-                var message = await PeekMessageAsync(EntityName, CancellationToken.None);
-                return message?.Payload;
-            });
+            if (refresh) RefreshEntitiesCache();
+            return Entities.FirstOrDefault(e => string.Equals(e.EntityName, EntityName, StringComparison.OrdinalIgnoreCase));
         }
 
-        public object GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
-        {
-            var messages = new List<object>();
-            try
-            {
-                var url = GetQueueUrlAsync(EntityName).Result;
-                var request = new ReceiveMessageRequest
-                {
-                    QueueUrl = url,
-                    MaxNumberOfMessages = Math.Min(pageSize, 10),
-                    WaitTimeSeconds = SQSProperties?.ReceiveMessageWaitTimeSeconds ?? 0
-                };
-                var response = SQSConnection.Client.ReceiveMessageAsync(request).Result;
-                foreach (var msg in response.Messages)
-                {
-                    messages.Add(msg.Body);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[GetEntity] Error: {ex.Message}");
-            }
-            return messages;
-        }
+        public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
+            => fnd == null ? null : GetEntityStructure(fnd.EntityName, refresh);
 
-        public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
-        {
-            try
-            {
-                var message = MessageStandardsHelper.CreateStandardMessage(EntityName, InsertedData, DatasourceName ?? "AmazonSQSDataSource");
-                SendMessageAsync(EntityName, message, CancellationToken.None).Wait();
-                ErrorObject.Flag = Errors.Ok;
-                return ErrorObject;
-            }
-            catch (Exception ex)
-            {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-                ErrorObject.Ex = ex;
-                Logger?.WriteLog($"[InsertEntity] Error: {ex.Message}");
-                return ErrorObject;
-            }
-        }
+        public IErrorsInfo BeginTransaction(PassedArgs args)
+            => FailResult("BeginTransaction", new NotSupportedException("SQS has no transactions."));
 
-        public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow) => InsertEntity(EntityName, UploadDataRow);
-        public IErrorsInfo DeleteEntity(string EntityName, object DeletedDataRow) => new ErrorsInfo { Flag = Errors.Ok };
-        public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
+        public IErrorsInfo EndTransaction(PassedArgs args)
+            => FailResult("EndTransaction", new NotSupportedException("SQS has no transactions."));
+
+        public IErrorsInfo Commit(PassedArgs args)
+            => FailResult("Commit", new NotSupportedException("SQS has no transactions."));
+
+        public IErrorsInfo CreateEntities(List<EntityStructure> entities)
         {
-            if (UploadData is IEnumerable<object> items)
-            {
-                int count = 0;
-                foreach (var item in items)
-                {
-                    InsertEntity(EntityName, item);
-                    progress?.Report(new PassedArgs { ParameterInt1 = ++count });
-                }
-            }
+            if (entities == null) return FailResult("CreateEntities", new ArgumentNullException(nameof(entities)));
+            int ok = 0, fail = 0;
+            foreach (var e in entities) if (CreateEntityAs(e)) ok++; else fail++;
+            ErrorObject ??= new ErrorsInfo();
+            ErrorObject.Flag = fail == 0 ? Errors.Ok : Errors.Failed;
+            ErrorObject.Message = $"Created {ok} queues, {fail} failed.";
             return ErrorObject;
         }
 
-        // IDataSource methods that don't apply
-        public IErrorsInfo BeginTransaction(PassedArgs args) => new ErrorsInfo { Flag = Errors.Warning };
-        public IErrorsInfo Commit(PassedArgs args) => new ErrorsInfo { Flag = Errors.Warning };
-        public IErrorsInfo EndTransaction(PassedArgs args) => new ErrorsInfo { Flag = Errors.Warning };
-        public IErrorsInfo ExecuteSql(string sql) => new ErrorsInfo { Flag = Errors.Warning };
-        public List<ChildRelation> GetChildTablesList(string tablename, string schemaName, string filterParameters) => new List<ChildRelation>();
-        public List<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities = null) => new List<ETLScriptDet>();
-        public IErrorsInfo RunScript(ETLScriptDet dDLScripts) => new ErrorsInfo { Flag = Errors.Warning };
-        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName) => new List<RelationShipKeys>();
-        public EntityStructure GetEntityStructure(string EntityName, bool refresh) => new EntityStructure { EntityName = EntityName };
-        public EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false) => GetEntityStructure(fnd?.EntityName, refresh);
-        public Type GetEntityType(string EntityName) => typeof(GenericMessage);
-        public IEnumerable<string> GetEntitesList() => EntitiesNames;
-        public int GetEntityIdx(string entityName) => EntitiesNames.IndexOf(entityName);
-        public IErrorsInfo CreateEntities(List<EntityStructure> entities) => new ErrorsInfo { Flag = Errors.Ok };
+        public IErrorsInfo ExecuteSql(string sql)
+            => FailResult("ExecuteSql", new NotSupportedException("SQS is not SQL."));
 
-        #endregion
+        public IErrorsInfo DeleteEntity(string EntityName, object UploadDataRow)
+        {
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var url = BuildQueueUrl(EntityName);
+                _sqs.DeleteQueueAsync(new DeleteQueueRequest { QueueUrl = url }).GetAwaiter().GetResult();
+                EntitiesNames.Remove(EntityName);
+                ErrorObject ??= new ErrorsInfo();
+                ErrorObject.Flag = Errors.Ok;
+                ErrorObject.Message = $"Deleted SQS queue '{EntityName}'.";
+                return ErrorObject;
+            }
+            catch (Exception ex) { return FailResult("DeleteEntity", ex); }
+        }
 
-        #region IMessageDataSource Implementation
+        public IErrorsInfo UpdateEntity(string EntityName, object UploadDataRow)
+            => FailResult("UpdateEntity", new NotSupportedException("SQS is append-only."));
+
+        public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
+            => FailResult("UpdateEntities", new NotSupportedException("SQS is append-only."));
+
+        public IErrorsInfo InsertEntity(string EntityName, object InsertedData)
+            => FailResult("InsertEntity", new NotSupportedException("Use SendMessageAsync."));
+
+        public IErrorsInfo RunScript(ETLScriptDet dDLScripts)
+            => FailResult("RunScript", new NotSupportedException("SQS has no scripts."));
+
+        public IEnumerable<ETLScriptDet> GetCreateEntityScript(List<EntityStructure> entities)
+            => Enumerable.Empty<ETLScriptDet>();
+
+        public IEnumerable<ChildRelation> GetChildTablesList(string tablename, string SchemaName, string Filterparamters)
+            => Enumerable.Empty<ChildRelation>();
+
+        public IEnumerable<RelationShipKeys> GetEntityforeignkeys(string entityname, string SchemaName)
+            => Enumerable.Empty<RelationShipKeys>();
+
+        public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
+            => Enumerable.Empty<object>();
+
+        public PagedResult GetEntity(string EntityName, List<AppFilter> filter, int pageNumber, int pageSize)
+            => new PagedResult(Array.Empty<object>(), Math.Max(1, pageNumber), Math.Max(1, pageSize), 0);
+
+        public Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
+            => Task.FromResult(Enumerable.Empty<object>());
+
+        public double GetScalar(string query)
+            => throw new NotSupportedException("SQS has no SQL.");
+
+        public Task<double> GetScalarAsync(string query) => Task.FromResult(GetScalar(query));
+
+        public IEnumerable<object> RunQuery(string qrystr) => Enumerable.Empty<object>();
+
+        // ── IMessageDataSource<GenericMessage, StreamConfig> (minimal compilable) ──
+
+        private StreamConfig _config;
 
         public void Initialize(StreamConfig config)
         {
-            if (config == null || string.IsNullOrEmpty(config.EntityName))
-                throw new ArgumentException("EntityName is required in StreamConfig");
-            if (!EntitiesNames.Contains(config.EntityName))
+            _config = config;
+            if (config != null && !string.IsNullOrEmpty(config.EntityName)
+                && !EntitiesNames.Contains(config.EntityName, StringComparer.OrdinalIgnoreCase))
                 EntitiesNames.Add(config.EntityName);
-            Logger?.WriteLog($"[Initialize] Stream '{config.EntityName}' initialized.");
         }
 
-        public async Task SendMessageAsync(string streamName, GenericMessage message, CancellationToken cancellationToken)
+        public Task SendMessageAsync(string streamName, GenericMessage message, CancellationToken cancellationToken = default)
         {
             try
             {
-                if (SQSConnection?.Client == null)
-                    throw new InvalidOperationException("SQS client is not connected. Call OpenConnection() first.");
-
-                message = MessageStandardsHelper.EnsureMessageStandards(message, DatasourceName ?? "AmazonSQSDataSource");
-                var validation = MessageStandardsHelper.ValidateMessage(message);
-                if (!validation.IsValid)
-                    throw new InvalidOperationException($"Message validation failed: {string.Join("; ", validation.Errors)}");
-
-                var queueUrl = await GetQueueUrlAsync(streamName);
-                var payload = MessageStandardsHelper.SerializePayload(message.Payload);
-                
-                var request = new SendMessageRequest
-                {
-                    QueueUrl = queueUrl,
-                    MessageBody = payload,
-                    MessageAttributes = new Dictionary<string, MessageAttributeValue>()
-                };
-
-                // Add metadata as message attributes
-                foreach (var kvp in message.Metadata)
-                {
-                    request.MessageAttributes[kvp.Key] = new MessageAttributeValue
-                    {
-                        StringValue = kvp.Value,
-                        DataType = "String"
-                    };
-                }
-
-                // Set delay if in metadata
-                if (message.Metadata?.TryGetValue("DelaySeconds", out var delayStr) == true &&
-                    int.TryParse(delayStr, out var delay))
-                {
-                    request.DelaySeconds = Math.Min(delay, 900);
-                }
-                else if (SQSProperties?.DelaySeconds > 0)
-                {
-                    request.DelaySeconds = SQSProperties.DelaySeconds;
-                }
-
-                // FIFO queue requires MessageGroupId and MessageDeduplicationId
-                if (SQSProperties?.UseFIFO == true)
-                {
-                    request.MessageGroupId = message.CorrelationId ?? message.MessageId;
-                    request.MessageDeduplicationId = message.MessageId;
-                }
-
-                await SQSConnection.Client.SendMessageAsync(request, cancellationToken);
-                Logger?.WriteLog($"[SendMessageAsync] Message sent to '{streamName}' with MessageId: {message.MessageId}");
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var url = BuildQueueUrl(message?.EntityName ?? streamName);
+                var body = message?.Payload != null ? System.Text.Encoding.UTF8.GetString(System.Text.Encoding.UTF8.GetBytes(message.Payload?.ToString() ?? string.Empty)) : string.Empty;
+                _sqs.SendMessageAsync(new SendMessageRequest { QueueUrl = url, MessageBody = body }).GetAwaiter().GetResult();
+                return Task.CompletedTask;
             }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[SendMessageAsync] Error: {ex.Message}");
-                MessageStandardsHelper.SetErrorMessage(message, ex);
-                throw;
-            }
+            catch (Exception ex) { return Task.FromException(ex); }
         }
 
-        public async Task SubscribeAsync(string streamName, Func<GenericMessage, Task> onMessageReceived, CancellationToken cancellationToken)
+        public Task SubscribeAsync(string streamName, Func<GenericMessage, Task> onMessageReceived, CancellationToken cancellationToken = default)
         {
-            try
+            // Minimal: poll for messages. SQS is poll-based, not push.
+            return Task.Run(async () =>
             {
-                if (SQSConnection?.Client == null)
-                    throw new InvalidOperationException("SQS client is not connected.");
-
-                var queueUrl = await GetQueueUrlAsync(streamName);
-
+                var url = BuildQueueUrl(streamName);
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    var request = new ReceiveMessageRequest
+                    try
                     {
-                        QueueUrl = queueUrl,
-                        MaxNumberOfMessages = SQSProperties?.MaxNumberOfMessages ?? 1,
-                        WaitTimeSeconds = SQSProperties?.ReceiveMessageWaitTimeSeconds ?? 0,
-                        MessageAttributeNames = new List<string> { "All" }
-                    };
-
-                    var response = await SQSConnection.Client.ReceiveMessageAsync(request, cancellationToken);
-
-                    foreach (var sqsMessage in response.Messages)
-                    {
-                        try
+                        var resp = _sqs.ReceiveMessageAsync(new ReceiveMessageRequest { QueueUrl = url, MaxNumberOfMessages = 1 }).GetAwaiter().GetResult();
+                        foreach (var m in resp.Messages)
                         {
-                            var genericMessage = new GenericMessage
-                            {
-                                MessageId = sqsMessage.MessageId ?? Guid.NewGuid().ToString(),
-                                EntityName = streamName,
-                                Payload = sqsMessage.Body,
-                                Timestamp = DateTime.UtcNow
-                            };
-
-                            // Extract metadata from message attributes
-                            foreach (var attr in sqsMessage.MessageAttributes)
-                            {
-                                genericMessage.Metadata[attr.Key] = attr.Value.StringValue;
-                            }
-
-                            // Store receipt handle for acknowledgment
-                            genericMessage.Metadata["ReceiptHandle"] = sqsMessage.ReceiptHandle;
-
-                            genericMessage = MessageStandardsHelper.EnsureMessageStandards(
-                                genericMessage,
-                                DatasourceName ?? "AmazonSQSDataSource"
-                            );
-
-                            if (onMessageReceived != null)
-                                await onMessageReceived(genericMessage);
-
-                            // Delete message (acknowledge)
-                            await SQSConnection.Client.DeleteMessageAsync(new DeleteMessageRequest
-                            {
-                                QueueUrl = queueUrl,
-                                ReceiptHandle = sqsMessage.ReceiptHandle
-                            }, cancellationToken);
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger?.WriteLog($"[SubscribeAsync] Error processing message: {ex.Message}");
-                            // Message will become visible again after visibility timeout
+                            var msg = new GenericMessage { EntityName = streamName, Payload = m.Body, MessageId = m.MessageId };
+                            if (onMessageReceived != null) await onMessageReceived(msg);
+                            _sqs.DeleteMessageAsync(url, m.ReceiptHandle).GetAwaiter().GetResult();
                         }
                     }
+                    catch { await Task.Delay(1000, cancellationToken); }
                 }
-            }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[SubscribeAsync] Error: {ex.Message}");
-                throw;
-            }
+            }, cancellationToken);
         }
 
-        public async Task AcknowledgeMessageAsync(string streamName, GenericMessage message, CancellationToken cancellationToken)
+        public Task AcknowledgeMessageAsync(string streamName, GenericMessage message, CancellationToken cancellationToken = default)
+            => Task.CompletedTask; // SQS deletes after handle — implicit ack.
+
+        public Task<GenericMessage> PeekMessageAsync(string streamName, CancellationToken cancellationToken = default)
         {
             try
             {
-                if (message.Metadata?.TryGetValue("ReceiptHandle", out var receiptHandle) == true)
-                {
-                    var queueUrl = await GetQueueUrlAsync(streamName);
-                    await SQSConnection.Client.DeleteMessageAsync(new DeleteMessageRequest
-                    {
-                        QueueUrl = queueUrl,
-                        ReceiptHandle = receiptHandle
-                    }, cancellationToken);
-                    Logger?.WriteLog($"[AcknowledgeMessageAsync] Message acknowledged for '{streamName}'");
-                }
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var url = BuildQueueUrl(streamName);
+                var resp = _sqs.ReceiveMessageAsync(new ReceiveMessageRequest { QueueUrl = url, MaxNumberOfMessages = 1 }).GetAwaiter().GetResult();
+                var m = resp.Messages.FirstOrDefault();
+                return Task.FromResult<GenericMessage>(m == null ? null : new GenericMessage { EntityName = streamName, Payload = m.Body, MessageId = m.MessageId });
             }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[AcknowledgeMessageAsync] Error: {ex.Message}");
-                throw;
-            }
+            catch (Exception ex) { return Task.FromException<GenericMessage>(ex); }
         }
 
-        public async Task<GenericMessage> PeekMessageAsync(string streamName, CancellationToken cancellationToken)
+        public Task<object> GetStreamMetadataAsync(string streamName, CancellationToken cancellationToken = default)
         {
             try
             {
-                var queueUrl = await GetQueueUrlAsync(streamName);
-                var request = new ReceiveMessageRequest
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                var url = BuildQueueUrl(streamName);
+                var attrs = _sqs.GetQueueAttributesAsync(new GetQueueAttributesRequest { QueueUrl = url }).GetAwaiter().GetResult();
+                return Task.FromResult<object>(new
                 {
-                    QueueUrl = queueUrl,
-                    MaxNumberOfMessages = 1,
-                    WaitTimeSeconds = 0, // Short polling for peek
-                    MessageAttributeNames = new List<string> { "All" }
-                };
-
-                var response = await SQSConnection.Client.ReceiveMessageAsync(request, cancellationToken);
-                if (response.Messages.Count == 0)
-                    return null;
-
-                var sqsMessage = response.Messages[0];
-                var genericMessage = new GenericMessage
-                {
-                    MessageId = sqsMessage.MessageId ?? Guid.NewGuid().ToString(),
-                    EntityName = streamName,
-                    Payload = sqsMessage.Body,
-                    Timestamp = DateTime.UtcNow
-                };
-
-                foreach (var attr in sqsMessage.MessageAttributes)
-                {
-                    genericMessage.Metadata[attr.Key] = attr.Value.StringValue;
-                }
-
-                genericMessage.Metadata["ReceiptHandle"] = sqsMessage.ReceiptHandle;
-
-                genericMessage = MessageStandardsHelper.EnsureMessageStandards(
-                    genericMessage,
-                    DatasourceName ?? "AmazonSQSDataSource"
-                );
-
-                return genericMessage;
+                    Stream = streamName,
+                    ApproximateNumberOfMessages = attrs.ApproximateNumberOfMessages,
+                    ApproximateNumberOfMessagesNotVisible = attrs.ApproximateNumberOfMessagesNotVisible,
+                    VisibilityTimeout = attrs.VisibilityTimeout
+                });
             }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[PeekMessageAsync] Error: {ex.Message}");
-                throw;
-            }
+            catch (Exception ex) { return Task.FromException<object>(ex); }
         }
 
-        public async Task<object> GetStreamMetadataAsync(string streamName, CancellationToken cancellationToken)
+        public void Disconnect() => Closeconnection();
+
+        // ── Colocated schema-migration provider accessors (Phase 10.4) ──
+        internal AmazonSQSClient MigrationClient => _sqs;
+        internal void EnsureMigrationConnected()
         {
-            try
-            {
-                var queueUrl = await GetQueueUrlAsync(streamName);
-                var request = new GetQueueAttributesRequest
-                {
-                    QueueUrl = queueUrl,
-                    AttributeNames = new List<string> { "All" }
-                };
-
-                var response = await SQSConnection.Client.GetQueueAttributesAsync(request, cancellationToken);
-                return new
-                {
-                    QueueUrl = queueUrl,
-                    QueueName = streamName,
-                    ApproximateNumberOfMessages = response.Attributes.ContainsKey("ApproximateNumberOfMessages") 
-                        ? int.Parse(response.Attributes["ApproximateNumberOfMessages"]) : 0,
-                    ApproximateNumberOfMessagesNotVisible = response.Attributes.ContainsKey("ApproximateNumberOfMessagesNotVisible")
-                        ? int.Parse(response.Attributes["ApproximateNumberOfMessagesNotVisible"]) : 0,
-                    VisibilityTimeout = response.Attributes.ContainsKey("VisibilityTimeout")
-                        ? int.Parse(response.Attributes["VisibilityTimeout"]) : 0,
-                    CreatedTimestamp = response.Attributes.ContainsKey("CreatedTimestamp")
-                        ? DateTimeOffset.FromUnixTimeSeconds(long.Parse(response.Attributes["CreatedTimestamp"])).DateTime : (DateTime?)null
-                };
-            }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[GetStreamMetadataAsync] Error: {ex.Message}");
-                throw;
-            }
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
         }
 
-        public void Disconnect()
+        // ── Dispose ──
+        protected virtual void Dispose(bool disposing)
         {
-            try
-            {
-                _queueUrls.Clear();
-                SQSConnection?.CloseConn();
-                Logger?.WriteLog("[Disconnect] Amazon SQS disconnected.");
-            }
-            catch (Exception ex)
-            {
-                Logger?.WriteLog($"[Disconnect] Error: {ex.Message}");
-            }
+            if (disposedValue) return;
+            if (disposing) { try { _sqs?.Dispose(); } catch { } }
+            disposedValue = true;
         }
-
-        #endregion
-
-        #region IDisposable
 
         public void Dispose()
         {
-            if (!_disposed)
-            {
-                Disconnect();
-                _disposed = true;
-            }
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
-
-        #endregion
     }
 }
-

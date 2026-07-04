@@ -145,7 +145,11 @@ namespace TheTechIdea.Beep.MilvusDatasource
 
         #region IDataSource Core Methods
         
-        public IEnumerable<string> GetEntitesList() => EntitiesNames;
+        public IEnumerable<string> GetEntitesList()
+        {
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
+            return EntitiesNames;
+        }
 
         public IEnumerable<object> GetEntity(string EntityName, List<AppFilter> filter)
         {
@@ -219,7 +223,18 @@ namespace TheTechIdea.Beep.MilvusDatasource
             {
                 Logger?.WriteLog("Opening connection to Milvus");
                 UpdateBaseUrl();
-                ConnectionStatus = ConnectionState.Open;
+                // Verify connectivity against Milvus health endpoint.
+                using var resp = _httpClient.GetAsync(_baseUrl + "health").GetAwaiter().GetResult();
+                if (resp.IsSuccessStatusCode)
+                {
+                    ConnectionStatus = ConnectionState.Open;
+                    RefreshCollectionsCache();
+                }
+                else
+                {
+                    Logger?.WriteLog($"Milvus connectivity check failed: {(int)resp.StatusCode} {resp.ReasonPhrase}");
+                    ConnectionStatus = ConnectionState.Broken;
+                }
                 return ConnectionStatus;
             }
             catch (Exception ex)
@@ -249,8 +264,57 @@ namespace TheTechIdea.Beep.MilvusDatasource
 
         #region IDataSource Entity Management
 
-        public bool CheckEntityExist(string EntityName) => 
-            EntitiesNames.Contains(EntityName, StringComparer.OrdinalIgnoreCase);
+        public bool CheckEntityExist(string EntityName)
+        {
+            try
+            {
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+                // Real existence check via Milvus describe-collection.
+                var body = new { collectionName = EntityName };
+                using var content = new System.Net.Http.StringContent(
+                    System.Text.Json.JsonSerializer.Serialize(body),
+                    System.Text.Encoding.UTF8, "application/json");
+                using var resp = _httpClient
+                    .PostAsync(_baseUrl + "v1/vector/collections/describe", content)
+                    .GetAwaiter().GetResult();
+                return resp.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"Error checking entity existence '{EntityName}': {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>Lists collections from real Milvus and refreshes the cache.</summary>
+        private void RefreshCollectionsCache()
+        {
+            try
+            {
+                var body = new { dbName = "" };
+                using var content = new System.Net.Http.StringContent(
+                    System.Text.Json.JsonSerializer.Serialize(body),
+                    System.Text.Encoding.UTF8, "application/json");
+                using var resp = _httpClient
+                    .PostAsync(_baseUrl + "v1/vector/collections", content)
+                    .GetAwaiter().GetResult();
+                if (!resp.IsSuccessStatusCode) return;
+                var json = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                var names = new List<string>();
+                if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    foreach (var c in data.EnumerateArray())
+                        if (c.ValueKind == System.Text.Json.JsonValueKind.String)
+                            names.Add(c.GetString() ?? string.Empty);
+                }
+                EntitiesNames = names;
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"Error refreshing Milvus collections: {ex.Message}");
+            }
+        }
 
         public int GetEntityIdx(string entityName) => 
             EntitiesNames.FindIndex(e => e.Equals(entityName, StringComparison.OrdinalIgnoreCase));
@@ -270,19 +334,51 @@ namespace TheTechIdea.Beep.MilvusDatasource
         {
             try
             {
+                if (ConnectionStatus != ConnectionState.Open) Openconnection();
+
                 Logger?.WriteLog($"Creating Milvus collection: {entity.EntityName}");
-                if (!EntitiesNames.Contains(entity.EntityName))
+                // Resolve vector dimension from the entity (a "dimension" field), default 1536.
+                var dimension = 1536;
+                var dimField = entity?.Fields?.FirstOrDefault(f =>
+                    f != null && (f.FieldName?.Equals("dimension", StringComparison.OrdinalIgnoreCase) ?? false));
+                if (dimField != null && int.TryParse(dimField.DefaultValue, out var parsed) && parsed > 0)
+                    dimension = parsed;
+
+                var body = new
                 {
-                    EntitiesNames.Add(entity.EntityName);
-                    Entities.Add(entity);
+                    collectionName = entity.EntityName,
+                    dimension = dimension,
+                    metricType = "Cosine"
+                };
+                var json = System.Text.Json.JsonSerializer.Serialize(body);
+                using var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                using var resp = _httpClient
+                    .PostAsync(_baseUrl + "v1/vector/collections/create", content)
+                    .GetAwaiter().GetResult();
+
+                if (resp.IsSuccessStatusCode)
+                {
+                    if (!EntitiesNames.Contains(entity.EntityName, StringComparer.OrdinalIgnoreCase))
+                        EntitiesNames.Add(entity.EntityName);
+                    return true;
                 }
-                return true;
+
+                Logger?.WriteLog($"Create collection '{entity.EntityName}' failed: {(int)resp.StatusCode} {resp.ReasonPhrase}");
+                return false;
             }
             catch (Exception ex)
             {
                 Logger?.WriteLog($"Error creating entity {entity.EntityName}: {ex.Message}");
                 return false;
             }
+        }
+
+        // ── Colocated schema-migration provider accessors (Phase 10.4) ──
+        internal System.Net.Http.HttpClient MigrationHttp => _httpClient;
+        internal string MigrationBaseUrl => _baseUrl;
+        internal void EnsureMigrationConnected()
+        {
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
         }
 
         #endregion

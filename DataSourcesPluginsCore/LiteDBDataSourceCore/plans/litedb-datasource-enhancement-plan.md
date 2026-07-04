@@ -142,3 +142,79 @@
 - `Entities` and `EntitiesNames` remain consistent after all schema operations.
 - Local DB create/copy/delete operations are deterministic and safe.
 - CRUD/query behavior is stable across POCO, `DataRow`, and `BsonDocument` payloads.
+
+## Phase 10.5 — Round 2 Enhancement (executed against BeepDM 3.1.0)
+
+This session implemented the plan in-place against the existing minimal `LiteDBDataSource`. The
+resulting datasource is real against the LiteDB 5.0.21 SDK end-to-end.
+
+### Connection lifecycle (Phase 1)
+- Single `_db` instance retained for the lifetime of the data source.
+- `BuildConnectionString()` assembles `Filename=…;Password=…;Connection=shared;Journal=true`.
+- `EnsureOpen()` is idempotent and used by every method.
+- `Closeconnection()` rolls back any in-flight transaction, checkpoints the journal, and disposes.
+- New `EnsureMigrationConnected()` accessor for the colocated provider.
+
+### Transactions (Phase 2)
+- `BeginTransaction` → `_db.BeginTrans()` (returns `bool`, kept in `_inTransaction`).
+- `Commit` → `_db.Commit()`.
+- `EndTransaction` → `_db.Rollback()`.
+- All three return `IErrorsInfo`, never throw.
+
+### CRUD (Phase 2)
+- `InsertEntity`     → `ILiteCollection<BsonDocument>.InsertBulk(IEnumerable<BsonDocument>)`.
+- `UpdateEntity`     → per-doc `Update` (when `_id` present) / `Upsert`.
+- `UpdateEntities`   → bulk `Upsert` with `IProgress<PassedArgs>`.
+- `DeleteEntity`     → `Delete(BsonValue id)` for row-deletes, `DropCollection(name)` otherwise.
+
+### Schema introspection (Phase 3)
+- `GetEntityStructure(name, refresh)` samples up to 100 docs, merges field-name → `(BsonType, count)`,
+  builds an `EntityField` per unique field, marks `_id` as the key, and caches the result in `Entities`.
+- One-level nested document fields are flattened as `parent.child` synthetic field names.
+- BsonType → CLR type string + `DbFieldCategory` mapping helper (`MapBsonTypeToClr` / `MapBsonTypeToDbFieldCategory`).
+- Cached entity lookups now hit before the SDK (no SDK call when refresh is false and cache is warm).
+
+### Conversion pipeline (Phase 4)
+- `ToBsonValue(object)` covers `string`, `bool`, numeric primitives, `DateTime`, `Guid`, `byte[]`,
+  nested `IDictionary<string,object>`, non-generic `IDictionary`, and arbitrary `IEnumerable` (recursively).
+- `DataRowToBsonDocument` produces a row-typed `BsonDocument` with null-aware column reading.
+- `DictionaryToBsonDocument` overloads for both generic and non-generic dictionaries.
+- `ToBsonDocuments(object)` accepts `BsonDocument`, `IEnumerable<BsonDocument>`, `DataTable`,
+  `DataRow`, `IDictionary<string,object>`, `IDictionary`, generic `IEnumerable`, and arbitrary POCOs
+  via `BsonMapper.Global.ToDocument`. Single-dict cases are placed before the `IEnumerable` case
+  to avoid the unreachable-match warning (both dictionary interfaces extend `IEnumerable`).
+
+### Query & filter pipeline (Phase 5)
+- `BuildQueryFromFilters(List<AppFilter>)` now composes a `BsonExpression` using `Query.EQ`, `Query.Not`,
+  `Query.GT/GTE/LT/LTE`, `Query.And`, and `BsonExpression.Root` (match-all sentinel).
+- `BuildQueryFromDocument(BsonDocument)` builds the same `BsonExpression` for delete-by-row match.
+- `GetEntity(name, filter)` returns `Dictionary<string,object>` projections of each document.
+- `GetEntity(name, filter, pageNumber, pageSize)` returns a `PagedResult` (count + skip/limit slice).
+- `GetEntityAsync` returns `Task<IEnumerable<object>>` backed by the sync query.
+- `ExecuteSql` passes through to LiteDB's `_db.Execute(string, BsonDocument)` SQL dialect.
+- `RunQuery` iterates `_db.Execute(...).ToEnumerable()` and unwraps each `BsonValue` to a dictionary
+  when the value is a `BsonDocument`, otherwise returns its `RawValue`.
+- `GetScalar` recognises `COUNT(collection)` and returns the document count.
+
+### Migration provider (Phase 10 colocated capabilities expansion)
+- Added to `LiteDBMigrationProvider.Capabilities`:
+  `SupportsTruncateEntity`, `SupportsRenameEntity`, `SupportsCreateIndex`, `SupportsDropIndex`.
+- `TruncateEntity` → `ILiteCollection<BsonDocument>.DeleteAll()`.
+- `RenameEntity` → `LiteDatabase.RenameCollection(old, new)` with existence guards and cache maintenance.
+- `CreateIndex` → `EnsureIndex(name, BsonExpression, unique)` with `options["Unique"]` honoured; supports
+  composite indexes by calling `EnsureIndex` once per column.
+- `DropIndex` → `ILiteCollection<BsonDocument>.DropIndex(name)`.
+
+### Build artefacts
+- Project: `DataSourcesPluginsCore/LiteDBDataSourceCore/LiteDBDataSourceCore.csproj` (unchanged).
+- Package: `TheTechIdea.Beep.LiteDBDataSourceCore 1.0.23` (targets `net8.0`, `net9.0`, `net10.0`).
+- Built and copied to `LocalNugetFiles/DataSources/` for downstream consumption.
+
+### Honest Unsupported stubs (kept)
+- `AlterColumn`, `DropColumn`, `RenameColumn`, `AddForeignKey`, `DropForeignKey` — document stores
+  have no strict column-level DDL and no FK constraints; these remain `Unsupported`.
+- `BeginTransaction` etc. now real, no longer stubs.
+
+### Verification
+- `dotnet build -c Debug` across all three target frameworks → **0 errors** (only `CS0067` warning
+  on the unused `PassEvent`, which is required by the `IDataSource` interface contract).

@@ -18,6 +18,7 @@ namespace TheTechIdea.Beep.DataBase
             Dataconnection.ConnectionProp.Category = DatasourceCategory.RDBMS;
             Dataconnection.ConnectionProp.IsDatabase = true;
             Dataconnection.ConnectionProp.IsLocal = true;
+            Dataconnection.ConnectionProp.IsFile = true;
             return true;
         }
 
@@ -116,14 +117,9 @@ namespace TheTechIdea.Beep.DataBase
             return DMEEditor.ErrorObject.Message;
         }
 
-        private List<FkListforSQLlite> GetSqlLiteTableKeysAsync(string tablename)
+        private List<FkListforSQLlite> GetSqlLiteTableKeys(string tablename)
         {
             return base.GetData<FkListforSQLlite>($"PRAGMA foreign_key_check({tablename});");
-        }
-
-        private void enablefk()
-        {
-            ExecuteSql("PRAGMA foreign_keys = ON;");
         }
     }
 }

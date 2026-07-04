@@ -128,6 +128,13 @@ namespace TheTechIdea.Beep.NATS
         public string Resource { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public string Audience { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+        // Added for BeepDM 3.1.0 IConnectionProperties — not used by NATS.
+        public bool ValidateServerCertificate { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ClientCertificatePath { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ClientCertificatePassword { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool RequiresAuthentication { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool RequiresTokenRefresh { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         #endregion
     }
 }

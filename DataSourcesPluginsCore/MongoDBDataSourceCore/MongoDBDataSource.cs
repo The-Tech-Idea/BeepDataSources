@@ -59,6 +59,20 @@ namespace TheTechIdea.Beep.NOSQL
         public string CurrentDatabase { get { return Dataconnection.ConnectionProp.Database; } set { Dataconnection.ConnectionProp.Database = value; } }
         public virtual string ColumnDelimiter { get; set; } = "''";
         public virtual string ParameterDelimiter { get; set; } = ":";
+
+        // ── Colocated schema-migration provider accessors (Phase 10.4) ──
+        // Exposes the live client/database to MongoDBMigrationProvider in this assembly.
+        // Not part of IDataSource; internal to keep the public surface unchanged.
+        internal IMongoDatabase MigrationDatabase
+        {
+            get
+            {
+                if (ConnectionStatus != ConnectionState.Open)
+                    Openconnection();
+                return _client?.GetDatabase(CurrentDatabase);
+            }
+        }
+        internal IMongoClient MigrationClient => _client;
         #region "MongoDB Properties"
         private IMongoClient _client;
         private IMongoDatabase _database;

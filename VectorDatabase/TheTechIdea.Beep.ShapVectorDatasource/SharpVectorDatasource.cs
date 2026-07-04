@@ -102,6 +102,14 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
         public List<EntityStructure> InMemoryStructures { get; set; }
         #endregion "IDataSource PROPERTIES"
 
+        // ── Colocated schema-migration provider accessors (Phase 10.4) ──
+        internal System.Net.Http.HttpClient MigrationHttp => _httpClient;
+        internal string MigrationBaseUrl => _baseUrl;
+        internal void EnsureMigrationConnected()
+        {
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
+        }
+
         #region "IDataSource METHODS"
         public ConnectionState Openconnection()
         {

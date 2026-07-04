@@ -37,6 +37,13 @@
 | 08 | REST connectors | `impl-connectors.html` + category hubs (`connectors-*.html`); eight hubs with flagship rows link `#flagship-provider-pages` | Done (first wave + hub notes) |
 | 09 | Flagship connectors | `Help/providers/conn-*.html` (13 vendors); master table `impl-connectors.html#flagship-provider-pages` (see phase-09) | Done (waves A–D) |
 
+> **Note:** Phases 01–09 above are the **HTML help** track. Phase 10 below is a **code implementation** track — different deliverable, tracked here so it's discoverable.
+
+| # | Name | Output (Code) | Status |
+|---|------|----------------|--------|
+| 10 | Schema migration providers | `ISchemaMigrationProvider` resolved via a 3-tier registry (exact type → category fallback → null) so `MigrationManager` migrates **all 157** data-source types. ~25 colocated provider files (NoSQL/vector/read-only-file/cloud-native) + category fallbacks cover the other ~132. Contracts in BeepDM; providers colocated here. See `phase-10-schema-migration-providers.md`. | Planned |
+| 11 | Local KV stores | **Code (not help):** Four widely-used embedded KV stores (RocksDB, LevelDB, LMDB, NitriteDB) + new `KVStore` category. BeepDM enum additions shipped in 3.1.0. See `phase-11-local-kv-store.md`; per-DB plans in `databases/`. | Planned |
+
 ## Verification (global)
 
 - [ ] Open `Help/index.html` locally; sidebar expands; theme toggle works.

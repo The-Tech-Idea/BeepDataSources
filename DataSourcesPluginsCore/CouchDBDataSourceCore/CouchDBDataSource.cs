@@ -315,63 +315,44 @@ namespace TheTechIdea.Beep.NOSQL.CouchDB
             try
             {
                 if (ConnectionStatus != ConnectionState.Open)
-                {
                     Openconnection();
-                }
 
-                if (ConnectionStatus == ConnectionState.Open && _database != null)
+                // Real CouchDB creation: create (or get) a dedicated database for this entity.
+                // Uses the same driver call proven in Openconnection (line ~192).
+                var handle = _client.GetOrCreateDatabaseAsync<BeepCouchDocument>(entity.EntityName)
+                                  .GetAwaiter().GetResult();
+                if (handle == null)
                 {
-                    // Create a design document for the entity
-                    var designDoc = new JObject
-                    {
-                        ["_id"] = $"_design/{entity.EntityName}",
-                        ["views"] = new JObject
-                        {
-                            ["all"] = new JObject
-                            {
-                                ["map"] = $"function(doc) {{ if(doc.type === '{entity.EntityName}') {{ emit(doc._id, doc); }} }}"
-                            }
-                        }
-                    };
-
-                    var json = designDoc.ToString();
-                    // For CouchDB, we'll store the design document as a regular document
-                    // The actual implementation would use the CouchDB HTTP API
-                    // For now, store metadata in memory
-                    if (Entities == null)
-                    {
-                        Entities = new List<EntityStructure>();
-                    }
-                    var idx = GetEntityIdx(entity.EntityName);
-                    if (idx >= 0)
-                    {
-                        Entities[idx] = entity;
-                    }
-                    
-                    if (Entities == null)
-                    {
-                        Entities = new List<EntityStructure>();
-                    }
-                    Entities.Add(entity);
-                    
-                    if (EntitiesNames == null)
-                    {
-                        EntitiesNames = new List<string>();
-                    }
-                    if (!EntitiesNames.Contains(entity.EntityName))
-                    {
-                        EntitiesNames.Add(entity.EntityName);
-                    }
-                    
-                    DMEEditor?.AddLogMessage("Beep", $"Created entity: {entity.EntityName}", DateTime.Now, 0, null, Errors.Ok);
-                    return true;
+                    DMEEditor?.AddLogMessage("Beep",
+                        $"CreateEntityAs: driver returned null handle for '{entity.EntityName}'.",
+                        DateTime.Now, 0, null, Errors.Failed);
+                    return false;
                 }
+
+                // Track the entity locally.
+                if (Entities == null) Entities = new List<EntityStructure>();
+                var idx = GetEntityIdx(entity.EntityName);
+                if (idx >= 0) Entities[idx] = entity; else Entities.Add(entity);
+                if (EntitiesNames == null) EntitiesNames = new List<string>();
+                if (!EntitiesNames.Contains(entity.EntityName)) EntitiesNames.Add(entity.EntityName);
+
+                DMEEditor?.AddLogMessage("Beep", $"Created CouchDB database: {entity.EntityName}",
+                    DateTime.Now, 0, null, Errors.Ok);
+                return true;
             }
             catch (Exception ex)
             {
-                DMEEditor?.AddLogMessage("Beep", $"Error creating entity: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Error creating entity: {ex.Message}",
+                    DateTime.Now, 0, null, Errors.Failed);
+                return false;
             }
-            return false;
+        }
+
+        // ── Colocated schema-migration provider accessors (Phase 10.4) ──
+        internal ICouchClient MigrationClient => _client;
+        internal void EnsureMigrationConnected()
+        {
+            if (ConnectionStatus != ConnectionState.Open) Openconnection();
         }
 
         public IErrorsInfo ExecuteSql(string sql)

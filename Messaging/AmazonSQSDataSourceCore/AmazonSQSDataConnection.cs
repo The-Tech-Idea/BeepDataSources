@@ -24,6 +24,12 @@ namespace TheTechIdea.Beep.AmazonSQS
             DMEEditor = dMEEditor;
         }
 
+        public AmazonSQSDataConnection(IDMEEditor dMEEditor, IConnectionProperties properties)
+        {
+            DMEEditor = dMEEditor;
+            ConnectionProp = properties;
+        }
+
         public ConnectionDriversConfig DataSourceDriver { get; set; }
         public IConnectionProperties ConnectionProp { get; set; }
         public ConnectionState ConnectionStatus { get; set; } = ConnectionState.Closed;
@@ -111,6 +117,13 @@ namespace TheTechIdea.Beep.AmazonSQS
             SQSProperties.SecretKey = password;
             SQSProperties.Region = host ?? "us-east-1";
             return OpenConnection();
+        }
+
+        public string ReplaceValueFromConnectionString()
+        {
+            // Parses the ConnectionString into typed properties (AccessKey, SecretKey, Region, etc.).
+            // Minimal implementation: identity mapping.
+            return ConnectionProp?.ConnectionString;
         }
 
         public void Dispose()

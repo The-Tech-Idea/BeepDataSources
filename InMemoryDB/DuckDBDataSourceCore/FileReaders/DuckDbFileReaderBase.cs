@@ -7,6 +7,7 @@ using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.FileManager.Readers;
+using TheTechIdea.Beep.Rules;
 using TheTechIdea.Beep.Utilities;
 
 namespace DuckDBDataSourceCore.FileReaders

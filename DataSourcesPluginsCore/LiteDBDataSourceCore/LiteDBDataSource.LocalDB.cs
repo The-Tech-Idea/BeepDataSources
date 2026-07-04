@@ -1,88 +1,80 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using LiteDB;
-using DataManagementModels.DriversConfigurations;
-using DataManagementModels.Editor;
 using TheTechIdea.Beep;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Vis;
+using LiteDB;
 
 namespace LiteDBDataSourceCore
 {
     public partial class LiteDBDataSource
     {
-        private void InitDataConnection()
-        {
-            if (DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == DatasourceName).Any())
-            {
-                Dataconnection.ConnectionProp = DMEEditor.ConfigEditor.DataConnections.Where(c => c.ConnectionName == DatasourceName).FirstOrDefault();
-            }
-            else
-            {
-                ConnectionDriversConfig driversConfig = DMEEditor.ConfigEditor.DataDriversClasses.FirstOrDefault(p => p.DatasourceType == DataSourceType.LiteDB);
-                if (driversConfig != null)
-                {
-                    Dataconnection.ConnectionProp = new ConnectionProperties
-                    {
-                        ConnectionName = DatasourceName,
-                        ConnectionString = driversConfig.ConnectionString,
-                        DriverName = driversConfig.PackageName,
-                        DriverVersion = driversConfig.version,
-                        DatabaseType = DataSourceType.LiteDB,
-                        Category = DatasourceCategory.NOSQL
-                    };
-                }
-            }
-            if (string.IsNullOrEmpty(_connectionString) && string.IsNullOrEmpty(DBfilepathandname))
-            {
-                DBfilepathandname = Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath, $"{DatasourceName}{Extension}");
-            }
-            if (!string.IsNullOrEmpty(DBfilepathandname))
-            {
-                Dataconnection.ConnectionProp.ConnectionString = $"{DBfilepathandname}";
-                Dataconnection.ConnectionProp.FilePath = Path.GetDirectoryName(DBfilepathandname);
-                Dataconnection.ConnectionProp.FileName = Path.GetFileName(DBfilepathandname);
-            }
-
-            Dataconnection.ConnectionProp.Category = DatasourceCategory.NOSQL;
-            Dataconnection.ConnectionProp.DatabaseType = DataSourceType.LiteDB;
-            _connectionString = Dataconnection.ConnectionProp.ConnectionString;
-
-            // HandleConnectionStringforMongoDB();
-            Dataconnection.ConnectionProp.IsLocal = true;
-        }
+        // ── ILocalDB (file-lifecycle parity with SQLite) ──
+        public bool CanCreateLocal { get; set; } = true;
+        public bool InMemory { get; set; } = false;
+        public string Extension { get; set; } = ".ldb";
 
         public bool CreateDB()
         {
-            DBfilepathandname = string.Empty;
-            InitDataConnection();
-            return Openconnection() == ConnectionState.Open;
+            try
+            {
+                var p = Dataconnection?.ConnectionProp;
+                if (p == null) return false;
+                if (string.IsNullOrEmpty(p.FileName) && string.IsNullOrEmpty(p.FilePath)) return false;
+                var path = ResolveLocalDbPath();
+                if (string.IsNullOrEmpty(path)) return false;
+                return CreateDB(path);
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"LiteDB CreateDB error: {ex.Message}");
+                return false;
+            }
         }
 
         public bool CreateDB(bool inMemory)
         {
-            InitDataConnection();
             InMemory = inMemory;
-            Dataconnection.ConnectionProp.ConnectionString = inMemory
-                ? ":memory:"
-                : Path.Combine(DMEEditor.ConfigEditor.Config.DataFilePath, $"{DatasourceName}{Extension}");
-            _connectionString = Dataconnection.ConnectionProp.ConnectionString;
-
-            return Openconnection() == ConnectionState.Open;
+            if (inMemory)
+            {
+                Dataconnection!.ConnectionProp.IsInMemory = true;
+                var tmp = Path.Combine(Path.GetTempPath(), "beep-litedb-" + Guid.NewGuid().ToString("N"));
+                try { Directory.CreateDirectory(tmp); } catch { }
+                Dataconnection.ConnectionProp.FilePath = tmp;
+                Dataconnection.ConnectionProp.FileName = "memory.ldb";
+                DatabasePath = Path.Combine(tmp, "memory.ldb");
+                return Openconnection() == System.Data.ConnectionState.Open;
+            }
+            Dataconnection!.ConnectionProp.IsInMemory = false;
+            return CreateDB();
         }
 
         public bool CreateDB(string filepathandname)
         {
-            if (string.IsNullOrEmpty(filepathandname))
+            try
             {
+                if (string.IsNullOrWhiteSpace(filepathandname)) return false;
+                var dir = Path.GetDirectoryName(filepathandname);
+                var name = Path.GetFileName(filepathandname);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+                Closeconnection();
+                Dataconnection!.ConnectionProp.FilePath = dir ?? string.Empty;
+                Dataconnection.ConnectionProp.FileName = name;
+                DatabasePath = filepathandname;
+                return Openconnection() == System.Data.ConnectionState.Open;
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"LiteDB CreateDB('{filepathandname}') error: {ex.Message}");
                 return false;
             }
-            DBfilepathandname = filepathandname;
-            InitDataConnection();
-            return Openconnection() == ConnectionState.Open;
         }
 
         public bool DeleteDB()
@@ -90,153 +82,49 @@ namespace LiteDBDataSourceCore
             try
             {
                 Closeconnection();
-                if (string.IsNullOrWhiteSpace(_connectionString))
-                {
-                    return false;
-                }
-
-                if (File.Exists(_connectionString))
-                {
-                    File.Delete(_connectionString);
-                }
+                var path = ResolveLocalDbPath();
+                if (string.IsNullOrEmpty(path) || !File.Exists(path)) return false;
+                File.Delete(path);
                 return true;
             }
             catch (Exception ex)
             {
-                DMEEditor?.AddLogMessage("Beep", $"Error deleting LiteDB file in {DatasourceName}: {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
+                Logger?.WriteLog($"LiteDB DeleteDB error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public bool CopyDB(string destDbName, string destPath)
+        {
+            try
+            {
+                Closeconnection();
+                var src = ResolveLocalDbPath();
+                if (string.IsNullOrEmpty(src) || !File.Exists(src)) return false;
+                if (string.IsNullOrWhiteSpace(destPath)) return false;
+                if (!Directory.Exists(destPath)) Directory.CreateDirectory(destPath);
+                var targetName = string.IsNullOrWhiteSpace(destDbName) ? Path.GetFileName(src) : destDbName;
+                if (!Path.HasExtension(targetName)) targetName += Extension;
+                File.Copy(src, Path.Combine(destPath, targetName), overwrite: true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger?.WriteLog($"LiteDB CopyDB error: {ex.Message}");
                 return false;
             }
         }
 
         public IErrorsInfo DropEntity(string EntityName)
+            => DeleteEntity(EntityName, null);
+
+        private string ResolveLocalDbPath()
         {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Collection dropped successfully." };
-
-            try
-            {
-                if (!EnsureConnectionReady(nameof(DropEntity)))
-                {
-                    retval.Flag = Errors.Failed;
-                    retval.Message = "Database connection is not open.";
-                    return retval;
-                }
-
-                using (var session = new LiteDatabase(_connectionString))
-                {
-                    bool dropped = session.DropCollection(EntityName);
-                    if (!dropped)
-                    {
-                        retval.Flag = Errors.Failed;
-                        retval.Message = "Collection does not exist or could not be dropped.";
-                        DMEEditor.AddLogMessage("Beep", "Collection does not exist or could not be dropped.", DateTime.Now, -1, null, Errors.Failed);
-                    }
-                    else
-                    {
-                        SyncEntityCaches(EntityName, remove: true);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = "Error dropping collection: " + ex.Message;
-                DMEEditor.AddLogMessage("Beep", $"error in {nameof(DropEntity)} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-            }
-
-            return retval;
-        }
-
-        public bool CopyDB(string DestDbName, string DesPath)
-        {
-            ErrorsInfo retval = new ErrorsInfo { Flag = Errors.Ok, Message = "Get Entity Successfully" };
-            bool result = false;
-            try
-            {
-                if (string.IsNullOrWhiteSpace(_connectionString))
-                {
-                    return false;
-                }
-
-                Closeconnection();
-
-                if (!Directory.Exists(DesPath))
-                {
-                    Directory.CreateDirectory(DesPath);
-                }
-
-                if (File.Exists(_connectionString))
-                {
-                    string targetName = string.IsNullOrWhiteSpace(DestDbName)
-                        ? Path.GetFileName(_connectionString)
-                        : DestDbName;
-                    if (Path.GetExtension(targetName) == string.Empty)
-                    {
-                        targetName = $"{targetName}{Extension}";
-                    }
-
-                    string destinationFile = Path.Combine(DesPath, targetName);
-                    File.Copy(_connectionString, destinationFile, true);
-                    result = true;
-                }
-                else
-                {
-                    result = false;
-                }
-            }
-            catch (Exception ex)
-            {
-                retval.Flag = Errors.Failed;
-                retval.Message = ex.Message;
-                DMEEditor.AddLogMessage("Beep", $"error in {nameof(CopyDB)} in {DatasourceName} - {ex.Message}", DateTime.Now, -1, null, Errors.Failed);
-                return false;
-            }
-
-            return result;
-        }
-
-        public void HandleConnectionStringforMongoDB()
-        {
-            if (_connectionString.Contains("}"))
-            {
-                // Create a dictionary to map placeholders to their respective values
-                var replacements = new Dictionary<string, string>
-                {
-                    { "{Host}", Dataconnection.ConnectionProp.Host },
-                    { "{Port}", Dataconnection.ConnectionProp.Port.ToString() },
-                    { "{Database}", Dataconnection.ConnectionProp.Database }
-                };
-
-                // Optionally add Username and Password to the replacements dictionary
-                if (!string.IsNullOrEmpty(Dataconnection.ConnectionProp.UserID) ||
-                    !string.IsNullOrEmpty(Dataconnection.ConnectionProp.Password))
-                {
-                    replacements.Add("{Username}", Dataconnection.ConnectionProp.UserID);
-                    replacements.Add("{Password}", Dataconnection.ConnectionProp.Password);
-                }
-
-                // Use a regular expression to replace placeholders, ignoring case
-                foreach (var replacement in replacements)
-                {
-                    if (!string.IsNullOrEmpty(replacement.Value))
-                    {
-                        _connectionString = Regex.Replace(_connectionString, Regex.Escape(replacement.Key), replacement.Value, RegexOptions.IgnoreCase);
-                    }
-                }
-
-                // Remove any remaining username and password placeholders if they were not replaced
-                _connectionString = Regex.Replace(_connectionString, @"\{Username\}:\{Password\}@", string.Empty, RegexOptions.IgnoreCase);
-                _connectionString = Regex.Replace(_connectionString, @"\{Username\}:\{Password\}", string.Empty, RegexOptions.IgnoreCase);
-            }
-
-            // get database name from connection string if CurrentDatabase is not set
-            //if (string.IsNullOrEmpty(CurrentDatabase))
-            //{
-            //    var match = Regex.Match(_connectionString, @"\/(?<database>[^\/\?]+)(\?|$)");
-            //    if (match.Success)
-            //    {
-            //        CurrentDatabase = match.Groups["database"].Value;
-            //    }
-            //}
+            var p = Dataconnection?.ConnectionProp;
+            if (p == null) return null;
+            if (!string.IsNullOrEmpty(p.FileName))
+                return string.IsNullOrEmpty(p.FilePath) ? p.FileName : Path.Combine(p.FilePath, p.FileName);
+            return p.FilePath;
         }
     }
 }

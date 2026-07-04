@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Logger;
@@ -10,60 +9,18 @@ using TheTechIdea.Beep.ConfigUtil;
 
 namespace TheTechIdea.Beep.DataBase
 {
+    /// <summary>
+    /// PostgreSQL data source — inherits BeginTransaction / EndTransaction / Commit / InsertEntity /
+    /// UpdateEntity / DeleteEntity from RDBSource. Only dialect-specific FK-toggle SQL is overridden.
+    /// </summary>
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.Postgre)]
     public class PostgreDataSource : RDBSource, IDataSource
     {
-        public PostgreDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, DMEEditor, databasetype, per)
+        public PostgreDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per)
+            : base(datasourcename, logger, DMEEditor, databasetype, per)
         {
-
-        }
-        public virtual IErrorsInfo BeginTransaction(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-            }
-            return DMEEditor.ErrorObject;
         }
 
-        public virtual IErrorsInfo EndTransaction(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Error in End Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-            }
-            return DMEEditor.ErrorObject;
-        }
-
-        public virtual IErrorsInfo Commit(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Error in Commit Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-            }
-            return DMEEditor.ErrorObject;
-        }
         public override string DisableFKConstraints(EntityStructure t1)
         {
             try
@@ -74,42 +31,13 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", "Disabling PostgreSQL FK Constraints: " + ex.Message, DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                DMEEditor.AddLogMessage("Fail", "Disabling PostgreSQL FK Constraints: " + ex.Message, DateTime.Now, 0, t1?.EntityName, Errors.Failed);
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
                 DMEEditor.ErrorObject.Message = ex.Message;
             }
             return DMEEditor.ErrorObject.Message;
         }
-        public override IErrorsInfo InsertEntity(string EntityName, object InsertedData)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-                EntityStructure t1 = GetEntityStructure(EntityName);
-                string sql = $"INSERT INTO {EntityName} (";
-                string sql2 = " VALUES (";
-                foreach (EntityField fld in t1.Fields)
-                {
-                    if (fld.IsKey == false)
-                    {
-                        sql += fld.FieldName + ",";
-                        sql2 += $"'{InsertedData.GetType().GetProperty(fld.FieldName).GetValue(InsertedData)}',";
-                    }
-                }
-                sql = sql.Substring(0, sql.Length - 1) + ")";
-                sql2 = sql2.Substring(0, sql2.Length - 1) + ")";
-                sql += sql2;
-                this.ExecuteSql(sql);
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Fail", "Inserting Data: " + ex.Message, DateTime.Now, 0, EntityName, Errors.Failed);
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-            }
-            return DMEEditor.ErrorObject;
 
-        }
         public override string EnableFKConstraints(EntityStructure t1)
         {
             try
@@ -120,12 +48,11 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", "Enabling PostgreSQL FK Constraints: " + ex.Message, DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                DMEEditor.AddLogMessage("Fail", "Enabling PostgreSQL FK Constraints: " + ex.Message, DateTime.Now, 0, t1?.EntityName, Errors.Failed);
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
                 DMEEditor.ErrorObject.Message = ex.Message;
             }
             return DMEEditor.ErrorObject.Message;
         }
-    
     }
 }

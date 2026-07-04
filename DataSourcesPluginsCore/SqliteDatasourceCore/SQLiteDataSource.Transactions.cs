@@ -8,7 +8,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             try
             {
-                if (Openconnection() != ConnectionState.Open)
+                if (Dataconnection?.ConnectionStatus != ConnectionState.Open)
                 {
                     return SetError(Errors.Failed, "Cannot begin transaction because connection is not open.");
                 }
@@ -24,6 +24,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
+                DMEEditor?.AddLogMessage("Beep", $"Error beginning transaction on {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
                 return SetError(Errors.Failed, "Error beginning transaction.", ex);
             }
         }
@@ -43,6 +44,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
+                DMEEditor?.AddLogMessage("Beep", $"Error committing transaction on {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
                 return SetError(Errors.Failed, "Error committing transaction.", ex);
             }
         }
@@ -62,6 +64,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
+                DMEEditor?.AddLogMessage("Beep", $"Error ending transaction on {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
                 return SetError(Errors.Failed, "Error ending transaction.", ex);
             }
         }

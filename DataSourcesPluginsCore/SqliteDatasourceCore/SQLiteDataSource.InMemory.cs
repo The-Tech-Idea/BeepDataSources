@@ -5,25 +5,32 @@ namespace TheTechIdea.Beep.DataBase
 {
     public partial class SQLiteDataSource
     {
-        public static string BeepDataPath { get; private set; }
-        public static string InMemoryPath { get; private set; }
-        public static string Filepath { get; private set; }
-        public static string InMemoryStructuresfilepath { get; private set; }
-        public static bool Isfoldercreated { get; private set; } = false;
+        // Instance-scoped (per-datasource) — was static, caused cross-instance races.
+        public string BeepDataPath { get; private set; }
+        public string InMemoryPath { get; private set; }
+        public string Filepath { get; private set; }
+        public string InMemoryStructuresfilepath { get; private set; }
+        public bool Isfoldercreated { get; private set; } = false;
+
+        private const string InMemoryConnectionString = @"Data Source=:memory:;Version=3;New=True;";
 
         public IErrorsInfo OpenDatabaseInMemory(string databasename)
         {
-            ErrorObject.Flag = Errors.Ok;
             try
             {
+                ErrorObject ??= new ErrorsInfo();
+                ErrorObject.Flag = Errors.Ok;
+
+                var cp = base.Dataconnection.ConnectionProp;
+                cp.IsInMemory = true;
+                cp.IsFile = false;
+                cp.FileName = string.Empty;
+                cp.ConnectionString = InMemoryConnectionString;
+                cp.Database = databasename;
+                cp.ConnectionName = databasename;
                 base.Dataconnection.InMemory = true;
-                base.Dataconnection.ConnectionProp.IsInMemory = true;
-                base.Dataconnection.ConnectionProp.IsFile = false;
-                base.Dataconnection.ConnectionProp.FileName = string.Empty;
-                base.Dataconnection.ConnectionProp.ConnectionString = @"Data Source=:memory:;Version=3;New=True;";
-                base.Dataconnection.DataSourceDriver.ConnectionString = @"Data Source=:memory:;Version=3;New=True;";
-                base.Dataconnection.ConnectionProp.Database = databasename;
-                base.Dataconnection.ConnectionProp.ConnectionName = databasename;
+                if (base.Dataconnection.DataSourceDriver != null)
+                    base.Dataconnection.DataSourceDriver.ConnectionString = InMemoryConnectionString;
                 base.Dataconnection.OpenConnection();
 
                 IsStructureLoaded = false;
@@ -55,7 +62,7 @@ namespace TheTechIdea.Beep.DataBase
 
         public string GetConnectionString()
         {
-            return base.Dataconnection.ConnectionProp.ConnectionString;
+            return Dataconnection.ConnectionProp.ConnectionString;
         }
 
         private void Createfolder(string datasourcename)
@@ -172,6 +179,7 @@ namespace TheTechIdea.Beep.DataBase
                     DMEEditor.ETL.Script.ScriptDetails = retscripts;
                     DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
                     DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
+                    IsSynced = true;
                     DMEEditor.AddLogMessage("Beep", $"Synced entity '{entityname}' for {DatasourceName} successfully.", DateTime.Now, 0, null, Errors.Ok);
                 }
             }

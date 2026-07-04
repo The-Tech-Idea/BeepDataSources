@@ -485,6 +485,172 @@ namespace TheTechIdea.Beep
             }
         }
         #endregion
+        #region "IInMemoryDB v2 — new methods (forwarders + new FillFrom/ExportTo/Reset)"
+        // Forwarders to the existing v1 methods so callers using the new interface contract work.
+        public virtual IErrorsInfo OpenInMemory(string databaseName)
+            => OpenDatabaseInMemory(databaseName);
+
+        public virtual string GetInMemoryConnectionString()
+            => GetConnectionString();
+
+        public virtual IErrorsInfo ResetInMemory()
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                // Drop all rows, keep schema. Best-effort: delete each entity's rows.
+                if (IsCreated && Entities != null)
+                {
+                    foreach (var entity in Entities.ToList())
+                    {
+                        try
+                        {
+                            string sql = GetDeleteAllSql(entity.EntityName);
+                            DMEEditor.ErrorObject = ExecuteSql(sql);
+                        }
+                        catch
+                        {
+                            // best-effort
+                        }
+                    }
+                }
+                InMemoryStructures?.Clear();
+                IsLoaded = false;
+                IsSaved = false;
+                IsSynced = false;
+                DataChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+                StateChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+                return DMEEditor.ErrorObject;
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.AddLogMessage("Beep", $"ResetInMemory error on {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                return DMEEditor.ErrorObject ?? new ErrorsInfo { Flag = Errors.Failed, Message = ex.Message };
+            }
+        }
+
+        // New: explicit LoadStructureWithData (replaces the old bool copydata = false magic flag)
+        public virtual IErrorsInfo LoadStructureWithData(IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            var r = LoadStructure(progress, token, copydata: true);
+            if (r?.Flag == Errors.Ok)
+            {
+                DataChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+            }
+            return r;
+        }
+
+        // New: bulk-copy from another data source.
+        public virtual IErrorsInfo FillFromDataSource(IDataSource source, IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (source == null) { DMEEditor.ErrorObject.Flag = Errors.Failed; DMEEditor.ErrorObject.Message = "Source is null."; return DMEEditor.ErrorObject; }
+                if (!IsCreated) { DMEEditor.ErrorObject.Flag = Errors.Failed; DMEEditor.ErrorObject.Message = "Structure not created. Call CreateStructure first."; return DMEEditor.ErrorObject; }
+                if (source.ConnectionStatus != ConnectionState.Open && source.Openconnection() != ConnectionState.Open)
+                { DMEEditor.ErrorObject.Flag = Errors.Failed; DMEEditor.ErrorObject.Message = $"Could not open source '{source.DatasourceName}'."; return DMEEditor.ErrorObject; }
+
+                // GetCopyDataEntityScript(destination, entities, progress, token) — generates scripts to copy data INTO the destination.
+                var copyScript = DMEEditor.ETL.GetCopyDataEntityScript(this, InMemoryStructures, progress, token);
+                DMEEditor.ETL.Script.ScriptDetails = copyScript;
+                DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
+                DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
+                IsLoaded = true;
+                IsSynced = true;
+                DataChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+                StateChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+                DMEEditor.AddLogMessage("Beep", $"Filled in-memory {DatasourceName} from {source.DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
+            }
+            catch (OperationCanceledException)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"FillFromDataSource cancelled for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.AddLogMessage("Beep", $"FillFromDataSource error on {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+
+        // New: bulk-copy out to another data source.
+        public virtual IErrorsInfo ExportToDataSource(IDataSource target, IProgress<PassedArgs> progress, CancellationToken token)
+        {
+            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (target == null) { DMEEditor.ErrorObject.Flag = Errors.Failed; DMEEditor.ErrorObject.Message = "Target is null."; return DMEEditor.ErrorObject; }
+                if (!IsLoaded) { DMEEditor.ErrorObject.Flag = Errors.Failed; DMEEditor.ErrorObject.Message = "No data loaded in-memory."; return DMEEditor.ErrorObject; }
+                if (target.ConnectionStatus != ConnectionState.Open && target.Openconnection() != ConnectionState.Open)
+                { DMEEditor.ErrorObject.Flag = Errors.Failed; DMEEditor.ErrorObject.Message = $"Could not open target '{target.DatasourceName}'."; return DMEEditor.ErrorObject; }
+
+                // Generate scripts to copy data FROM this (source) TO target.
+                var copyScript = DMEEditor.ETL.GetCopyDataEntityScript(target, InMemoryStructures, progress, token);
+                DMEEditor.ETL.Script.ScriptDetails = copyScript;
+                DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
+                DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
+                IsSaved = true;
+                DataChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+                StateChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+                DMEEditor.AddLogMessage("Beep", $"Exported in-memory {DatasourceName} to {target.DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
+            }
+            catch (OperationCanceledException)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.AddLogMessage("Beep", $"ExportToDataSource cancelled for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
+            }
+            catch (Exception ex)
+            {
+                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                DMEEditor.ErrorObject.Ex = ex;
+                DMEEditor.AddLogMessage("Beep", $"ExportToDataSource error on {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return DMEEditor.ErrorObject;
+        }
+
+        // New 3-event contract
+        public event EventHandler<PassedArgs> StructureChanged;
+        public event EventHandler<PassedArgs> DataChanged;
+        public event EventHandler<PassedArgs> StateChanged;
+
+        // ── IInMemoryDB v2 bridge methods (nullable → non-nullable forwarders) ──
+        // Required because the new IInMemoryDB interface declares IProgress<PassedArgs>? and
+        // the existing base-class overloads take non-nullable IProgress<PassedArgs>.
+        // These are implicit interface matches; no explicit interface implementation needed.
+        IErrorsInfo IInMemoryDB.LoadStructure(IProgress<PassedArgs>? progress, CancellationToken token)
+            => LoadStructure(progress ?? new Progress<PassedArgs>(), token);
+
+        IErrorsInfo IInMemoryDB.LoadStructureWithData(IProgress<PassedArgs>? progress, CancellationToken token)
+            => LoadStructureWithData(progress ?? new Progress<PassedArgs>(), token);
+
+        IErrorsInfo IInMemoryDB.LoadData(IProgress<PassedArgs>? progress, CancellationToken token)
+            => LoadData(progress ?? new Progress<PassedArgs>(), token);
+
+        IErrorsInfo IInMemoryDB.CreateStructure(IProgress<PassedArgs>? progress, CancellationToken token)
+            => CreateStructure(progress ?? new Progress<PassedArgs>(), token);
+
+        IErrorsInfo IInMemoryDB.SyncData(IProgress<PassedArgs>? progress, CancellationToken token)
+            => SyncData(progress ?? new Progress<PassedArgs>(), token);
+
+        IErrorsInfo IInMemoryDB.SyncData(string entityName, IProgress<PassedArgs>? progress, CancellationToken token)
+            => SyncData(entityName, progress ?? new Progress<PassedArgs>(), token);
+
+        IErrorsInfo IInMemoryDB.RefreshData(IProgress<PassedArgs>? progress, CancellationToken token)
+            => RefreshData(progress ?? new Progress<PassedArgs>(), token);
+
+        IErrorsInfo IInMemoryDB.RefreshData(string entityName, IProgress<PassedArgs>? progress, CancellationToken token)
+            => RefreshData(entityName, progress ?? new Progress<PassedArgs>(), token);
+
+        IErrorsInfo IInMemoryDB.FillFromDataSource(IDataSource source, IProgress<PassedArgs>? progress, CancellationToken token)
+            => FillFromDataSource(source, progress ?? new Progress<PassedArgs>(), token);
+
+        IErrorsInfo IInMemoryDB.ExportToDataSource(IDataSource target, IProgress<PassedArgs>? progress, CancellationToken token)
+            => ExportToDataSource(target, progress ?? new Progress<PassedArgs>(), token);
+
+        #endregion
         #region "Overriden Methods"
         public override bool CreateEntityAs(EntityStructure entity)
         {

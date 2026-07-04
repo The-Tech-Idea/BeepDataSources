@@ -2,24 +2,27 @@ using System;
 using System.Collections.Generic;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.Utilities;
 
 namespace TheTechIdea.Beep.AmazonSQS
 {
     /// <summary>
-    /// Connection properties specific to Amazon SQS.
+    /// Connection properties specific to Amazon SQS — full rewrite against BeepDM 3.1.0
+    /// (Phase 10 Messaging folder refresh). Carries AWS credentials and queue configuration;
+    /// implements the current <see cref="IConnectionProperties"/> interface (with all new
+    /// members required by BeepDM 3.1.0).
     /// </summary>
     public class AmazonSQSConnectionProperties : IConnectionProperties
     {
         #region Core Connection Properties
-
         public int ID { get; set; }
         public string GuidID { get; set; } = Guid.NewGuid().ToString();
         public string ConnectionName { get; set; }
         public string ConnectionString { get; set; }
         public string Database { get; set; }
         public string OracleSIDorService { get; set; }
-        public DataSourceType DatabaseType { get; set; } = DataSourceType.AmazonSQS;
         public DatasourceCategory Category { get; set; } = DatasourceCategory.MessageQueue;
+        public DataSourceType DatabaseType { get; set; } = DataSourceType.AmazonSQS;
         public string DriverName { get; set; }
         public string DriverVersion { get; set; }
         public string Host { get; set; }
@@ -50,88 +53,25 @@ namespace TheTechIdea.Beep.AmazonSQS
         public bool IsFavourite { get; set; }
         public bool IsDefault { get; set; }
         public bool IsInMemory { get; set; }
-
         #endregion
 
-        #region Amazon SQS Specific Properties
-
-        /// <summary>
-        /// AWS Access Key ID
-        /// </summary>
-        public string AccessKey
-        {
-            get => UserID;
-            set => UserID = value;
-        }
-
-        /// <summary>
-        /// AWS Secret Access Key
-        /// </summary>
-        public string SecretKey
-        {
-            get => Password;
-            set => Password = value;
-        }
-
-        /// <summary>
-        /// AWS Region (e.g., us-east-1, eu-west-1)
-        /// </summary>
+        #region SQS Specific Properties
+        public string AccessKey { get; set; }
+        public string SecretKey { get; set; }
         public string Region { get; set; } = "us-east-1";
-
-        /// <summary>
-        /// Queue URL (full URL to the SQS queue)
-        /// </summary>
         public string QueueUrl { get; set; }
-
-        /// <summary>
-        /// Queue name (used to construct URL if QueueUrl not provided)
-        /// </summary>
         public string QueueName { get; set; }
-
-        /// <summary>
-        /// Whether to use FIFO queue
-        /// </summary>
         public bool UseFIFO { get; set; }
-
-        /// <summary>
-        /// Visibility timeout in seconds (default: 30)
-        /// </summary>
         public int VisibilityTimeout { get; set; } = 30;
-
-        /// <summary>
-        /// Message retention period in seconds (default: 345600 = 4 days)
-        /// </summary>
         public int MessageRetentionPeriod { get; set; } = 345600;
-
-        /// <summary>
-        /// Receive message wait time in seconds (long polling, default: 0 = short polling)
-        /// </summary>
         public int ReceiveMessageWaitTimeSeconds { get; set; } = 0;
-
-        /// <summary>
-        /// Maximum number of messages to receive per call (1-10)
-        /// </summary>
         public int MaxNumberOfMessages { get; set; } = 1;
-
-        /// <summary>
-        /// Dead-letter queue URL
-        /// </summary>
         public string DeadLetterQueueUrl { get; set; }
-
-        /// <summary>
-        /// Maximum receive count before moving to DLQ
-        /// </summary>
         public int MaxReceiveCount { get; set; } = 10;
-
-        /// <summary>
-        /// Delay seconds for message delivery (0-900)
-        /// </summary>
         public int DelaySeconds { get; set; } = 0;
-
         #endregion
 
-        #region IConnectionProperties Required Properties (Not Used)
-
+        #region IConnectionProperties Required (Not Used by SQS)
         public bool IntegratedSecurity { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public bool PersistSecurityInfo { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public bool TrustedConnection { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -160,7 +100,68 @@ namespace TheTechIdea.Beep.AmazonSQS
         public string Resource { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public string Audience { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+        // Added for BeepDM 3.1.0 IConnectionProperties (the interface grew to ~50 members; these
+        // are the new ones — proxy, OAuth, certificates, regions, retry, timeout, etc.).
+        // All NotImplementedException: SQS uses AccessKey/SecretKey/Region, not OAuth/proxy/cert.
+        public string AdditionalAuthInfo { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ApiKeyHeader { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string AuthCode { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public AuthTypeEnum AuthType { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string AuthUrl { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public List<WebApiParameter> BodyParameters { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool BypassProxyOnLocal { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ClientCertificateStoreLocation { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ClientCertificateStoreName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ClientCertificateSubjectName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ClientCertificateThumbprint { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ClientId { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ClientSecret { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public List<DefaultValue> DatasourceDefaults { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string Domain { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public List<WebApiFileParameter> FileParameters { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public List<WebApiParameter> FormParameters { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string GrantType { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public List<WebApiHeader> Headers { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IgnoreSSLErrors { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string KerberosConfigPath { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string KerberosKdc { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string KerberosRealm { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string KerberosServiceName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int MaxRetries { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string OAuthAccessToken { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string OAuthClientSecret { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string OAuthCodeChallenge { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string OAuthCodeChallengeMethod { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string OAuthCodeVerifier { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string OAuthGrantType { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string OAuthRefreshToken { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string OAuthScope { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string OAuthState { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string OAuthTokenEndpoint { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public Dictionary<string, string> ParameterList { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ProxyPassword { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int ProxyPort { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ProxyUrl { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ProxyUser { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public List<WebApiParameter> QueryParameters { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string RedirectUri { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public List<string> Regions { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int RetryIntervalMs { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string Scope { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int TimeoutMs { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string TokenUrl { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool UseDefaultProxyCredentials { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool UseProxy { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string WorkstationID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        // ValidateServerCertificate / ClientCertificatePath / ClientCertificatePassword /
+        // RequiresAuthentication / RequiresTokenRefresh already added in the earlier "Added for
+        // BeepDM 3.1.0" block (lines just above Audience).
+        // Added for BeepDM 3.1.0 IConnectionProperties.
+        public bool ValidateServerCertificate { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ClientCertificatePath { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string ClientCertificatePassword { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool RequiresAuthentication { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool RequiresTokenRefresh { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         #endregion
     }
 }
-

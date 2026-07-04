@@ -1,5 +1,4 @@
-﻿
-using TheTechIdea.Beep.Vis;
+﻿using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.ConfigUtil;
@@ -7,61 +6,19 @@ using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.DriversConfigurations;
 using TheTechIdea.Beep.Editor;
 
-
 namespace TheTechIdea.Beep.DataBase
 {
-    [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType =  DataSourceType.FireBird)]
+    /// <summary>
+    /// Firebird data source (networked) — inherits BeginTransaction / EndTransaction / Commit /
+    /// CRUD from RDBSource. No dialect-specific overrides; the base class handles Firebird's
+    /// ADO.NET connection model.
+    /// </summary>
+    [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.FireBird)]
     public class FireBirdDataSource : RDBSource, IDataSource
     {
-        public FireBirdDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per) : base(datasourcename, logger, pDMEEditor, databasetype, per)
+        public FireBirdDataSource(string datasourcename, IDMLogger logger, IDMEEditor pDMEEditor, DataSourceType databasetype, IErrorsInfo per)
+            : base(datasourcename, logger, pDMEEditor, databasetype, per)
         {
-
         }
-
-        public virtual IErrorsInfo BeginTransaction(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-
-                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-            }
-            return DMEEditor.ErrorObject;
-        }
-
-        public virtual IErrorsInfo EndTransaction(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-
-                DMEEditor.AddLogMessage("Beep", $"Error in end Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-            }
-            return DMEEditor.ErrorObject;
-        }
-
-        public virtual IErrorsInfo Commit(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-
-                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-            }
-            return DMEEditor.ErrorObject;
-        }
-
     }
 }
