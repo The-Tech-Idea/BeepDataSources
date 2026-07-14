@@ -32,9 +32,9 @@
 	<ItemGroup>
 	  <PackageReference Include="AWSSDK.Core" Version="4.0.100.4" />
 	  <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.101.1" />
-	  <PackageReference Include="AWSSDK.S3" Version="4.0.100.3" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.1.0" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="3.1.0" />
+	  <PackageReference Include="AWSSDK.S3" Version="4.0.101" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.1.1" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="3.1.1" />
 	</ItemGroup>
 	
 

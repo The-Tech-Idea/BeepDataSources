@@ -16,13 +16,15 @@ using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Report;
 using TheTechIdea.Beep.Vis;
-using TheTechIdea.Logger;
-using TheTechIdea.Util;
+
 using System.Collections.Generic;
 using TheTechIdea.Beep.FileManager;
 using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Helpers;
 using Parquet.Serialization;
+using TheTechIdea.Beep.Addin;
+using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Logger;
 
 namespace ParquetDataSourceCore
 {
@@ -101,7 +103,7 @@ namespace ParquetDataSourceCore
         {
             try
             {
-                ConnectionStatus = Dataconnection.CloseConnection();
+                ConnectionStatus = Dataconnection.CloseConn();
             }
             catch (Exception ex)
             {
@@ -229,9 +231,9 @@ namespace ParquetDataSourceCore
                     {
                         var script = new ETLScriptDet
                         {
-                            EntityName = entity.EntityName,
-                            ScriptType = "CREATE",
-                            ScriptText = $"# Parquet entity: {entity.EntityName}\n# Schema defined in Parquet file"
+                            //EntityName = entity.EntityName,
+                            //ScriptType = "CREATE",
+                            //ScriptText = $"# Parquet entity: {entity.EntityName}\n# Schema defined in Parquet file"
                         };
                         scripts.Add(script);
                     }

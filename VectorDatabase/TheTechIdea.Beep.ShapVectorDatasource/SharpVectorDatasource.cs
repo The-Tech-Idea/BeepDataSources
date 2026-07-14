@@ -76,6 +76,9 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
         public event EventHandler<PassedArgs> OnRefreshData;
         public event EventHandler<PassedArgs> OnRefreshDataEntity;
         public event EventHandler<PassedArgs> OnSyncData;
+        public event EventHandler<PassedArgs> StructureChanged;
+        public event EventHandler<PassedArgs> DataChanged;
+        public event EventHandler<PassedArgs> StateChanged;
         #endregion "IInMemoryDB EVENTS"
 
         #region "IDataSource PROPERTIES"
@@ -105,6 +108,9 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
         // ── Colocated schema-migration provider accessors (Phase 10.4) ──
         internal System.Net.Http.HttpClient MigrationHttp => _httpClient;
         internal string MigrationBaseUrl => _baseUrl;
+
+        public bool IsStructureLoaded { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         internal void EnsureMigrationConnected()
         {
             if (ConnectionStatus != ConnectionState.Open) Openconnection();
@@ -1001,6 +1007,41 @@ namespace TheTechIdea.Beep.ShapVectorDatasource
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        public IErrorsInfo OpenInMemory(string databaseName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetInMemoryConnectionString()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo ResetInMemory()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo LoadStructure(IProgress<PassedArgs> progress = null, CancellationToken token = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo LoadStructureWithData(IProgress<PassedArgs> progress = null, CancellationToken token = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo FillFromDataSource(IDataSource source, IProgress<PassedArgs> progress = null, CancellationToken token = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IErrorsInfo ExportToDataSource(IDataSource target, IProgress<PassedArgs> progress = null, CancellationToken token = default)
+        {
+            throw new NotImplementedException();
         }
         #endregion "IDisposable Support"
     }

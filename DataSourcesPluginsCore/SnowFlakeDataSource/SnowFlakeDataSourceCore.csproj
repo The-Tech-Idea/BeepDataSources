@@ -32,7 +32,7 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.9" />
 		<PackageReference Include="Snowflake.Data" Version="5.7.0" />
-		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.1.0" />
+		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.1.1" />
 		<PackageReference Include="TheTechIdea.Beep.RDBDataSource" Version="2.0.22" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
