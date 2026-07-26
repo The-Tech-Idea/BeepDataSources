@@ -45,21 +45,21 @@
                         <li><strong>Commands:</strong> Operations exposed to the editor/runtime use <code>CommandAttribute</code> (and related metadata) so CRUD-like calls route to the correct HTTP method and path.</li>
                         <li><strong>Models:</strong> DTOs and enums live in <code>Models.cs</code> (or a <code>Models</code> folder) under namespace <code>TheTechIdea.Beep.Connectors.&lt;Category&gt;.&lt;Service&gt;.Models</code>.</li>
                     </ul>
-                    <p class="note">Refactoring inventory and conventions: <a href="EXECUTION_SUMMARY.md">Help/EXECUTION_SUMMARY.md</a> (open from repo; raw markdown in browser may be plain text). Rough scale: <strong>105+</strong> connectors analyzed, high coverage of <code>CommandAttribute</code> and <code>Models</code>.</p>
+                    <p class="note">Roughly <strong>105+</strong> connectors follow these conventions, with high coverage of <code>CommandAttribute</code> and <code>Models</code>.</p>
                 </section>
 
                 <section class="section">
                     <h2>How flagship provider pages document APIs</h2>
-                    <p>Each <code><a href="providers/conn-salesforce.html">conn-*.html</a></code> file under <code>Help/providers/</code> documents that connector’s <strong>command surface</strong>: public methods decorated with <code>CommandAttribute</code>, with <code>Name</code>, <code>Caption</code>, and <code>ObjectType</code> when the source sets them (some connectors omit <code>Name</code>; the editor then keys off the method name). A <strong>Model types</strong> subsection lists the main DTO classes and namespace; <strong>Connection</strong> (or auth) is typically last before <em>Also read</em>. Cross-cutting <code>IDataSource</code> behavior is described in <a href="platform-idatasource.html">IDataSource</a>. The master index with hubs and <code>DataSourceType</code> is in <a href="#flagship-provider-pages">Flagship provider pages (phase 09)</a> below.</p>
+                    <p>Each <code><a href="providers/conn-salesforce.html">conn-*.html</a></code> file under <code>Help/providers/</code> documents that connector’s <strong>command surface</strong>: public methods decorated with <code>CommandAttribute</code>, with <code>Name</code>, <code>Caption</code>, and <code>ObjectType</code> when the source sets them (some connectors omit <code>Name</code>; the editor then keys off the method name). A <strong>Model types</strong> subsection lists the main DTO classes and namespace; <strong>Connection</strong> (or auth) is typically last before <em>Also read</em>. Cross-cutting <code>IDataSource</code> behavior is described in <a href="platform-idatasource.html">IDataSource</a>. The master index with hubs and <code>DataSourceType</code> is in <a href="#flagship-provider-pages">Flagship provider pages</a> below.</p>
                 </section>
 
                 <section class="section">
                     <h2>Flagship reference in repo</h2>
-                    <p><strong>Twitter / X</strong> (<code>Connectors/SocialMedia/Twitter/</code>) is called out in the refactoring summary as a reference layout: <code>TwitterDataSource : WebAPIDataSource</code>, entity endpoint dictionaries, required filters, and JSON handling. Use it when aligning a new connector with the shared pattern. Help: <a href="providers/conn-twitter.html">Twitter / X</a>.</p>
+                    <p><strong>Twitter / X</strong> (<code>Connectors/SocialMedia/Twitter/</code>) is a good reference layout: <code>TwitterDataSource : WebAPIDataSource</code>, entity endpoint dictionaries, required filters, and JSON handling. Use it when aligning a new connector with the shared pattern. Help: <a href="providers/conn-twitter.html">Twitter / X</a>.</p>
                 </section>
 
                 <section class="section" id="flagship-provider-pages">
-                    <h2>Flagship provider pages (phase 09)</h2>
+                    <h2>Flagship provider pages</h2>
                     <p>Deeper one-page notes under <code>Help/providers/conn-*.html</code> (OAuth, entities, and <strong>full command + model catalogs</strong> aligned to source). <code>DataSourceType</code> values match <code>[AddinAttribute(… DatasourceType = …)]</code> on each datasource class.</p>
                     <table>
                         <thead>
@@ -84,7 +84,7 @@
                 </section>
 
                 <section class="section">
-                    <h2>Connector categories (phase 08 hubs)</h2>
+                    <h2>Connector categories</h2>
                     <p>Each row links to a category page listing child connector folders under <code>Connectors/</code>.</p>
                     <p class="note">Eight hubs that already surface flagship <code>conn-*</code> help links include a post-table note pointing at <a href="#flagship-provider-pages">the flagship index above</a>. Other category pages list folders only until additional <code>conn-*.html</code> pages are authored.</p>
                     <table>
@@ -127,7 +127,7 @@
                     <ul>
                         <li><code>BeepDM/.cursor/idatasource/SKILL.md</code></li>
                     </ul>
-                    <p>Additional <code>Help/providers/conn-*.html</code> pages can cover OAuth setup, scopes, and rate limits; category hubs stay stable as the folder list changes. Shipped flagship list: <a href="#flagship-provider-pages">index table</a> above. Plan: <code>.plans/phase-09-connectors-flagship.md</code>.</p>
+                    <p>Additional <code>Help/providers/conn-*.html</code> pages can cover OAuth setup, scopes, and rate limits; category hubs stay stable as the folder list changes. Shipped flagship list: <a href="#flagship-provider-pages">index table</a> above.</p>
                 </section>
 
                 <div class="nav-links">
@@ -138,7 +138,7 @@
                 <footer class="documentation-footer">
                     <div class="footer-content">
                         <div><p>© 2026 The Tech Idea — Beep DataSources Help</p></div>
-                        <div class="footer-links"><a href="roadmap.html">Roadmap</a></div>
+                        <div class="footer-links"></div>
                     </div>
                 </footer>
             </div>

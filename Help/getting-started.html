@@ -30,7 +30,7 @@
 
                 <div class="page-header">
                     <h1>How to use this help</h1>
-                    <p class="page-subtitle">Reading order, relationship to BeepDM skills, and how phased provider docs will land.</p>
+                    <p class="page-subtitle">Reading order and how these pages relate to the BeepDM skills.</p>
                 </div>
 
                 <section class="section">
@@ -47,26 +47,18 @@
                         <li><a href="platform-connection-properties.html">ConnectionProperties</a> — building a definition.</li>
                         <li><a href="platform-connection.html">Connection lifecycle</a> — validation, normalization, masking.</li>
                         <li><a href="platform-idatasource.html">IDataSource contract</a> — CRUD, metadata, errors.</li>
-                        <li><a href="impl-local-inmemory.html">Local &amp; in-memory</a> — SQLite, LiteDB, DuckDB (phase 03).</li>
-                        <li><a href="impl-rdbms.html">RDBMS (SQL Server, PostgreSQL, MySQL, Oracle)</a> — shared <code>RDBSource</code> / helpers (phase 04).</li>
-                        <li><a href="impl-nosql.html">NoSQL / document / KV / TSDB</a> — MongoDB, Redis, RavenDB, CouchDB, InfluxDB (phase 05).</li>
-                        <li><a href="impl-cloud-analytics.html">Cloud &amp; analytics</a> — BigQuery, Snowflake, Spanner, Kusto, Presto (phase 06).</li>
-                        <li><a href="impl-messaging-vector.html">Messaging &amp; vector</a> — Kafka, RabbitMQ, NATS, MassTransit, Redis Streams, Pub/Sub; Qdrant, Milvus, ChromaDB (phase 07).</li>
-                        <li><a href="impl-connectors.html">REST / SaaS connectors</a> — <code>Connectors/</code> by category, <code>WebAPIDataSource</code> pattern (phase 08); phase 09 <a href="impl-connectors.html#flagship-provider-pages">flagship <code>conn-*</code> index table</a>.</li>
-                        <li><a href="phased-implementations.html">Provider rollout</a> — all phases.</li>
+                        <li><a href="impl-local-inmemory.html">Local &amp; in-memory</a> — SQLite, LiteDB, DuckDB.</li>
+                        <li><a href="impl-rdbms.html">RDBMS (SQL Server, PostgreSQL, MySQL, Oracle)</a> — shared <code>RDBSource</code> / helpers.</li>
+                        <li><a href="impl-nosql.html">NoSQL / document / KV / TSDB</a> — MongoDB, Redis, RavenDB, CouchDB, InfluxDB.</li>
+                        <li><a href="impl-cloud-analytics.html">Cloud &amp; analytics</a> — BigQuery, Snowflake, Spanner, Kusto, Presto.</li>
+                        <li><a href="impl-messaging-vector.html">Messaging &amp; vector</a> — Kafka, RabbitMQ, NATS, MassTransit, Redis Streams, Pub/Sub; Qdrant, Milvus, ChromaDB.</li>
+                        <li><a href="impl-connectors.html">REST / SaaS connectors</a> — <code>Connectors/</code> by category using the <code>WebAPIDataSource</code> pattern, with a <a href="impl-connectors.html#flagship-provider-pages">flagship <code>conn-*</code> index table</a>.</li>
                     </ol>
                 </section>
 
                 <section class="section">
                     <h2>BeepDM skills (authoritative)</h2>
                     <p>This HTML summarizes behavior; the canonical guides are markdown skills under <strong><code>BeepDM/.cursor/</code></strong> (e.g. <code>idatasource</code>, <code>connection</code>, <code>configeditor</code>). When instructions conflict, prefer the BeepDM repo and code.</p>
-                </section>
-
-                <section class="section">
-                    <h2>Phased plans</h2>
-                    <p>Execution checklists live in <code>BeepDataSources/.plans/</code>. Start with <code>00-MASTER-PLAN.md</code> and <code>phase-01-html-framework.md</code>.</p>
-                    <p>Phase 09 adds thirteen <code>Help/providers/conn-*.html</code> flagship connector write-ups; the single index table is on <a href="impl-connectors.html#flagship-provider-pages">REST / SaaS overview → flagship list</a>.</p>
-                    <p><a href="roadmap.html">Roadmap (HTML summary) →</a> &nbsp; <a href="phased-implementations.html">Provider rollout (phase map) →</a></p>
                 </section>
 
                 <footer class="documentation-footer">

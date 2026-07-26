@@ -4,7 +4,6 @@ Open **`index.html`** in a browser or serve this folder with any static host.
 
 - **Navigation / theme:** `navigation.js` (localStorage key `beep-datasources-docs-theme`)
 - **Styles:** `sphinx-style.css` (adapted from Beep Streaming / DME docs)
-- **Phased authoring:** `../.plans/` (start at `README.md` and `00-MASTER-PLAN.md`)
 
 Platform pages summarize **BeepDM** behavior; authoritative text lives in **`BeepDM/.cursor/<skill>/SKILL.md`**.
 

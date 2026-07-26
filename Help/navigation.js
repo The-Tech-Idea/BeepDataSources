@@ -16,14 +16,12 @@ class NavigationManager {
         return {
             'index.html': { activeId: 'nav-home', openSection: null },
             'getting-started.html': { activeId: 'nav-getting-started', openSection: 'nav-start' },
-            'roadmap.html': { activeId: 'nav-roadmap', openSection: 'nav-start' },
             'platform-beepdm.html': { activeId: 'nav-platform-beepdm', openSection: 'nav-platform' },
             'platform-beepservice.html': { activeId: 'nav-platform-beepservice', openSection: 'nav-platform' },
             'platform-configeditor.html': { activeId: 'nav-platform-configeditor', openSection: 'nav-platform' },
             'platform-connection.html': { activeId: 'nav-platform-connection', openSection: 'nav-platform' },
             'platform-connection-properties.html': { activeId: 'nav-platform-cp', openSection: 'nav-platform' },
             'platform-idatasource.html': { activeId: 'nav-platform-idatasource', openSection: 'nav-platform' },
-            'phased-implementations.html': { activeId: 'nav-phased', openSection: 'nav-impl' },
             'impl-local-inmemory.html': { activeId: 'nav-local-inmemory', openSection: 'nav-impl' },
             'sqlite.html': { activeId: 'nav-sqlite', openSection: 'nav-impl' },
             'litedb.html': { activeId: 'nav-litedb', openSection: 'nav-impl' },
@@ -90,7 +88,6 @@ class NavigationManager {
             'conn-asana.html': { activeId: 'nav-conn-ds-asana', openSection: 'nav-impl' },
             'conn-bigcommerce.html': { activeId: 'nav-conn-ds-bc', openSection: 'nav-impl' },
             'conn-gmail.html': { activeId: 'nav-conn-ds-gmail', openSection: 'nav-impl' },
-            'repo-layout.html': { activeId: 'nav-repo-layout', openSection: 'nav-ref' },
         };
     }
 
@@ -118,7 +115,6 @@ class NavigationManager {
                         <a href="#"><i class="bi bi-rocket-takeoff"></i> Getting started</a>
                         <ul class="submenu">
                             <li><a href="${b}getting-started.html" id="nav-getting-started">How to use this help</a></li>
-                            <li><a href="${b}roadmap.html" id="nav-roadmap">Roadmap &amp; phases</a></li>
                         </ul>
                     </li>
 
@@ -135,9 +131,8 @@ class NavigationManager {
                     </li>
 
                     <li class="has-submenu" id="nav-impl">
-                        <a href="#"><i class="bi bi-layers-fill"></i> Implementations (phased)</a>
+                        <a href="#"><i class="bi bi-layers-fill"></i> Data providers</a>
                         <ul class="submenu">
-                            <li><a href="${b}phased-implementations.html" id="nav-phased">Provider rollout plan</a></li>
                             <li><a href="${b}impl-local-inmemory.html" id="nav-local-inmemory">Local &amp; in-memory</a></li>
                             <li><a href="${b}providers/sqlite.html" id="nav-sqlite">SQLite</a></li>
                             <li><a href="${b}providers/litedb.html" id="nav-litedb">LiteDB</a></li>
@@ -208,12 +203,6 @@ class NavigationManager {
                         </ul>
                     </li>
 
-                    <li class="has-submenu" id="nav-ref">
-                        <a href="#"><i class="bi bi-folder2-open"></i> Reference</a>
-                        <ul class="submenu">
-                            <li><a href="${b}repo-layout.html" id="nav-repo-layout">Repository layout</a></li>
-                        </ul>
-                    </li>
                 </ul>
             </nav>
         `;
