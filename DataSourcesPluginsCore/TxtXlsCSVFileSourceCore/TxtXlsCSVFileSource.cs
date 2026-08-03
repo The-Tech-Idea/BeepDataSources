@@ -441,10 +441,16 @@ namespace TheTechIdea.Beep.FileManager
                 if (idx >= 0 && idx < Entities.Count)
                 {
                     EntityStructure ent = Entities[idx];
-                    DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, ent.Fields);
+                    // Take the type from the OBJECT this call returns, not from
+                    // DMTypeBuilder.MyType, a mutable static holding the LAST type
+                    // built anywhere, so any thread that resolved a different entity between
+                    // the call above and the read below made this method return the wrong
+                    // type. The returned instance is local and cannot be raced.
+                    // (2026-08-03)
+                    var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, ent.Fields)?.GetType();
                 }
              
-                return DMTypeBuilder.MyType;
+                return beepEntityType;
             }
             return null;
         }

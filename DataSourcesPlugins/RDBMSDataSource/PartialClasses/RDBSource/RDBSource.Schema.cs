@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Collections.Generic;
 using System.Linq;
@@ -323,9 +323,15 @@ namespace TheTechIdea.Beep.DataBase
         public virtual Type GetEntityType(string EntityName)
         {
             EntityStructure x = GetEntityStructure(EntityName);
-            DMTypeBuilder.CreateNewObject(DMEEditor, DatasourceName, DatasourceName, EntityName, x.Fields);
-            enttype = DMTypeBuilder.MyType;
-            return DMTypeBuilder.MyType;
+            // Take the type from the OBJECT this call returns, not from
+            // DMTypeBuilder.MyType, a mutable static holding the LAST type
+            // built anywhere, so any thread that resolved a different entity between
+            // the call above and the read below made this method return the wrong
+            // type. The returned instance is local and cannot be raced.
+            // (2026-08-03)
+            var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, DatasourceName, DatasourceName, EntityName, x.Fields)?.GetType();
+            enttype = beepEntityType;
+            return beepEntityType;
         }
         /// <summary>
         /// Retrieves a list of all entity names (like tables) from the database.

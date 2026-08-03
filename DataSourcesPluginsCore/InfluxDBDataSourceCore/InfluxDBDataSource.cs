@@ -155,7 +155,33 @@ namespace InfluxDBDataSourceCore
         public int GetEntityIdx(string entityName)
             => EntitiesNames.FindIndex(e => string.Equals(e, entityName, StringComparison.OrdinalIgnoreCase));
 
-        public Type GetEntityType(string EntityName) => typeof(System.Collections.Generic.Dictionary<string, object>);
+        /// <summary>
+        /// The runtime row type for an entity, generated from its
+        /// <see cref="EntityStructure"/>.
+        /// </summary>
+        /// <remarks>
+        /// This returned <c>typeof(Dictionary&lt;string, object&gt;)</c>.
+        /// <c>UnitofWork&lt;T&gt;</c> is constrained <c>where T : Entity, new()</c>, so a
+        /// dictionary cannot close it and NO form could ever be built on this data
+        /// source — the block silently failed to register with
+        /// "violates the constraint of type 'T'".
+        ///
+        /// Found by running BeepDM Forms against LiteDB, then audited across every
+        /// driver: eight had the identical one-line defect, all of them document or
+        /// key-value stores. The dictionary remains the fallback for the one case
+        /// where it was the best available answer — no structure to build from.
+        /// (2026-08-03)
+        /// </remarks>
+        public Type GetEntityType(string EntityName)
+        {
+            var structure = GetEntityStructure(EntityName, false);
+            if (structure?.Fields == null || structure.Fields.Count == 0)
+                return typeof(Dictionary<string, object>);
+
+            return DMTypeBuilder.CreateNewObject(
+                       DMEEditor, "Beep." + DatasourceName, EntityName, structure.Fields)?.GetType()
+                   ?? typeof(Dictionary<string, object>);
+        }
 
         public bool CreateEntityAs(EntityStructure entity)
         {

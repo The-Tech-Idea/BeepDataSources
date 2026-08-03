@@ -1,4 +1,4 @@
-
+﻿
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -1180,8 +1180,14 @@ namespace TheTechIdea.Beep.NOSQL
                         DataStruct = GetEntityStructure(EntityName);
                     }
                     
-                    DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields);
-                    result = DMTypeBuilder.MyType;
+                    // Take the type from the OBJECT this call returns, not from
+                    // DMTypeBuilder.MyType, a mutable static holding the LAST type
+                    // built anywhere, so any thread that resolved a different entity between
+                    // the call above and the read below made this method return the wrong
+                    // type. The returned instance is local and cannot be raced.
+                    // (2026-08-03)
+                    var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, DataStruct.Fields)?.GetType();
+                    result = beepEntityType;
                     if(result != null)
                     {
                        

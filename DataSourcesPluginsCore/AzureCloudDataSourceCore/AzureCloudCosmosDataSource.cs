@@ -1,4 +1,4 @@
-
+﻿
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -666,8 +666,14 @@ namespace TheTechIdea.Beep.Cloud
                 var entityStructure = GetEntityStructure(EntityName, false);
                 if (entityStructure != null && entityStructure.Fields != null && entityStructure.Fields.Count > 0)
                 {
-                    DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, entityStructure.Fields);
-                    retval = DMTypeBuilder.MyType;
+                    // Take the type from the OBJECT this call returns, not from
+                    // DMTypeBuilder.MyType, a mutable static holding the LAST type
+                    // built anywhere, so any thread that resolved a different entity between
+                    // the call above and the read below made this method return the wrong
+                    // type. The returned instance is local and cannot be raced.
+                    // (2026-08-03)
+                    var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, entityStructure.Fields)?.GetType();
+                    retval = beepEntityType;
                 }
             }
             catch (Exception ex)

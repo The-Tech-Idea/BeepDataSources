@@ -574,8 +574,14 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
         public Type GetEntityType(string EntityName)
         {
             EntityStructure x = GetEntityStructure(EntityName, false);
-            DMTypeBuilder.CreateNewObject(DMEEditor, EntityName, EntityName, x.Fields);
-            return DMTypeBuilder.MyType;
+            // Take the type from the OBJECT this call returns, not from
+            // DMTypeBuilder.MyType, a mutable static holding the LAST type
+            // built anywhere, so any thread that resolved a different entity between
+            // the call above and the read below made this method return the wrong
+            // type. The returned instance is local and cannot be raced.
+            // (2026-08-03)
+            var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, EntityName, EntityName, x.Fields)?.GetType();
+            return beepEntityType;
         }
 
         public IErrorsInfo UpdateEntities(string EntityName, object UploadData, IProgress<PassedArgs> progress)
