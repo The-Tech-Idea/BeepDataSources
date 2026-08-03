@@ -310,6 +310,16 @@ namespace LiteDBDataSourceCore
                     }
                 }
 
+                // PrimaryKeys, not just IsKey on the field.
+                //
+                // BuildEntityField marks "_id" with IsKey, but nothing copied it
+                // into EntityStructure.PrimaryKeys — which is the property the
+                // rest of the stack actually reads: master-detail relation setup,
+                // the IDE's block editors, and the DML binders all go through
+                // PrimaryKeys. A sampled structure therefore looked keyless to
+                // everything outside this class. (2026-08-03)
+                es.PrimaryKeys = es.Fields.Where(f => f.IsKey).ToList();
+
                 // Upsert into the entities cache.
                 var idx = Entities.FindIndex(e => string.Equals(e.EntityName, EntityName, StringComparison.OrdinalIgnoreCase));
                 if (idx >= 0) Entities[idx] = es; else Entities.Add(es);
