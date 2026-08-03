@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Collections.Generic;
 using System.Linq;
@@ -990,6 +990,11 @@ namespace TheTechIdea.Beep.DataBase
                     DMEEditor?.AddLogMessage("Fail", $"Entity structure not found for '{Entityname}'", DateTime.Now, 0, null, Errors.Failed);
                 }
                 command = RDBMSConnection.DbConn?.CreateCommand();
+
+                // Same reason as GetDataCommand: a command created while a
+                // transaction is open must carry it. (2026-08-03)
+                var activeTx = ActiveTransaction;
+                if (command != null && activeTx != null) command.Transaction = activeTx;
                 enttype = GetEntityType(Entityname);
                 ObjectsCreated = true;
                 lastentityname = Entityname;

@@ -166,8 +166,25 @@ namespace TheTechIdea.Beep.DataBase
             for (int i = 0; i < UpdateFieldSequnce.Count; i++)
             {
                 EntityField field = UpdateFieldSequnce[i];
-                // Skip auto-increment (identity) fields
-                if (field.IsAutoIncrement)
+
+                // Skip auto-increment fields — EXCEPT primary keys.
+                //
+                // Skipping identity columns is right for INSERT, where the server
+                // assigns them. This is UPDATE, and GetUpdateString deliberately
+                // appends the primary keys to UpdateFieldSequnce (see the
+                // AddRange after the SET clause) precisely so they can be bound
+                // for "where Id = @p_Id". Skipping an IDENTITY primary key left
+                // that placeholder in the SQL with nothing bound to it:
+                //
+                //   Must declare the scalar variable "@p_Id".
+                //
+                // So no row could ever be updated on a table whose key is an
+                // IDENTITY column — which is most SQL Server tables. SQLite keys
+                // are not flagged auto-increment by its schema reader, so a
+                // file-based driver never hit this. (2026-08-03)
+                if (field.IsAutoIncrement &&
+                    !DataStruct.PrimaryKeys.Any(pk =>
+                        string.Equals(pk.FieldName, field.FieldName, StringComparison.OrdinalIgnoreCase)))
                 {
                     continue;
                 }

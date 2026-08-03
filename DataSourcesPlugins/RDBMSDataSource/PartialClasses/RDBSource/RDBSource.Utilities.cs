@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Collections.Generic;
 using System.Linq;
@@ -97,6 +97,16 @@ namespace TheTechIdea.Beep.DataBase
                 if (Dataconnection.ConnectionStatus == ConnectionState.Open)
                 {
                     cmd = RDBMSConnection.DbConn.CreateCommand();
+
+                    // Carry the open transaction. Providers that track a pending
+                    // local transaction reject any command that does not:
+                    // "ExecuteNonQuery requires the command to have a transaction
+                    // when the connection assigned to the command is in a pending
+                    // local transaction." Every command in this class comes from
+                    // here, so this is the one place it has to happen.
+                    // (2026-08-03)
+                    var tx = ActiveTransaction;
+                    if (tx != null) cmd.Transaction = tx;
                 }
                 else
                 {
