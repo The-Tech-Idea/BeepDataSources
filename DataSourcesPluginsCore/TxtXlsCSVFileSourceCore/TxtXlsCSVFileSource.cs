@@ -447,7 +447,7 @@ namespace TheTechIdea.Beep.FileManager
                     // the call above and the read below made this method return the wrong
                     // type. The returned instance is local and cannot be raced.
                     // (2026-08-03)
-                    var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, ent.Fields)?.GetType();
+                    var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, ent.Fields)?.GetType();
                 }
              
                 return beepEntityType;
@@ -1272,7 +1272,7 @@ namespace TheTechIdea.Beep.FileManager
         private void GetTypeForSheetsFile(string pSheetname)
         {
             List<EntityField> flds = GetSheetColumns(pSheetname);
-            DMTypeBuilder.CreateNewObject(DMEEditor, pSheetname, pSheetname, flds);
+            DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, pSheetname, flds);
 
         }
        

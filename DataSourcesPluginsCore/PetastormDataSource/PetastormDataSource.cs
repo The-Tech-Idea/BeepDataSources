@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -295,7 +295,7 @@ namespace TheTechIdea.Beep.FileManager
                 if (entity != null)
                 {
                     // Use the correct DMTypeBuilder method - CreateNewObject returns an object, get its type
-                    var obj = DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, entity.Fields);
+                    var obj = DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, entity.Fields);
                     return obj?.GetType() ?? typeof(object);
                 }
             }

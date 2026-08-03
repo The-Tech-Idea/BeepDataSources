@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -265,7 +265,7 @@ namespace TheTechIdea.Beep.Cloud.Firebase
                 if (entity != null)
                 {
                     // Use the correct DMTypeBuilder method
-                    return DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, entity.Fields)?.GetType() ?? typeof(object);
+                    return DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, entity.Fields)?.GetType() ?? typeof(object);
                 }
             }
             catch (Exception ex)

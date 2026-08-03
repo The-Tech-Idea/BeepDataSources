@@ -580,7 +580,7 @@ namespace TheTechIdea.Beep.NOSQL.RavenDB
             // the call above and the read below made this method return the wrong
             // type. The returned instance is local and cannot be raced.
             // (2026-08-03)
-            var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, EntityName, EntityName, x.Fields)?.GetType();
+            var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, x.Fields)?.GetType();
             return beepEntityType;
         }
 

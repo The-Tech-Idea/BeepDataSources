@@ -485,7 +485,7 @@ namespace DaprClient
                     // the call above and the read below made this method return the wrong
                     // type. The returned instance is local and cannot be raced.
                     // (2026-08-03)
-                    var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, "TheTechIdea.Classes", EntityName, entityStructure.Fields)?.GetType();
+                    var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, entityStructure.Fields)?.GetType();
                     retval = beepEntityType;
                 }
             }

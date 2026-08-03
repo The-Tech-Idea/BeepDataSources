@@ -565,7 +565,7 @@ namespace TheTechIdea.Beep.Composite
                     // the call and the read made this return the wrong type; the
                     // returned instance is local and cannot be raced. (2026-08-03)
                     retval = DMTypeBuilder.CreateNewObject(
-                        DMEEditor, "TheTechIdea.Classes", EntityName, entityStructure.Fields)?.GetType();
+                        DMEEditor, "Beep." + DatasourceName, EntityName, entityStructure.Fields)?.GetType();
                 }
             }
             catch (Exception ex)
