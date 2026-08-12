@@ -631,7 +631,13 @@ namespace TheTechIdea.Beep.DataBase
             {
                 ErrorObject.Flag = Errors.Failed;
                 ErrorObject.Message = ex.Message;
-                DMEEditor.AddLogMessage("Fail", $"Error preparing entity stream ({ex.Message})", DateTime.Now, 0, inname, Errors.Failed);
+                // Include the SQL and the parameter delimiter actually used. Without them a dialect
+                // mismatch (a '$p_' parameter reaching SQL Server, say) is unattributable — the
+                // message alone names neither the query nor the datasource that produced it.
+                DMEEditor.AddLogMessage("Fail",
+                    $"Error preparing entity stream ({ex.Message}) | source={GetType().Name} " +
+                    $"type={DatasourceType} delimiter='{ParameterDelimiter}' | sql=[{streamQueryDefinition?.QueryText}]",
+                    DateTime.Now, 0, inname, Errors.Failed);
                 if (reader != null) { try { reader.Close(); } catch { } }
                 cmd?.Dispose();
                 yield break;
@@ -985,9 +991,21 @@ namespace TheTechIdea.Beep.DataBase
             if (!ObjectsCreated || Entityname != lastentityname)
             {
                 DataStruct = GetEntityStructure(Entityname, false);
-                if (DataStruct == null)
+
+                // A cached structure with no fields is unusable: every statement built from it comes
+                // out column-less (an INSERT degenerates to "() VALUES ()"). That is the normal state
+                // for a table just created by MigrationManager — the cache predates it — so re-read
+                // the structure from the datasource before giving up.
+                if (DataStruct == null || DataStruct.Fields == null || DataStruct.Fields.Count == 0)
                 {
-                    DMEEditor?.AddLogMessage("Fail", $"Entity structure not found for '{Entityname}'", DateTime.Now, 0, null, Errors.Failed);
+                    DataStruct = GetEntityStructure(Entityname, true);
+                }
+
+                if (DataStruct == null || DataStruct.Fields == null || DataStruct.Fields.Count == 0)
+                {
+                    DMEEditor?.AddLogMessage("Fail",
+                        $"Entity structure not found (or has no fields) for '{Entityname}' — statements built " +
+                        "from it would have no columns.", DateTime.Now, 0, null, Errors.Failed);
                 }
                 command = RDBMSConnection.DbConn?.CreateCommand();
 

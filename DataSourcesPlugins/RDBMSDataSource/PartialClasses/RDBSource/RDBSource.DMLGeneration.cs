@@ -510,17 +510,33 @@ namespace TheTechIdea.Beep.DataBase
                     }
 
                     // Get database-specific type with null safety
-                    string dbType;
+                    string dbType = null;
                     if (DMEEditor?.typesHelper != null)
                     {
                         dbType = DMEEditor.typesHelper.GetDataType(DatasourceName, dbf);
                     }
-                    else
+
+                    // The lookup falls back to .NET type names ("System.Boolean") when it cannot
+                    // resolve a mapping for this datasource. Those are not SQL types — emitting one
+                    // produces DDL the server rejects ("Cannot find data type BOOLEAN"). Detect that
+                    // and map to a real type for THIS provider.
+                    if (string.IsNullOrWhiteSpace(dbType) ||
+                        dbType.StartsWith("System.", StringComparison.OrdinalIgnoreCase))
                     {
-                        // Fallback: map .NET types to SQLite-compatible types directly
-                        dbType = GetFallbackDbType(dbf.Fieldtype);
-                        DMEEditor?.AddLogMessage("Beep", $"typesHelper is null, using fallback type '{dbType}' for field '{dbf.FieldName}' (Fieldtype='{dbf.Fieldtype}')", DateTime.Now, 0, t1.EntityName, Errors.Warning);
+                        var unresolved = dbType;
+                        dbType = GetFallbackDbType(dbf.Fieldtype, DatasourceType);
+                        DMEEditor?.AddLogMessage("Beep",
+                            $"No datasource type mapping for field '{dbf.FieldName}' (Fieldtype='{dbf.Fieldtype}'" +
+                            (string.IsNullOrWhiteSpace(unresolved) ? "" : $"', resolved to '{unresolved}'") +
+                            $"); using '{dbType}' for {DatasourceType}.",
+                            DateTime.Now, 0, t1.EntityName, Errors.Warning);
                     }
+
+                    // The configured mappings are keyed loosely enough that a type belonging to a
+                    // different provider can come back (e.g. BOOLEAN for SQL Server, which has none).
+                    // Translate those to the target provider's equivalent rather than emitting DDL
+                    // the server will reject.
+                    dbType = NormalizeDbTypeForProvider(dbType, DatasourceType);
                     
                     createtablestring += "\n " + FieldName + " " + dbType + " ";
 
@@ -872,39 +888,143 @@ namespace TheTechIdea.Beep.DataBase
             return AutnumberString;
         }
         /// <summary>
-        /// Fallback type mapping when typesHelper is not available.
-        /// Maps .NET FullName types to generic SQL types.
+        /// Translates a resolved column type into one the target provider actually has.
         /// </summary>
-        private static string GetFallbackDbType(string fieldtype)
+        /// <remarks>
+        /// The configured type mappings are keyed by datasource name and can return a type belonging
+        /// to a different provider. Emitting it produces DDL the server rejects — SQL Server, for
+        /// instance, has no BOOLEAN, TEXT-as-unicode, or BLOB. Only genuinely foreign spellings are
+        /// rewritten; anything the provider understands (including sized types like NVARCHAR(200))
+        /// is passed through untouched.
+        /// </remarks>
+        private static string NormalizeDbTypeForProvider(string dbType, DataSourceType datasourceType)
+        {
+            if (string.IsNullOrWhiteSpace(dbType)) return dbType;
+
+            // Compare on the bare type name so sized types (NUMBER(10), VARCHAR2(200)) still match.
+            var bare = dbType.Trim();
+            var paren = bare.IndexOf('(');
+            var name = (paren > 0 ? bare.Substring(0, paren) : bare).Trim().ToUpperInvariant();
+            var args = paren > 0 ? bare.Substring(paren) : string.Empty;
+
+            if (datasourceType != DataSourceType.SqlServer) return dbType;
+
+            return name switch
+            {
+                "BOOLEAN" or "BOOL" => "BIT",
+                "TEXT" or "CLOB" or "NCLOB" or "LONGTEXT" => "NVARCHAR(MAX)",
+                "BLOB" or "BYTEA" or "LONGBLOB" => "VARBINARY(MAX)",
+                "DOUBLE" or "DOUBLE PRECISION" => "FLOAT",
+                "INTEGER" => "INT",
+                "TIMESTAMP" => "DATETIME2",
+                "TIMESTAMPTZ" => "DATETIMEOFFSET",
+                "UUID" => "UNIQUEIDENTIFIER",
+                "NUMBER" => string.IsNullOrEmpty(args) ? "DECIMAL(18,4)" : "DECIMAL" + args,
+                "NVARCHAR2" => "NVARCHAR" + (string.IsNullOrEmpty(args) ? "(MAX)" : args),
+                "VARCHAR2" => "VARCHAR" + (string.IsNullOrEmpty(args) ? "(MAX)" : args),
+                _ => dbType
+            };
+        }
+
+        /// <summary>
+        /// Fallback type mapping used when the configured type mappings cannot resolve a field.
+        /// Maps .NET FullName types to a real SQL type for the target provider.
+        /// </summary>
+        /// <remarks>
+        /// This must be provider-aware. It previously returned SQLite types unconditionally, so a
+        /// SQL Server / Oracle / Postgres CREATE TABLE could be emitted with types those servers do
+        /// not have, and the whole migration failed on types like BOOLEAN.
+        /// </remarks>
+        private static string GetFallbackDbType(string fieldtype, DataSourceType datasourceType)
         {
             if (string.IsNullOrWhiteSpace(fieldtype))
-                return "TEXT";
+                fieldtype = "System.String";
 
-            switch (fieldtype)
+            switch (datasourceType)
             {
-                case "System.Int32":
-                case "System.Int16":
-                case "System.Byte":
-                    return "INTEGER";
-                case "System.Int64":
-                    return "BIGINT";
-                case "System.String":
-                    return "TEXT";
-                case "System.Decimal":
-                case "System.Double":
-                case "System.Single":
-                    return "REAL";
-                case "System.Boolean":
-                    return "INTEGER";
-                case "System.DateTime":
-                case "System.DateTimeOffset":
-                    return "TEXT";
-                case "System.Guid":
-                    return "TEXT";
-                case "System.Byte[]":
-                    return "BLOB";
+                case DataSourceType.SqlServer:
+                    return fieldtype switch
+                    {
+                        "System.Int32" or "System.Int16" => "INT",
+                        "System.Byte" => "TINYINT",
+                        "System.Int64" => "BIGINT",
+                        "System.String" => "NVARCHAR(MAX)",
+                        "System.Decimal" => "DECIMAL(18,4)",
+                        "System.Double" or "System.Single" => "FLOAT",
+                        "System.Boolean" => "BIT",
+                        "System.DateTime" => "DATETIME2",
+                        "System.DateTimeOffset" => "DATETIMEOFFSET",
+                        "System.TimeSpan" => "TIME",
+                        "System.Guid" => "UNIQUEIDENTIFIER",
+                        "System.Byte[]" => "VARBINARY(MAX)",
+                        _ => "NVARCHAR(MAX)"
+                    };
+
+                case DataSourceType.Postgre:
+                    return fieldtype switch
+                    {
+                        "System.Int32" or "System.Int16" or "System.Byte" => "INTEGER",
+                        "System.Int64" => "BIGINT",
+                        "System.String" => "TEXT",
+                        "System.Decimal" => "NUMERIC(18,4)",
+                        "System.Double" or "System.Single" => "DOUBLE PRECISION",
+                        "System.Boolean" => "BOOLEAN",
+                        "System.DateTime" => "TIMESTAMP",
+                        "System.DateTimeOffset" => "TIMESTAMPTZ",
+                        "System.TimeSpan" => "INTERVAL",
+                        "System.Guid" => "UUID",
+                        "System.Byte[]" => "BYTEA",
+                        _ => "TEXT"
+                    };
+
+                case DataSourceType.Mysql:
+                    return fieldtype switch
+                    {
+                        "System.Int32" or "System.Int16" => "INT",
+                        "System.Byte" => "TINYINT",
+                        "System.Int64" => "BIGINT",
+                        "System.String" => "TEXT",
+                        "System.Decimal" => "DECIMAL(18,4)",
+                        "System.Double" or "System.Single" => "DOUBLE",
+                        "System.Boolean" => "TINYINT(1)",
+                        "System.DateTime" or "System.DateTimeOffset" => "DATETIME",
+                        "System.TimeSpan" => "TIME",
+                        "System.Guid" => "CHAR(36)",
+                        "System.Byte[]" => "BLOB",
+                        _ => "TEXT"
+                    };
+
+                case DataSourceType.Oracle:
+                    return fieldtype switch
+                    {
+                        "System.Int32" or "System.Int16" or "System.Byte" => "NUMBER(10)",
+                        "System.Int64" => "NUMBER(19)",
+                        "System.String" => "NVARCHAR2(2000)",
+                        "System.Decimal" => "NUMBER(18,4)",
+                        "System.Double" or "System.Single" => "BINARY_DOUBLE",
+                        "System.Boolean" => "NUMBER(1)",
+                        "System.DateTime" => "TIMESTAMP",
+                        "System.DateTimeOffset" => "TIMESTAMP WITH TIME ZONE",
+                        "System.TimeSpan" => "INTERVAL DAY TO SECOND",
+                        "System.Guid" => "RAW(16)",
+                        "System.Byte[]" => "BLOB",
+                        _ => "NVARCHAR2(2000)"
+                    };
+
                 default:
-                    return "TEXT";
+                    // SQLite and anything else with its permissive type affinities.
+                    return fieldtype switch
+                    {
+                        "System.Int32" or "System.Int16" or "System.Byte" => "INTEGER",
+                        "System.Int64" => "BIGINT",
+                        "System.String" => "TEXT",
+                        "System.Decimal" or "System.Double" or "System.Single" => "REAL",
+                        "System.Boolean" => "INTEGER",
+                        "System.DateTime" or "System.DateTimeOffset" => "TEXT",
+                        "System.Guid" => "TEXT",
+                        "System.Byte[]" => "BLOB",
+                        _ => "TEXT"
+                    };
             }
         }
 

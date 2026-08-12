@@ -371,7 +371,11 @@ namespace TheTechIdea.Beep.DataBase
                 adp = GetDataAdapter(sql, null);
                 adp.Fill(ds);
 #if DEBUG
-                DMEEditor.AddLogMessage("Beep", $"Get Tables List Query {sql}", DateTime.Now, 0, DatasourceName, Errors.Failed);
+                // Errors.Ok, not Errors.Failed: this is a diagnostic trace of a query that just
+                // succeeded. Logging it as a failure sets ErrorObject.Flag, and every caller that
+                // checks the flag afterwards — MigrationManager.CheckEntityExist among them — reads a
+                // failure that never happened, in Debug builds only.
+                DMEEditor.AddLogMessage("Beep", $"Get Tables List Query {sql}", DateTime.Now, 0, DatasourceName, Errors.Ok);
                 Debug.WriteLine($" -- Get Tables List Query {sql}");
 #endif
 
@@ -507,15 +511,30 @@ namespace TheTechIdea.Beep.DataBase
                 return false;
             }
 
-            bool retval = false;
+            // Start from a clean slate: ErrorObject is shared state on the datasource, and callers
+            // (MigrationManager among them) treat a Failed flag after this call as "the check itself
+            // broke". Without this, a failure left behind by an unrelated earlier operation is
+            // misreported as an existence-check failure for every entity.
+            ErrorObject.Flag = Errors.Ok;
+            ErrorObject.Message = string.Empty;
+
             GetEntitesList();
-            if (EntitiesNames.Count == 0)
+
+            // Compare against the table names actually read from the database, not the Entities
+            // structure cache. The cache is populated lazily and is empty in a fresh process, so
+            // testing it reports "does not exist" for tables that are really there — and migration
+            // then tries to re-create every one of them.
+            bool retval = EntitiesNames != null &&
+                          EntitiesNames.Any(n => string.Equals(n, EntityName, StringComparison.OrdinalIgnoreCase));
+
+            // Fall back to the structure cache only when the name list yielded nothing, so
+            // in-memory-only entities are still discoverable.
+            if (!retval && Entities != null && Entities.Count > 0)
             {
-                retval = false;
-            }
-            if (Entities.Count > 0)
-            {
-                retval = Entities.Any(p => p.EntityName == EntityName || p.OriginalEntityName == EntityName || p.DatasourceEntityName == EntityName);
+                retval = Entities.Any(p =>
+                    string.Equals(p.EntityName, EntityName, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(p.OriginalEntityName, EntityName, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(p.DatasourceEntityName, EntityName, StringComparison.OrdinalIgnoreCase));
             }
 
             return retval;
