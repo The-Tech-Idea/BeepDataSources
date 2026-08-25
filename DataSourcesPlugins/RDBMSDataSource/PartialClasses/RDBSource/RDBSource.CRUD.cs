@@ -183,15 +183,24 @@ namespace TheTechIdea.Beep.DataBase
                         DMEEditor.ErrorObject.Message = $"Successfully inserted record to {EntityName}";
                         DMEEditor.ErrorObject.Flag = Errors.Ok;
                         
-                        // Fetch auto-generated identity if applicable
+                        // Fetch auto-generated identity if applicable. Gated on the primary key
+                        // actually BEING an auto-increment column: SQLite's last_insert_rowid() (and
+                        // every provider's equivalent) always returns a value after a successful
+                        // insert regardless of the declared PK — every SQLite table has an implicit
+                        // ROWID even when the real PK is a client-generated TEXT/GUID column. Without
+                        // this guard, that implicit rowid silently overwrote the caller's own primary
+                        // key value on every insert, corrupting the in-memory entity (the row itself,
+                        // written from the caller's value, stayed correct — only the C# object's PK
+                        // no longer matched what was actually persisted).
                         string fetchIdentityQuery = RDBMSHelper.GenerateFetchLastIdentityQuery(DatasourceType);
-                        if (fetchIdentityQuery.ToUpper().Contains("SELECT") && DataStruct.PrimaryKeys.Count() > 0)
+                        var pkField = DataStruct.PrimaryKeys.Count() > 0 ? DataStruct.PrimaryKeys.First() : null;
+                        if (fetchIdentityQuery.ToUpper().Contains("SELECT") && pkField != null && pkField.IsAutoIncrement)
                         {
                             cmd.CommandText = fetchIdentityQuery;
                             object result = cmd.ExecuteScalar();
-                            if (result != null)
+                            if (result != null && result != DBNull.Value)
                             {
-                                var pkFieldName = DataStruct.PrimaryKeys.First().FieldName;
+                                var pkFieldName = pkField.FieldName;
                                 var primaryKeyProperty = FindPropertyCaseInsensitive(InsertedData.GetType(), pkFieldName);
                                 if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
                                 {
@@ -425,15 +434,20 @@ namespace TheTechIdea.Beep.DataBase
                         DMEEditor.ErrorObject.Message = $"Successfully inserted record to {EntityName}";
                         DMEEditor.ErrorObject.Flag = Errors.Ok;
                         
-                        // Fetch auto-generated identity if applicable
+                        // Fetch auto-generated identity if applicable. Gated on the primary key
+                        // actually BEING an auto-increment column — see InsertEntity's identical
+                        // guard for why: SQLite's last_insert_rowid() always returns the implicit
+                        // ROWID after any insert, even for a table whose real PK is a client-generated
+                        // TEXT/GUID column, and would otherwise silently overwrite the caller's PK.
                         string fetchIdentityQuery = RDBMSHelper.GenerateFetchLastIdentityQuery(DatasourceType);
-                        if (fetchIdentityQuery.ToUpper().Contains("SELECT") && DataStruct.PrimaryKeys.Count() > 0)
+                        var pkField = DataStruct.PrimaryKeys.Count() > 0 ? DataStruct.PrimaryKeys.First() : null;
+                        if (fetchIdentityQuery.ToUpper().Contains("SELECT") && pkField != null && pkField.IsAutoIncrement)
                         {
                             cmd.CommandText = fetchIdentityQuery;
                             object result = await ExecuteScalarAsync(cmd);
-                            if (result != null)
+                            if (result != null && result != DBNull.Value)
                             {
-                                var pkFieldName = DataStruct.PrimaryKeys.First().FieldName;
+                                var pkFieldName = pkField.FieldName;
                                 var primaryKeyProperty = FindPropertyCaseInsensitive(InsertedData.GetType(), pkFieldName);
                                 if (primaryKeyProperty != null && primaryKeyProperty.CanWrite)
                                 {

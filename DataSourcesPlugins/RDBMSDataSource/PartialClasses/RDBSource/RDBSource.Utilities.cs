@@ -107,6 +107,8 @@ namespace TheTechIdea.Beep.DataBase
                     // (2026-08-03)
                     var tx = ActiveTransaction;
                     if (tx != null) cmd.Transaction = tx;
+
+                    ConfigureCommand(cmd);
                 }
                 else
                 {
@@ -128,6 +130,16 @@ namespace TheTechIdea.Beep.DataBase
             }
             return cmd;
         }
+
+        /// <summary>
+        /// Provider-specific command configuration hook, invoked once per command
+        /// by <see cref="GetDataCommand"/>. The base implementation is a no-op;
+        /// overrides (e.g. Oracle's BindByName) plug in here.
+        /// </summary>
+        protected virtual void ConfigureCommand(IDbCommand command)
+        {
+        }
+
         public virtual IDbDataAdapter GetDataAdapter(string Sql, List<AppFilter> Filter = null)
         {
             IDbDataAdapter adp = null;

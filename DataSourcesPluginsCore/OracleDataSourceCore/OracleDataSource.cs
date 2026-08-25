@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using TheTechIdea.Beep.Vis;
 using TheTechIdea.Beep.DataBase;
 using TheTechIdea.Beep.Editor;
@@ -27,6 +28,21 @@ namespace TheTechIdea.Beep.DataBase
         // column delimiter for our DML generator. Bind params use ":" (Oracle bind prefix).
         public override string ColumnDelimiter { get; set; } = "'";
         public override string ParameterDelimiter { get; set; } = ":";
+
+        /// <summary>
+        /// ODP.NET binds positionally by default (BindByName = false). RDBSource
+        /// generates named placeholders (:p_&lt;Field&gt;) and adds parameters in field
+        /// order, so positional binding silently shifts values into the wrong
+        /// columns whenever a parameter is skipped. Name-based binding makes a
+        /// missing parameter fail loudly (ORA-01008) instead of corrupting data.
+        /// </summary>
+        protected override void ConfigureCommand(IDbCommand command)
+        {
+            if (command is Oracle.ManagedDataAccess.Client.OracleCommand oracleCommand)
+            {
+                oracleCommand.BindByName = true;
+            }
+        }
 
         public override string DisableFKConstraints(EntityStructure t1)
         {

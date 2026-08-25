@@ -14,105 +14,6 @@ namespace TheTechIdea.Beep.DataBase
 {
     public partial class RDBSource : IRDBSource
     {
-        /// <summary>
-        /// Creates and adds parameters to a database command based on the provided DataRow and EntityStructure.
-        /// </summary>
-        /// <param name="command">The database command to add parameters to.</param>
-        /// <param name="r">The DataRow containing parameter values.</param>
-        /// <param name="DataStruct">The EntityStructure defining the structure of the entity.</param>
-        /// <returns>The updated IDbCommand with parameters added.</returns>
-        private IDbCommand CreateCommandParameters(IDbCommand command, DataRow r, EntityStructure DataStruct)
-        {
-            command.Parameters.Clear();
-
-            foreach (EntityField item in DataStruct.Fields.OrderBy(o => o.FieldName))
-            {
-
-                if (!command.Parameters.Contains("p_" + Regex.Replace(item.FieldName, @"\s+", "_")))
-                {
-                    IDbDataParameter parameter = command.CreateParameter();
-                    switch (item.Fieldtype)
-                    {
-                        case "System.DateTime":
-                            parameter.DbType = DbType.DateTime;  // Set this once as it's common for both branches
-
-                            if (r[item.FieldName] == DBNull.Value || string.IsNullOrWhiteSpace(r[item.FieldName].ToString()))
-                            {
-                                parameter.Value = DBNull.Value;
-                            }
-                            else
-                            {
-                                if (DateTime.TryParse(r[item.FieldName].ToString(), out DateTime dateValue))
-                                {
-                                    // Ensuring the DateTime Kind is correctly set
-                                    if (dateValue.Kind == DateTimeKind.Unspecified)
-                                    {
-                                        // Assuming the unspecified DateTime is in UTC as required by PostgreSQL
-                                        dateValue = DateTime.SpecifyKind(dateValue, DateTimeKind.Utc);
-                                    }
-                                    else if (dateValue.Kind == DateTimeKind.Local)
-                                    {
-                                        // Convert local DateTime to UTC
-                                        dateValue = dateValue.ToUniversalTime();
-                                    }
-                                    parameter.Value = dateValue;
-                                }
-                                else
-                                {
-                                    parameter.Value = DBNull.Value;
-                                }
-                            }
-
-                            break;
-                        case "System.Double":
-                            parameter.DbType = DbType.Double;
-                            parameter.Value = Convert.ToDouble(r[item.FieldName]);
-                            break;
-                        case "System.Single": // Single is equivalent to float in C#
-                            parameter.DbType = DbType.Single;
-                            parameter.Value = Convert.ToSingle(r[item.FieldName]);
-                            break;
-                        case "System.Byte":
-                            parameter.DbType = DbType.Byte;
-                            parameter.Value = Convert.ToByte(r[item.FieldName]);
-                            break;
-                        case "System.Guid":
-                            parameter.DbType = DbType.Guid;
-                            parameter.Value = Guid.Parse(r[item.FieldName].ToString());
-                            break;
-                        case "System.String":  // For VARCHAR2 and NVARCHAR2
-                            parameter.DbType = DbType.String;
-                            parameter.Value = r[item.FieldName] ?? DBNull.Value;
-                            break;
-                        case "System.Decimal":  // For NUMBER without scale
-                            parameter.DbType = DbType.Decimal;
-                            parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : (object)Convert.ToDecimal(r[item.FieldName]);
-                            break;
-                        case "System.Int32":  // For NUMBER that fits into Int32
-                            parameter.DbType = DbType.Int32;
-                            parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : (object)Convert.ToInt32(r[item.FieldName]);
-                            break;
-                        case "System.Int64":  // For NUMBER that fits into Int64
-                            parameter.DbType = DbType.Int64;
-                            parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : (object)Convert.ToInt64(r[item.FieldName]);
-                            break;
-                        case "System.Boolean":  // If you have a boolean in .NET mapped to VARCHAR2(3 CHAR) in Oracle
-                            parameter.DbType = DbType.Boolean;
-                            parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : (object)Convert.ToBoolean(r[item.FieldName]);
-                            break;
-                        // Add more cases as needed for other types
-                        default:
-                            parameter.Value = r.IsNull(item.FieldName) ? DBNull.Value : r[item.FieldName];
-                            break;
-                    }
-                    parameter.ParameterName = "p_" + Regex.Replace(item.FieldName, @"\s+", "_");
-                    //   parameter.DbType = TypeToDbType(tb.Columns[item.FieldName].DataType);
-                    command.Parameters.Add(parameter);
-                }
-
-            }
-            return command;
-        }
         private IDbCommand CreateCommandParameters(IDbCommand command, object InsertedData, EntityStructure DataStruct)
         {
 
@@ -156,6 +57,10 @@ namespace TheTechIdea.Beep.DataBase
                         parameter.Value = DBNull.Value;
                     }
                     command.Parameters.Add(parameter);
+                }
+                else
+                {
+                    DMEEditor.AddLogMessage("Beep", $"Field '{field.FieldName}' has no matching property on type '{InsertedData.GetType().Name}'; its SQL placeholder will be left unbound.", DateTime.Now, 0, DataStruct.EntityName, Errors.Warning);
                 }
             }
 
@@ -222,6 +127,10 @@ namespace TheTechIdea.Beep.DataBase
                     }
                     command.Parameters.Add(parameter);
                 }
+                else
+                {
+                    DMEEditor.AddLogMessage("Beep", $"Field '{field.FieldName}' has no matching property on type '{InsertedData.GetType().Name}'; its SQL placeholder will be left unbound.", DateTime.Now, 0, DataStruct.EntityName, Errors.Warning);
+                }
             }
 
             return command;
@@ -273,6 +182,10 @@ namespace TheTechIdea.Beep.DataBase
                     }
 
                     command.Parameters.Add(parameter);
+                }
+                else
+                {
+                    DMEEditor.AddLogMessage("Beep", $"Field '{field.FieldName}' has no matching property on type '{r.GetType().Name}'; its SQL placeholder will be left unbound.", DateTime.Now, 0, DataStruct.EntityName, Errors.Warning);
                 }
 
             }

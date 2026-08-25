@@ -87,7 +87,8 @@ namespace TheTechIdea.Beep.DataBase
 
         private bool IsNumericType(string fieldType)
         {
-            return fieldType == "System.Decimal" || fieldType == "System.Float" || fieldType == "System.Double";
+            return fieldType == "System.Decimal" || fieldType == "System.Float" || fieldType == "System.Double"
+                || fieldType == "System.Int16" || fieldType == "System.Int32" || fieldType == "System.Int64";
         }
         // helper to read a typed column only if it exists (otherwise return default)
         private static T SafeField<T>(DataRow row, string colName, T defaultValue = default)
@@ -95,6 +96,16 @@ namespace TheTechIdea.Beep.DataBase
             if (row.Table.Columns.Contains(colName) && !row.IsNull(colName))
                 return row.Field<T>(colName);
             return defaultValue;
+        }
+        // ADO.NET providers disagree on the NumericPrecision/NumericScale column type:
+        // the schema spec says Int16 but System.Data.SQLite returns Int32, so a
+        // row.Field<short> unbox throws InvalidCastException. Convert.ToInt16 handles
+        // boxed Int16/Int32/Int64/string uniformly.
+        private static short SafeShort(DataRow row, string colName)
+        {
+            if (row.Table.Columns.Contains(colName) && !row.IsNull(colName))
+                return Convert.ToInt16(row[colName]);
+            return 0;
         }
 
         public virtual EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
@@ -163,6 +174,18 @@ namespace TheTechIdea.Beep.DataBase
                                 x.Fieldtype = MapOracleFloatToDotNetType(precision);
                             }
 
+                            // Oracle NUMBER(p,0) → int/long. ODP.NET's schema table
+                            // maps every NUMBER to System.Decimal; without this an
+                            // INTEGER/NUMBER(10,0) key surfaces as decimal in POCOs,
+                            // FieldTypeMapper and generated editors.
+                            if (DatasourceType == DataSourceType.Oracle
+                             && x.Fieldtype.Equals("System.Decimal", StringComparison.OrdinalIgnoreCase))
+                            {
+                                short numberPrecision = SafeShort(r, "NumericPrecision");
+                                short numberScale = SafeShort(r, "NumericScale");
+                                x.Fieldtype = MapOracleNumberToDotNetType(numberPrecision, numberScale);
+                            }
+
                             x.Size1 = SafeField<int>(r, "ColumnSize");
                             x.IsAutoIncrement = SafeField<bool>(r, "IsAutoIncrement");
                             x.AllowDBNull = SafeField<bool>(r, "AllowDBNull");
@@ -187,8 +210,8 @@ namespace TheTechIdea.Beep.DataBase
                             // NumericPrecision/Scale only if the schema provides them
                             if (IsNumericType(x.Fieldtype))
                             {
-                                x.NumericPrecision = SafeField<short>(r, "NumericPrecision");
-                                x.NumericScale = SafeField<short>(r, "NumericScale");
+                                x.NumericPrecision = SafeShort(r, "NumericPrecision");
+                                x.NumericScale = SafeShort(r, "NumericScale");
                             }
                         }
                         catch (Exception ex)
@@ -823,6 +846,39 @@ namespace TheTechIdea.Beep.DataBase
                 // Use .NET decimal for higher precision
                 return "System.Decimal";
             }
+        }
+
+        /// <summary>
+        /// Maps an Oracle NUMBER column to the tightest .NET integral/decimal
+        /// type from its decimal precision and scale. ODP.NET's GetSchemaTable
+        /// reports every NUMBER as System.Decimal, which is too coarse for
+        /// NUMBER(p,0) integer keys.
+        /// </summary>
+        public static string MapOracleNumberToDotNetType(short precision, short scale)
+        {
+            // Fractional or unconstrained NUMBER stays decimal — decimal is the
+            // only .NET type that can hold the full Oracle NUMBER range/semantics.
+            if (scale > 0 || precision <= 0)
+            {
+                return "System.Decimal";
+            }
+
+            // Integral NUMBER(p,0) narrows to the smallest integer type that fits.
+            if (precision <= 4)
+            {
+                return "System.Int16";
+            }
+            if (precision <= 9)
+            {
+                return "System.Int32";
+            }
+            if (precision <= 18)
+            {
+                return "System.Int64";
+            }
+
+            // 19–38 digits exceed Int64; decimal is required.
+            return "System.Decimal";
         }
         public int GetFloatPrecision(string tableName, string FieldName)
         {

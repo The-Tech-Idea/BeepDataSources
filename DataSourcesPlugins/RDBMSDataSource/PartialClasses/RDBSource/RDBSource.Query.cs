@@ -86,8 +86,14 @@ namespace TheTechIdea.Beep.DataBase
                     {
                         if (reader.Read())
                         {
-                            var result = reader.GetDecimal(0); // Assuming the result is a decimal value
-                            return Convert.ToDouble(result);
+                            // GetValue + Convert.ToDouble is provider- and type-safe:
+                            // GetDecimal(0) throws on any non-decimal scalar (an
+                            // integer identity, a string, a timestamp). Matches
+                            // GetScalarAsync's behaviour.
+                            var result = reader.GetValue(0);
+                            return result == null || result == DBNull.Value
+                                ? 0.0
+                                : Convert.ToDouble(result);
                         }
                     }
                 }
