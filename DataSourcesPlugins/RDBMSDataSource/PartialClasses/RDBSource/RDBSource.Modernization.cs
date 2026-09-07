@@ -10,6 +10,7 @@ using TheTechIdea.Beep.ConfigUtil;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Logger;
 using TheTechIdea.Beep.Utilities;
+using TheTechIdea.Beep.Helpers.RDBMSHelpers;
 using TheTechIdea.Beep.Addin;
 using TheTechIdea.Beep.Helpers;
 using TheTechIdea.Beep.Report;
@@ -62,9 +63,13 @@ namespace TheTechIdea.Beep.DataBase
                     }
                 }
 
-                reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken);
+                reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken).ConfigureAwait(false);
 
-                while (await reader.ReadAsync(cancellationToken))
+                // One entry per column that failed conversion during this read, so the log records
+                // the problem once rather than once per row.
+                var reportedConversionFailures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -88,9 +93,18 @@ namespace TheTechIdea.Beep.DataBase
                                         Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
                                     property.SetValue(entity, convertedValue);
                                 }
-                                catch
+                                catch (Exception convEx)
                                 {
-                                    // Skip conversion errors
+                                    // Was an empty catch: an unconvertible column left the property
+                                    // at its default and every row still came back looking valid.
+                                    if (reportedConversionFailures.Add(FieldName))
+                                    {
+                                        DMEEditor?.AddLogMessage("Beep",
+                                            $"Could not convert column '{FieldName}' of '{entityName}' to " +
+                                            $"{property.PropertyType.Name}: {convEx.Message}. That property is " +
+                                            "left at its default value for every row of this read.",
+                                            DateTime.Now, 0, entityName, Errors.Warning);
+                                    }
                                 }
                             }
                         }
@@ -102,9 +116,9 @@ namespace TheTechIdea.Beep.DataBase
             finally
             {
                 if (reader != null)
-                    await reader.DisposeAsync();
+                    await reader.DisposeAsync().ConfigureAwait(false);
                 if (cmd != null)
-                    await cmd.DisposeAsync();
+                    await cmd.DisposeAsync().ConfigureAwait(false);
             }
         }
 
@@ -128,9 +142,9 @@ namespace TheTechIdea.Beep.DataBase
                     throw new InvalidOperationException("Database command does not support async operations");
 
                 cmd.CommandText = query;
-                reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken);
+                reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken).ConfigureAwait(false);
 
-                while (await reader.ReadAsync(cancellationToken))
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -142,9 +156,9 @@ namespace TheTechIdea.Beep.DataBase
             finally
             {
                 if (reader != null)
-                    await reader.DisposeAsync();
+                    await reader.DisposeAsync().ConfigureAwait(false);
                 if (cmd != null)
-                    await cmd.DisposeAsync();
+                    await cmd.DisposeAsync().ConfigureAwait(false);
             }
         }
 
@@ -163,7 +177,7 @@ namespace TheTechIdea.Beep.DataBase
 
             while (hasMoreData && !cancellationToken.IsCancellationRequested)
             {
-                var pagedResult = await GetEntityPagedAsync<T>(entityName, filters, currentPage, pageSize, cancellationToken);
+                var pagedResult = await GetEntityPagedAsync<T>(entityName, filters, currentPage, pageSize, cancellationToken).ConfigureAwait(false);
                 
                 if (pagedResult?.Data == null || !pagedResult.Data.Any())
                 {
@@ -222,7 +236,7 @@ namespace TheTechIdea.Beep.DataBase
                 cmd.CommandText = countQuery;
                 AddFilterParameters(cmd, filters);
 
-                var totalCountObj = await cmd.ExecuteScalarAsync(cancellationToken);
+                var totalCountObj = await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
                 result.TotalCount = Convert.ToInt32(totalCountObj);
                 result.TotalPages = (int)Math.Ceiling(result.TotalCount / (double)pageSize);
 
@@ -232,12 +246,16 @@ namespace TheTechIdea.Beep.DataBase
                 cmd.Parameters.Clear();
                 AddFilterParameters(cmd, filters);
 
-                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken))
+                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken).ConfigureAwait(false))
                 {
                     var entities = new List<T>();
                     var properties = typeof(T).GetProperties();
 
-                    while (await reader.ReadAsync(cancellationToken))
+                    // One entry per column that failed conversion on this page; see the streaming
+                    // read above for why this is reported once rather than once per row.
+                    var pagedConversionFailures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                     {
                         var entity = new T();
 
@@ -258,7 +276,18 @@ namespace TheTechIdea.Beep.DataBase
                                             Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
                                         property.SetValue(entity, convertedValue);
                                     }
-                                    catch { }
+                                    catch (Exception convEx)
+                                    {
+                                        // See the streaming read above; this was `catch { }`.
+                                        if (pagedConversionFailures.Add(FieldName))
+                                        {
+                                            DMEEditor?.AddLogMessage("Beep",
+                                                $"Could not convert column '{FieldName}' of '{entityName}' to " +
+                                                $"{property.PropertyType.Name}: {convEx.Message}. That property is " +
+                                                "left at its default value for every row of this page.",
+                                                DateTime.Now, 0, entityName, Errors.Warning);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -278,7 +307,7 @@ namespace TheTechIdea.Beep.DataBase
             finally
             {
                 if (cmd != null)
-                    await cmd.DisposeAsync();
+                    await cmd.DisposeAsync().ConfigureAwait(false);
             }
 
             return result;
@@ -300,7 +329,7 @@ namespace TheTechIdea.Beep.DataBase
                     throw new InvalidOperationException("Database command does not support async operations");
 
                 cmd.CommandText = query;
-                var result = await cmd.ExecuteScalarAsync(cancellationToken);
+                var result = await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
 
                 if (result == null || result == DBNull.Value)
                     return default;
@@ -310,7 +339,7 @@ namespace TheTechIdea.Beep.DataBase
             finally
             {
                 if (cmd != null)
-                    await cmd.DisposeAsync();
+                    await cmd.DisposeAsync().ConfigureAwait(false);
             }
         }
 
@@ -330,12 +359,12 @@ namespace TheTechIdea.Beep.DataBase
                     throw new InvalidOperationException("Database command does not support async operations");
 
                 cmd.CommandText = query;
-                return await cmd.ExecuteNonQueryAsync(cancellationToken);
+                return await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
             finally
             {
                 if (cmd != null)
-                    await cmd.DisposeAsync();
+                    await cmd.DisposeAsync().ConfigureAwait(false);
             }
         }
 
@@ -348,7 +377,7 @@ namespace TheTechIdea.Beep.DataBase
         /// </summary>
         private string GetQueryString(string entityName, List<AppFilter>? filters)
         {
-            string baseQuery = $"SELECT * FROM {Dataconnection.ConnectionProp.SchemaName}{entityName}";
+            string baseQuery = $"SELECT * FROM {QualifyWithSchema(entityName)}";
 
             if (filters != null && filters.Any())
             {
@@ -368,7 +397,7 @@ namespace TheTechIdea.Beep.DataBase
         /// </summary>
         private string GetCountQuery(string entityName, List<AppFilter>? filters)
         {
-            string countQuery = $"SELECT COUNT(*) FROM {Dataconnection.ConnectionProp.SchemaName}{entityName}";
+            string countQuery = $"SELECT COUNT(*) FROM {QualifyWithSchema(entityName)}";
 
             if (filters != null && filters.Any())
             {
@@ -386,10 +415,25 @@ namespace TheTechIdea.Beep.DataBase
         /// <summary>
         /// Gets paged query with OFFSET/FETCH or database-specific syntax
         /// </summary>
+        /// <remarks>
+        /// Paging dialect comes from <c>RDBMSHelper.GetPagingSyntax</c>, the same source the
+        /// synchronous path in <c>RDBSource.Query.cs</c> uses.
+        ///
+        /// This used to carry its own <c>switch (DatasourceType)</c> covering five engines and
+        /// defaulting to SQL Server's OFFSET/FETCH, while the shared helper covers thirteen and
+        /// defaults to LIMIT/OFFSET. The two disagreed on Oracle — OFFSET/FETCH there, a ROWNUM
+        /// subquery here — and roughly nineteen engines (MariaDB, Snowflake, CockroachDB, Vertica,
+        /// BigQuery, Redshift, DuckDB, Databricks, Presto, Trino, Hana, Spanner and the rest) got
+        /// SQL Server syntax on the async path and LIMIT/OFFSET on the sync one. One source now.
+        ///
+        /// Note this settles Oracle on OFFSET/FETCH, which is 12c and later. The old ROWNUM wrapper
+        /// here worked on 11g, but the synchronous path already used OFFSET/FETCH, so 11g was
+        /// half-broken either way. If 11g support is needed, add it to
+        /// <c>RDBMSHelper.GetPagingSyntax</c> so both paths get it.
+        /// </remarks>
         private string GetPagedQuery(string entityName, List<AppFilter>? filters, int pageNumber, int pageSize)
         {
             string baseQuery = GetQueryString(entityName, filters);
-            int offset = (pageNumber - 1) * pageSize;
 
             // Add ORDER BY if not present (required for paging)
             if (!baseQuery.Contains("ORDER BY", StringComparison.OrdinalIgnoreCase))
@@ -408,32 +452,7 @@ namespace TheTechIdea.Beep.DataBase
                 }
             }
 
-            // Database-specific paging syntax
-            return DatasourceType switch
-            {
-                DataSourceType.SqlServer => $"{baseQuery} OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY",
-                DataSourceType.Mysql => $"{baseQuery} LIMIT {pageSize} OFFSET {offset}",
-                DataSourceType.Postgre => $"{baseQuery} LIMIT {pageSize} OFFSET {offset}",
-                DataSourceType.Oracle => BuildOraclePagingQuery(baseQuery, offset, pageSize),
-                DataSourceType.SqlLite => $"{baseQuery} LIMIT {pageSize} OFFSET {offset}",
-                _ => $"{baseQuery} OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY"
-            };
-        }
-
-        /// <summary>
-        /// Builds Oracle-specific paging query using ROW_NUMBER()
-        /// </summary>
-        private string BuildOraclePagingQuery(string baseQuery, int offset, int pageSize)
-        {
-            int startRow = offset + 1;
-            int endRow = offset + pageSize;
-
-            return $@"
-                SELECT * FROM (
-                    SELECT a.*, ROWNUM rnum FROM (
-                        {baseQuery}
-                    ) a WHERE ROWNUM <= {endRow}
-                ) WHERE rnum >= {startRow}";
+            return $"{baseQuery} {RDBMSHelper.GetPagingSyntax(DatasourceType, pageNumber, pageSize)}";
         }
 
         /// <summary>

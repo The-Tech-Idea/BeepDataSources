@@ -46,6 +46,125 @@ namespace TheTechIdea.Beep.DataBase
 
         #endregion
 
+        #region Bulk Transaction Scope
+
+        /// <summary>
+        /// Opens a transaction for a bulk batch and <b>publishes</b> it as this datasource's
+        /// <see cref="ActiveTransaction"/>, so commands created through <see cref="GetDataCommand"/>
+        /// carry it. Returns null when there is nothing to open.
+        /// </summary>
+        /// <remarks>
+        /// Publishing is the whole point. The batched paths do their work through
+        /// <c>InsertEntity</c>/<c>UpdateEntity</c>, which build their commands with
+        /// <c>GetDataCommand()</c> — and that only attaches <see cref="ActiveTransaction"/>. A
+        /// transaction held in a local variable was therefore invisible to them, so every command
+        /// ran with <c>cmd.Transaction</c> unset while the connection had a pending local
+        /// transaction. Providers that enforce the association reject that outright:
+        ///
+        ///   "ExecuteNonQuery requires the command to have a transaction when the connection
+        ///    assigned to the command is in a pending local transaction."
+        ///
+        /// Since <c>UseBulkTransactions</c> defaults to true and Oracle takes the batched path
+        /// (it is absent from <see cref="SupportsMultiRowInsert"/>), Oracle bulk insert failed out
+        /// of the box. Only SQLite survived, because it does not enforce the association.
+        ///
+        /// Returns null when the caller already owns a transaction, so a bulk operation inside an
+        /// outer <c>BeginTransaction</c>/<c>Commit</c> scope joins it instead of opening a second
+        /// one — most providers throw on a nested local transaction, and the previous code also
+        /// overwrote <c>cmd.Transaction</c>, silently taking the work out of the caller's scope.
+        /// </remarks>
+        private IDbTransaction BeginPublishedBulkTransaction()
+        {
+            if (!UseBulkTransactions)
+                return null;
+
+            // The caller owns one already — join it rather than nesting.
+            if (ActiveTransaction != null)
+                return null;
+
+            if (RDBMSConnection?.DbConn == null || RDBMSConnection.DbConn.State != ConnectionState.Open)
+                return null;
+
+            var transaction = RDBMSConnection.DbConn.BeginTransaction();
+            _activeTransaction = transaction;
+            return transaction;
+        }
+
+        /// <summary>
+        /// Completes a transaction opened by <see cref="BeginPublishedBulkTransaction"/> and stops
+        /// publishing it. Safe to call with null.
+        /// </summary>
+        private void EndPublishedBulkTransaction(IDbTransaction transaction, bool commit)
+        {
+            if (transaction == null)
+                return;
+
+            try
+            {
+                if (commit)
+                    transaction.Commit();
+                else
+                    transaction.Rollback();
+            }
+            finally
+            {
+                // Only clear it if it is still ours; never strand a caller's transaction.
+                if (ReferenceEquals(_activeTransaction, transaction))
+                    _activeTransaction = null;
+
+                transaction.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Rolls back without letting the rollback's own failure replace the exception that caused it.
+        /// </summary>
+        private void RollbackPublishedBulkTransaction(IDbTransaction transaction)
+        {
+            if (transaction == null)
+                return;
+
+            try
+            {
+                EndPublishedBulkTransaction(transaction, commit: false);
+            }
+            catch (Exception rollbackEx)
+            {
+                // Rollback on a dead connection throws, and rethrowing here would replace the
+                // original failure with a misleading one.
+                Logger?.WriteLog($"Bulk rollback failed for {DatasourceName}: {rollbackEx.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Resolves a column's SQL type for temp-table DDL.
+        /// </summary>
+        /// <remarks>
+        /// The three temp-table builders emitted <c>f.Fieldtype</c> straight into the CREATE
+        /// statement, but that holds a .NET type name — so the DDL read
+        /// <c>CREATE TABLE #t (Name System.String, Id System.Int32)</c>, which every server rejects.
+        /// With <c>EnableBulkOptimizations</c> defaulting to true, <c>BulkUpdateEntities</c>
+        /// therefore failed on its first statement on SQL Server, MySQL and PostgreSQL — the three
+        /// engines <see cref="SupportsTempTables"/> claims to support.
+        ///
+        /// <c>GenerateCreateEntityScript</c> already solved this; this routes the temp-table
+        /// builders through the same two helpers rather than repeating the mapping.
+        /// </remarks>
+        private string ResolveDdlColumnType(EntityField field)
+        {
+            string dbType = field?.Fieldtype;
+
+            if (string.IsNullOrWhiteSpace(dbType) ||
+                dbType.StartsWith("System.", StringComparison.OrdinalIgnoreCase))
+            {
+                dbType = GetFallbackDbType(field?.Fieldtype, DatasourceType);
+            }
+
+            return NormalizeDbTypeForProvider(dbType, DatasourceType);
+        }
+
+        #endregion
+
         #region Bulk Insert Operations
 
         /// <summary>
@@ -142,7 +261,6 @@ namespace TheTechIdea.Beep.DataBase
             }
 
             int totalRows = entitiesList.Count;
-            int processedRows = 0;
             int successfulRows = 0;
 
             try
@@ -152,11 +270,11 @@ namespace TheTechIdea.Beep.DataBase
 
                 if (EnableBulkOptimizations && SupportsMultiRowInsert())
                 {
-                    successfulRows = await BulkInsertMultiRowAsync(entityName, entitiesList, optimalBatchSize, progress, cancellationToken);
+                    successfulRows = await BulkInsertMultiRowAsync(entityName, entitiesList, optimalBatchSize, progress, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
-                    successfulRows = await BulkInsertBatchedAsync(entityName, entitiesList, optimalBatchSize, progress, cancellationToken);
+                    successfulRows = await BulkInsertBatchedAsync(entityName, entitiesList, optimalBatchSize, progress, cancellationToken).ConfigureAwait(false);
                 }
 
                 InvalidateEntityCache(entityName);
@@ -195,27 +313,24 @@ namespace TheTechIdea.Beep.DataBase
                     string multiRowInsert = BuildMultiRowInsertCommand(entityName, batch, cmd);
                     cmd.CommandText = multiRowInsert;
 
-                    if (UseBulkTransactions && Dataconnection.ConnectionProp.Database != null)
+                    // The command was created before the transaction, so attach it explicitly.
+                    // A null transaction means either bulk transactions are off or the caller
+                    // already owns one — in which case GetDataCommand already attached theirs and
+                    // overwriting it would take this work out of their scope.
+                    var transaction = BeginPublishedBulkTransaction();
+                    if (transaction != null)
+                        cmd.Transaction = transaction;
+
+                    try
                     {
-                        using (var transaction = RDBMSConnection.DbConn.BeginTransaction())
-                        {
-                            cmd.Transaction = transaction;
-                            try
-                            {
-                                int rowsInserted = cmd.ExecuteNonQuery();
-                                transaction.Commit();
-                                successfulRows += rowsInserted;
-                            }
-                            catch
-                            {
-                                transaction.Rollback();
-                                throw;
-                            }
-                        }
+                        int rowsInserted = cmd.ExecuteNonQuery();
+                        EndPublishedBulkTransaction(transaction, commit: true);
+                        successfulRows += rowsInserted;
                     }
-                    else
+                    catch
                     {
-                        successfulRows += cmd.ExecuteNonQuery();
+                        RollbackPublishedBulkTransaction(transaction);
+                        throw;
                     }
                 }
 
@@ -255,29 +370,23 @@ namespace TheTechIdea.Beep.DataBase
                     string multiRowInsert = BuildMultiRowInsertCommand(entityName, batch, cmd);
                     cmd.CommandText = multiRowInsert;
 
-                    if (UseBulkTransactions && Dataconnection.ConnectionProp.Database != null)
+                    // Same shape as the synchronous path. Synchronous Begin/Commit here rather
+                    // than the *Async pair so the transaction goes through the one place that
+                    // publishes it as ActiveTransaction; the work itself is still async.
+                    var transaction = BeginPublishedBulkTransaction();
+                    if (transaction != null)
+                        cmd.Transaction = transaction as DbTransaction;
+
+                    try
                     {
-                        var transaction = await (RDBMSConnection.DbConn as DbConnection)!.BeginTransactionAsync(cancellationToken);
-                        cmd.Transaction = transaction;
-                        try
-                        {
-                            int rowsInserted = await cmd.ExecuteNonQueryAsync(cancellationToken);
-                            await transaction.CommitAsync(cancellationToken);
-                            successfulRows += rowsInserted;
-                        }
-                        catch
-                        {
-                            await transaction.RollbackAsync(cancellationToken);
-                            throw;
-                        }
-                        finally
-                        {
-                            await transaction.DisposeAsync();
-                        }
+                        int rowsInserted = await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                        EndPublishedBulkTransaction(transaction, commit: true);
+                        successfulRows += rowsInserted;
                     }
-                    else
+                    catch
                     {
-                        successfulRows += await cmd.ExecuteNonQueryAsync(cancellationToken);
+                        RollbackPublishedBulkTransaction(transaction);
+                        throw;
                     }
 
                     processedRows += batch.Count;
@@ -285,7 +394,7 @@ namespace TheTechIdea.Beep.DataBase
                 }
                 finally
                 {
-                    await cmd.DisposeAsync();
+                    await cmd.DisposeAsync().ConfigureAwait(false);
                 }
             }
 
@@ -309,28 +418,10 @@ namespace TheTechIdea.Beep.DataBase
             {
                 var batch = entities.Skip(i).Take(batchSize).ToList();
 
-                if (UseBulkTransactions && Dataconnection.ConnectionProp.Database != null)
-                {
-                    using (var transaction = RDBMSConnection.DbConn.BeginTransaction())
-                    {
-                        try
-                        {
-                            foreach (var entity in batch)
-                            {
-                                var result = InsertEntity(entityName, entity);
-                                if (result.Flag == Errors.Ok)
-                                    successfulRows++;
-                            }
-                            transaction.Commit();
-                        }
-                        catch
-                        {
-                            transaction.Rollback();
-                            throw;
-                        }
-                    }
-                }
-                else
+                // Published, so the InsertEntity calls below — which build their commands through
+                // GetDataCommand — actually run inside it.
+                var transaction = BeginPublishedBulkTransaction();
+                try
                 {
                     foreach (var entity in batch)
                     {
@@ -338,6 +429,12 @@ namespace TheTechIdea.Beep.DataBase
                         if (result.Flag == Errors.Ok)
                             successfulRows++;
                     }
+                    EndPublishedBulkTransaction(transaction, commit: true);
+                }
+                catch
+                {
+                    RollbackPublishedBulkTransaction(transaction);
+                    throw;
                 }
 
                 processedRows += batch.Count;
@@ -367,37 +464,24 @@ namespace TheTechIdea.Beep.DataBase
 
                 var batch = entities.Skip(i).Take(batchSize).ToList();
 
-                if (UseBulkTransactions && Dataconnection.ConnectionProp.Database != null)
-                {
-                    var transaction = await (RDBMSConnection.DbConn as DbConnection)!.BeginTransactionAsync(cancellationToken);
-                    try
-                    {
-                        foreach (var entity in batch)
-                        {
-                            var result = await InsertEntityAsync(entityName, entity);
-                            if (result.Flag == Errors.Ok)
-                                successfulRows++;
-                        }
-                        await transaction.CommitAsync(cancellationToken);
-                    }
-                    catch
-                    {
-                        await transaction.RollbackAsync(cancellationToken);
-                        throw;
-                    }
-                    finally
-                    {
-                        await transaction.DisposeAsync();
-                    }
-                }
-                else
+                // Published, so the per-row calls below — which build their commands through
+                // GetDataCommand — actually run inside it. Synchronous Begin/Commit so the
+                // transaction goes through the one place that publishes it; the work stays async.
+                var transaction = BeginPublishedBulkTransaction();
+                try
                 {
                     foreach (var entity in batch)
                     {
-                        var result = await InsertEntityAsync(entityName, entity);
+                        var result = await InsertEntityAsync(entityName, entity).ConfigureAwait(false);
                         if (result.Flag == Errors.Ok)
                             successfulRows++;
                     }
+                    EndPublishedBulkTransaction(transaction, commit: true);
+                }
+                catch
+                {
+                    RollbackPublishedBulkTransaction(transaction);
+                    throw;
                 }
 
                 processedRows += batch.Count;
@@ -438,13 +522,21 @@ namespace TheTechIdea.Beep.DataBase
 
             try
             {
+                // Clamp to the provider's parameter budget, as the insert paths do. This was
+                // missing here: BulkUpdateWithTempTable loads the temp table with a multi-row
+                // INSERT over ALL fields, so the default 1000 rows x 20 columns is 20,000
+                // parameters — far past SQL Server's 2,100 limit.
+                int updateFieldsCount = DataStruct?.Fields?.Count ?? 1;
+                int optimalBatchSize = Math.Min(batchSize, MaxParametersPerBatch / Math.Max(updateFieldsCount, 1));
+                if (optimalBatchSize < 1) optimalBatchSize = 1;
+
                 if (EnableBulkOptimizations && SupportsTempTables())
                 {
-                    successfulRows = BulkUpdateWithTempTable(entityName, entitiesList, batchSize, progress);
+                    successfulRows = BulkUpdateWithTempTable(entityName, entitiesList, optimalBatchSize, progress);
                 }
                 else
                 {
-                    successfulRows = BulkUpdateBatched(entityName, entitiesList, batchSize, progress);
+                    successfulRows = BulkUpdateBatched(entityName, entitiesList, optimalBatchSize, progress);
                 }
 
                 InvalidateEntityCache(entityName);
@@ -489,13 +581,18 @@ namespace TheTechIdea.Beep.DataBase
 
             try
             {
+                // See the synchronous overload: clamp to the provider's parameter budget.
+                int updateFieldsCount = DataStruct?.Fields?.Count ?? 1;
+                int optimalBatchSize = Math.Min(batchSize, MaxParametersPerBatch / Math.Max(updateFieldsCount, 1));
+                if (optimalBatchSize < 1) optimalBatchSize = 1;
+
                 if (EnableBulkOptimizations && SupportsTempTables())
                 {
-                    successfulRows = await BulkUpdateWithTempTableAsync(entityName, entitiesList, batchSize, progress, cancellationToken);
+                    successfulRows = await BulkUpdateWithTempTableAsync(entityName, entitiesList, optimalBatchSize, progress, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
-                    successfulRows = await BulkUpdateBatchedAsync(entityName, entitiesList, batchSize, progress, cancellationToken);
+                    successfulRows = await BulkUpdateBatchedAsync(entityName, entitiesList, optimalBatchSize, progress, cancellationToken).ConfigureAwait(false);
                 }
 
                 InvalidateEntityCache(entityName);
@@ -578,14 +675,14 @@ namespace TheTechIdea.Beep.DataBase
 
             try
             {
-                await CreateTempTableForUpdateAsync(tempTableName, cancellationToken);
+                await CreateTempTableForUpdateAsync(tempTableName, cancellationToken).ConfigureAwait(false);
 
                 for (int i = 0; i < entities.Count; i += batchSize)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
                     var batch = entities.Skip(i).Take(batchSize).ToList();
-                    await InsertIntoTempTableAsync(tempTableName, batch, cancellationToken);
+                    await InsertIntoTempTableAsync(tempTableName, batch, cancellationToken).ConfigureAwait(false);
                     processedRows += batch.Count;
                     ReportProgress(progress, entityName, processedRows, totalRows, "Bulk Update Async - Loading Temp Table");
                 }
@@ -598,18 +695,18 @@ namespace TheTechIdea.Beep.DataBase
                 try
                 {
                     cmd.CommandText = mergeQuery;
-                    successfulRows = await cmd.ExecuteNonQueryAsync(cancellationToken);
+                    successfulRows = await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                 }
                 finally
                 {
-                    await cmd.DisposeAsync();
+                    await cmd.DisposeAsync().ConfigureAwait(false);
                 }
 
                 ReportProgress(progress, entityName, totalRows, totalRows, "Bulk Update Async - Complete");
             }
             finally
             {
-                await DropTempTableAsync(tempTableName, cancellationToken);
+                await DropTempTableAsync(tempTableName, cancellationToken).ConfigureAwait(false);
             }
 
             return successfulRows;
@@ -632,28 +729,8 @@ namespace TheTechIdea.Beep.DataBase
             {
                 var batch = entities.Skip(i).Take(batchSize).ToList();
 
-                if (UseBulkTransactions && Dataconnection.ConnectionProp.Database != null)
-                {
-                    using (var transaction = RDBMSConnection.DbConn.BeginTransaction())
-                    {
-                        try
-                        {
-                            foreach (var entity in batch)
-                            {
-                                var result = UpdateEntity(entityName, entity);
-                                if (result.Flag == Errors.Ok)
-                                    successfulRows++;
-                            }
-                            transaction.Commit();
-                        }
-                        catch
-                        {
-                            transaction.Rollback();
-                            throw;
-                        }
-                    }
-                }
-                else
+                var transaction = BeginPublishedBulkTransaction();
+                try
                 {
                     foreach (var entity in batch)
                     {
@@ -661,6 +738,12 @@ namespace TheTechIdea.Beep.DataBase
                         if (result.Flag == Errors.Ok)
                             successfulRows++;
                     }
+                    EndPublishedBulkTransaction(transaction, commit: true);
+                }
+                catch
+                {
+                    RollbackPublishedBulkTransaction(transaction);
+                    throw;
                 }
 
                 processedRows += batch.Count;
@@ -690,37 +773,24 @@ namespace TheTechIdea.Beep.DataBase
 
                 var batch = entities.Skip(i).Take(batchSize).ToList();
 
-                if (UseBulkTransactions && Dataconnection.ConnectionProp.Database != null)
-                {
-                    var transaction = await (RDBMSConnection.DbConn as DbConnection)!.BeginTransactionAsync(cancellationToken);
-                    try
-                    {
-                        foreach (var entity in batch)
-                        {
-                            var result = await UpdateEntityAsync(entityName, entity);
-                            if (result.Flag == Errors.Ok)
-                                successfulRows++;
-                        }
-                        await transaction.CommitAsync(cancellationToken);
-                    }
-                    catch
-                    {
-                        await transaction.RollbackAsync(cancellationToken);
-                        throw;
-                    }
-                    finally
-                    {
-                        await transaction.DisposeAsync();
-                    }
-                }
-                else
+                // Published, so the per-row calls below — which build their commands through
+                // GetDataCommand — actually run inside it. Synchronous Begin/Commit so the
+                // transaction goes through the one place that publishes it; the work stays async.
+                var transaction = BeginPublishedBulkTransaction();
+                try
                 {
                     foreach (var entity in batch)
                     {
-                        var result = await UpdateEntityAsync(entityName, entity);
+                        var result = await UpdateEntityAsync(entityName, entity).ConfigureAwait(false);
                         if (result.Flag == Errors.Ok)
                             successfulRows++;
                     }
+                    EndPublishedBulkTransaction(transaction, commit: true);
+                }
+                catch
+                {
+                    RollbackPublishedBulkTransaction(transaction);
+                    throw;
                 }
 
                 processedRows += batch.Count;
@@ -737,13 +807,23 @@ namespace TheTechIdea.Beep.DataBase
         /// <summary>
         /// Builds multi-row INSERT command (INSERT INTO table VALUES (...), (...), ...)
         /// </summary>
-        private string BuildMultiRowInsertCommand<T>(string entityName, List<T> batch, IDbCommand cmd)
+        /// <param name="includeAutoIncrement">
+        /// True when loading a temp table for a bulk UPDATE. A real INSERT must skip identity
+        /// columns because the server assigns them, but the temp table is joined on the key, so it
+        /// needs the key's VALUE. The CREATE uses every field, and this used to filter identity
+        /// columns out unconditionally — so when the key was auto-increment it was never populated
+        /// and the MERGE's ON clause matched nothing, updating zero rows.
+        /// </param>
+        private string BuildMultiRowInsertCommand<T>(string entityName, List<T> batch, IDbCommand cmd,
+                                                     bool includeAutoIncrement = false)
         {
-            var fields = DataStruct.Fields.Where(f => !f.IsAutoIncrement).ToList();
+            var fields = includeAutoIncrement
+                ? DataStruct.Fields.ToList()
+                : DataStruct.Fields.Where(f => !f.IsAutoIncrement).ToList();
             var sb = new StringBuilder();
 
             // INSERT INTO table (col1, col2, ...)
-            sb.Append($"INSERT INTO {Dataconnection.ConnectionProp.SchemaName}{entityName} (");
+            sb.Append($"INSERT INTO {QualifyWithSchema(entityName)} (");
             sb.Append(string.Join(", ", fields.Select(f => GetFieldName(f.FieldName))));
             sb.Append(") VALUES ");
 
@@ -754,19 +834,35 @@ namespace TheTechIdea.Beep.DataBase
             foreach (var entity in batch)
             {
                 var paramNames = new List<string>();
-                
+
+                // Reflect on the RUNTIME type of the row, not on T.
+                //
+                // T is `object` whenever the caller came through the ETL layer or any
+                // IEnumerable<object> path, and typeof(object) has none of the entity's properties —
+                // so every lookup returned null, every parameter became DBNull.Value, and the bulk
+                // insert wrote a table full of NULLs and reported success. The single-row path had
+                // this right all along (CreateCommandParameters uses InsertedData.GetType()).
+                var rowType = entity?.GetType() ?? typeof(T);
+
                 foreach (var field in fields)
                 {
                     string paramName = $"{ParameterDelimiter}p{paramIndex++}";
                     paramNames.Add(paramName);
 
-                    var property = typeof(T).GetProperty(field.FieldName)
-                        ?? typeof(T).GetProperty(field.FieldName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                    var property = FindPropertyCaseInsensitive(rowType, field.FieldName);
                     var value = property?.GetValue(entity);
-                    
+
                     var param = cmd.CreateParameter();
                     param.ParameterName = paramName;
-                    param.Value = value ?? DBNull.Value;
+
+                    // Type and convert the value the same way the single-row path does. Leaving
+                    // DbType unset made the provider infer it from the CLR value, which silently
+                    // mishandles byte[], Guid, decimal scale and DateTime bounds.
+                    param.DbType = GetDbType(field.Fieldtype);
+                    param.Value = value == null || value == DBNull.Value
+                        ? DBNull.Value
+                        : ConvertToDbTypeValue(value, field.Fieldtype);
+
                     cmd.Parameters.Add(param);
                 }
 
@@ -817,11 +913,11 @@ namespace TheTechIdea.Beep.DataBase
             try
             {
                 cmd.CommandText = createTableSql;
-                await cmd.ExecuteNonQueryAsync(cancellationToken);
+                await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
             finally
             {
-                await cmd.DisposeAsync();
+                await cmd.DisposeAsync().ConfigureAwait(false);
             }
         }
 
@@ -832,7 +928,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             using (var cmd = GetDataCommand())
             {
-                string multiRowInsert = BuildMultiRowInsertCommand(tempTableName, batch, cmd);
+                string multiRowInsert = BuildMultiRowInsertCommand(tempTableName, batch, cmd, includeAutoIncrement: true);
                 cmd.CommandText = multiRowInsert;
                 cmd.ExecuteNonQuery();
             }
@@ -849,13 +945,13 @@ namespace TheTechIdea.Beep.DataBase
 
             try
             {
-                string multiRowInsert = BuildMultiRowInsertCommand(tempTableName, batch, cmd);
+                string multiRowInsert = BuildMultiRowInsertCommand(tempTableName, batch, cmd, includeAutoIncrement: true);
                 cmd.CommandText = multiRowInsert;
-                await cmd.ExecuteNonQueryAsync(cancellationToken);
+                await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
             finally
             {
-                await cmd.DisposeAsync();
+                await cmd.DisposeAsync().ConfigureAwait(false);
             }
         }
 
@@ -882,7 +978,7 @@ namespace TheTechIdea.Beep.DataBase
         private string BuildSqlServerMergeQuery(string targetTable, string tempTable, List<EntityField> primaryKeys, List<EntityField> updateFields)
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"MERGE INTO {Dataconnection.ConnectionProp.SchemaName}{targetTable} AS target");
+            sb.AppendLine($"MERGE INTO {QualifyWithSchema(targetTable)} AS target");
             sb.AppendLine($"USING {tempTable} AS source");
             
             // ON clause (primary key match)
@@ -904,7 +1000,7 @@ namespace TheTechIdea.Beep.DataBase
         private string BuildMySqlUpdateJoinQuery(string targetTable, string tempTable, List<EntityField> primaryKeys, List<EntityField> updateFields)
         {
             var sb = new StringBuilder();
-            sb.Append($"UPDATE {Dataconnection.ConnectionProp.SchemaName}{targetTable} AS target ");
+            sb.Append($"UPDATE {QualifyWithSchema(targetTable)} AS target ");
             sb.Append($"INNER JOIN {tempTable} AS source ");
             
             var onConditions = primaryKeys.Select(pk => 
@@ -924,7 +1020,7 @@ namespace TheTechIdea.Beep.DataBase
         private string BuildPostgreSqlUpdateFromQuery(string targetTable, string tempTable, List<EntityField> primaryKeys, List<EntityField> updateFields)
         {
             var sb = new StringBuilder();
-            sb.Append($"UPDATE {Dataconnection.ConnectionProp.SchemaName}{targetTable} AS target SET ");
+            sb.Append($"UPDATE {QualifyWithSchema(targetTable)} AS target SET ");
             
             var setStatements = updateFields.Select(f => 
                 $"{GetFieldName(f.FieldName)} = source.{GetFieldName(f.FieldName)}");
@@ -948,7 +1044,7 @@ namespace TheTechIdea.Beep.DataBase
             sb.AppendLine($"CREATE TABLE {tempTableName} (");
             
             var columns = DataStruct.Fields.Select(f => 
-                $"{GetFieldName(f.FieldName)} {f.Fieldtype}");
+                $"{GetFieldName(f.FieldName)} {ResolveDdlColumnType(f)}");
             sb.AppendLine(string.Join(",\n", columns));
             sb.AppendLine(")");
             
@@ -964,7 +1060,7 @@ namespace TheTechIdea.Beep.DataBase
             sb.AppendLine($"CREATE TEMPORARY TABLE {tempTableName} (");
             
             var columns = DataStruct.Fields.Select(f => 
-                $"{GetFieldName(f.FieldName)} {f.Fieldtype}");
+                $"{GetFieldName(f.FieldName)} {ResolveDdlColumnType(f)}");
             sb.AppendLine(string.Join(",\n", columns));
             sb.AppendLine(")");
             
@@ -980,7 +1076,7 @@ namespace TheTechIdea.Beep.DataBase
             sb.AppendLine($"CREATE TEMP TABLE {tempTableName} (");
             
             var columns = DataStruct.Fields.Select(f => 
-                $"{GetFieldName(f.FieldName)} {f.Fieldtype}");
+                $"{GetFieldName(f.FieldName)} {ResolveDdlColumnType(f)}");
             sb.AppendLine(string.Join(",\n", columns));
             sb.AppendLine(")");
             
@@ -996,13 +1092,23 @@ namespace TheTechIdea.Beep.DataBase
             {
                 using (var cmd = GetDataCommand())
                 {
-                    cmd.CommandText = $"DROP TABLE {tempTableName}";
+                    if (cmd == null)
+                    {
+                        Logger?.WriteLog($"Temp table {tempTableName} was not dropped: no command could be " +
+                                         $"created on {DatasourceName}. It will persist for the life of the connection.");
+                        return;
+                    }
+
+                    cmd.CommandText = $"DROP TABLE IF EXISTS {tempTableName}";
                     cmd.ExecuteNonQuery();
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Ignore errors on cleanup
+                // Cleanup failure must not replace the caller's outcome, but it must not be silent
+                // either: the catch here used to be completely empty, so a temp table that could not
+                // be dropped survived for the life of the connection with nothing recorded.
+                Logger?.WriteLog($"Could not drop temp table {tempTableName} on {DatasourceName}: {ex.Message}");
             }
         }
 
@@ -1018,39 +1124,61 @@ namespace TheTechIdea.Beep.DataBase
                 {
                     try
                     {
-                        cmd.CommandText = $"DROP TABLE {tempTableName}";
-                        await cmd.ExecuteNonQueryAsync(cancellationToken);
+                        cmd.CommandText = $"DROP TABLE IF EXISTS {tempTableName}";
+
+                        // CancellationToken.None deliberately. This runs from a finally, and the
+                        // caller's token is already cancelled on the path that matters — passing it
+                        // made the drop throw immediately, so the temp table leaked on EVERY
+                        // cancellation.
+                        await cmd.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
                     }
                     finally
                     {
-                        await cmd.DisposeAsync();
+                        await cmd.DisposeAsync().ConfigureAwait(false);
                     }
                 }
+                else
+                {
+                    Logger?.WriteLog($"Temp table {tempTableName} was not dropped: no async command could be " +
+                                     $"created on {DatasourceName}. It will persist for the life of the connection.");
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                // Ignore errors on cleanup
+                Logger?.WriteLog($"Could not drop temp table {tempTableName} on {DatasourceName}: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Check if database supports multi-row INSERT
+        /// Whether this engine accepts several rows in one INSERT ... VALUES clause.
         /// </summary>
+        /// <remarks>
+        /// Delegates to <see cref="RDBMSHelper.SupportsFeature"/>. This used to be a four-arm switch
+        /// naming SQL Server, MySQL, PostgreSQL and SQLite, so MariaDB, AzureSQL, CockroachDB,
+        /// DuckDB, DB2, Snowflake, Spanner, Presto/Trino and the rest all reported false and fell
+        /// back to a statement per row -- correct, but far slower than the grammar they support.
+        ///
+        /// This is a property of the engine's grammar, so it belongs in the shared dialect table
+        /// where every consumer sees the same answer, not in one base class.
+        /// <see cref="BuildMultiRowInsertCommand"/> emits plain ANSI multi-row VALUES, which is
+        /// exactly what that feature flag describes.
+        /// </remarks>
         private bool SupportsMultiRowInsert()
-        {
-            return DatasourceType switch
-            {
-                DataSourceType.SqlServer => true,
-                DataSourceType.Mysql => true,
-                DataSourceType.Postgre => true,
-                DataSourceType.SqlLite => true,
-                _ => false
-            };
-        }
+            => RDBMSHelper.SupportsFeature(DatasourceType, DatabaseFeature.MultiRowInsert);
 
         /// <summary>
-        /// Check if database supports temp tables for bulk operations
+        /// Whether <b>this class</b> can build temp-table bulk-update SQL for the current engine.
         /// </summary>
+        /// <remarks>
+        /// Deliberately <b>not</b> delegated to the shared dialect table. Far more engines support
+        /// temporary tables than are listed here; what is actually being asked is whether
+        /// <see cref="CreateTempTableForUpdate"/> and <see cref="BuildMergeUpdateQuery"/> have a
+        /// builder for this engine, and they have exactly three. Answering from an engine-capability
+        /// table would send Oracle and the others down a path that ends in the
+        /// <c>NotSupportedException</c> those two methods throw.
+        ///
+        /// Keep this list and those two switches in step: widening one without the other is the bug.
+        /// </remarks>
         private bool SupportsTempTables()
         {
             return DatasourceType switch

@@ -8,12 +8,76 @@ using System.Data.SqlTypes;
 using TheTechIdea.Beep.Editor;
 using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.ConfigUtil;
+using TheTechIdea.Beep.Helpers.RDBMSHelpers;
 using System.Threading.Tasks;
 
 namespace TheTechIdea.Beep.DataBase
 {
     public partial class RDBSource : IRDBSource
     {
+        /// <summary>
+        /// Clears the per-operation parameter-allocation state. Call once at the start of every
+        /// statement build, before <see cref="AllocateParameterName"/>.
+        /// </summary>
+        private void ResetParameterAllocation()
+        {
+            usedParameterNames = new HashSet<string>();
+            parameterNamesByField = new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        /// <summary>
+        /// Allocates a unique parameter name for <paramref name="fieldName"/> and remembers the
+        /// association, so binding can look it up exactly rather than guessing by prefix.
+        /// </summary>
+        /// <remarks>
+        /// The 30-character clamp matches the pre-existing behaviour. It is not correct for every
+        /// provider. It now asks <c>RDBMSHelper.GetMaxIdentifierLength(DataSourceType)</c> instead
+        /// of assuming 30 — Oracle's pre-12.2 limit — which needlessly truncated names on SQL Server
+        /// (128), MySQL (64), PostgreSQL (63) and every other engine, and each truncation is another
+        /// chance for two distinct fields to collide onto one parameter.
+        /// </remarks>
+        private string AllocateParameterName(string fieldName)
+        {
+            // Every call site emits {ParameterDelimiter}p_{name}. The delimiter is not part of the
+            // identifier, but the "p_" prefix is, so the budget for the normalised field name is the
+            // provider's limit less those two characters.
+            int budget = Math.Max(1, RDBMSHelper.GetMaxIdentifierLength(DatasourceType) - 2);
+
+            string paramName = Regex.Replace(fieldName, @"\s+", "_");
+            if (paramName.Length > budget)
+            {
+                paramName = paramName.Substring(0, budget);
+            }
+
+            // Two different fields can normalise to the same parameter name ("My Field" and
+            // "My_Field" both become My_Field, and the clamp above can make long names collide),
+            // so keep suffixing until the name is unused — trimming the stem so the suffix stays
+            // inside the budget rather than pushing the name back over the provider's limit.
+            int suffix = 1;
+            string originalParamName = paramName;
+            while (usedParameterNames.Contains(paramName))
+            {
+                string tail = "_" + suffix++;
+                string head = originalParamName.Length + tail.Length > budget
+                    ? originalParamName.Substring(0, Math.Max(1, budget - tail.Length))
+                    : originalParamName;
+                paramName = head + tail;
+            }
+
+            usedParameterNames.Add(paramName);
+            parameterNamesByField[fieldName] = paramName;
+            return paramName;
+        }
+
+        /// <summary>
+        /// Returns the parameter name allocated for <paramref name="fieldName"/> during statement
+        /// generation, or null when the field was not part of the generated statement.
+        /// </summary>
+        private string ResolveParameterName(string fieldName)
+        {
+            return parameterNamesByField.TryGetValue(fieldName, out string paramName) ? paramName : null;
+        }
+
         private IDbCommand CreateCommandParameters(IDbCommand command, object InsertedData, EntityStructure DataStruct)
         {
 
@@ -31,17 +95,10 @@ namespace TheTechIdea.Beep.DataBase
                     var value = property.GetValue(InsertedData) ?? DBNull.Value;
                     var parameter = command.CreateParameter();
 
-                    // Find the corresponding parameter name in usedParameterNames
-                    string paramName = Regex.Replace(field.FieldName, @"\s+", "_");
-                    if (paramName.Length > 30)
-                    {
-                        paramName = paramName.Substring(0, 30);
-                    }
-
-                    string matchingParamName = usedParameterNames.FirstOrDefault(p => p.StartsWith(paramName));
+                    string matchingParamName = ResolveParameterName(field.FieldName);
                     if (string.IsNullOrEmpty(matchingParamName))
                     {
-                        throw new InvalidOperationException($"Parameter name for field '{field.FieldName}' not found in usedParameterNames.");
+                        throw new InvalidOperationException($"Parameter name for field '{field.FieldName}' was not allocated during statement generation.");
                     }
 
                     parameter.ParameterName = $"{ParameterDelimiter}p_" + matchingParamName;
@@ -60,7 +117,7 @@ namespace TheTechIdea.Beep.DataBase
                 }
                 else
                 {
-                    DMEEditor.AddLogMessage("Beep", $"Field '{field.FieldName}' has no matching property on type '{InsertedData.GetType().Name}'; its SQL placeholder will be left unbound.", DateTime.Now, 0, DataStruct.EntityName, Errors.Warning);
+                    DMEEditor?.AddLogMessage("Beep", $"Field '{field.FieldName}' has no matching property on type '{InsertedData.GetType().Name}'; its SQL placeholder will be left unbound.", DateTime.Now, 0, DataStruct.EntityName, Errors.Warning);
                 }
             }
 
@@ -100,17 +157,10 @@ namespace TheTechIdea.Beep.DataBase
                     var value = property.GetValue(InsertedData) ?? DBNull.Value;
                     var parameter = command.CreateParameter();
 
-                    // Find the corresponding parameter name in usedParameterNames
-                    string paramName = Regex.Replace(field.FieldName, @"\s+", "_");
-                    if (paramName.Length > 30)
-                    {
-                        paramName = paramName.Substring(0, 30);
-                    }
-
-                    string matchingParamName = usedParameterNames.FirstOrDefault(p => p.StartsWith(paramName));
+                    string matchingParamName = ResolveParameterName(field.FieldName);
                     if (string.IsNullOrEmpty(matchingParamName))
                     {
-                        throw new InvalidOperationException($"Parameter name for field '{field.FieldName}' not found in usedParameterNames.");
+                        throw new InvalidOperationException($"Parameter name for field '{field.FieldName}' was not allocated during statement generation.");
                     }
 
                     parameter.ParameterName = $"{ParameterDelimiter}p_" + matchingParamName;
@@ -129,7 +179,7 @@ namespace TheTechIdea.Beep.DataBase
                 }
                 else
                 {
-                    DMEEditor.AddLogMessage("Beep", $"Field '{field.FieldName}' has no matching property on type '{InsertedData.GetType().Name}'; its SQL placeholder will be left unbound.", DateTime.Now, 0, DataStruct.EntityName, Errors.Warning);
+                    DMEEditor?.AddLogMessage("Beep", $"Field '{field.FieldName}' has no matching property on type '{InsertedData.GetType().Name}'; its SQL placeholder will be left unbound.", DateTime.Now, 0, DataStruct.EntityName, Errors.Warning);
                 }
             }
 
@@ -153,24 +203,20 @@ namespace TheTechIdea.Beep.DataBase
                 var property = FindPropertyCaseInsensitive(r.GetType(), field.FieldName);
                 if (property != null)
                 {
-                    var value = property.GetValue(r);
+                    // Coalesce here, not after the null test below. Its two sibling binders do
+                    // `?? DBNull.Value` at this point; this one did not, so a null primary-key value
+                    // reached `value.GetType()` and threw NullReferenceException instead of binding
+                    // DBNull like the INSERT and UPDATE paths do.
+                    var value = property.GetValue(r) ?? DBNull.Value;
                     var parameter = command.CreateParameter();
 
-                    // Find the corresponding parameter name in usedParameterNames
-                    string paramName = Regex.Replace(field.FieldName, @"\s+", "_");
-                    if (paramName.Length > 30)
-                    {
-                        paramName = paramName.Substring(0, 30);
-                    }
-
-                    string matchingParamName = usedParameterNames.FirstOrDefault(p => p.StartsWith(paramName));
+                    string matchingParamName = ResolveParameterName(field.FieldName);
                     if (string.IsNullOrEmpty(matchingParamName))
                     {
-                        throw new InvalidOperationException($"Parameter name for field '{field.FieldName}' not found in usedParameterNames.");
+                        throw new InvalidOperationException($"Parameter name for field '{field.FieldName}' was not allocated during statement generation.");
                     }
 
                     parameter.ParameterName = $"{ParameterDelimiter}p_" + matchingParamName;
-                    parameter.Value = value ?? DBNull.Value;
                     parameter.DbType = GetDbType(field.Fieldtype);
                     if (value != DBNull.Value && value.GetType() != typeof(DBNull))
                     {
@@ -185,7 +231,7 @@ namespace TheTechIdea.Beep.DataBase
                 }
                 else
                 {
-                    DMEEditor.AddLogMessage("Beep", $"Field '{field.FieldName}' has no matching property on type '{r.GetType().Name}'; its SQL placeholder will be left unbound.", DateTime.Now, 0, DataStruct.EntityName, Errors.Warning);
+                    DMEEditor?.AddLogMessage("Beep", $"Field '{field.FieldName}' has no matching property on type '{r.GetType().Name}'; its SQL placeholder will be left unbound.", DateTime.Now, 0, DataStruct.EntityName, Errors.Warning);
                 }
 
             }
@@ -197,8 +243,13 @@ namespace TheTechIdea.Beep.DataBase
             List<EntityField> SourceEntityFields = new List<EntityField>();
             List<EntityField> DestEntityFields = new List<EntityField>();
 
-            string Insertstr = "INSERT INTO " + EntityName + " (";
-            Insertstr = GetTableName(Insertstr.ToLower());
+            // Qualify the entity name directly rather than building the statement and then parsing
+            // the table back out of it with GetTableName. That routine rewrote SQL by string
+            // surgery: it lowercased the whole fragment (destroying identifier case on
+            // case-sensitive servers) and dispatched on IndexOf("insert"/"update"/"delete"), so an
+            // entity whose NAME merely contains one of those words — `updates`, `deleted_records`,
+            // `insert_log` — took the wrong branch and corrupted the statement.
+            string Insertstr = "INSERT INTO " + QualifyWithSchema(EntityName) + " (";
             string Valuestr = ") VALUES (";
 
             int t = 0;
@@ -207,27 +258,7 @@ namespace TheTechIdea.Beep.DataBase
                 if (!(item.IsAutoIncrement))
                 {
                     string FieldName = GetFieldName(item.FieldName);
-                    string paramName = Regex.Replace(item.FieldName, @"\s+", "_");
-
-                    // Ensure the field name and parameter name are within the Oracle identifier length limit
-                    if (FieldName.Length > 30)
-                    {
-                       FieldName = FieldName.Substring(0, 30);
-                    }
-
-                    if (paramName.Length > 30)
-                    {
-                        paramName = paramName.Substring(0, 30);
-                    }
-
-                    // Ensure unique parameter names
-                    int suffix = 1;
-                    string originalParamName = paramName;
-                    while (usedParameterNames.Contains(paramName))
-                    {
-                        paramName = originalParamName + "_" + suffix++;
-                    }
-                    usedParameterNames.Add(paramName);
+                    string paramName = AllocateParameterName(item.FieldName);
 
                     Insertstr += $"{FieldName},";
                     Valuestr += $"{ParameterDelimiter}p_" + paramName + ",";
@@ -245,9 +276,10 @@ namespace TheTechIdea.Beep.DataBase
             List<EntityField> SourceEntityFields = new List<EntityField>();
             List<EntityField> DestEntityFields = new List<EntityField>();
 
-            string Updatestr = @"Update " + EntityName + " set " + Environment.NewLine;
-            //      Updatestr = GetTableName(Updatestr.ToLower());
-            string Valuestr = "";
+            // Schema-qualified like INSERT. The GetTableName call that used to do this was commented
+            // out, so INSERT addressed schema.Table while UPDATE and DELETE addressed Table — on any
+            // datasource with a non-default SchemaName, two different objects.
+            string Updatestr = @"Update " + QualifyWithSchema(EntityName) + " set " + Environment.NewLine;
             // i want a new list of fields that are the primary key at the end of the list
             UpdateFieldSequnce = new List<EntityField>();
             for (int i = 0; i < DataStruct.Fields.Count; i++)
@@ -263,34 +295,34 @@ namespace TheTechIdea.Beep.DataBase
                 EntityField item = UpdateFieldSequnce[i];
                 if (!DataStruct.PrimaryKeys.Any(l => l.FieldName == item.FieldName))
                 {
-                    string FieldName = GetFieldName(item.FieldName);
-                    string paramName = Regex.Replace(item.FieldName, @"\s+", "_");
-
-                    // Ensure the field name and parameter name are within the Oracle identifier length limit
-                    if (FieldName.Length > 30)
-                    {
-                       FieldName = FieldName.Substring(0, 30);
-                    }
-
-                    if (paramName.Length > 30)
-                    {
-                        paramName = paramName.Substring(0, 30);
-                    }
-
-                    // Ensure unique parameter names
-                    int suffix = 1;
-                    string originalParamName = paramName;
-                    while (usedParameterNames.Contains(paramName))
-                    {
-                        paramName = originalParamName + "_" + suffix++;
-                    }
-                    usedParameterNames.Add(paramName);
-
+                    string paramName = AllocateParameterName(item.FieldName);
                     Updatestr += $"{GetFieldName(item.FieldName)}= {ParameterDelimiter}p_{paramName},";
                 }
             }
 
 
+
+            // Refuse to build a keyless UPDATE rather than emitting a broken one.
+            //
+            // With no primary keys the WHERE loop below appends nothing, leaving "... where" — a
+            // syntax error the caller saw as an opaque provider message. With no non-key fields
+            // (every column is part of the key) the SET clause is empty and the Remove below chops a
+            // character off " set \r\n" instead of a trailing comma, producing a mangled statement.
+            // Neither ever updated the wrong rows, but neither said what was wrong either.
+            if (DataStruct?.PrimaryKeys == null || DataStruct.PrimaryKeys.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot build an UPDATE for '{EntityName}': its entity structure has no primary key, " +
+                    "so the statement would have no WHERE clause. Refresh the structure " +
+                    "(GetEntityStructure with refresh: true) or declare a key.");
+            }
+
+            if (!Updatestr.TrimEnd().EndsWith(","))
+            {
+                throw new InvalidOperationException(
+                    $"Cannot build an UPDATE for '{EntityName}': every column is part of the primary key, " +
+                    "so there is nothing to SET.");
+            }
 
             Updatestr = Updatestr.Remove(Updatestr.Length - 1); // Remove the trailing comma
             UpdateFieldSequnce.AddRange(DataStruct.PrimaryKeys);
@@ -299,34 +331,17 @@ namespace TheTechIdea.Beep.DataBase
             for (int i = 0; i < DataStruct.PrimaryKeys.Count; i++)
             {
                 EntityField item = DataStruct.PrimaryKeys[i];
-                string FieldName = GetFieldName(item.FieldName);
-                string paramName = Regex.Replace(item.FieldName, @"\s+", "_");
-                if (usedParameterNames.Contains(paramName))
-                {
-                    paramName = usedParameterNames.FirstOrDefault(p => p.Contains(paramName));
-                }
-                else
-                {
-                    // Ensure the field name and parameter name are within the Oracle identifier length limit
-                    if (FieldName.Length > 30)
-                    {
-                       FieldName = FieldName.Substring(0, 30);
-                    }
 
-                    if (paramName.Length > 30)
-                    {
-                        paramName = paramName.Substring(0, 30);
-                    }
-
-                    // Ensure unique parameter names
-                    int suffix = 1;
-                    string originalParamName = paramName;
-                    while (usedParameterNames.Contains(paramName))
-                    {
-                        paramName = originalParamName + "_" + suffix++;
-                    }
-                    usedParameterNames.Add(paramName);
-                }
+                // Primary keys are excluded from the SET clause above (UpdateFieldSequnce is built
+                // from the non-key fields), so each one is allocated fresh here.
+                //
+                // This replaces a substring lookup that read:
+                //     if (usedParameterNames.Contains(paramName))
+                //         paramName = usedParameterNames.FirstOrDefault(p => p.Contains(paramName));
+                // For primary key "Id" with an existing SET parameter "ProductId", that returned
+                // "ProductId" — so the WHERE clause became "where Id = @p_ProductId" and the UPDATE
+                // was steered onto a row selected by another column's value, with no error.
+                string paramName = AllocateParameterName(item.FieldName);
 
                 if (t == 1)
                 {
@@ -343,32 +358,21 @@ namespace TheTechIdea.Beep.DataBase
         }
         public virtual string GetDeleteString(string EntityName, EntityStructure DataStruct)
         {
-            string deleteStr = $"DELETE FROM {EntityName} WHERE ";
+            // Without keys the loop below appends nothing, leaving "DELETE FROM t WHERE " — a syntax
+            // error rather than a mass delete, but an unattributable one. Say what is actually wrong.
+            if (DataStruct?.PrimaryKeys == null || DataStruct.PrimaryKeys.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot build a DELETE for '{EntityName}': its entity structure has no primary key, " +
+                    "so the statement would have no WHERE clause and would target every row. Refresh the " +
+                    "structure (GetEntityStructure with refresh: true) or declare a key.");
+            }
+
+            string deleteStr = $"DELETE FROM {QualifyWithSchema(EntityName)} WHERE ";
             int t = 1;
             foreach (EntityField item in DataStruct.PrimaryKeys.OrderBy(o => o.FieldName))
             {
-                string FieldName = GetFieldName(item.FieldName);
-                string paramName = Regex.Replace(item.FieldName, @"\s+", "_");
-
-                // Ensure the field name and parameter name are within the Oracle identifier length limit
-                if (FieldName.Length > 30)
-                {
-                   FieldName = FieldName.Substring(0, 30);
-                }
-
-                if (paramName.Length > 30)
-                {
-                    paramName = paramName.Substring(0, 30);
-                }
-
-                // Ensure unique parameter names
-                int suffix = 1;
-                string originalParamName = paramName;
-                while (usedParameterNames.Contains(paramName))
-                {
-                    paramName = originalParamName + "_" + suffix++;
-                }
-                usedParameterNames.Add(paramName);
+                string paramName = AllocateParameterName(item.FieldName);
                 if (t > 1)
                 {
                     deleteStr += " AND ";
@@ -379,7 +383,7 @@ namespace TheTechIdea.Beep.DataBase
             return deleteStr;
         }
 
-        private string GenerateCreateEntityScript(EntityStructure t1)
+        protected virtual string GenerateCreateEntityScript(EntityStructure t1)
         {
             string createtablestring = "Create table ";
             try
@@ -390,7 +394,7 @@ namespace TheTechIdea.Beep.DataBase
                 if (t1.Fields.Count == 0)
                 {
                     // Empty fields collection, add error log
-                    DMEEditor.AddLogMessage("Fail", $"No fields defined for entity {t1.EntityName}", DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                    DMEEditor?.AddLogMessage("Fail", $"No fields defined for entity {t1.EntityName}", DateTime.Now, 0, t1.EntityName, Errors.Failed);
                     return createtablestring + ")";
                 }
 
@@ -400,7 +404,7 @@ namespace TheTechIdea.Beep.DataBase
 
                 if (totalValidFields == 0)
                 {
-                    DMEEditor.AddLogMessage("Fail", $"All field names are empty for {t1.EntityName}", DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                    DMEEditor?.AddLogMessage("Fail", $"All field names are empty for {t1.EntityName}", DateTime.Now, 0, t1.EntityName, Errors.Failed);
                     return createtablestring + ")";
                 }
 
@@ -411,7 +415,7 @@ namespace TheTechIdea.Beep.DataBase
                     // Skip fields with empty names
                     if (string.IsNullOrEmpty(dbf.FieldName))
                     {
-                        DMEEditor.AddLogMessage("Fail", $"Field Name is empty for {t1.EntityName}", DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                        DMEEditor?.AddLogMessage("Fail", $"Field Name is empty for {t1.EntityName}", DateTime.Now, 0, t1.EntityName, Errors.Failed);
                         continue;
                     }
 
@@ -511,16 +515,16 @@ namespace TheTechIdea.Beep.DataBase
             catch (Exception ex)
             {
                 string innerMsg = ex.InnerException != null ? $" Inner: {ex.InnerException.Message}" : "";
-                DMEEditor.AddLogMessage("Fail", $"Error Creating Entity {t1.EntityName}: {ex.GetType().Name}: {ex.Message}{innerMsg} | SQL so far: [{createtablestring}]", DateTime.Now, 0, t1.EntityName, Errors.Failed);
+                DMEEditor?.AddLogMessage("Fail", $"Error Creating Entity {t1.EntityName}: {ex.GetType().Name}: {ex.Message}{innerMsg} | SQL so far: [{createtablestring}]", DateTime.Now, 0, t1.EntityName, Errors.Failed);
                 createtablestring = "";
             }
 
             return createtablestring;
         }
 
-        public List<ETLScriptDet> GenerateCreatEntityScript(List<EntityStructure> entities)
+        public virtual List<ETLScriptDet> GenerateCreatEntityScript(List<EntityStructure> entities)
         {
-            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            SetSuccess();
             int i = 0;
             List<ETLScriptDet> rt = new List<ETLScriptDet>();
             try
@@ -542,17 +546,15 @@ namespace TheTechIdea.Beep.DataBase
             catch (Exception ex)
             {
                 string errmsg = "Error in Generating Script";
-                DMEEditor.AddLogMessage("Fail", $"{errmsg}:{ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Fail", $"{errmsg}:{ex.Message}", DateTime.Now, 0, null, Errors.Failed);
 
             }
             return rt;
 
         }
-        public List<ETLScriptDet> GenerateCreatEntityScript(EntityStructure entity)
+        public virtual List<ETLScriptDet> GenerateCreatEntityScript(EntityStructure entity)
         {
-            DMEEditor.ErrorObject.Flag = Errors.Ok;
-
-            int i = 0;
+            SetSuccess();
 
             List<ETLScriptDet> rt = new List<ETLScriptDet>();
             try
@@ -571,7 +573,7 @@ namespace TheTechIdea.Beep.DataBase
             catch (Exception ex)
             {
                 string errmsg = "Error in Generating Script";
-                DMEEditor.AddLogMessage("Fail", $"{errmsg}:{ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Fail", $"{errmsg}:{ex.Message}", DateTime.Now, 0, null, Errors.Failed);
 
             }
             return rt;
@@ -583,29 +585,34 @@ namespace TheTechIdea.Beep.DataBase
 
             try
             {
-                var t = Task.Run<EntityStructure>(() => { return GetEntityStructure(entity, true); });
-                t.Wait();
-                EntityStructure entstructure = t.Result;
+                // Called directly. These three were each Task.Run(...) followed by .Wait() on a
+                // synchronous method: the calling thread blocked anyway, so nothing was gained, one
+                // pool thread was consumed per call, and a limited scheduler (a UI SynchronizationContext,
+                // an ASP.NET request pool) could deadlock on it. Worse for diagnosis, .Wait() rewraps
+                // whatever the method threw in an AggregateException, so the catch below logged
+                // "One or more errors occurred." instead of the actual failure.
+                EntityStructure entstructure = GetEntityStructure(entity, true);
                 entstructure.IsCreated = false;
-                if (DMEEditor.ErrorObject.Flag == Errors.Ok)
+
+                // Read this datasource's own flag. DMEEditor.ErrorObject is usually the same
+                // instance -- the standard creation path passes it as the constructor's `per` --
+                // but that is an aliasing coincidence, not a contract, and it is null whenever no
+                // editor is attached. Every failure path in this class sets both.
+                if (ErrorObject?.Flag == Errors.Ok)
                 {
                     Entities[Entities.FindIndex(x => x.EntityName == entity)] = entstructure;
 
                 }
                 else
                 {
-                    DMEEditor.AddLogMessage("Fail", $"Error getting entity structure for {entity}", DateTime.Now, entstructure.Id, entstructure.DataSourceID, Errors.Failed);
+                    DMEEditor?.AddLogMessage("Fail", $"Error getting entity structure for {entity}", DateTime.Now, entstructure.Id, entstructure.DataSourceID, Errors.Failed);
                 }
-                var t2 = Task.Run<List<ETLScriptDet>>(() => { return GenerateCreatEntityScript(entstructure); });
-                t2.Wait();
-                rt.AddRange(t2.Result);
-                t2 = Task.Run<List<ETLScriptDet>>(() => { return CreateForKeyRelationScripts(entstructure); });
-                t2.Wait();
-                rt.AddRange(t2.Result);
+                rt.AddRange(GenerateCreatEntityScript(entstructure));
+                rt.AddRange(CreateForKeyRelationScripts(entstructure));
             }
             catch (System.Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error in getting entities from Database ({ex.Message})", DateTime.Now, -1, "CopyDatabase", Errors.Failed);
+                DMEEditor?.AddLogMessage("Fail", $"Error in getting entities from Database ({ex.Message})", DateTime.Now, -1, "CopyDatabase", Errors.Failed);
             }
             return rt;
         }
@@ -616,14 +623,13 @@ namespace TheTechIdea.Beep.DataBase
             {
                 if (structureentities.Count > 0)
                 {
-                    var t = Task.Run<List<ETLScriptDet>>(() => { return GenerateCreatEntityScript(structureentities); });
-                    t.Wait();
-                    rt.AddRange(t.Result);
+                    // See the overload above: Task.Run + Wait on a synchronous method.
+                    rt.AddRange(GenerateCreatEntityScript(structureentities));
                 }
             }
             catch (System.Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error in getting entities from Database ({ex.Message})", DateTime.Now, -1, "CopyDatabase", Errors.Failed);
+                DMEEditor?.AddLogMessage("Fail", $"Error in getting entities from Database ({ex.Message})", DateTime.Now, -1, "CopyDatabase", Errors.Failed);
             }
             return rt;
         }
@@ -659,7 +665,7 @@ namespace TheTechIdea.Beep.DataBase
             catch (Exception ex)
             {
                 string mes = "";
-                DMEEditor.AddLogMessage(ex.Message, "Could not  Create Primery Key" + mes, DateTime.Now, -1, mes, Errors.Failed);
+                DMEEditor?.AddLogMessage(ex.Message, "Could not  Create Primery Key" + mes, DateTime.Now, -1, mes, Errors.Failed);
                 return null;
             };
         }
@@ -694,7 +700,7 @@ namespace TheTechIdea.Beep.DataBase
             catch (Exception ex)
             {
                 string mes = "";
-                DMEEditor.AddLogMessage(ex.Message, "Could not Create Relation" + mes, DateTime.Now, -1, mes, Errors.Failed);
+                DMEEditor?.AddLogMessage(ex.Message, "Could not Create Relation" + mes, DateTime.Now, -1, mes, Errors.Failed);
                 return null;
             };
         }
@@ -716,7 +722,11 @@ namespace TheTechIdea.Beep.DataBase
                         {
                             ETLScriptDet x = new ETLScriptDet();
                             x.DestinationDataSourceEntityName = DatasourceName;
-                            ds = DMEEditor.GetDataSource(entity.DataSourceID);
+                            // The result is discarded -- it always was. The call is kept and guarded
+                            // rather than deleted because GetDataSource registers and opens a
+                            // datasource as a side effect, and dropping that silently is a bigger
+                            // change than removing an unused local.
+                            ds = DMEEditor?.GetDataSource(entity.DataSourceID);
                             x.SourceDataSourceEntityName = entity.DatasourceEntityName;
                             x.Ddl = rl;
                             x.SourceEntityName = entity.EntityName;
@@ -729,7 +739,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error in getting For. Keys from Database ({ex.Message})", DateTime.Now, -1, "CopyDatabase", Errors.Failed);
+                DMEEditor?.AddLogMessage("Fail", $"Error in getting For. Keys from Database ({ex.Message})", DateTime.Now, -1, "CopyDatabase", Errors.Failed);
             }
             return rt;
         }
@@ -750,7 +760,8 @@ namespace TheTechIdea.Beep.DataBase
                         {
                             ETLScriptDet x = new ETLScriptDet();
                             x.DestinationDataSourceEntityName = item.DataSourceID;
-                            ds = DMEEditor.GetDataSource(item.DataSourceID);
+                            // See the sibling above: the result is discarded, the side effect is not.
+                            ds = DMEEditor?.GetDataSource(item.DataSourceID);
                             x.SourceDataSourceName = item.DatasourceEntityName;
                             x.Ddl = CreateAlterRalationString(item);
                             x.SourceEntityName = item.EntityName;
@@ -765,7 +776,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error in getting For. Keys from Database ({ex.Message})", DateTime.Now, -1, "CopyDatabase", Errors.Failed);
+                DMEEditor?.AddLogMessage("Fail", $"Error in getting For. Keys from Database ({ex.Message})", DateTime.Now, -1, "CopyDatabase", Errors.Failed);
 
             }
             return rt;
@@ -792,11 +803,30 @@ namespace TheTechIdea.Beep.DataBase
                                 break;
                         }
                     }
+
+                    if (string.IsNullOrEmpty(AutnumberString))
+                    {
+                        // No known syntax for this provider (Snowflake, Hana, Presto, Spanner,
+                        // CockroachDB, Firebolt). The caller appends whatever comes back when the
+                        // flag is Ok, so the table is created WITHOUT the identity property and
+                        // nothing said so.
+                        //
+                        // Logged rather than flagged deliberately: the caller throws on a non-Ok
+                        // flag, so failing here would turn "table created without identity" into
+                        // "CreateEntityAs throws" on six engines. That is arguably the right
+                        // behaviour, but it is a behavioural decision, not an error-reporting fix —
+                        // tracked in docs/10-known-issues.md rather than changed here.
+                        Logger?.WriteLog($"CreateAutoNumber: no auto-increment syntax is known for {dbType}; " +
+                                         $"column {f.EntityName}.{f.FieldName} will be created without the " +
+                                         $"identity property.");
+                    }
                 }
+
+                SetSuccess();
             }
             catch (System.Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error Creating Auto number Field {f.EntityName} and {f.FieldName} ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+                HandleDatabaseError(ex, f?.EntityName, $"create the auto-number clause for column {f?.FieldName} of");
             }
             return AutnumberString;
         }
@@ -944,7 +974,7 @@ namespace TheTechIdea.Beep.DataBase
         private string CreateEntity(EntityStructure t1)
         {
             string createtablestring = null;
-            DMEEditor.ErrorObject.Flag = Errors.Ok;
+            SetSuccess();
             try
             {
                 createtablestring = GenerateCreateEntityScript(t1);
@@ -952,7 +982,9 @@ namespace TheTechIdea.Beep.DataBase
             catch (System.Exception ex)
             {
                 createtablestring = null;
-                DMEEditor.AddLogMessage("Fail", $"Error in  Creating Table " + t1.EntityName + "   ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+                // "({ex.Message})" sat in a segment with no $ on it, so the log printed that text
+                // literally and the exception message never appeared anywhere (CS0168).
+                DMEEditor?.AddLogMessage("Fail", $"Error in Creating Table {t1.EntityName} ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
             }
             return createtablestring;
         }

@@ -1,36 +1,21 @@
-using System;
-using System.Collections.Generic;
-using TheTechIdea.Beep.ConfigUtil;
-using TheTechIdea.Beep.Editor;
-
 namespace TheTechIdea.Beep.DataBase
 {
     public partial class RDBSource : IRDBSource
     {
-        // Pagination is implemented across multiple files. This file serves as the central
-        // reference for all paging-related functionality and will be the consolidation target.
+        // Paging has a single dialect source: RDBMSHelper.GetPagingSyntax.
         //
-        // CURRENT IMPLEMENTATIONS:
+        // Both live paths now use it — RDBSource.Query.cs for the synchronous paged GetEntity, and
+        // RDBSource.Modernization.cs for GetEntityPagedAsync / GetEntityPagedStreamAsync. Add a new
+        // engine's syntax there and both paths get it.
         //
-        // 1. RDBSource.Query.cs — GetEntity(entityName, filter, pageNumber, pageSize)
-        //    Uses PaginationHelper.ApplyPaging() which delegates to RDBMSHelper.GetPagingSyntax().
-        //    This is the legacy paging path used by non-async callers.
+        // This file previously held no code at all: 36 lines of comment describing four competing
+        // paging implementations and a consolidation that was never carried out (and describing them
+        // inaccurately — it claimed Query.cs went through PaginationHelper, which it never did).
+        // Of those four, two were dead and have been deleted (Helpers/PagedQueryExecutor.cs and
+        // Helpers/PaginationHelper.cs), and Modernization's private switch has been replaced by the
+        // shared helper.
         //
-        // 2. RDBSource.Modernization.cs — GetPagedQuery(), BuildOraclePagingQuery(), GetOperator()
-        //    Database-specific paging (OFFSET/FETCH for SQL Server, LIMIT/OFFSET for MySQL/PostgreSQL/SQLite,
-        //    ROWNUM subquery for Oracle). Used by GetEntityPagedAsync<T>() and GetEntityPagedStreamAsync<T>().
-        //
-        // 3. Helpers/PagedQueryExecutor.cs — Builds count query + paged query, executes both,
-        //    returns (List<object> rows, int total). Regex-based count query generation.
-        //
-        // 4. Helpers/PaginationHelper.cs — Thin wrapper delegating to RDBMSHelper.GetPagingSyntax().
-        //
-        // CONSOLIDATION PLAN:
-        // - Move GetPagedQuery(), BuildOraclePagingQuery(), GetOperator() from Modernization.cs here
-        // - Have Query.cs delegate to this file instead of PaginationHelper
-        // - Make PagedQueryExecutor the single engine for all paged queries
-        // - Add a PaginationStrategy with database-specific implementations (Strategy pattern)
-        //
-        // TARGET: This file becomes the single source of truth for all paging logic.
+        // Kept as a signpost rather than deleted, because "where does paging live?" is the question
+        // this file's name invites.
     }
 }

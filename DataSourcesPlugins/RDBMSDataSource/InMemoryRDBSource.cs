@@ -1,4 +1,4 @@
-﻿using TheTechIdea.Beep.DataBase;
+using TheTechIdea.Beep.DataBase;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -67,7 +67,7 @@ namespace TheTechIdea.Beep
             catch (Exception ex)
             {
                 IsLoaded = false;
-                DMEEditor.AddLogMessage("Beep", $"Could not Load InMemory data for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Could not Load InMemory data for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
         }
@@ -84,16 +84,25 @@ namespace TheTechIdea.Beep
                     if (Entities != null  && Entities.Any())
                     {
                         IsStructureLoaded = true;
+                        StructureChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
                     }
 
                     OnLoadStructure?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+
+                    // copydata was accepted and never referenced, so LoadStructureWithData -- whose
+                    // whole purpose is to pass copydata: true -- loaded the structure and no data,
+                    // then reported success and raised DataChanged.
+                    if (copydata && IsStructureLoaded)
+                    {
+                        LoadData(progress, token);
+                    }
                 }
             }
             catch (Exception ex)
             {
                 IsStructureLoaded = false;
                 IsStructureCreated = false;
-                DMEEditor.AddLogMessage("Beep", $"Failed to load in-memory structure: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Failed to load in-memory structure: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
         }
@@ -106,12 +115,12 @@ namespace TheTechIdea.Beep
                 // Step 1: Get the latest list of table/entity names
                 if(Entities == null || Entities.Count == 0)
                 {
-                    DMEEditor.AddLogMessage("Beep", $"No entities found in the in-memory structure for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
+                    DMEEditor?.AddLogMessage("Beep", $"No entities found in the in-memory structure for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
                     return DMEEditor.ErrorObject;
                 }
                 if(ConnectionStatus!= ConnectionState.Open)
                 {
-                    DMEEditor.AddLogMessage("Beep", $"Connection is not established for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
+                    DMEEditor?.AddLogMessage("Beep", $"Connection is not established for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
                     return DMEEditor.ErrorObject;
                 }
                 GetEntitesList(); // Refresh entity list from database
@@ -119,13 +128,19 @@ namespace TheTechIdea.Beep
 
                 SaveEntites(DatasourceName);
 
+                // IsSaved was never assigned anywhere in this class, so it read false after a
+                // successful save and every caller gating on it re-saved or refused to proceed.
+                IsSaved = true;
+
                 // Step 7: Raise event
                 OnSaveStructure?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
+                StructureChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
             }
             catch (Exception ex)
             {
+                IsSaved = false;
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
-                DMEEditor.AddLogMessage("Beep", $"Failed to save in-memory structure for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Failed to save in-memory structure for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
 
             return DMEEditor.ErrorObject;
@@ -158,13 +173,13 @@ namespace TheTechIdea.Beep
                         {
                             // Add to Entities if not already there
                             Entities.Add(entityStructure);
-                            DMEEditor.AddLogMessage("Success", $"Added entity {entityName} to Entities collection", DateTime.Now, 0, null, Errors.Ok);
+                            DMEEditor?.AddLogMessage("Success", $"Added entity {entityName} to Entities collection", DateTime.Now, 0, null, Errors.Ok);
                         }
                         else
                         {
                             // Mark for removal from EntitiesNames if structure couldn't be retrieved
                             entityNamesToRemove.Add(entityName);
-                            DMEEditor.AddLogMessage("Warning", $"Could not get structure for entity {entityName}, removing from EntitiesNames", DateTime.Now, 0, null, Errors.Warning);
+                            DMEEditor?.AddLogMessage("Warning", $"Could not get structure for entity {entityName}, removing from EntitiesNames", DateTime.Now, 0, null, Errors.Warning);
                         }
                     }
                 }
@@ -191,11 +206,11 @@ namespace TheTechIdea.Beep
                         {
                             // Add to EntitiesNames if successfully created
                             EntitiesNames.Add(entity.EntityName);
-                            DMEEditor.AddLogMessage("Success", $"Created entity {entity.EntityName} in database and added to EntitiesNames", DateTime.Now, 0, null, Errors.Ok);
+                            DMEEditor?.AddLogMessage("Success", $"Created entity {entity.EntityName} in database and added to EntitiesNames", DateTime.Now, 0, null, Errors.Ok);
                         }
                         else
                         {
-                            DMEEditor.AddLogMessage("Warning", $"Failed to create entity {entity.EntityName} in database", DateTime.Now, 0, null, Errors.Warning);
+                            DMEEditor?.AddLogMessage("Warning", $"Failed to create entity {entity.EntityName} in database", DateTime.Now, 0, null, Errors.Warning);
                         }
                     }
                 }
@@ -215,7 +230,7 @@ namespace TheTechIdea.Beep
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Error", $"Error synchronizing entities: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Error", $"Error synchronizing entities: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
                 IsSynced = false;
             }
         }
@@ -229,7 +244,7 @@ namespace TheTechIdea.Beep
                 if (string.IsNullOrWhiteSpace(databasename))
                 {
                     DMEEditor.ErrorObject.Flag = Errors.Failed;
-                    DMEEditor.AddLogMessage("Beep", $"Database name cannot be null or empty.", DateTime.Now, 0, null, Errors.Failed);
+                    DMEEditor?.AddLogMessage("Beep", $"Database name cannot be null or empty.", DateTime.Now, 0, null, Errors.Failed);
                     return DMEEditor.ErrorObject;
                 }
                 DatasourceName = databasename;
@@ -242,18 +257,18 @@ namespace TheTechIdea.Beep
                     if (InMemoryStructures == null)
                         InMemoryStructures = new List<EntityStructure>();
                     IsCreated = true;
-                    DMEEditor.AddLogMessage("Beep", $"In-memory database '{databasename}' opened successfully.", DateTime.Now, 0, null, Errors.Ok);
+                    DMEEditor?.AddLogMessage("Beep", $"In-memory database '{databasename}' opened successfully.", DateTime.Now, 0, null, Errors.Ok);
                 }
                 else
                 {
                     DMEEditor.ErrorObject.Flag = Errors.Failed;
-                    DMEEditor.AddLogMessage("Beep", $"Failed to open in-memory database '{databasename}'.", DateTime.Now, 0, null, Errors.Failed);
+                    DMEEditor?.AddLogMessage("Beep", $"Failed to open in-memory database '{databasename}'.", DateTime.Now, 0, null, Errors.Failed);
                 }
             }
             catch (Exception ex)
             {
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
-                DMEEditor.AddLogMessage("Beep", $"Error opening in-memory database '{databasename}': {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Error opening in-memory database '{databasename}': {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
         }
@@ -270,20 +285,20 @@ namespace TheTechIdea.Beep
                     DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
                     DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
                     IsSynced = true;
-                    DMEEditor.AddLogMessage("Beep", $"Synced all data for {DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
+                    DMEEditor?.AddLogMessage("Beep", $"Synced all data for {DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
                 }
             }
             catch (OperationCanceledException)
             {
                 IsSynced = false;
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
-                DMEEditor.AddLogMessage("Beep", $"Sync of {DatasourceName} was cancelled.", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Sync of {DatasourceName} was cancelled.", DateTime.Now, 0, null, Errors.Failed);
             }
             catch (Exception ex)
             {
                 IsSynced = false;
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
-                DMEEditor.AddLogMessage("Beep", $"Error syncing data for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Error syncing data for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             RaiseOnSyncData((PassedArgs)DMEEditor.Passedarguments);
             return DMEEditor.ErrorObject;
@@ -296,14 +311,14 @@ namespace TheTechIdea.Beep
                 if (string.IsNullOrWhiteSpace(entityname))
                 {
                     DMEEditor.ErrorObject.Flag = Errors.Failed;
-                    DMEEditor.AddLogMessage("Beep", $"Entity name cannot be null or empty.", DateTime.Now, 0, null, Errors.Failed);
+                    DMEEditor?.AddLogMessage("Beep", $"Entity name cannot be null or empty.", DateTime.Now, 0, null, Errors.Failed);
                     return DMEEditor.ErrorObject;
                 }
                 var entity = Entities?.FirstOrDefault(e => e.EntityName.Equals(entityname, StringComparison.OrdinalIgnoreCase));
                 if (entity == null)
                 {
                     DMEEditor.ErrorObject.Flag = Errors.Failed;
-                    DMEEditor.AddLogMessage("Beep", $"Entity '{entityname}' not found for sync.", DateTime.Now, 0, null, Errors.Failed);
+                    DMEEditor?.AddLogMessage("Beep", $"Entity '{entityname}' not found for sync.", DateTime.Now, 0, null, Errors.Failed);
                     return DMEEditor.ErrorObject;
                 }
                 if (IsCreated)
@@ -312,18 +327,18 @@ namespace TheTechIdea.Beep
                     DMEEditor.ETL.Script.ScriptDetails = retscripts;
                     DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
                     DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
-                    DMEEditor.AddLogMessage("Beep", $"Synced entity '{entityname}' for {DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
+                    DMEEditor?.AddLogMessage("Beep", $"Synced entity '{entityname}' for {DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
                 }
             }
             catch (OperationCanceledException)
             {
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
-                DMEEditor.AddLogMessage("Beep", $"Sync of entity '{entityname}' was cancelled.", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Sync of entity '{entityname}' was cancelled.", DateTime.Now, 0, null, Errors.Failed);
             }
             catch (Exception ex)
             {
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
-                DMEEditor.AddLogMessage("Beep", $"Error syncing entity '{entityname}' for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Error syncing entity '{entityname}' for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             RaiseOnSyncData((PassedArgs)DMEEditor.Passedarguments);
             return DMEEditor.ErrorObject;
@@ -337,7 +352,7 @@ namespace TheTechIdea.Beep
                 if (string.IsNullOrWhiteSpace(entityname))
                 {
                     DMEEditor.ErrorObject.Flag = Errors.Failed;
-                    DMEEditor.AddLogMessage("Beep", $"Entity name cannot be null or empty.", DateTime.Now, 0, null, Errors.Failed);
+                    DMEEditor?.AddLogMessage("Beep", $"Entity name cannot be null or empty.", DateTime.Now, 0, null, Errors.Failed);
                     return DMEEditor.ErrorObject;
                 }
                 if (!IsCreated)
@@ -346,37 +361,43 @@ namespace TheTechIdea.Beep
                 if (entity == null)
                 {
                     DMEEditor.ErrorObject.Flag = Errors.Failed;
-                    DMEEditor.AddLogMessage("Beep", $"Entity '{entityname}' not found in in-memory structures.", DateTime.Now, 0, null, Errors.Failed);
+                    DMEEditor?.AddLogMessage("Beep", $"Entity '{entityname}' not found in in-memory structures.", DateTime.Now, 0, null, Errors.Failed);
                     return DMEEditor.ErrorObject;
                 }
                 token.ThrowIfCancellationRequested();
-                DMEEditor.AddLogMessage("Beep", $"Refreshing entity '{entityname}' — clearing data.", DateTime.Now, 0, null, Errors.Ok);
+                DMEEditor?.AddLogMessage("Beep", $"Refreshing entity '{entityname}' — clearing data.", DateTime.Now, 0, null, Errors.Ok);
                 string sql = GetDeleteAllSql(entity.EntityName);
-                DMEEditor.ErrorObject = ExecuteSql(sql);
-                if (DMEEditor.ErrorObject.Flag == Errors.Ok)
+
+                // Read the result, do not re-point the global. ExecuteSql returns THIS datasource's
+                // ErrorObject, so assigning it to DMEEditor.ErrorObject permanently aliased
+                // engine-wide state to one datasource's field — after which every unrelated
+                // component writing DMEEditor.ErrorObject was writing into this datasource, and
+                // vice versa.
+                var truncateResult = ExecuteSql(sql);
+                if (truncateResult.Flag == Errors.Ok)
                 {
-                    DMEEditor.AddLogMessage("Beep", $"Deleted data from '{entityname}', reloading.", DateTime.Now, 0, null, Errors.Ok);
+                    DMEEditor?.AddLogMessage("Beep", $"Deleted data from '{entityname}', reloading.", DateTime.Now, 0, null, Errors.Ok);
                     List<ETLScriptDet> retscripts = DMEEditor.ETL.GetCopyDataEntityScript(this, new List<EntityStructure> { entity }, progress, token);
                     DMEEditor.ETL.Script.ScriptDetails = retscripts;
                     DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
                     DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
-                    DMEEditor.AddLogMessage("Beep", $"Refreshed entity '{entityname}' successfully.", DateTime.Now, 0, null, Errors.Ok);
+                    DMEEditor?.AddLogMessage("Beep", $"Refreshed entity '{entityname}' successfully.", DateTime.Now, 0, null, Errors.Ok);
                 }
                 else
                 {
-                    DMEEditor.AddLogMessage("Beep", $"Could not delete data from '{entityname}' during refresh.", DateTime.Now, 0, null, Errors.Failed);
+                    DMEEditor?.AddLogMessage("Beep", $"Could not delete data from '{entityname}' during refresh.", DateTime.Now, 0, null, Errors.Failed);
                 }
                 RaiseOnRefreshDataEntity((PassedArgs)DMEEditor.Passedarguments);
             }
             catch (OperationCanceledException)
             {
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
-                DMEEditor.AddLogMessage("Beep", $"Refresh of entity '{entityname}' was cancelled.", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Refresh of entity '{entityname}' was cancelled.", DateTime.Now, 0, null, Errors.Failed);
             }
             catch (Exception ex)
             {
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
-                DMEEditor.AddLogMessage("Beep", $"Error refreshing entity '{entityname}': {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Error refreshing entity '{entityname}': {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
         }
@@ -391,17 +412,20 @@ namespace TheTechIdea.Beep
                     foreach (var item in InMemoryStructures)
                     {
                         token.ThrowIfCancellationRequested();
-                        DMEEditor.AddLogMessage("Beep", $"Refreshing entity '{item.EntityName}' — clearing data.", DateTime.Now, 0, null, Errors.Ok);
+                        DMEEditor?.AddLogMessage("Beep", $"Refreshing entity '{item.EntityName}' — clearing data.", DateTime.Now, 0, null, Errors.Ok);
                         string sql = GetDeleteAllSql(item.EntityName);
-                        DMEEditor.ErrorObject = ExecuteSql(sql);
-                        if (DMEEditor.ErrorObject.Flag == Errors.Ok)
+
+                        // See the entity-scoped refresh above: read the result rather than
+                        // re-pointing DMEEditor.ErrorObject at this datasource's error object.
+                        var truncateResult = ExecuteSql(sql);
+                        if (truncateResult.Flag == Errors.Ok)
                         {
                             isdeleted = true;
-                            DMEEditor.AddLogMessage("Beep", $"Deleted data from {item.EntityName}", DateTime.Now, 0, null, Errors.Ok);
+                            DMEEditor?.AddLogMessage("Beep", $"Deleted data from {item.EntityName}", DateTime.Now, 0, null, Errors.Ok);
                         }
                         else
                         {
-                            DMEEditor.AddLogMessage("Beep", $"Could not delete data from {item.EntityName}", DateTime.Now, 0, null, Errors.Failed);
+                            DMEEditor?.AddLogMessage("Beep", $"Could not delete data from {item.EntityName}", DateTime.Now, 0, null, Errors.Failed);
                         }
                     }
                     if (isdeleted)
@@ -417,13 +441,13 @@ namespace TheTechIdea.Beep
             {
                 IsLoaded = false;
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
-                DMEEditor.AddLogMessage("Beep", $"Refresh of {DatasourceName} was cancelled.", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Refresh of {DatasourceName} was cancelled.", DateTime.Now, 0, null, Errors.Failed);
             }
             catch (Exception ex)
             {
                 IsLoaded = false;
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
-                DMEEditor.AddLogMessage("Beep", $"Could not refresh InMemory data for {DatasourceName}- {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Could not refresh InMemory data for {DatasourceName}- {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
         }
@@ -433,7 +457,10 @@ namespace TheTechIdea.Beep
         public event EventHandler<PassedArgs> OnLoadStructure;
         public event EventHandler<PassedArgs> OnSaveStructure;
         public event EventHandler<PassedArgs> OnSyncData;
-        public event EventHandler<PassedArgs> PassEvent;
+        // PassEvent is NOT re-declared here. RDBSource already declares it, and this shadowing
+        // copy (CS0108, no `new` keyword) split subscribers across two events -- anyone attaching
+        // through the InMemoryRDBSource type got this one, which nothing ever raised, while the
+        // base raises its own from UpdateEntities.
         public event EventHandler<PassedArgs> OnCreateStructure;
         public event EventHandler<PassedArgs> OnRefreshData;
         public event EventHandler<PassedArgs> OnRefreshDataEntity;
@@ -472,17 +499,13 @@ namespace TheTechIdea.Beep
             {
                 // fall through to safe quoted-identifier fallback
             }
-            // Fallback: provider-appropriate quoted identifier DELETE
-            switch (DatasourceType)
-            {
-                case DataSourceType.SqlServer:
-                    return $"DELETE FROM [{tableName}]";
-                case DataSourceType.Mysql:
-                    return $"DELETE FROM `{tableName}`";
-                default:
-                    // SQLite, PostgreSQL, Oracle, FireBird, DB2 and most ANSI-SQL providers.
-                    return $"DELETE FROM \"{tableName}\"";
-            }
+            // Fallback: let the base class quote it. This was a three-arm switch that knew about
+            // SQL Server and MySQL only -- so MariaDB got ANSI double quotes instead of backticks,
+            // AzureSQL and SQL Server Compact got double quotes instead of brackets -- and it
+            // interpolated the name straight into the delimiters with no escaping, so a name
+            // containing the closing delimiter produced broken or injectable SQL. QuoteIdentifier
+            // covers every dialect the drivers use and escapes the delimiter.
+            return $"DELETE FROM {QuoteIdentifier(tableName)}";
         }
         #endregion
         #region "IInMemoryDB v2 — new methods (forwarders + new FillFrom/ExportTo/Reset)"
@@ -506,10 +529,14 @@ namespace TheTechIdea.Beep
                         try
                         {
                             string sql = GetDeleteAllSql(entity.EntityName);
-                            DMEEditor.ErrorObject = ExecuteSql(sql);
+                            ExecuteSql(sql);
                         }
-                        catch
+                        catch (Exception truncateEx)
                         {
+                            // Best-effort, but no longer silent: this was a completely empty catch,
+                            // so a table that could not be cleared during a reset left stale rows
+                            // behind with nothing recorded.
+                            Logger?.WriteLog($"Could not clear '{entity.EntityName}' during reset of {DatasourceName}: {truncateEx.Message}");
                             // best-effort
                         }
                     }
@@ -524,7 +551,7 @@ namespace TheTechIdea.Beep
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Beep", $"ResetInMemory error on {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"ResetInMemory error on {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
                 return DMEEditor.ErrorObject ?? new ErrorsInfo { Flag = Errors.Failed, Message = ex.Message };
             }
         }
@@ -551,8 +578,34 @@ namespace TheTechIdea.Beep
                 if (source.ConnectionStatus != ConnectionState.Open && source.Openconnection() != ConnectionState.Open)
                 { DMEEditor.ErrorObject.Flag = Errors.Failed; DMEEditor.ErrorObject.Message = $"Could not open source '{source.DatasourceName}'."; return DMEEditor.ErrorObject; }
 
-                // GetCopyDataEntityScript(destination, entities, progress, token) — generates scripts to copy data INTO the destination.
-                var copyScript = DMEEditor.ETL.GetCopyDataEntityScript(this, InMemoryStructures, progress, token);
+                // GetCopyDataEntityScript(destination, entities, progress, token) generates scripts to
+                // copy data INTO the destination, and it resolves each row's ORIGIN from that
+                // entity's own DataSourceID. Passing InMemoryStructures -- whose DataSourceID is
+                // this in-memory database -- therefore generated scripts copying every entity onto
+                // itself. `source` was validated, opened, and named in the success message, and had
+                // no effect whatsoever on where the data came from.
+                var sourceEntities = new List<EntityStructure>();
+                foreach (EntityStructure target in InMemoryStructures ?? new List<EntityStructure>())
+                {
+                    if (target == null || string.IsNullOrWhiteSpace(target.EntityName)) continue;
+
+                    EntityStructure fromSource = source.GetEntityStructure(target.EntityName, false) ?? target;
+
+                    // Clone before stamping: mutating the instance the source hands back would
+                    // rewrite that datasource's own cached structure.
+                    var copy = (EntityStructure)fromSource.Clone();
+                    copy.DataSourceID = source.DatasourceName;
+                    sourceEntities.Add(copy);
+                }
+
+                if (sourceEntities.Count == 0)
+                {
+                    DMEEditor.ErrorObject.Flag = Errors.Failed;
+                    DMEEditor.ErrorObject.Message = $"Nothing to fill: {DatasourceName} has no in-memory structures to copy from '{source.DatasourceName}'.";
+                    return DMEEditor.ErrorObject;
+                }
+
+                var copyScript = DMEEditor.ETL.GetCopyDataEntityScript(this, sourceEntities, progress, token);
                 DMEEditor.ETL.Script.ScriptDetails = copyScript;
                 DMEEditor.ETL.Script.LastRunDateTime = DateTime.Now;
                 DMEEditor.ETL.RunCreateScript(DMEEditor.progress, token, true);
@@ -560,18 +613,18 @@ namespace TheTechIdea.Beep
                 IsSynced = true;
                 DataChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
                 StateChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
-                DMEEditor.AddLogMessage("Beep", $"Filled in-memory {DatasourceName} from {source.DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
+                DMEEditor?.AddLogMessage("Beep", $"Filled in-memory {DatasourceName} from {source.DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
             }
             catch (OperationCanceledException)
             {
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
-                DMEEditor.AddLogMessage("Beep", $"FillFromDataSource cancelled for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"FillFromDataSource cancelled for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
             }
             catch (Exception ex)
             {
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
                 DMEEditor.ErrorObject.Ex = ex;
-                DMEEditor.AddLogMessage("Beep", $"FillFromDataSource error on {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"FillFromDataSource error on {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
         }
@@ -595,18 +648,18 @@ namespace TheTechIdea.Beep
                 IsSaved = true;
                 DataChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
                 StateChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
-                DMEEditor.AddLogMessage("Beep", $"Exported in-memory {DatasourceName} to {target.DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
+                DMEEditor?.AddLogMessage("Beep", $"Exported in-memory {DatasourceName} to {target.DatasourceName}.", DateTime.Now, 0, null, Errors.Ok);
             }
             catch (OperationCanceledException)
             {
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
-                DMEEditor.AddLogMessage("Beep", $"ExportToDataSource cancelled for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"ExportToDataSource cancelled for {DatasourceName}.", DateTime.Now, 0, null, Errors.Failed);
             }
             catch (Exception ex)
             {
                 DMEEditor.ErrorObject.Flag = Errors.Failed;
                 DMEEditor.ErrorObject.Ex = ex;
-                DMEEditor.AddLogMessage("Beep", $"ExportToDataSource error on {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"ExportToDataSource error on {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
         }
@@ -704,11 +757,23 @@ namespace TheTechIdea.Beep
                 {
                     try
                     {
+                        // NOTE: this does real work during disposal. SaveStructure() calls
+                        // SyncEntitiesNameandEntities(), which issues GetEntitesList() and
+                        // CreateEntityAs() — database round trips and CREATE TABLE statements —
+                        // and then writes the entity structures to the config store. On an
+                        // application-shutdown or GC-pressure path that can block or fail.
+                        //
+                        // Left in place because in-memory sources (SQLite, DuckDB) may be relying on
+                        // the implicit save, and removing it is a behavioural change rather than a
+                        // defect fix. It should move to an explicit SaveStructure() call by the
+                        // owner; tracked in docs/10-known-issues.md (K23).
                         SaveStructure();
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // Ignore errors during disposal — connection may already be closed
+                        // Was a completely empty catch, so a failed structure save during disposal —
+                        // including a failed config write — vanished without trace.
+                        Logger?.WriteLog($"Error saving the structure for {DatasourceName} during disposal: {ex.Message}");
                     }
                     InMemoryStructures?.Clear();
                 }
@@ -761,11 +826,23 @@ namespace TheTechIdea.Beep
                         {
                             // remove duplicates
                             ents.Entities = ents.Entities.GroupBy(x => x.EntityName).Select(g => g.First()).ToList();
-                            DataSource.Entities = ents.Entities;
-                            DataSource.EntitiesNames = ents.Entities.Select(x => x.EntityName).ToList();
+                            // Populate this instance. The old code assigned only to whatever
+                            // GetDataSource(datasourcename) handed back -- normally this same
+                            // registered object, but when the registry holds a different instance
+                            // (or the datasource is registered later) this object kept its empty
+                            // list, and LoadStructure's `Entities.Any()` check immediately after
+                            // then reported the structure as not loaded.
+                            Entities = ents.Entities;
+                            EntitiesNames = ents.Entities.Select(x => x.EntityName).ToList();
+
+                            if (!ReferenceEquals(DataSource, this))
+                            {
+                                DataSource.Entities = ents.Entities;
+                                DataSource.EntitiesNames = ents.Entities.Select(x => x.EntityName).ToList();
+                            }
                         }
                     }
-                    InMemoryStructures = DataSource.Entities;
+                    InMemoryStructures = Entities;
                 }
             }
             catch (Exception ex)
@@ -781,6 +858,7 @@ namespace TheTechIdea.Beep
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
             {
+                bool allCreated = true;
                 if (!IsStructureCreated)
                 {
                     
@@ -789,20 +867,40 @@ namespace TheTechIdea.Beep
                     {
                     //    if (!string.IsNullOrEmpty(Entities[i].DataSourceID))
                     //    {
-                            CreateEntityAs(Entities[i]);
-                            Entities[i].IsCreated = true;
+                            // Record what CreateEntityAs actually reported. The result was
+                            // discarded and IsCreated set to true unconditionally, so a table that
+                            // failed validation or whose CREATE never ran was still marked created
+                            // -- and IsStructureCreated below said the whole structure was ready.
+                            // CreateEntityAs returns false both when creation failed AND when the
+                            // entity already exists -- it is gated on CheckEntityExist. For this
+                            // method's purposes an entity that is already in the database is
+                            // created, so ask, rather than reporting a re-opened database as
+                            // structurally incomplete.
+                            bool created = CreateEntityAs(Entities[i]) || CheckEntityExist(Entities[i].EntityName);
+                            Entities[i].IsCreated = created;
+                            if (!created)
+                            {
+                                allCreated = false;
+                                DMEEditor?.AddLogMessage("Beep",
+                                    $"Could not create '{Entities[i].EntityName}' in {DatasourceName}; the in-memory structure is incomplete.",
+                                    DateTime.Now, 0, Entities[i].EntityName, Errors.Failed);
+                            }
                   //      }
                        
 
                     }
                   
                 }
-                IsStructureCreated = true;
+                IsStructureCreated = allCreated;
+
+                // StructureChanged was declared and never raised anywhere in this class (CS0067),
+                // so nothing could observe the structure being created, loaded or saved.
+                StructureChanged?.Invoke(this, (PassedArgs)DMEEditor.Passedarguments);
             }
             catch (Exception ex)
             {
                 IsStructureCreated = false;
-                DMEEditor.AddLogMessage("Beep", $"Could not Load InMemory Structure for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Beep", $"Could not Load InMemory Structure for {DatasourceName}- {ex.Message}", System.DateTime.Now, 0, null, Errors.Failed);
             }
             return DMEEditor.ErrorObject;
         }

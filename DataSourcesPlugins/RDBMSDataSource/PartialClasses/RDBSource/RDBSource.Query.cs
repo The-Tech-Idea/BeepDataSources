@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,14 +36,22 @@ namespace TheTechIdea.Beep.DataBase
             {
                 using (var command = GetDataCommand())
                 {
+                    // GetDataCommand returns null on a closed connection. Without this the NRE
+                    // below was caught and reported as a query error, hiding the real cause; and
+                    // because 0.0 is also a legitimate result, the caller had no way to tell a
+                    // failed scalar from a genuine zero.
+                    if (command == null)
+                        return 0.0;
+
                     command.CommandText = query;
-                    
+
                     // Try to use async if DbCommand is available
                     if (command is System.Data.Common.DbCommand dbCommand)
                     {
-                        var result = await dbCommand.ExecuteScalarAsync();
+                        var result = await dbCommand.ExecuteScalarAsync().ConfigureAwait(false);
                         if (result != null && result != DBNull.Value)
                         {
+                            SetSuccess();
                             return Convert.ToDouble(result);
                         }
                     }
@@ -53,14 +61,19 @@ namespace TheTechIdea.Beep.DataBase
                         var result = command.ExecuteScalar();
                         if (result != null && result != DBNull.Value)
                         {
+                            SetSuccess();
                             return Convert.ToDouble(result);
                         }
                     }
                 }
+
+                // Executed cleanly but produced no scalar. Distinct from a failure, and distinct
+                // from a real 0 — say so rather than leaving the caller to guess.
+                SetSuccess($"Scalar query returned no value: {query}");
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+                HandleDatabaseError(ex, DatasourceName, "execute a scalar query", query);
             }
 
             return 0.0;
@@ -81,6 +94,11 @@ namespace TheTechIdea.Beep.DataBase
 
                 using (var command = GetDataCommand())
                 {
+                    // See GetScalarAsync: null command means the connection is closed, and 0.0 is
+                    // indistinguishable from a real result, so the flag has to carry the outcome.
+                    if (command == null)
+                        return 0.0;
+
                     command.CommandText = query;
                     using (IDataReader reader = command.ExecuteReader())
                     {
@@ -91,6 +109,7 @@ namespace TheTechIdea.Beep.DataBase
                             // integer identity, a string, a timestamp). Matches
                             // GetScalarAsync's behaviour.
                             var result = reader.GetValue(0);
+                            SetSuccess();
                             return result == null || result == DBNull.Value
                                 ? 0.0
                                 : Convert.ToDouble(result);
@@ -98,13 +117,12 @@ namespace TheTechIdea.Beep.DataBase
                     }
                 }
 
-
-                // If the query executed successfully but didn't return a valid double, you can handle it here.
-                // You might want to log an error or throw an exception as needed.
+                // Executed cleanly, no row. Not a failure, but not a real zero either.
+                SetSuccess($"Scalar query returned no rows: {query}");
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error in executing scalar query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+                HandleDatabaseError(ex, DatasourceName, "execute a scalar query", query);
             }
 
             // Return a default value or throw an exception if the query failed.
@@ -127,7 +145,7 @@ namespace TheTechIdea.Beep.DataBase
             {
                 ErrorObject.Flag = Errors.Failed;
                 ErrorObject.Message = "SQL command is null or empty - cannot execute";
-                DMEEditor.AddLogMessage("Fail", "ExecuteSql called with null or empty SQL", DateTime.Now, -1, null, Errors.Failed);
+                DMEEditor?.AddLogMessage("Fail", "ExecuteSql called with null or empty SQL", DateTime.Now, -1, null, Errors.Failed);
                 return ErrorObject;
             }
             
@@ -139,19 +157,34 @@ namespace TheTechIdea.Beep.DataBase
                 {
                     cmd.CommandText = sql;
                     cmd.ExecuteNonQuery();
-                    cmd.Dispose();
-                    //    DMEEditor.AddLogMessage("Success", "Executed Sql Successfully", DateTime.Now, -1, "Ok", Errors.Ok);
+                    SetSuccess();
                 }
                 catch (Exception ex)
                 {
-
-                    cmd.Dispose();
-                    ErrorObject.Flag = Errors.Failed;
-                    ErrorObject.Message = $" Could not run Script - {sql} -" + ex.Message;
-                    DMEEditor.AddLogMessage("Fail", $" Could not run Script - {sql} -" + ex.Message, DateTime.Now, -1, ex.Message, Errors.Failed);
-
+                    // DMEEditor and DMEEditor.ErrorObject were dereferenced unguarded here, on the
+                    // one path that runs when a statement fails. With no editor attached, a failing
+                    // statement threw NullReferenceException out of the method whose whole job is to
+                    // report that failure -- replacing the real error with an unrelated one. This is
+                    // what SetFailure is for: it null-guards both error objects and logs.
+                    SetFailure($" Could not run Script - {sql} -" + ex.Message);
                 }
-
+                finally
+                {
+                    // Was disposed separately in the try and the catch, so a throw from
+                    // `cmd.CommandText = sql` — which some providers validate — leaked the command.
+                    cmd.Dispose();
+                }
+            }
+            else
+            {
+                // There was no `else` here. GetDataCommand returns null whenever the connection is
+                // not open, so this method returned the Errors.Ok set on line 123 having executed
+                // nothing. CreateEntityAs checks that flag and logged "Entity created successfully"
+                // for a CREATE TABLE that never ran; RunScript reported the same for un-executed
+                // DDL; InMemoryRDBSource treated it as proof a table had been truncated and reloaded
+                // data on top of rows that were still there.
+                SetFailure($"Could not run Script - {sql} - no command could be created " +
+                           $"(the connection to {DatasourceName} is not open).");
             }
 
             return ErrorObject;
@@ -172,7 +205,9 @@ namespace TheTechIdea.Beep.DataBase
             {
                 if (string.IsNullOrWhiteSpace(qrystr))
                 {
-                    DMEEditor.AddLogMessage("Fail", "RunQuery: query string is null or empty", DateTime.Now, 0, "", Errors.Failed);
+                    // An empty result is what a query with no rows also returns, so these paths have
+                    // to set the flag or the caller cannot tell "nothing matched" from "nothing ran".
+                    SetFailure("RunQuery: query string is null or empty");
                     return Enumerable.Empty<object>();
                 }
 
@@ -185,7 +220,7 @@ namespace TheTechIdea.Beep.DataBase
                 {
                     if (cmd == null)
                     {
-                        DMEEditor.AddLogMessage("Fail", "RunQuery: failed to create data command", DateTime.Now, 0, "", Errors.Failed);
+                        SetFailure($"RunQuery: failed to create data command (the connection to {DatasourceName} is not open)");
                         return Enumerable.Empty<object>();
                     }
 
@@ -195,376 +230,33 @@ namespace TheTechIdea.Beep.DataBase
                     {
                         var dt = new DataTable();
                         dt.Load(reader);
+                        SetSuccess();
                         return dt.AsEnumerable().Select(row => row.ItemArray);
                     }
                 }
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error executing query ({ex.Message})", DateTime.Now, 0, "", Errors.Failed);
+                HandleDatabaseError(ex, DatasourceName, "execute a query", qrystr);
                 return Enumerable.Empty<object>();
             }
         }
 
-        // <summary>
-        /// Dynamically builds an SQL query based on the original query and provided filters.
-        /// </summary>
-        /// <param name="originalquery">The base SQL query string.</param>
-        /// <param name="Filter">List of filters to be applied to the query.</param>
-        /// <returns>The dynamically built SQL query string.</returns>
-        /// <remarks>
-        /// This method enhances flexibility in data retrieval by allowing dynamic query modifications based on runtime conditions and parameters.
-        /// </remarks>
-        /// /// <summary>
-        /// Dynamically builds an SQL query based on the original query and provided filters.
-        /// Uses caching to improve performance for repeated queries.
-        /// </summary>
-        /// <param name="originalquery">The base SQL query string.</param>
-        /// <param name="Filter">List of filters to be applied to the query.</param>
-        /// <param name="entityName">Optional entity name for cache key generation.</param>
-        /// <returns>The dynamically built SQL query string.</returns>
-        /// <remarks>
-        /// This method creates flexible, database-agnostic queries by properly handling 
-        /// SQL syntax, filter operators, and parameter names for prepared statements.
-        /// </remarks>
+        // The dynamic query builder that used to live here has been removed.
+        //
+        // BuildQuery, BuildQueryInternal, ParseQueryComponents, FindNextClausePosition,
+        // GetSchemaPrefix, BuildWhereClause, IsValidFilter, FormatFilterCondition,
+        // SanitizeParameterName and AppendClauseIfExists formed one mutually-referential cluster
+        // whose only entry point, BuildQuery, had no callers anywhere in the solution — roughly
+        // 350 lines of unreachable code. It was also the sole remaining caller of GetTableName and
+        // of the query-string cache in RDBSource.Cache.cs, which is why both are now unused.
+        //
+        // The live query path is GetEntity below, which builds its SQL through
+        // BuildSelectQueryDefinition (BeepDM's DataSourceAppFilterExtensions) and binds every
+        // filter value as a parameter. Do not resurrect this cluster: it lowercased whole
+        // statements, detected clauses with Contains("where") and no word boundary, and
+        // concatenated AppFilter.FieldName and Operator straight into the SQL.
 
-        private string BuildQuery(string originalquery, List<AppFilter> Filter, string? entityName = null)
-        {
-            // Try to get from cache first
-            if (!string.IsNullOrEmpty(entityName))
-            {
-                var cacheKey = GenerateQueryCacheKey(entityName, Filter);
-                if (TryGetCachedQuery(cacheKey, out var cachedQuery) && !string.IsNullOrEmpty(cachedQuery))
-                {
-                    return cachedQuery;
-                }
-
-                // Build the query
-                var builtQuery = BuildQueryInternal(originalquery, Filter);
-
-                // Cache the result
-                CacheQuery(cacheKey, builtQuery);
-
-                return builtQuery;
-            }
-
-            // If no entity name provided, build without caching
-            return BuildQueryInternal(originalquery, Filter);
-        }
-
-        /// <summary>
-        /// Internal method that performs the actual query building logic.
-        /// </summary>
-        private string BuildQueryInternal(string originalquery, List<AppFilter> Filter)
-        {
-            string retval;
-            string[] stringSeparators;
-            string[] sp;
-            string qrystr = "Select ";
-            bool FoundWhere = false;
-            QueryBuild queryStructure = new QueryBuild();
-            try
-            {
-                //stringSeparators = new string[] {"select ", " from ", " where ", " group by "," having ", " order by " };
-                // Get Selected Fields
-                originalquery = GetTableName(originalquery.ToLower());
-                stringSeparators = new string[] { "select", "from", "where", "group by", "having", "order by" };
-                sp = originalquery.ToLower().Split(stringSeparators, StringSplitOptions.RemoveEmptyEntries);
-                queryStructure.FieldsString = sp[0];
-                string[] Fieldsp = sp[0].Split(',');
-                queryStructure.Fields.AddRange(Fieldsp);
-                // Get From  Tables
-                queryStructure.EntitiesString = sp[1];
-                string[] Tablesdsp = sp[1].Split(',');
-                queryStructure.Entities.AddRange(Tablesdsp);
-
-                if (GetSchemaName() == null)
-                {
-                    qrystr += queryStructure.FieldsString + " " + " from " + queryStructure.EntitiesString;
-                }
-                else
-                    qrystr += queryStructure.FieldsString + $" from {GetSchemaName().ToLower()}." + queryStructure.EntitiesString;
-
-                qrystr += Environment.NewLine;
-
-                if (Filter != null)
-                {
-                    if (Filter.Count > 0)
-                    {
-                        if (Filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator)).Any())
-                        {
-                            qrystr += Environment.NewLine;
-                            if (FoundWhere == false)
-                            {
-                                qrystr += " where " + Environment.NewLine;
-                                FoundWhere = true;
-                            }
-
-                            foreach (AppFilter item in Filter.Where(p => !string.IsNullOrEmpty(p.FilterValue) && !string.IsNullOrWhiteSpace(p.FilterValue) && !string.IsNullOrEmpty(p.Operator) && !string.IsNullOrWhiteSpace(p.Operator)))
-                            {
-                                if (!string.IsNullOrEmpty(item.FilterValue) && !string.IsNullOrWhiteSpace(item.FilterValue))
-                                {
-                                    //  EntityField f = ent.Fields.Where(i => i.FieldName == item.FieldName).FirstOrDefault();
-                                    if (item.Operator.ToLower() == "between")
-                                    {
-                                        qrystr += item.FieldName + " " + item.Operator + $" {ParameterDelimiter}p_" + item.FieldName + $" and  {ParameterDelimiter}p_" + item.FieldName + "1 " + Environment.NewLine;
-                                    }
-                                    else
-                                    {
-                                        qrystr += item.FieldName + " " + item.Operator + $" {ParameterDelimiter}p_" + item.FieldName + " " + Environment.NewLine;
-                                    }
-
-                                }
-
-
-
-                            }
-                        }
-                    }
-                }
-                if (originalquery.ToLower().Contains("where"))
-                {
-                    qrystr += Environment.NewLine;
-
-                    string[] whereSeparators = new string[] { "where", "group by", "having", "order by" };
-
-                    string[] spwhere = originalquery.ToLower().Split(whereSeparators, StringSplitOptions.RemoveEmptyEntries);
-                    queryStructure.WhereCondition = spwhere[0];
-                    if (FoundWhere == false)
-                    {
-                        qrystr += " where " + Environment.NewLine;
-                        FoundWhere = true;
-                    }
-                    qrystr += spwhere[1];
-                    qrystr += Environment.NewLine;
-
-
-
-                }
-                if (originalquery.ToLower().Contains("group by"))
-                {
-                    string[] groupbySeparators = new string[] { "group by", "having", "order by" };
-
-                    string[] groupbywhere = originalquery.ToLower().Split(groupbySeparators, StringSplitOptions.RemoveEmptyEntries);
-                    queryStructure.GroupbyCondition = groupbywhere[1];
-                    qrystr += " group by " + groupbywhere[1];
-                    qrystr += Environment.NewLine;
-                }
-                if (originalquery.ToLower().Contains("having"))
-                {
-                    string[] havingSeparators = new string[] { "having", "order by" };
-
-                    string[] havingywhere = originalquery.ToLower().Split(havingSeparators, StringSplitOptions.RemoveEmptyEntries);
-                    queryStructure.HavingCondition = havingywhere[1];
-                    qrystr += " having " + havingywhere[1];
-                    qrystr += Environment.NewLine;
-                }
-                if (originalquery.ToLower().Contains("order by"))
-                {
-                    string[] orderbySeparators = new string[] { "order by" };
-
-                    string[] orderbywhere = originalquery.ToLower().Split(orderbySeparators, StringSplitOptions.RemoveEmptyEntries);
-                    queryStructure.OrderbyCondition = orderbywhere[1];
-                    qrystr += " order by " + orderbywhere[1];
-
-                }
-
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Fail", $"Unable Build Query Object {originalquery}- {ex.Message}", DateTime.Now, 0, "Error", Errors.Failed);
-            }
-            return qrystr;
-        }
-
-        /// <summary>
-        /// Parses SQL query components into a QueryBuild structure.
-        /// </summary>
-        private QueryBuild ParseQueryComponents(string query)
-        {
-            QueryBuild queryStructure = new QueryBuild();
-
-            // Define the SQL clause keywords to split by
-            string[] clauseKeywords = { "select", "from", "where", "group by", "having", "order by" };
-
-            // Split the query by clause keywords
-            string[] parts = query.Split(clauseKeywords, StringSplitOptions.RemoveEmptyEntries);
-
-            // Parse SELECT clause
-            if (parts.Length > 0)
-            {
-                queryStructure.FieldsString = parts[0].Trim();
-                queryStructure.Fields.AddRange(parts[0].Split(',').Select(f => f.Trim()));
-            }
-
-            // Parse FROM clause
-            if (parts.Length > 1)
-            {
-                queryStructure.EntitiesString = parts[1].Trim();
-                queryStructure.Entities.AddRange(parts[1].Split(',').Select(e => e.Trim()));
-            }
-
-            // Extract additional clauses if present in original query
-            if (query.Contains("where"))
-            {
-                int wherePos = query.IndexOf("where", StringComparison.OrdinalIgnoreCase) + 5;
-                int endPos = FindNextClausePosition(query, wherePos, new[] { "group by", "having", "order by" });
-                queryStructure.WhereCondition = query.Substring(wherePos, endPos - wherePos).Trim();
-            }
-
-            if (query.Contains("group by"))
-            {
-                int groupByPos = query.IndexOf("group by", StringComparison.OrdinalIgnoreCase) + 8;
-                int endPos = FindNextClausePosition(query, groupByPos, new[] { "having", "order by" });
-                queryStructure.GroupbyCondition = query.Substring(groupByPos, endPos - groupByPos).Trim();
-            }
-
-            if (query.Contains("having"))
-            {
-                int havingPos = query.IndexOf("having", StringComparison.OrdinalIgnoreCase) + 6;
-                int endPos = FindNextClausePosition(query, havingPos, new[] { "order by" });
-                queryStructure.HavingCondition = query.Substring(havingPos, endPos - havingPos).Trim();
-            }
-
-            if (query.Contains("order by"))
-            {
-                int orderByPos = query.IndexOf("order by", StringComparison.OrdinalIgnoreCase) + 8;
-                queryStructure.OrderbyCondition = query.Substring(orderByPos).Trim();
-            }
-
-            return queryStructure;
-        }
-
-        /// <summary>
-        /// Finds the position of the next SQL clause in the query.
-        /// </summary>
-        private int FindNextClausePosition(string query, int startPos, string[] clauses)
-        {
-            int nextPos = query.Length;
-
-            foreach (string clause in clauses)
-            {
-                int pos = query.IndexOf(clause, startPos, StringComparison.OrdinalIgnoreCase);
-                if (pos > 0 && pos < nextPos)
-                {
-                    nextPos = pos;
-                }
-            }
-
-            return nextPos;
-        }
-
-        /// <summary>
-        /// Gets the schema prefix for the query.
-        /// </summary>
-        private string GetSchemaPrefix()
-        {
-            string schemaName = GetSchemaName();
-            return !string.IsNullOrEmpty(schemaName) ? $"{schemaName}." : string.Empty;
-        }
-
-        /// <summary>
-        /// Builds the WHERE clause including any filters.
-        /// </summary>
-        private string BuildWhereClause(QueryBuild queryStructure, List<AppFilter> filters, bool hasExistingWhere)
-        {
-            StringBuilder whereBuilder = new StringBuilder();
-            bool hasFilters = filters != null && filters.Any(f => IsValidFilter(f));
-
-            // Determine if we need to add a WHERE clause
-            if (hasExistingWhere || hasFilters)
-            {
-                whereBuilder.Append("WHERE ");
-
-                // Add filters if present
-                if (hasFilters)
-                {
-                    bool firstFilter = true;
-                    foreach (AppFilter filter in filters.Where(IsValidFilter))
-                    {
-                        if (!firstFilter)
-                        {
-                            whereBuilder.AppendLine(" AND ");
-                        }
-
-                        whereBuilder.Append(FormatFilterCondition(filter));
-                        firstFilter = false;
-                    }
-                }
-
-                // Add existing where clause if present
-                if (hasExistingWhere && !string.IsNullOrEmpty(queryStructure.WhereCondition))
-                {
-                    if (hasFilters)
-                    {
-                        whereBuilder.AppendLine(" AND ");
-                    }
-                    whereBuilder.Append(queryStructure.WhereCondition);
-                }
-            }
-
-            return whereBuilder.ToString();
-        }
-
-        /// <summary>
-        /// Checks if an AppFilter has valid values for SQL generation.
-        /// </summary>
-        private bool IsValidFilter(AppFilter filter)
-        {
-            return filter != null &&
-                   !string.IsNullOrEmpty(filter.FieldName) &&
-                   !string.IsNullOrWhiteSpace(filter.FieldName) &&
-                   !string.IsNullOrEmpty(filter.Operator) &&
-                   !string.IsNullOrWhiteSpace(filter.Operator) &&
-                   !string.IsNullOrEmpty(filter.FilterValue) &&
-                   !string.IsNullOrWhiteSpace(filter.FilterValue);
-        }
-
-        /// <summary>
-        /// Formats a filter condition for SQL.
-        /// </summary>
-        private string FormatFilterCondition(AppFilter filter)
-        {
-            string FieldName = filter.FieldName;
-            string paramName = SanitizeParameterName(filter.FieldName);
-
-            if (filter.Operator.ToLower() == "between")
-            {
-                return $"{FieldName} BETWEEN {ParameterDelimiter}p_{paramName} AND {ParameterDelimiter}p_{paramName}1";
-            }
-            else
-            {
-                return $"{FieldName} {filter.Operator} {ParameterDelimiter}p_{paramName}";
-            }
-        }
-
-        /// <summary>
-        /// Sanitizes a parameter name to ensure it's valid for SQL.
-        /// </summary>
-        private string SanitizeParameterName(string FieldName)
-        {
-            // Replace spaces with underscores and ensure name is valid
-            string paramName = Regex.Replace(FieldName, @"\s+", "_");
-
-            // Truncate if needed (for databases with name length limits)
-            if (paramName.Length > 30 && (DatasourceType == DataSourceType.Oracle || DatasourceType == DataSourceType.Postgre))
-            {
-                paramName = paramName.Substring(0, 30);
-            }
-
-            return paramName;
-        }
-
-        /// <summary>
-        /// Appends a SQL clause to the query builder if it exists.
-        /// </summary>
-        private void AppendClauseIfExists(StringBuilder queryBuilder, string clauseContent, string clauseName)
-        {
-            if (!string.IsNullOrEmpty(clauseContent))
-            {
-                queryBuilder.AppendLine($"{clauseName} {clauseContent}");
-            }
-        }
 
         /// <summary>
         /// Retrieves data for a specified entity from the database, with the option to apply filters.
@@ -588,13 +280,14 @@ namespace TheTechIdea.Beep.DataBase
                 if (!EntityName.Contains("select", StringComparison.OrdinalIgnoreCase) &&
                     !EntityName.Contains("from", StringComparison.OrdinalIgnoreCase))
                 {
-                    qrystr = "select * from " + EntityName;
-                    qrystr = GetTableName(qrystr.ToLower());
+                    qrystr = "select * from " + QualifyWithSchema(EntityName);
                     inname = EntityName;
                 }
                 else
                 {
-                    EntityName = GetTableName(EntityName);
+                    // A caller-supplied SELECT. GetTableName used to try to inject the schema into
+                    // it by string surgery; the caller wrote the query and any qualification it
+                    // needs, so leave it alone.
                     string[] stringSeparators = { " from ", " where ", " group by ", " order by " };
                     var sp = EntityName.ToLower().Split(stringSeparators, StringSplitOptions.None);
                     qrystr = EntityName;
@@ -612,7 +305,14 @@ namespace TheTechIdea.Beep.DataBase
                     qrystr = ent.CustomBuildQuery;
                 }
             }
-            catch { /* ignore metadata errors for streaming */ }
+            catch (Exception ex)
+            {
+                // Non-fatal: a missing or unreadable structure only costs the CustomBuildQuery
+                // override, and the plain SELECT below still works. But it used to be discarded
+                // entirely, so a broken structure looked identical to an entity that simply has no
+                // custom query.
+                Logger?.WriteLog($"Could not read the structure of '{inname}' while starting a streaming read on {DatasourceName}; using the default query. {ex.Message}");
+            }
 
             var streamQueryDefinition = this.BuildSelectQueryDefinition(qrystr, Filter);
 
@@ -640,7 +340,7 @@ namespace TheTechIdea.Beep.DataBase
                 // Include the SQL and the parameter delimiter actually used. Without them a dialect
                 // mismatch (a '$p_' parameter reaching SQL Server, say) is unattributable — the
                 // message alone names neither the query nor the datasource that produced it.
-                DMEEditor.AddLogMessage("Fail",
+                DMEEditor?.AddLogMessage("Fail",
                     $"Error preparing entity stream ({ex.Message}) | source={GetType().Name} " +
                     $"type={DatasourceType} delimiter='{ParameterDelimiter}' | sql=[{streamQueryDefinition?.QueryText}]",
                     DateTime.Now, 0, inname, Errors.Failed);
@@ -660,7 +360,17 @@ namespace TheTechIdea.Beep.DataBase
                     entityProperties = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
                 }
             }
-            catch { /* fallback: yield raw dictionaries if type resolution fails */ }
+            catch (Exception ex)
+            {
+                // The fallback is real -- the loop below yields dictionaries when entityType is
+                // null -- but callers expecting typed rows got them silently swapped for
+                // dictionaries with nothing logged.
+                Logger?.WriteLog($"Could not resolve an entity type for '{inname}' on {DatasourceName}; streaming rows as dictionaries instead. {ex.Message}");
+            }
+
+            // One entry per column that failed conversion during this read, so the log records the
+            // problem once rather than once per row.
+            var reportedConversionFailures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             // Streaming loop using DataStreamer helper
             using (cmd)
@@ -706,7 +416,24 @@ namespace TheTechIdea.Beep.DataBase
 
                                     prop.SetValue(obj, convertedValue);
                                 }
-                                catch { /* skip properties that fail conversion */ }
+                                catch (Exception convEx)
+                                {
+                                    // Report each problem column once per read, not once per row.
+                                    //
+                                    // This was a completely empty catch, so a column whose value
+                                    // could not be converted silently produced the property's
+                                    // default on EVERY row — a table of zeros and nulls that looked
+                                    // like data. Logging per row would be unusable on a large read,
+                                    // so the first failure for each column is recorded and the rest
+                                    // suppressed.
+                                    if (reportedConversionFailures.Add(prop.Name))
+                                    {
+                                        Logger?.WriteLog($"Column '{prop.Name}' could not be converted to " +
+                                                         $"{prop.PropertyType.Name} while reading {EntityName} " +
+                                                         $"({convEx.Message}); this property will be left at its " +
+                                                         $"default for the affected rows.");
+                                    }
+                                }
                             }
                         }
                         yield return obj;
@@ -733,7 +460,7 @@ namespace TheTechIdea.Beep.DataBase
 
             if (string.IsNullOrWhiteSpace(EntityName))
             {
-                DMEEditor.AddLogMessage("Fail", "Entity name cannot be null or empty", DateTime.Now, 0, "", Errors.Failed);
+                SetFailure("Entity name cannot be null or empty");
                 return null;
             }
             if (pageNumber < 1) pageNumber = 1;
@@ -757,7 +484,13 @@ namespace TheTechIdea.Beep.DataBase
                     isCustomQuery = true;
                 }
             }
-            catch { /* non-fatal */ }
+            catch (Exception ex)
+            {
+                // Same as the streaming path: losing the structure costs CustomBuildQuery and the
+                // primary key used for the ORDER BY that makes paging deterministic, so it is worth
+                // a line in the log even though the read continues.
+                Logger?.WriteLog($"Could not read the structure of '{entityForStruct}' while paging on {DatasourceName}; paging with the default query. {ex.Message}");
+            }
 
             // Ensure deterministic ORDER BY for paging
             if (!baseQuery.Contains("order by", StringComparison.OrdinalIgnoreCase))
@@ -805,7 +538,11 @@ namespace TheTechIdea.Beep.DataBase
             try
             {
                 using var countCmd = GetDataCommand();
-                if (countCmd == null) return null;
+                if (countCmd == null)
+                {
+                    SetFailure($"Paged read of {EntityName}: could not create the count command (the connection to {DatasourceName} is not open).");
+                    return null;
+                }
                 var countQueryDef = new AppFilterQueryDefinition
                 {
                     QueryText = countQuery,
@@ -816,7 +553,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Warning", $"Count failed: {ex.Message}", DateTime.Now, 0, EntityName, Errors.Warning);
+                DMEEditor?.AddLogMessage("Warning", $"Count failed: {ex.Message}", DateTime.Now, 0, EntityName, Errors.Warning);
             }
 
             // Resolve entity type for converting dictionary rows to typed objects
@@ -830,14 +567,26 @@ namespace TheTechIdea.Beep.DataBase
                     pagedEntityProperties = pagedEntityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
                 }
             }
-            catch { /* fallback: raw dictionaries */ }
+            catch (Exception ex)
+            {
+                // See the streaming read: the fallback works, it just used to be invisible.
+                Logger?.WriteLog($"Could not resolve an entity type for '{entityForStruct}' on {DatasourceName}; returning the page as dictionaries instead. {ex.Message}");
+            }
 
             // Execute paged data query
             var rows = new List<object>();
+
+            // One entry per column that failed conversion during this read; see the streaming read
+            // above for why this is reported once rather than once per row.
+            var reportedConversionFailures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             try
             {
                 using var dataCmd = GetDataCommand();
-                if (dataCmd == null) return null;
+                if (dataCmd == null)
+                {
+                    SetFailure($"Paged read of {EntityName}: could not create the data command (the connection to {DatasourceName} is not open).");
+                    return null;
+                }
                 var pagedQueryDef = new AppFilterQueryDefinition
                 {
                     QueryText = pagedQuery,
@@ -874,7 +623,24 @@ namespace TheTechIdea.Beep.DataBase
 
                                     prop.SetValue(obj, convertedValue);
                                 }
-                                catch { /* skip properties that fail conversion */ }
+                                catch (Exception convEx)
+                                {
+                                    // Report each problem column once per read, not once per row.
+                                    //
+                                    // This was a completely empty catch, so a column whose value
+                                    // could not be converted silently produced the property's
+                                    // default on EVERY row — a table of zeros and nulls that looked
+                                    // like data. Logging per row would be unusable on a large read,
+                                    // so the first failure for each column is recorded and the rest
+                                    // suppressed.
+                                    if (reportedConversionFailures.Add(prop.Name))
+                                    {
+                                        Logger?.WriteLog($"Column '{prop.Name}' could not be converted to " +
+                                                         $"{prop.PropertyType.Name} while reading {EntityName} " +
+                                                         $"({convEx.Message}); this property will be left at its " +
+                                                         $"default for the affected rows.");
+                                    }
+                                }
                             }
                         }
                         rows.Add(obj);
@@ -887,7 +653,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error executing paginated query: {ex.Message}", DateTime.Now, 0, EntityName, Errors.Failed);
+                DMEEditor?.AddLogMessage("Fail", $"Error executing paginated query: {ex.Message}", DateTime.Now, 0, EntityName, Errors.Failed);
                 return null;
             }
 
@@ -936,7 +702,14 @@ namespace TheTechIdea.Beep.DataBase
                 if (token.Equals("select", StringComparison.OrdinalIgnoreCase)) return null;
                 return token;
             }
-            catch { return null; }
+            catch
+            {
+                // Best-effort text scan over arbitrary SQL, and the only failure it can produce is
+                // an out-of-range index on a malformed statement. Returning null is the contract --
+                // the caller falls back to its own naming -- and this method is static, so there is
+                // no logger to report to.
+                return null;
+            }
         }
         /// <summary>
         /// Asynchronously retrieves data for a specified entity from the database, with the option to apply filters.
@@ -944,15 +717,37 @@ namespace TheTechIdea.Beep.DataBase
         /// <param name="EntityName">The name of the entity (table) to retrieve data from.</param>
         /// <param name="Filter">A list of filters to apply to the query.</param>
         /// <remarks>
-        /// This method is an asynchronous wrapper around GetEntity, providing the same functionality but in an async manner. It is particularly useful for operations that might take a longer time to complete, ensuring that the application remains responsive.
+        /// Runs the read on a thread-pool thread and completes when the rows are in hand.
+        ///
+        /// The offload used to be a no-op. <see cref="GetEntity"/> is an iterator, so
+        /// <c>Task.Run(() =&gt; GetEntity(...))</c> returned the un-enumerated sequence immediately:
+        /// opening the connection, executing the reader and materialising every row all happened on
+        /// the *consuming* thread, when it got round to enumerating. The task completed in
+        /// microseconds having done nothing, and the XML comment claiming the application stayed
+        /// responsive was false.
+        ///
+        /// Enumerating inside the task is what makes the offload real, and it is also what the
+        /// signature promises: a caller awaiting a <c>Task&lt;IEnumerable&lt;object&gt;&gt;</c>
+        /// reasonably expects the awaited result to be data, not a reader still attached to the
+        /// shared connection that will do its I/O later -- or never, if the caller abandons it.
+        ///
+        /// The cost is buffering: the whole result set is materialised. Callers that need to stream
+        /// should use <c>GetEntityStreamAsync&lt;T&gt;</c> (Modernization.cs), which is a genuine
+        /// <c>IAsyncEnumerable</c> over <c>ExecuteReaderAsync</c>.
         /// </remarks>
-        /// <returns>A task representing the asynchronous operation, which, when completed, will return an object representing the data retrieved.</returns>
+        /// <returns>A task that completes with the rows read.</returns>
         public virtual Task<IEnumerable<object>> GetEntityAsync(string EntityName, List<AppFilter> Filter)
         {
-            // Offload synchronous GetEntity to thread pool to avoid blocking the calling thread.
-            // The sync implementation uses IDataReader which doesn't support true async I/O;
-            // for true async streaming, use GetEntityStreamAsync<T>() from Modernization.cs.
-            return Task.Run(() => GetEntity(EntityName, Filter));
+            return Task.Run<IEnumerable<object>>(() =>
+            {
+                var rows = GetEntity(EntityName, Filter);
+                if (rows == null)
+                    return new List<object>();
+
+                // Enumerate here, on the pool thread, so the connection work actually happens off
+                // the caller's thread. A List is already a List; anything else is drained.
+                return rows as IList<object> ?? rows.Cast<object>().ToList();
+            });
         }
 
         // Helper method to extract WHERE clause from a query
@@ -1013,6 +808,16 @@ namespace TheTechIdea.Beep.DataBase
                         $"Entity structure not found (or has no fields) for '{Entityname}' — statements built " +
                         "from it would have no columns.", DateTime.Now, 0, null, Errors.Failed);
                 }
+                // Dispose the command this field was holding before replacing it. SetObjects runs
+                // on every entity switch, and the previous command was simply dropped — one leaked
+                // IDbCommand per switch, for the lifetime of the datasource.
+                if (command != null)
+                {
+                    try { command.Dispose(); }
+                    catch (Exception ex) { Logger?.WriteLog($"Error disposing the cached command for {DatasourceName}: {ex.Message}"); }
+                    command = null;
+                }
+
                 command = RDBMSConnection.DbConn?.CreateCommand();
 
                 // Same reason as GetDataCommand: a command created while a
@@ -1028,11 +833,32 @@ namespace TheTechIdea.Beep.DataBase
         public virtual IDataReader GetDataReader(string querystring)
         {
             IDbCommand cmd = GetDataCommand();
-            cmd.CommandText = querystring;
-            IDataReader dt = cmd.ExecuteReader();
 
-            return dt;
+            // GetDataCommand returns null on a closed connection; this used to dereference it and
+            // throw a bare NullReferenceException out of an IRDBSource contract method.
+            // GetDataCommand has already recorded the reason on ErrorObject.
+            if (cmd == null)
+                return null;
 
+            try
+            {
+                cmd.CommandText = querystring;
+                IDataReader dt = cmd.ExecuteReader();
+
+                SetSuccess();
+
+                // The caller only ever gets the reader back, so the reader has to own the command:
+                // GetDataCommand() creates a new one on every call and nothing here disposed it.
+                // Disposing it before returning is not an option either -- on SQLite and others
+                // that finalises the statement the open reader is reading through.
+                return new DataBase.Helpers.CommandOwningDataReader(dt, cmd);
+            }
+            catch
+            {
+                // No reader to carry ownership, so the command has to go now.
+                cmd.Dispose();
+                throw;
+            }
         }
 
         #endregion
