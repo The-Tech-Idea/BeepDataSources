@@ -14,7 +14,7 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Title>TheTechIdea.Beep.RedisDataSourceCore</Title>
 		<PackageId>TheTechIdea.Beep.RedisDataSourceCore</PackageId>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 
 	</PropertyGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">

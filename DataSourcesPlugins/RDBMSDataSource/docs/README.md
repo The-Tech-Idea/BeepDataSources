@@ -10,13 +10,18 @@ in this class is correct.
 
 ## Who inherits it
 
-Twelve drivers extend `RDBSource` directly:
+Twenty drivers extend `RDBSource` directly. Eight of these (marked *new*) did not exist until the
+Tier 5 sweep (`docs/10-known-issues.md`, D8/D15) found their `classHandler` registered in BeepDM's
+`ConnectionHelper_RDBMS.cs` with no matching class anywhere in the repo:
 
 | Driver | Project |
 |---|---|
 | `SQLServerDataSource` | `DataSourcesPluginsCore/SQlServerDataSourceCore/` |
+| `AzureSQLDataSource` *(new)* | `DataSourcesPluginsCore/SQlServerDataSourceCore/` |
 | `PostgreDataSource` | `DataSourcesPluginsCore/PostgreDataSourceCore/` |
+| `TimeScaleDBDataSource` *(new)* | `DataSourcesPluginsCore/PostgreDataSourceCore/` |
 | `MySQLDataSource` | `DataSourcesPluginsCore/MySqlDataSourceCore/` |
+| `AWSRDSDataSource` *(new)* | `DataSourcesPluginsCore/MySqlDataSourceCore/` |
 | `OracleDataSource` | `DataSourcesPluginsCore/OracleDataSourceCore/` |
 | `HanaDataSource` | `DataSourcesPluginsCore/HanaDataSource/` |
 | `FireBirdDataSource` | `DataSourcesPluginsCore/FirebirdDataSourceCore/` |
@@ -26,6 +31,11 @@ Twelve drivers extend `RDBSource` directly:
 | `PrestoDataSource` | `DataSourcesPluginsCore/PrestoDatasource/` |
 | `SnowFlakeDataSource` | `DataSourcesPluginsCore/SnowFlakeDataSource/` |
 | `SpannerDataSource` | `DataSourcesPluginsCore/SpannerDataSourceCore/` |
+| `SQLCompactDataSource` *(new)* | `DataSourcesPluginsCore/SqlCompactDatasourceCore/` |
+| `DB2DataSource` *(new)* | `DataSourcesPluginsCore/DB2DataSourceCore/` |
+| `VerticaDataSource` *(new)* | `DataSourcesPluginsCore/VerticaDataSourceCore/` |
+| `TerraDataDataSource` *(new)* | `DataSourcesPluginsCore/TerraDataDataSourceCore/` |
+| `VistaDBDataSource` *(new, minimal — see D15)* | `DataSourcesPluginsCore/VistaDBDataSourceCore/` |
 
 Two extend it through `InMemoryRDBSource : RDBSource, IInMemoryDB`:
 

@@ -622,7 +622,7 @@ namespace TheTechIdea.Beep.DataBase
             int totalRows = entities.Count;
             int processedRows = 0;
 
-            string tempTableName = $"#TempUpdate_{entityName}_{Guid.NewGuid():N}";
+            string tempTableName = BuildTempTableName(entityName);
 
             try
             {
@@ -671,7 +671,7 @@ namespace TheTechIdea.Beep.DataBase
             int totalRows = entities.Count;
             int processedRows = 0;
 
-            string tempTableName = $"#TempUpdate_{entityName}_{Guid.NewGuid():N}";
+            string tempTableName = BuildTempTableName(entityName);
 
             try
             {
@@ -883,6 +883,11 @@ namespace TheTechIdea.Beep.DataBase
                 DataSourceType.SqlServer => BuildSqlServerTempTableCreate(tempTableName),
                 DataSourceType.Mysql => BuildMySqlTempTableCreate(tempTableName),
                 DataSourceType.Postgre => BuildPostgreSqlTempTableCreate(tempTableName),
+                // CockroachDB is PostgreSQL wire- and DDL-compatible for this exact builder:
+                // it accepts CREATE TEMP TABLE, and ResolveDdlColumnType already dispatches
+                // on DatasourceType, so the column types it emits are Cockroach's own (K46's
+                // GetFallbackDbType/NormalizeDbTypeForProvider extension), not Postgres's.
+                DataSourceType.Cockroach => BuildPostgreSqlTempTableCreate(tempTableName),
                 _ => throw new NotSupportedException($"Temp tables not supported for {DatasourceType}")
             };
 
@@ -903,6 +908,11 @@ namespace TheTechIdea.Beep.DataBase
                 DataSourceType.SqlServer => BuildSqlServerTempTableCreate(tempTableName),
                 DataSourceType.Mysql => BuildMySqlTempTableCreate(tempTableName),
                 DataSourceType.Postgre => BuildPostgreSqlTempTableCreate(tempTableName),
+                // CockroachDB is PostgreSQL wire- and DDL-compatible for this exact builder:
+                // it accepts CREATE TEMP TABLE, and ResolveDdlColumnType already dispatches
+                // on DatasourceType, so the column types it emits are Cockroach's own (K46's
+                // GetFallbackDbType/NormalizeDbTypeForProvider extension), not Postgres's.
+                DataSourceType.Cockroach => BuildPostgreSqlTempTableCreate(tempTableName),
                 _ => throw new NotSupportedException($"Temp tables not supported for {DatasourceType}")
             };
 
@@ -968,6 +978,9 @@ namespace TheTechIdea.Beep.DataBase
                 DataSourceType.SqlServer => BuildSqlServerMergeQuery(targetTable, tempTable, primaryKeys, updateFields),
                 DataSourceType.Mysql => BuildMySqlUpdateJoinQuery(targetTable, tempTable, primaryKeys, updateFields),
                 DataSourceType.Postgre => BuildPostgreSqlUpdateFromQuery(targetTable, tempTable, primaryKeys, updateFields),
+                // CockroachDB accepts the same UPDATE ... SET ... FROM ... AS source WHERE ...
+                // join-update syntax as PostgreSQL.
+                DataSourceType.Cockroach => BuildPostgreSqlUpdateFromQuery(targetTable, tempTable, primaryKeys, updateFields),
                 _ => throw new NotSupportedException($"Bulk update not supported for {DatasourceType}")
             };
         }
@@ -1179,6 +1192,32 @@ namespace TheTechIdea.Beep.DataBase
         ///
         /// Keep this list and those two switches in step: widening one without the other is the bug.
         /// </remarks>
+        /// <summary>
+        /// A temp-table name in the syntax this engine actually recognises.
+        /// </summary>
+        /// <remarks>
+        /// This was hardcoded to a SQL-Server-only local-temp-table name -- "#TempUpdate_..." --
+        /// regardless of engine. SQL Server is the ONE engine where a leading "#" means anything;
+        /// on PostgreSQL and CockroachDB it is a syntax error, and on MySQL "#" starts a
+        /// to-end-of-line comment, so "CREATE TEMPORARY TABLE #TempUpdate_..." silently became
+        /// "CREATE TEMPORARY TABLE " with the rest of the line commented out -- a syntax error
+        /// either way. Since nothing exercised this path against a real non-SqlServer engine before
+        /// (SQLite masks it: this method is never reached for DataSourceType.SqlLite because
+        /// SupportsTempTables() has never listed it), the bug was invisible until this class was
+        /// actually driven with SupportsTempTables() reporting true for something other than
+        /// SqlServer -- which is exactly what extending it to CockroachDB (above) did, and how this
+        /// was found.
+        /// </remarks>
+        private string BuildTempTableName(string entityName)
+        {
+            string bare = $"TempUpdate_{entityName}_{Guid.NewGuid():N}";
+            return DatasourceType switch
+            {
+                DataSourceType.SqlServer or DataSourceType.AzureSQL or DataSourceType.SqlCompact => "#" + bare,
+                _ => bare
+            };
+        }
+
         private bool SupportsTempTables()
         {
             return DatasourceType switch
@@ -1186,6 +1225,13 @@ namespace TheTechIdea.Beep.DataBase
                 DataSourceType.SqlServer => true,
                 DataSourceType.Mysql => true,
                 DataSourceType.Postgre => true,
+                // CockroachDB is PostgreSQL wire-compatible for the exact statements this path
+                // emits (CREATE TEMP TABLE, UPDATE ... FROM ... AS source), so it reuses
+                // BuildPostgreSqlTempTableCreate/BuildPostgreSqlUpdateFromQuery directly rather
+                // than needing its own builder pair. Not extended further: Oracle, SQLite,
+                // Hana, Firebird, Presto, Snowflake and Spanner each need dialect-specific
+                // temp-table/MERGE syntax this class does not have a builder for yet.
+                DataSourceType.Cockroach => true,
                 _ => false
             };
         }

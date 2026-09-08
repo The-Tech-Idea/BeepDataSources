@@ -38,7 +38,11 @@ namespace TheTechIdea.Beep.DataBase
         /// </summary>
         protected override void ConfigureCommand(IDbCommand command)
         {
-            if (command is Oracle.ManagedDataAccess.Client.OracleCommand oracleCommand)
+            // Fully qualified: this project also declares the nested namespace
+            // TheTechIdea.Beep.DataBase.Oracle (OracleDataSourceServiceExtensions.cs), which
+            // shadows the top-level Oracle.ManagedDataAccess namespace from the NuGet package
+            // for any unqualified reference written inside TheTechIdea.Beep.DataBase.
+            if (command is global::Oracle.ManagedDataAccess.Client.OracleCommand oracleCommand)
             {
                 oracleCommand.BindByName = true;
             }

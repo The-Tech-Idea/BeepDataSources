@@ -15,7 +15,18 @@ namespace TheTechIdea.Beep.DataBase
     {
         public SQLiteMigrationProvider(IDataSource owner) : base(owner) { }
 
-        public new SchemaMigrationCapabilities Capabilities => new()
+        // override, not new: RdbmsSqlMigrationProvider.Capabilities is declared "public virtual",
+        // and MigrationManager holds every provider as ISchemaMigrationProvider
+        // (IDMEEditor.GetMigrationProvider's declared return type). The "new" this replaced hid the
+        // base property instead of replacing it in the interface's virtual slot, so
+        // "provider.Capabilities" -- exactly how every guard in MigrationManager.EntityOperations.cs
+        // reads it -- resolved to RdbmsSqlMigrationProvider's generic, all-supported capabilities,
+        // not this class's honest, degraded ones. Verified empirically (Type.GetInterfaceMap against
+        // the compiled DLL) before and after this fix. Every guard below -- SupportsAlterColumn,
+        // SupportsDropColumn, SupportsDropForeignKey, SupportsTransactionalDdl -- was silently
+        // bypassed: MigrationManager would have attempted each directly against SQLite,
+        // which does not support any of them in the form RdbmsSqlMigrationProvider emits.
+        public override SchemaMigrationCapabilities Capabilities => new()
         {
             SupportsCreateEntity = true,
             SupportsDropEntity = true,

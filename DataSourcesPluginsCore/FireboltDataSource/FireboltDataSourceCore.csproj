@@ -13,7 +13,7 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Title>TheTechIdea.Beep.FireboltDataSourceCore</Title>
 		<PackageId>TheTechIdea.Beep.FireboltDataSourceCore</PackageId>
-		<Version>1.0.0</Version>
+		<Version>1.0.1</Version>
 
 	</PropertyGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
@@ -30,6 +30,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Firebolt.Ado" Version="1.1.2" />
+		<ProjectReference Include="..\..\DataSourcesPlugins\RDBMSDataSource\RDBDataSource.csproj" />
 		<PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="2.0.35" />
 		<PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="2.0.69" />
 	</ItemGroup>

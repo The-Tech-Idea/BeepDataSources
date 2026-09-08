@@ -1,4 +1,4 @@
-﻿using DuckDB.NET.Data;
+using DuckDB.NET.Data;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -62,7 +62,16 @@ namespace DuckDBDataSourceCore
             
         }
 
-        protected virtual void Dispose(bool disposing)
+        // Was `protected virtual`, hiding InMemoryRDBSource.Dispose(bool) rather than overriding it.
+        // This class also declares its own `public void Dispose()`, so calling `Dispose(disposing:
+        // true)` from within that method resolved -- correctly, since it is a direct call inside this
+        // class -- to THIS method; the bug was that this method never called base.Dispose(disposing),
+        // so RDBSource's own Dispose(bool) (rolling back a pending _activeTransaction, clearing the
+        // entity-structure cache, closing and disposing the provider connection, clearing
+        // Entities/EntitiesNames) never ran for a DuckDBDataSource. DuckConn/Transaction/command here
+        // are this class's own fields, entirely separate from RDBSource's, so cleaning them up is
+        // still necessary -- base.Dispose(disposing) is additive, not a replacement.
+        protected override void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
@@ -91,6 +100,8 @@ namespace DuckDBDataSourceCore
                 // Free unmanaged resources and override finalizer
                 disposedValue = true;
             }
+
+            base.Dispose(disposing);
         }
 
         // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
@@ -99,13 +110,11 @@ namespace DuckDBDataSourceCore
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: false);
         }
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-        public IErrorsInfo OpenDatabaseInMemory(string databasename)
+        // public void Dispose() is NOT re-declared here. It used to hide RDBSource.Dispose() (same
+        // signature, no override) with an identical body -- Dispose(disposing: true) then
+        // GC.SuppressFinalize(this) -- so it added nothing beyond obscuring which Dispose() actually
+        // runs. RDBSource.Dispose() already does exactly this and reaches the override above.
+        public override IErrorsInfo OpenDatabaseInMemory(string databasename)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
@@ -158,7 +167,7 @@ namespace DuckDBDataSourceCore
             return DMEEditor.ErrorObject;
         }
 
-        public string GetConnectionString()
+        public override string GetConnectionString()
         {
             return Dataconnection.ConnectionProp.ConnectionString;
         }
@@ -233,7 +242,7 @@ namespace DuckDBDataSourceCore
             return DMEEditor.ErrorObject;
         }
 
-        public IErrorsInfo SyncData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
+        public new IErrorsInfo SyncData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
@@ -276,7 +285,7 @@ namespace DuckDBDataSourceCore
             return DMEEditor.ErrorObject;
         }
 
-        public IErrorsInfo RefreshData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
+        public new IErrorsInfo RefreshData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
@@ -328,7 +337,7 @@ namespace DuckDBDataSourceCore
             return DMEEditor.ErrorObject;
         }
 
-        public IErrorsInfo RefreshData(IProgress<PassedArgs> progress, CancellationToken token)
+        public new IErrorsInfo RefreshData(IProgress<PassedArgs> progress, CancellationToken token)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             bool isdeleted = false;
@@ -1308,11 +1317,18 @@ namespace DuckDBDataSourceCore
                 }
                 else
                 {
+                    // Was report-only: ErrorObject.Flag was set to Ok at method entry and never
+                    // changed here, so a zero-row update (the key matched no row) reported success
+                    // -- the exact F1/K2 pattern the RDBSource rework this class bypasses (it
+                    // overrides UpdateEntity instead of inheriting it) was built around. Without a
+                    // logger, DMEEditor.AddLogMessage does nothing to the flag either.
                     msg = $"Fail to Updated  Record  to {EntityName} : {updatestring}";
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = msg;
                     DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
                 }
 
-
+                command.Dispose();
             }
             catch (Exception ex)
             {
@@ -1399,8 +1415,19 @@ namespace DuckDBDataSourceCore
                         }
                     }
                     }
+                else
+                {
+                    // Same gap as UpdateEntity: rowsUpdated <= 0 fell through with no else branch at
+                    // all, leaving ErrorObject.Flag at the Ok set on entry -- a zero-row insert
+                    // reported success silently, with not even a log line.
+                    msg = $"No rows were inserted into {EntityName}.";
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = msg;
+                    DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, updatestring, Errors.Failed);
+                }
                     // DMEEditor.AddLogMessage("Success",$"Successfully Written Data to {EntityName}",DateTime.Now,0,null, Errors.Ok);
 
+                command.Dispose();
             }
             catch (Exception ex)
             {
@@ -1451,7 +1478,11 @@ namespace DuckDBDataSourceCore
                 }
                 else
                 {
+                    // Same F1/K2 gap as UpdateEntity/InsertEntity: ErrorObject.Flag stayed at the Ok
+                    // set on entry, so deleting by a key that matched no row reported success.
                     msg = $"Fail to Delete Record  from {EntityName} : {updatestring}";
+                    ErrorObject.Flag = Errors.Failed;
+                    ErrorObject.Message = msg;
                     DMEEditor.AddLogMessage("Beep", $"{msg} ", DateTime.Now, 0, null, Errors.Failed);
                 }
                 sqlTran.Commit();
@@ -1982,7 +2013,13 @@ namespace DuckDBDataSourceCore
             }
             return qrystr;
         }
-        public virtual DuckDBCommand GetDataCommand()
+        // Covariant override (DuckDBCommand : DbCommand : IDbCommand). This used to be `public
+        // virtual`, hiding RDBSource.GetDataCommand() -- so every RDBSource method NOT overridden
+        // by this class (any future addition to the base that calls GetDataCommand() internally)
+        // would have silently used the generic base command creation instead of this DuckDB-aware
+        // one, since a hiding member does not occupy the virtual slot base-class code dispatches
+        // through.
+        public override DuckDBCommand GetDataCommand()
         {
             DuckDBCommand cmd = null;
             ErrorObject.Flag = Errors.Ok;

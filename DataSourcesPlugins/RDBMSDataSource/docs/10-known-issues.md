@@ -4,7 +4,10 @@ The defect register for `RDBSource`. This file is the single source of truth; th
 `Help/providers/` link here rather than keeping their own list.
 
 Every entry was verified against the source. Line references are to
-`DataSourcesPlugins/RDBMSDataSource/PartialClasses/RDBSource/` unless stated otherwise.
+`DataSourcesPlugins/RDBMSDataSource/PartialClasses/RDBSource/` unless stated otherwise. F1 and K1
+through K49 are defects inside `RDBSource`/`InMemoryRDBSource`; Tier 5 (D1-D7) is a separate sweep
+of the 14 concrete driver classes for defects specific to them, done after the base-class rework was
+otherwise complete.
 
 **Fixed and no longer worth reporting** — earlier documents still list these as open:
 `UpdateEntities` calling `InsertEntity` (fixed, `CRUD.cs:305`); `Commit`/`EndTransaction` as empty
@@ -553,9 +556,527 @@ that closes the connection after the await and still reads every row.
 ---
 
 <a id="coverage"></a>
+## Tier 5 -- driver-level defects (not in `RDBSource` itself)
+
+Everything above is inside `RDBSource`/`InMemoryRDBSource`. This tier is different: these are
+defects in the 14 concrete driver classes under `DataSourcesPluginsCore/` and `InMemoryDB/` --
+found while checking, driver by driver, whether each one needs special handling relative to the
+reworked base. `D` numbering, to keep it visibly separate from the base-class `K` register.
+
+### D1 -- 10 of 14 drivers were not building against this `RDBSource` at all -- *fixed*
+
+**Where** `CockroachDBDataSourceCore.csproj`, `FirebirdDataSourceCore.csproj`,
+`FireboltDataSourceCore.csproj`, `HanaDataSourceCore.csproj`, `MySqlDataSourceCore.csproj`,
+`OracleDataSourceCore.csproj`, `PostgreDataSourceCore.csproj`, `PrestoDatasourceCore.csproj`,
+`SnowFlakeDataSourceCore.csproj`, `SpannerDataSourceCore.csproj`, `SqlCompactDatasourceCore.csproj`
+
+**The defect.** CLAUDE.md's own architecture table says `DataSourcePluginSolution.sln` projects use
+`ProjectReference` to the local sources because "the local BeepDM sources carry unpublished fixes,
+and a package copy alongside the project copy loads the same types twice." The same reasoning
+applies, unstated, to `RDBDataSource` itself -- and it was being violated by 10 of the 14 drivers
+that inherit it. Nine referenced `TheTechIdea.Beep.RDBDataSource` version `2.0.22` as a
+**published NuGet package** (`SqlCompact` referenced a *different* package, `RDBDataSource`
+`1.0.42`); Firebolt referenced no `RDBDataSource` package at all, despite `FireBoltDataSource : RDBSource`.
+2.0.22 was also, not coincidentally, the local project's own `<Version>` -- the number had never
+been bumped across all eleven phases of this rework, so the pinned version looked current without
+being current.
+
+**The consequence.** None of F1 or K1 through K49 above ever reached CockroachDB, Firebird, Hana,
+MySQL, Oracle, PostgreSQL, Presto, Snowflake, Spanner or SQL Server Compact -- at compile time or
+at run time. Every rebuild-and-test cycle across all eleven phases that reported "0 errors" for
+these projects was compiling against a stale package predating this work, not against the source
+under review; a green build proved nothing about them. Only SQLite, SQL Server and DuckDB, which
+already used `ProjectReference`, ever actually saw the fixes.
+
+**Status -- fixed.** All 10 converted to `ProjectReference Include="..\..\DataSourcesPlugins\RDBMSDataSource\RDBDataSource.csproj"`,
+matching SQLite/SQL Server/DuckDB exactly; Firebolt's missing reference was added the same way.
+Fixing the reference surfaced two further problems, both fixed alongside it:
+
+- **Package downgrade errors.** Firebird, Hana, MySQL, Oracle, Presto, Snowflake and Spanner each
+  pinned `Microsoft.Extensions.Caching.Memory` at `10.0.9`; the local `RDBDataSource.csproj` needs
+  `>= 10.0.10`. NuGet's downgrade detection (`NU1605`) is an error in this SDK, not a warning.
+  Bumped all seven to `10.0.10`.
+- **A namespace collision that blocked Oracle specifically (CS0234).** `OracleDataSource.cs`
+  sits in `namespace TheTechIdea.Beep.DataBase`; `OracleDataSourceServiceExtensions.cs`, in the same
+  project, declares `namespace TheTechIdea.Beep.DataBase.Oracle`. Once Oracle was pointed at a
+  `RDBSource` that actually has `ConfigureCommand` as `protected virtual` (the earlier
+  `CS0115: no suitable method found to override` failure, previously written off as an unrelated
+  pre-existing issue, was this same root cause under a different symptom), `ConfigureCommand`'s
+  unqualified `Oracle.ManagedDataAccess.Client.OracleCommand` resolved to the sibling namespace
+  instead of the NuGet package's top-level one. Fixed with `global::Oracle.ManagedDataAccess...`
+  rather than renaming either namespace.
+
+All 13 buildable RDBMS driver projects (Firebolt still cannot restore -- see below) now compile
+against the local, current `RDBSource`, most of them for the first time in this project's history.
+
+**Still open:** Firebolt (`FireboltDataSourceCore.csproj`) references `Firebolt.Ado` `1.1.2`, which
+this environment's configured NuGet sources cannot find (`NU1101`) -- unrelated to `RDBDataSource`,
+and not something fixable without network access to wherever that package is actually published.
+The missing `RDBDataSource` reference is added regardless, so the project will pick up the base
+class correctly once that package becomes resolvable.
+
+### D2 -- Hana, Presto, Snowflake and SQLite's transactions were fake through `IDataSource` -- *fixed*
+
+**Where** `HanaDataSource.cs`, `PrestoDataSource.cs`, `SnowFlakeDataSource.cs`, `SQLiteDataSource.Transactions.cs`
+
+**The defect.** All four declared `BeginTransaction(PassedArgs)`, `Commit(PassedArgs)` and
+`EndTransaction(PassedArgs)` as `public virtual` methods -- not `override` -- with the exact same
+signatures as `RDBSource.BeginTransaction`/`Commit`/`EndTransaction`. Because each of these classes
+also re-lists `IDataSource` in its own type declaration (`class HanaDataSource : RDBSource,
+IDataSource`, etc.), C# does not treat the hiding methods as dead code sitting beside the real ones:
+**it rebinds the `IDataSource` interface slot to the most-derived member matching the signature --
+the hiding method, not the inherited `override`.** Verified empirically (a standalone repro, then
+`Type.GetInterfaceMap` against the actual compiled DLLs, before and after the fix) --
+`((IDataSource)new HanaDataSource(...)).BeginTransaction(...)` called `HanaDataSource`'s own method,
+not `RDBSource`'s, which is exactly how the engine consumes every plugin.
+
+Hana's, Presto's and Snowflake's versions were pure no-ops: an empty `try` block that always set
+`Errors.Ok`, with a comment reading "*Transactions are handled by RDBSource base class*" -- true in
+intent, false in effect. `BeginTransaction` never opened a real `IDbTransaction`; `Commit` had
+nothing to commit; `EndTransaction` (rollback) had nothing to roll back. Every write made "inside"
+a transaction on these three engines committed immediately and individually, and a rollback after a
+partial failure silently did nothing while reporting success.
+
+SQLite's version was worse in a different way: not a no-op, but a **second, disconnected**
+transaction mechanism -- a private `_transactionStarted` flag and literal `"BEGIN TRANSACTION;"` /
+`"COMMIT;"` / `"ROLLBACK;"` SQL text, entirely separate from `RDBSource._activeTransaction` (the
+ADO.NET `IDbTransaction` that `GetDataCommand()` attaches to every command, per K8). Two
+consequences: the interface-hijack above applied here too, and `RDBSource.ActiveTransaction` stayed
+`null` throughout, so `BulkOperations`'s check for an already-open transaction (`if
+(ActiveTransaction != null) return null;`, K8's guard against nesting) could not see that a
+transaction was already open at the SQL level -- risking a second, real ADO.NET transaction
+starting on top of the raw-SQL one.
+
+**Status -- fixed.** All four hiding declarations removed (the `SQLiteDataSource.Transactions.cs`
+file deleted outright; `_transactionStarted` was read and written nowhere else). `RDBSource`'s real,
+tested `BeginTransaction`/`Commit`/`EndTransaction` now occupy the `IDataSource` slot for all four
+drivers, confirmed the same way the bug was found: `Type.GetInterfaceMap` against the rebuilt DLLs
+now resolves all three methods to `RDBSource`.
+
+A concrete side effect for SQLite specifically: `SQLiteDataSource.InMemory.cs`'s
+`RefreshData(IProgress, CancellationToken)` calls `BeginTransaction(null)` / `Commit(null)` /
+`EndTransaction(null)` on `this` to wrap a clear-and-reload of every entity. Those calls resolve at
+compile time to whatever this class declares, hiding or not -- so this method was *already* using
+the disconnected raw-SQL mechanism from within SQLite's own code, not just for outside callers. It
+now uses the real one.
+
+### D3 -- SQLite's and DuckDB's `Dispose()` never ran the K22 rework at all -- *fixed*
+
+**Where** `SQLiteDataSource.cs`, `DuckDBDataSource.cs`
+
+**The defect.** Both classes declared a complete, independent Dispose pattern -- `public void
+Dispose()` hiding `RDBSource.Dispose()`, and `protected virtual void Dispose(bool disposing)` hiding
+`InMemoryRDBSource.Dispose(bool)` -- with no `override` anywhere and, critically, **no call to
+`base.Dispose(disposing)`**. `using var ds = new SQLiteDataSource(...)` (or DuckDB) calls `Dispose()`
+on the compile-time-declared type directly, which is the hiding method regardless of any interface
+subtlety -- so every ordinary disposal ran only the local override-that-wasn't and never reached
+`RDBSource.Dispose(bool)` at all.
+
+Concretely, this meant the entire K22 rework never executed for these two drivers: a pending
+`_activeTransaction` was never rolled back or disposed, the cached `command` field was never
+released, `_entityCache` was never cleared, `Entities`/`EntitiesNames` were never cleared, and the
+provider connection was only ever `Close()`d (by SQLite's own `Closeconnection()` call) rather than
+`Dispose()`d -- precisely the K12 leak K22 was written to close. SQLite's own body did nothing but
+call `Closeconnection()`; DuckDB's own body disposed its own `DuckConn`/`Transaction`/`command`
+fields (separate from `RDBSource`'s, so still necessary) and called `SaveStructure()`, but likewise
+never reached the base.
+
+**Status -- fixed.** SQLite: both hiding methods and the `disposedValue` field deleted outright:
+`RDBSource.Dispose()`'s own chain already does everything the deleted `Dispose(bool)` did (it also
+calls `Closeconnection()`) and more. DuckDB: `Dispose()` deleted (its body was identical to
+`RDBSource.Dispose()`'s), `Dispose(bool)` changed to `protected override` with a `base.Dispose(disposing)`
+call added at the end -- additive only; every line DuckDB's version already ran still runs, and
+`RDBSource`'s cleanup now runs alongside it for the first time.
+
+### D4 -- SQLite's `IInMemoryDB` state properties had two separate backing fields -- *fixed*
+
+**Where** `SQLiteDataSource.cs`
+
+**The defect.** `IsCreated`, `IsLoaded`, `IsSaved`, `IsSynced`, `IsStructureLoaded`,
+`IsStructureCreated`, `CreateScript` and `InMemoryStructures` were re-declared as plain
+auto-properties with the same names as `InMemoryRDBSource`'s `IInMemoryDB` properties -- giving
+`SQLiteDataSource` a **second, disconnected backing field** for each. `SQLiteDataSource` does not
+itself re-list `IInMemoryDB`, so any caller holding this datasource as `IInMemoryDB` read and wrote
+the *base* class's copy, while this class's own methods (`OpenDatabaseInMemory` setting `IsCreated
+= true`, for instance) read and wrote the *shadowed* copy declared here. The two views of "is this
+database created" could silently disagree depending on which typed reference asked.
+
+**Status -- fixed.** The eight shadow declarations are gone; `SQLiteDataSource` now inherits
+`InMemoryRDBSource`'s single copy of each, which already satisfies `IInMemoryDB`.
+
+### D5 -- SQLite's and DuckDB's `IInMemoryDB` overrides were hidden, not overriding -- *fixed*
+
+**Where** `SQLiteDataSource.InMemory.cs`, `DuckDBDataSource.cs`
+
+**The defect.** `LoadData(IProgress, CancellationToken)`, `SyncData(IProgress, CancellationToken)`,
+`OpenDatabaseInMemory(string)` and `GetConnectionString()` are declared `virtual` on
+`InMemoryRDBSource`; both drivers re-declared them with matching signatures but no `override`.
+Unlike D2/D3, `SQLiteDataSource`/`DuckDBDataSource` do not themselves re-list `IInMemoryDB`, so an
+`IInMemoryDB`-typed caller was not hijacked the way `IDataSource` callers were for D2 -- it got the
+generic base implementation regardless. The real risk is narrower but still concrete: any future
+`RDBSource`/`InMemoryRDBSource` method that calls one of these internally (as the base class is free
+to do, since they are declared `virtual` precisely so overrides are reachable) would silently use
+the generic version instead of the driver-specific one -- the SQLite-specific
+`:memory:`-connection-string handling and folder bookkeeping, or DuckDB's `DuckDBCommand`-returning
+`GetDataCommand()` (a covariant override, `DuckDBCommand : DbCommand : IDbCommand`, legal under this
+project's `LangVersion Latest`), would simply not run where the base class expected an override to.
+
+**Status -- fixed.** `override` added to all four sites on both classes, plus DuckDB's
+`GetDataCommand()`. Three further sites on each class -- `SyncData(string, ...)`,
+`RefreshData(string, ...)`, `RefreshData(IProgress, ...)` -- hide **non-virtual** base members (also
+part of `IInMemoryDB`, but `InMemoryRDBSource` does not mark them `virtual`, so `override` is not an
+option without a base-class change outside today's driver-focused scope); each is marked `new`
+instead, which changes nothing behaviourally but records the shadow as deliberate rather than an
+accident the compiler is warning about.
+
+### D6 -- SQL Server's `PagedQuery` was dead code duplicating the consolidated paging path -- *fixed*
+
+**Where** `SQLServerDataSource.cs`
+
+A private `PagedQuery(string, List<AppFilter>)` method built SQL Server OFFSET/FETCH paging by hand,
+reading `"Pagesize"`/`"pagenumber"` filter entries -- and had no caller anywhere in the file. Paging
+for every RDBMS driver, including SQL Server, already runs through the single dialect source K11
+consolidated everything onto (`RDBMSHelper.GetPagingSyntax`); a second, unreachable implementation
+sitting next to it risked exactly the "two paging implementations disagree" defect K11 fixed, the
+moment anyone wired it up thinking it was the live path. Deleted.
+
+### D7 -- versions bumped
+
+Per CLAUDE.md ("Bump the `<Version>` in the csproj when a plugin's behavior changes -- versions are
+per-project, not repo-wide"): `RDBDataSource.csproj` had not been bumped once across the eleven
+phases of this rework (`2.0.22` throughout) despite being the version string ten drivers were
+pinning against by number (D1) -- bumped to `2.1.0`. Every driver project touched by D1-D6, whether
+by source edit or by the reference fix alone (a fixed reference changes what a published build of
+that driver actually contains, even with no `.cs` change), had its own `<Version>` bumped by one
+patch.
+
+### D8 -- SQLCompactDataSource did not exist -- *implemented*
+
+**Where** `SqlCompactDatasourceCore/SqlCompactDataSource.cs` (new)
+
+BeepDM's `ConnectionHelper.CreateSqlCompactConfig()` has always declared `classHandler =
+"SQLCompactDataSource"` -- the plugin discovery system has been looking, by reflection, for a class
+with exactly this name since that config was written, and finding nothing. SQL Compact was
+registerable in the connection UI but unusable: selecting it could never construct a working
+datasource instance. Implemented as a minimal `RDBSource` subclass matching `FireBirdDataSource`'s
+pattern (no ADO.NET package reference needed at compile time -- `RDBDataConnection` resolves the
+actual provider types from `ConnectionDriversConfig` by name at runtime), with FK toggling reported
+as an honest no-op (SQL CE has no way to disable an individual constraint without dropping and
+recreating it).
+
+**Still open, and not fixable here:** `CreateSqlCompactConfig()` names the provider package as
+`System.Data.SqlServerCe` 4.0.0.0, which was never published to nuget.org (confirmed: the package ID
+has no versions there) and, being SQL Server Compact's native ADO.NET provider, is
+Windows/.NET-Framework-only regardless -- it was never ported to .NET Core or later. An environment
+limitation of the discontinued engine itself, not something this class can work around.
+
+### D9 -- DDL type mapping only covered 4 of 14 dialects -- *fixed for 6 more*
+
+**Where** `RDBSource.DMLGeneration.cs`, `GetFallbackDbType` and `NormalizeDbTypeForProvider`
+
+Both methods -- the ones `CreateEntityAs` and the bulk temp-table path use to turn a `.NET` type name
+into a column type when the configured per-datasource type map is absent or leaks a type from a
+different provider -- only branched for SQL Server, PostgreSQL, MySQL and Oracle. Every other engine
+(CockroachDB, HANA, Firebird, Presto/Trino, Snowflake, Spanner, SQLite, DuckDB) fell to a single
+`default` case using SQLite's own permissive, affinity-typed names (`TEXT`/`REAL`/`BLOB`). Several of
+those engines do not recognise those names as types at all: Spanner shares essentially no type
+vocabulary with SQLite (`INT64`/`STRING`/`FLOAT64`/`BOOL`/`BYTES`, not
+`INTEGER`/`TEXT`/`REAL`/`BOOLEAN`/`BLOB`), and Firebird has neither a bare `TEXT` nor a bare
+`BLOB`-as-binary. The fallback these six replaced would have produced a `CREATE TABLE` several of
+them reject outright, not merely one that is suboptimal.
+
+**Status -- fixed for CockroachDB, HANA, Firebird, Presto/Trino, Snowflake and Spanner**, each using
+that engine's own documented type names (`GetFallbackDbType`'s new branches carry the reasoning
+inline). `NormalizeDbTypeForProvider` -- which runs on **every** provider's `CreateEntityAs`, not
+only the three engines that reach the bulk temp-table path, guarding against
+`DMEEditor.typesHelper.GetDataType` returning a type belonging to a different provider -- was
+extended the same way, reusing `GetFallbackDbType`'s own target vocabulary per engine so the two
+never disagree about what "this provider's TEXT type" is called. It previously normalised only for
+SQL Server and passed every other provider's input straight through unchanged.
+
+One bug in the new code was caught by its own test before landing: the Postgre and CockroachDB
+normalize branches were first written as one shared switch arm using `BYTEA` as the canonical binary
+output for both, which meant a value `GetFallbackDbType` had just picked as Cockroach's own name
+(`BYTES`) got "corrected" straight back to `BYTEA` on the very next line. Split into two branches;
+`DdlTypeMappingTests.CockroachDB_UsesPostgresTypeNames_NotSqliteAffinities` is what caught it.
+
+**Deliberately not extended:** Firebolt (no confident, verified DDL type vocabulary -- `Firebolt.Ado`
+is not resolvable in this environment either, so nothing here can be checked against a real
+connection) and SQL Compact (no reachable ADO.NET provider to verify against, per D1/D8). SQLite and
+DuckDB stay on the shared default, which both engines' own permissive type-alias acceptance makes
+correct as-is.
+
+Covered by `DdlTypeMappingTests.cs` (8 tests), asserting on the generated `CREATE TABLE` text per
+this suite's established practice, since SQLite -- the only engine actually reachable through the
+harness -- would execute any of these strings without distinguishing a name a real engine rejects
+from one it accepts.
+
+### D10 -- `SQLiteMigrationProvider.Capabilities` hid the base instead of overriding it -- *fixed*
+
+**Where** `SqliteDatasourceCore/SQLiteMigrationProvider.cs`
+
+The same hiding-vs-overriding defect class as D2-D5, in a completely different subsystem.
+`RdbmsSqlMigrationProvider.Capabilities` is declared `public virtual`; `SQLiteMigrationProvider`
+re-declared it as `public new SchemaMigrationCapabilities Capabilities`, explicitly (the `new`
+keyword suppresses the compiler's hiding warning, so this was a deliberate choice by whoever wrote
+it, not an accidentally-silenced one). `IDMEEditor.GetMigrationProvider(IDataSource)` -- what
+`MigrationManager` actually calls -- is declared to return `ISchemaMigrationProvider`, and every
+guard in `MigrationManager.EntityOperations.cs` (`if (!provider.Capabilities.Supports(...))`) reads
+`Capabilities` through that interface reference. Verified empirically both ways
+(`Type.GetInterfaceMap` against the compiled DLL, before and after): before the fix,
+`provider.Capabilities` on a `SQLiteMigrationProvider` resolved to
+`RdbmsSqlMigrationProvider`'s generic, all-supported capabilities -- not this class's honest,
+degraded ones (`SupportsAlterColumn = false`, `SupportsDropColumn = false`,
+`SupportsDropForeignKey = false`, `SupportsTransactionalDdl = false`). Every guard `MigrationManager`
+runs before attempting one of those four operations was silently bypassed, and it would have
+attempted each directly against SQLite, which does not support any of them in the form
+`RdbmsSqlMigrationProvider` emits.
+
+**Status -- fixed**: `new` changed to `override`. Swept every other `MigrationProvider` in the repo
+(25 in total, across RDBMS/NoSQL/File/Vector/Messaging) for the same `public new ... Capabilities`
+pattern -- `SQLiteMigrationProvider` was the only one.
+
+### D11 -- 4 of 14 RDBMS drivers had no migration provider -- *implemented for 4, deliberately skipped for 2*
+
+**Where** `HanaDataSource/HanaMigrationProvider.cs`, `SnowFlakeDataSource/SnowFlakeMigrationProvider.cs`,
+`PrestoDatasource/PrestoMigrationProvider.cs`, `SqlCompactDatasourceCore/SqlCompactMigrationProvider.cs` (all new)
+
+Per CLAUDE.md's "Schema migration providers" section, a Tier-1 provider is expected colocated with
+each driver; `MigrationManager` falls back to a generic Tier-2 default (`RdbmsSqlMigrationProvider`
+itself, for `DatasourceCategory.RDBMS`) when one is missing, so this was not a hard failure the way
+D1/D8 were -- but it meant six of fourteen drivers (Firebolt, HANA, Presto, Snowflake, SQL Compact,
+DuckDB) had never had their engine's real DDL limitations declared, and were silently treated as
+fully capable by the generic fallback.
+
+**HANA**: full 12/12 DDL, a thin wrapper like Postgre/MySQL/Oracle/SqlServer/CockroachDB/Firebird --
+HANA is a full-featured enterprise RDBMS with no capability gap to declare.
+
+**Snowflake**: overrides `Capabilities` -- no user-managed indexes at all (Snowflake relies on
+automatic micro-partition pruning instead of B-tree/hash indexes; `CREATE INDEX`/`DROP INDEX` are
+not Snowflake syntax), and DDL auto-commits so it cannot be wrapped in a transaction
+(`SupportsTransactionalDdl = false`).
+
+**Presto/Trino**: overrides `Capabilities` conservatively, matching `PrestoDataSource`'s own stance
+in its FK-toggle override ("Presto is primarily a query engine, not a transactional database"): no
+enforced foreign keys, no user-managed indexes (connector-specific at best), no transactional DDL,
+and `AlterColumn` (type changes) left unsupported since that is the one column operation without
+broad, connector-independent support across Presto/Trino's many backing catalogs.
+
+**SQL Compact**: overrides `Capabilities` -- no `RenameEntity`/`RenameColumn` at all (SQL CE has no
+`sp_rename` equivalent and no `ALTER TABLE ... RENAME`), no `AlterColumn` (cannot change a column's
+data type once created), and `SupportsTransactionalDdl = false` (SQL CE's transaction model is a
+single-connection subset of SQL Server's and DDL-in-transaction support was not confident enough to
+declare true).
+
+**Deliberately skipped**: Firebolt (same reasoning as D9 -- no verified DDL vocabulary and no
+reachable connection to check one against) and DuckDB (its own datasource class already bypasses
+`RDBSource`'s standard schema path almost entirely with ~20 of its own overrides; writing a
+migration provider for it needs auditing that integration first, which is a larger piece of work
+than a capability declaration).
+
+### D12 -- the temp-table bulk-update path was broken for every engine except SQL Server -- *fixed*
+
+**Where** `RDBSource.BulkOperations.cs`, `BulkUpdateWithTempTable`/`BulkUpdateWithTempTableAsync`
+
+Found while extending `SupportsTempTables()` to CockroachDB (below): the temp table name was
+generated as `$"#TempUpdate_{entityName}_{Guid.NewGuid():N}"` **unconditionally, for every engine**.
+The leading `#` is SQL Server's own local-temp-table sigil and means nothing anywhere else --
+PostgreSQL and CockroachDB reject it as a syntax error, and MySQL treats `#` as a to-end-of-line
+comment marker, so `CREATE TEMPORARY TABLE #TempUpdate_...` became `CREATE TEMPORARY TABLE` with the
+rest of the line silently commented out. `SupportsTempTables()` has listed MySQL and PostgreSQL
+alongside SQL Server from the start, so **this broke the temp-table path on two of the three engines
+it was originally written for**, from day one -- invisible until this work actually drove the path
+against a real, non-SqlServer execution for the first time (SQLite was never one of the three, so
+nothing before this exercised it).
+
+**Status -- fixed.** A new `BuildTempTableName(entityName)` helper applies the `#` prefix only for
+`DataSourceType.SqlServer`/`AzureSQL`/`SqlCompact` (the engines where it means something) and emits a
+plain, portable name everywhere else. Covered by `TempTableNamingTests.cs`: PostgreSQL executes the
+whole bulk update end to end through SQLite (its `UPDATE ... FROM` join-update syntax happens to also
+be valid SQLite); MySQL and SQL Server are asserted on the generated SQL text instead, since MySQL's
+`UPDATE ... INNER JOIN ... SET` merge syntax and SQL Server's bare `#` identifier are both things a
+real server understands and SQLite, as a stand-in, does not.
+
+### D13 -- `SupportsTempTables()`/temp-table builders did not cover CockroachDB -- *fixed*
+
+**Where** `RDBSource.BulkOperations.cs`
+
+CockroachDB is PostgreSQL wire- and DDL-compatible for the exact statements the temp-table path
+emits (`CREATE TEMP TABLE`, `UPDATE ... SET ... FROM ... AS source`), but `SupportsTempTables()` only
+listed SqlServer/Mysql/Postgre, so Cockroach fell back to the slower, row-at-a-time batched path.
+Extended `SupportsTempTables()` and the two dispatch switches (`CreateTempTableForUpdate`,
+`BuildMergeUpdateQuery`) to reuse `BuildPostgreSqlTempTableCreate`/`BuildPostgreSqlUpdateFromQuery`
+directly for `DataSourceType.Cockroach` rather than writing a separate, identical builder pair.
+`ResolveDdlColumnType` already dispatches on `DatasourceType` at call time, so the column types the
+reused builder emits are Cockroach's own (D9), not Postgres's `BYTEA`-for-`BYTES` naming. Covered by
+`CockroachTempTableTests.cs` (2 tests) -- the first of which is what surfaced D12.
+
+**Not extended further:** Oracle, SQLite, HANA, Firebird, Presto, Snowflake and Spanner each need
+genuinely dialect-specific temp-table/`MERGE` syntax this class has no builder for yet; only
+CockroachDB is close enough to an existing dialect (Postgres) to reuse it verbatim.
+
+### D14 -- versions bumped (second pass)
+
+Every driver project touched by D8-D13 -- Hana, Snowflake, Presto, SQL Compact (each gained a new
+migration provider file; SQL Compact also gained its missing datasource class) and the base
+`RDBDataSource.csproj` itself (D9/D12/D13 all land there) -- had its `<Version>` bumped by one patch,
+per the same CLAUDE.md rule D7 already applied.
+
+### D15 -- 7 more RDBMS classHandlers named a class that did not exist -- *implemented for 7, one flagged*
+
+**Where** (new) `SQlServerDataSourceCore/AzureSQLDataSource.cs`,
+`PostgreDataSourceCore/TimeScaleDBDataSource.cs`, `MySqlDataSourceCore/AWSRDSDataSource.cs`,
+`DB2DataSourceCore/`, `VerticaDataSourceCore/`, `TerraDataDataSourceCore/`, `VistaDBDataSourceCore/`
+(four new projects)
+
+The same gap as D8 (`SQLCompactDataSource`), found by checking every `classHandler` string in
+`ConnectionHelper_RDBMS.cs` against an actual class in the repo. Seven more named classes that were
+never written:
+
+| `classHandler` | `DataSourceType` | Provider package | Dialect |
+|---|---|---|---|
+| `AzureSQLDataSource` | `AzureSQL` | `System.Data.SqlClient` | Same engine as SQL Server |
+| `TimeScaleDBDataSource` | `TimeScale` | `Npgsql` | PostgreSQL extension -- same engine |
+| `AWSRDSDataSource` | `AWSRDS` | `MySql.Data` | This config is RDS-for-MySQL specifically |
+| `DB2DataSource` | `DB2` | `IBM.Data.DB2` | Db2 LUW |
+| `VerticaDataSource` | `Vertica` | `Vertica.Data` | Vertica MPP |
+| `TerraDataDataSource` | `TerraData` | `Teradata.Client.Provider` | Teradata MPP |
+| `VistaDBDataSource` | `VistaDB` | `VistaDB` | -- |
+
+**Status -- implemented for the first six.** `AzureSQLDataSource`/`TimeScaleDBDataSource`/
+`AWSRDSDataSource` mirror `SQLServerDataSource`/`PostgreDataSource`/`MySQLDataSource` exactly, since
+their `PackageName` in BeepDM's own config confirms each is the *same engine* wire-and-dialect-wise,
+just hosted differently -- there was nothing to guess. `DB2DataSource` uses Db2's real
+`SET INTEGRITY FOR ... OFF` / `... IMMEDIATE CHECKED` toggle, verified documented syntax, not the
+SQL Server/MySQL `ALTER TABLE ... [NO]CHECK CONSTRAINT` family. `VerticaDataSource` and
+`TerraDataDataSource` report FK toggling as an honest no-op rather than guessing an
+enforcement-toggle syntax neither engine has: both are MPP engines where foreign keys are
+conventionally unenforced (optimizer hints / `WITH NO CHECK OPTION`), matching this project's
+established pattern for a genuinely unsupported operation (Spanner, Presto, Snowflake all do the
+same for their own unsupported operations). None of the six needed a `PackageReference` to their own
+ADO.NET client at compile time -- like `FireBirdDataSource`, `RDBDataConnection` resolves the actual
+provider type from `ConnectionDriversConfig` by name at runtime, so this was zero-risk to add.
+
+**`VistaDBDataSource` is implemented but structurally minimal**, deliberately: unlike SQL Compact
+(D8), where `RDBSource`'s FK-toggle default was clearly wrong for that engine, whether VistaDB
+(marketed as broadly SQL-Server-compatible, but a much simpler embedded engine, with no vendor
+activity in years) accepts SQL Server's specific `ALTER TABLE ... [NO]CHECK CONSTRAINT ALL`
+administrative syntax could not be verified, so no FK-toggle override was written rather than
+guessed in either direction. The `VistaDB` NuGet package itself could not be found published under
+that name.
+
+Four new projects (`DB2DataSourceCore`, `VerticaDataSourceCore`, `TerraDataDataSourceCore`,
+`VistaDBDataSourceCore`) were created and added to `DataSourcePluginSolution.sln`; the other three
+classes were colocated in the existing project that already shares their exact dialect/package
+(`SQlServerDataSourceCore`, `PostgreDataSourceCore`, `MySqlDataSourceCore` respectively), since
+creating a whole separate project for a class needing nothing beyond what that project already
+references would have been pure duplication.
+
+### D16 -- CockroachDB's `classHandler` never matched its actual class name -- *fixed*
+
+**Where** `../BeepDM/DataManagementEngineStandard/Helpers/ConnectionHelpers/ConnectionHelper_RDBMS.cs`
+
+Found during the D15 sweep. `CreateCockroachConfig()` declared `classHandler = "CockroachDBDataSource"`;
+the actual class (correctly discovered via `[AddinAttribute]` reflection, which is why every
+CockroachDB test and fix earlier in this project worked) is `CockRoachDataSource` -- capital `R`, no
+`DB`. Per CLAUDE.md's own description of the three-way registration ("A `Create*Config` entry ...
+matched by `classHandler` == the class name. Without it the driver never appears in the connection
+UI"), this meant CockroachDB was constructible and fully functional once instantiated directly, but
+never appeared in the connection UI's driver list -- the one thing `classHandler` actually gates.
+Corrected the string to match the real class name.
+
+### D17 -- versions bumped (third pass)
+
+`AzureSQLDataSource`/`TimeScaleDBDataSource`/`AWSRDSDataSource` each bumped the `<Version>` of the
+existing project they were added to (`SqlServerDataSourceCore`, `PostgreDataSourceCore`,
+`MySqlDataSourceCore`) by one patch. The four new projects (D15) start at `1.0.0`, matching every
+other driver project's first-published convention.
+
+## Tier 6 -- `IInMemoryDB` implementers repo-wide
+
+Broader than Tier 5: `IInMemoryDB` (the interface `InMemoryRDBSource`, `SQLiteDataSource` and
+`DuckDBDataSource` all implement) has 12 implementers repo-wide, most with no relationship to
+`RDBSource` at all -- LevelDB, LiteDB, LMDB, RavenDB, RealM, Redis, RocksDB implement `IDataSource`/
+`IInMemoryDB` directly, as do the three vector databases (PineCone, Qdrant, SharpVector). Checked
+every one of them.
+
+### D18 -- 5 of 12 `IInMemoryDB` implementers did not compile at all -- *fixed*
+
+**Where** `RavenDBDataSourceCore/RavenDBDataSource.cs`, `RealMDataSource/RealMDataSource.cs`,
+`RedisDataSourceCore/RedisDataSource.cs`, `VectorDatabase/TheTechIdea.Beep.PineConeDatasource/PineConeDatasource.cs`,
+`VectorDatabase/TheTechIdea.Beep.QdrantDatasource/QdrantDatasourceGeneric.cs`
+
+**The defect.** `IInMemoryDB` has grown since these five were last touched: `OpenInMemory(string)`,
+`GetInMemoryConnectionString()`, `ResetInMemory()`, `LoadStructureWithData(...)`,
+`FillFromDataSource(...)`, `ExportToDataSource(...)`, the `IsStructureLoaded` property, and the
+`StructureChanged`/`DataChanged`/`StateChanged` events were all added to the interface at some point
+-- visible in `InMemoryRDBSource.cs`'s own "IInMemoryDB v2" region, and in the fact that LevelDB,
+LiteDB, LMDB and RocksDB (each carrying a "Phase 12" comment marking when they were migrated) already
+implement the full v2 surface. These five were never migrated: each was missing eleven interface
+members, which is not a partial or degraded implementation -- it is `CS0535` on every one of them,
+and **none of these five projects compiled**, in isolation or as part of either `.sln` they are
+listed in (`DataSourcePluginSolution.sln`, `DataSourcesPluginsCore.sln`). A twelfth error
+(`LoadStructure(IProgress<PassedArgs>?, CancellationToken)`) was a related but distinct gap: each
+class already had a *three*-parameter `LoadStructure(progress, token, copydata = false)`, but C#
+does not let an optional third parameter satisfy an interface member declared with only two --
+arity has to match exactly.
+
+**Status -- fixed, all five.** Added the missing eleven members to each class, built almost entirely
+by orchestrating primitives each class already had correctly working (`GetEntity`, `InsertEntity`,
+`CreateEntityAs`, `CheckEntityExist`, and each class's own pre-v2 `OpenDatabaseInMemory`/
+`GetConnectionString`, which `OpenInMemory`/`GetInMemoryConnectionString` now delegate to) rather
+than inventing new engine-specific logic for RavenDB's document-session API, Realm's mobile object
+store, Redis's key-value model, or the two vector stores' APIs. Added the missing 2-parameter
+`LoadStructure` overload to all five, delegating to the existing 3-parameter one with
+`copydata: false`.
+
+**Not independently verified**: correctness of the underlying engine-specific methods these new
+members call (`OpenDatabaseInMemory`, `GetEntity`, `InsertEntity`, etc.) was not re-audited here --
+only that the class now compiles and that the new methods correctly delegate to what was already
+there. A pre-existing, likely-broken line noticed in passing while reading RavenDB's file:
+`OpenDatabaseInMemory` casts `EmbeddedServer.Instance.GetDocumentStoreAsync("Embedded")` -- a
+`Task<IDocumentStore>` -- directly to `IDocumentStore`, which is not a valid conversion and would be
+expected to throw at the call site if this path is ever actually exercised. Left as found; fixing it
+needs RavenDB.Embedded API verification this pass did not do.
+
+### D19 -- DuckDB's own CRUD reproduces the F1/K2 pattern the RDBSource rework fixed -- *fixed*
+
+**Where** `InMemoryDB/DuckDBDataSourceCore/DuckDBDataSource.cs`, `UpdateEntity`/`InsertEntity`/`DeleteEntity`
+
+DuckDB does not inherit `RDBSource.CRUD.cs` -- it overrides `UpdateEntity`, `InsertEntity` and
+`DeleteEntity` itself, reimplementing roughly the same command-building-and-executing logic the base
+class had before Phase 1/2 of this rework. That reimplementation carries the exact same defect F1
+and K2 were written to fix, in all three methods: `ErrorObject.Flag = Errors.Ok` is set once at
+method entry and never revisited when the server reports zero rows affected. `UpdateEntity` and
+`DeleteEntity` had an `else` branch that only called `DMEEditor.AddLogMessage(..., Errors.Failed)` --
+which, per F1, does nothing to the flag when no logger is attached -- so a key that matched no row
+reported success. `InsertEntity` was worse: the zero-rows case had **no `else` branch at all**, not
+even a log line, so a failed insert was completely silent.
+
+None of this is exercised by `tests/RDBDataSource.Tests` (that suite drives `RDBSource` through
+`SqliteHarness`, not `DuckDBDataSource`, which needs the actual DuckDB engine), so it was found by
+reading, not by a failing test.
+
+**Status -- fixed.** All three zero/negative-row branches now set `ErrorObject.Flag = Errors.Failed`
+and `.Message` explicitly, matching the base class's K2 fix. Also fixed in the same pass: `command`
+(the `DuckDBCommand` from `GetDataCommand()`) was disposed on every exception path but never on the
+success path in `UpdateEntity` or `InsertEntity` -- one leaked native command handle per successful
+write.
+
+**Not fixed, and flagged rather than guessed at:** `DeleteEntity` opens
+`RDBMSConnection?.DbConn.BeginTransaction()` but never assigns it to `command.Transaction` before
+executing, so the delete is not actually protected by the transaction it opens (`sqlTran.Commit()`
+runs regardless of whether the delete's own transaction membership was ever established) -- the same
+shape as K8 in the base class, but fixing it here means verifying how strictly DuckDB.NET's provider
+enforces the command/transaction association, which this pass did not do. `UpdateEntity`'s
+transaction handling is commented out entirely (`//   var sqlTran = ...`), an inconsistency with
+`DeleteEntity` left as found. `CreateCommandParameters`/`CreateDeleteCommandParameters` bind
+parameters by field name directly (no shared-pool substring matching), so neither carries K1's
+wrong-row-update defect -- that part of DuckDB's own CRUD is sound.
+
 ## Test coverage
 
-`tests/RDBDataSource.Tests/` reports **176 passing tests**, and — unlike the suite this work
+`tests/RDBDataSource.Tests/` reports **189 passing tests**, and — unlike the suite this work
 started from — they exercise the class under test.
 
 The original `RDBSourceIntegrationTests.cs` had 25 tests that hand-wrote SQL against in-memory
@@ -580,6 +1101,9 @@ this document was invisible to them. That file has been replaced.
 | `DialectDelegationTests.cs` | 25 | K46 multi-row INSERT per engine, K32 parameter-name budget per engine |
 | `AsyncContractTests.cs` | 7 | K20, `RunScript` without a blocking wait, the async connection open |
 | `ServiceIndependenceTests.cs` | 8 | K49 — `CreateEntityAs`, `UpdateEntities` and the schema readers with no engine attached |
+| `DdlTypeMappingTests.cs` | 8 | D9 — dialect-correct CREATE TABLE types for 6 engines |
+| `CockroachTempTableTests.cs` | 2 | D13 — CockroachDB reusing Postgres's temp-table bulk-update path |
+| `TempTableNamingTests.cs` | 3 | D12 — the SQL-Server-only `#` prefix that broke Postgres/MySQL |
 
 Each defect fix was verified by reverting it and confirming the relevant tests go red — see the
 individual entries.

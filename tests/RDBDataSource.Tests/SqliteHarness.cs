@@ -42,6 +42,9 @@ internal sealed class TestRDBSource : RDBSource
 
     public override System.Type GetEntityType(string EntityName) => _entityType;
 
+    /// <summary>Exposes the protected CREATE TABLE string builder for dialect-mapping assertions.</summary>
+    public string GenerateCreateEntityScriptForTest(EntityStructure entity) => GenerateCreateEntityScript(entity);
+
     /// <summary>
     /// The most recent command handed out by <c>GetDataCommand()</c>.
     /// </summary>
@@ -52,10 +55,38 @@ internal sealed class TestRDBSource : RDBSource
     /// </remarks>
     public IDbCommand LastCommand { get; private set; }
 
+    /// <summary>
+    /// Every command created via <c>GetDataCommand()</c> during this instance's lifetime, in order.
+    /// A single bulk operation issues several commands in sequence (CREATE TEMP TABLE, per-batch
+    /// INSERT, the merge UPDATE, the DROP), each disposed before the next runs, so <see
+    /// cref="LastCommand"/> alone only ever reflects the final one. This lets a test find an
+    /// intermediate step's SQL even though its command object has since been disposed.
+    /// </summary>
+    private readonly List<IDbCommand> _commandHistory = new();
+
     protected override void ConfigureCommand(IDbCommand command)
     {
         base.ConfigureCommand(command);
         LastCommand = command;
+        _commandHistory.Add(command);
+    }
+
+    /// <summary>
+    /// The <c>CommandText</c> of the most recent recorded command whose text contains
+    /// <paramref name="containing"/>, searched newest-first. Reading <c>CommandText</c> off an
+    /// already-disposed <c>SqliteCommand</c> does not throw -- it is a plain managed string field,
+    /// not a handle Dispose() releases -- which is what makes this safe to call after the operation
+    /// that issued the command has completed and moved on to later steps.
+    /// </summary>
+    public string? LastCommandTextSeen(string containing)
+    {
+        for (int i = _commandHistory.Count - 1; i >= 0; i--)
+        {
+            string? text = _commandHistory[i].CommandText;
+            if (text != null && text.Contains(containing, System.StringComparison.OrdinalIgnoreCase))
+                return text;
+        }
+        return null;
     }
 }
 

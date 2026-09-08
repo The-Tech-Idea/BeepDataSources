@@ -14,7 +14,7 @@
 	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
 	  <Title>TheTechIdea.Beep.RealMDataSourceCore</Title>
 	  <PackageId>TheTechIdea.Beep.RealMDataSourceCore</PackageId>
-	  <Version>1.0.0</Version>
+	  <Version>1.0.1</Version>
 
   </PropertyGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

@@ -840,6 +840,18 @@ namespace TheTechIdea.Beep.DataBase
         /// rewritten; anything the provider understands (including sized types like NVARCHAR(200))
         /// is passed through untouched.
         /// </remarks>
+        /// <remarks>
+        /// This runs on every provider's CREATE TABLE, not only the three engines that reach it
+        /// through the bulk temp-table path -- it is <see cref="GenerateCreateEntityScript"/>'s own
+        /// guard against <c>DMEEditor.typesHelper.GetDataType</c> returning a type name that belongs
+        /// to a DIFFERENT provider (the method's own comment: "e.g. BOOLEAN for SQL Server, which has
+        /// none"). It originally normalised only for <see cref="DataSourceType.SqlServer"/> and
+        /// passed every other provider's input straight through unchanged -- so the same leak on
+        /// MySQL, PostgreSQL, Oracle, CockroachDB, HANA, Firebird, Presto/Trino, Snowflake or Spanner
+        /// reached the server as-is. Extended to every dialect <see cref="GetFallbackDbType"/> has a
+        /// confident mapping for, reusing that method's own target vocabulary so the two never
+        /// disagree about what "this provider's TEXT type" is called.
+        /// </remarks>
         private static string NormalizeDbTypeForProvider(string dbType, DataSourceType datasourceType)
         {
             if (string.IsNullOrWhiteSpace(dbType)) return dbType;
@@ -849,24 +861,183 @@ namespace TheTechIdea.Beep.DataBase
             var paren = bare.IndexOf('(');
             var name = (paren > 0 ? bare.Substring(0, paren) : bare).Trim().ToUpperInvariant();
             var args = paren > 0 ? bare.Substring(paren) : string.Empty;
+            string Sized(string type, string fallbackArgs) => type + (string.IsNullOrEmpty(args) ? fallbackArgs : args);
 
-            if (datasourceType != DataSourceType.SqlServer) return dbType;
-
-            return name switch
+            switch (datasourceType)
             {
-                "BOOLEAN" or "BOOL" => "BIT",
-                "TEXT" or "CLOB" or "NCLOB" or "LONGTEXT" => "NVARCHAR(MAX)",
-                "BLOB" or "BYTEA" or "LONGBLOB" => "VARBINARY(MAX)",
-                "DOUBLE" or "DOUBLE PRECISION" => "FLOAT",
-                "INTEGER" => "INT",
-                "TIMESTAMP" => "DATETIME2",
-                "TIMESTAMPTZ" => "DATETIMEOFFSET",
-                "UUID" => "UNIQUEIDENTIFIER",
-                "NUMBER" => string.IsNullOrEmpty(args) ? "DECIMAL(18,4)" : "DECIMAL" + args,
-                "NVARCHAR2" => "NVARCHAR" + (string.IsNullOrEmpty(args) ? "(MAX)" : args),
-                "VARCHAR2" => "VARCHAR" + (string.IsNullOrEmpty(args) ? "(MAX)" : args),
-                _ => dbType
-            };
+                case DataSourceType.SqlServer:
+                case DataSourceType.AzureSQL:
+                case DataSourceType.SqlCompact:
+                    return name switch
+                    {
+                        "BOOLEAN" or "BOOL" => "BIT",
+                        "TEXT" or "CLOB" or "NCLOB" or "LONGTEXT" or "STRING" => "NVARCHAR(MAX)",
+                        "BLOB" or "BYTEA" or "LONGBLOB" or "BYTES" or "BINARY" or "VARBINARY" => "VARBINARY(MAX)",
+                        "DOUBLE" or "DOUBLE PRECISION" or "FLOAT64" => "FLOAT",
+                        "INTEGER" or "INT64" => "INT",
+                        "TIMESTAMP" or "TIMESTAMP_NTZ" => "DATETIME2",
+                        "TIMESTAMPTZ" or "TIMESTAMP_TZ" => "DATETIMEOFFSET",
+                        "UUID" => "UNIQUEIDENTIFIER",
+                        "NUMBER" => Sized("DECIMAL", "(18,4)"),
+                        "NVARCHAR2" => Sized("NVARCHAR", "(MAX)"),
+                        "VARCHAR2" or "VARCHAR" => Sized("NVARCHAR", "(MAX)"),
+                        _ => dbType
+                    };
+
+                case DataSourceType.Postgre:
+                    return name switch
+                    {
+                        "BIT" => "BOOLEAN",
+                        "CLOB" or "NCLOB" or "LONGTEXT" or "STRING" => "TEXT",
+                        "BLOB" or "LONGBLOB" or "BYTES" or "BINARY" or "VARBINARY" => "BYTEA",
+                        "DOUBLE" or "FLOAT64" => "DOUBLE PRECISION",
+                        "INT64" => "BIGINT",
+                        "DATETIME2" or "TIMESTAMP_NTZ" => "TIMESTAMP",
+                        "DATETIMEOFFSET" or "TIMESTAMP_TZ" => "TIMESTAMPTZ",
+                        "UNIQUEIDENTIFIER" => "UUID",
+                        "NUMBER" => Sized("NUMERIC", "(18,4)"),
+                        "NVARCHAR2" or "NVARCHAR" or "VARCHAR2" => Sized("VARCHAR", ""),
+                        _ => dbType
+                    };
+
+                case DataSourceType.Cockroach:
+                    // Same PostgreSQL-compatible vocabulary as above, except CockroachDB's own name
+                    // for its binary type is BYTES -- BYTEA is only a Postgres-compatibility alias,
+                    // and GetFallbackDbType already emits BYTES as Cockroach's canonical spelling.
+                    // Normalizing an incoming BYTES back to BYTEA here would fight that choice.
+                    return name switch
+                    {
+                        "BIT" => "BOOLEAN",
+                        "CLOB" or "NCLOB" or "LONGTEXT" or "STRING" => "TEXT",
+                        "BLOB" or "LONGBLOB" or "BYTEA" or "BINARY" or "VARBINARY" => "BYTES",
+                        "DOUBLE" or "FLOAT64" => "DOUBLE PRECISION",
+                        "INT64" => "BIGINT",
+                        "DATETIME2" or "TIMESTAMP_NTZ" => "TIMESTAMP",
+                        "DATETIMEOFFSET" or "TIMESTAMP_TZ" => "TIMESTAMPTZ",
+                        "UNIQUEIDENTIFIER" => "UUID",
+                        "NUMBER" => Sized("NUMERIC", "(18,4)"),
+                        "NVARCHAR2" or "NVARCHAR" or "VARCHAR2" => Sized("VARCHAR", ""),
+                        _ => dbType
+                    };
+
+                case DataSourceType.Mysql:
+                case DataSourceType.MariaDB:
+                    return name switch
+                    {
+                        "BOOLEAN" or "BOOL" or "BIT" => "TINYINT(1)",
+                        "TEXT" or "CLOB" or "NCLOB" or "STRING" => "LONGTEXT",
+                        "BLOB" or "BYTEA" or "BYTES" or "BINARY" or "VARBINARY" => "LONGBLOB",
+                        "DOUBLE PRECISION" or "FLOAT64" => "DOUBLE",
+                        "INTEGER" or "INT64" => "INT",
+                        "TIMESTAMPTZ" or "TIMESTAMP_TZ" or "TIMESTAMP_NTZ" or "DATETIMEOFFSET" => "DATETIME",
+                        "TIMESTAMP" => "DATETIME",
+                        "UUID" or "UNIQUEIDENTIFIER" => "CHAR(36)",
+                        "NUMBER" => Sized("DECIMAL", "(18,4)"),
+                        "NVARCHAR2" or "NVARCHAR" or "VARCHAR2" => Sized("VARCHAR", "(255)"),
+                        _ => dbType
+                    };
+
+                case DataSourceType.Oracle:
+                    return name switch
+                    {
+                        "BOOLEAN" or "BOOL" or "BIT" => "NUMBER(1)",
+                        "TEXT" or "CLOB" or "LONGTEXT" or "STRING" => "NCLOB",
+                        "BLOB" or "BYTEA" or "LONGBLOB" or "BYTES" or "BINARY" or "VARBINARY" => "BLOB",
+                        "DOUBLE" or "DOUBLE PRECISION" or "FLOAT64" => "BINARY_DOUBLE",
+                        "INTEGER" => "NUMBER(10)",
+                        "INT64" or "BIGINT" => "NUMBER(19)",
+                        "TIMESTAMP_NTZ" => "TIMESTAMP",
+                        "DATETIMEOFFSET" or "TIMESTAMPTZ" or "TIMESTAMP_TZ" => "TIMESTAMP WITH TIME ZONE",
+                        "UUID" or "UNIQUEIDENTIFIER" => "RAW(16)",
+                        "VARCHAR" or "NVARCHAR" => Sized("NVARCHAR2", "(2000)"),
+                        _ => dbType
+                    };
+
+                case DataSourceType.Hana:
+                    return name switch
+                    {
+                        "BOOL" or "BIT" => "BOOLEAN",
+                        "TEXT" or "CLOB" or "LONGTEXT" or "STRING" => "NVARCHAR(5000)",
+                        "BLOB" or "BYTEA" or "LONGBLOB" or "BYTES" or "BINARY" => "VARBINARY(5000)",
+                        "DOUBLE PRECISION" or "FLOAT64" => "DOUBLE",
+                        "INT64" => "BIGINT",
+                        "DATETIME2" or "TIMESTAMP_NTZ" => "TIMESTAMP",
+                        "DATETIMEOFFSET" or "TIMESTAMPTZ" or "TIMESTAMP_TZ" => "TIMESTAMP",
+                        "UUID" or "UNIQUEIDENTIFIER" => "VARCHAR(36)",
+                        "NUMBER" => Sized("DECIMAL", "(18,4)"),
+                        "NVARCHAR2" or "VARCHAR2" or "VARCHAR" => Sized("NVARCHAR", "(5000)"),
+                        _ => dbType
+                    };
+
+                case DataSourceType.FireBird:
+                    return name switch
+                    {
+                        "BOOL" or "BIT" => "BOOLEAN",
+                        "TEXT" or "CLOB" or "NCLOB" or "LONGTEXT" or "STRING" => "BLOB SUB_TYPE TEXT",
+                        "BYTEA" or "LONGBLOB" or "BYTES" or "BINARY" or "VARBINARY" => "BLOB",
+                        "DOUBLE" or "FLOAT64" => "DOUBLE PRECISION",
+                        "INT64" => "BIGINT",
+                        "DATETIME2" or "TIMESTAMP_NTZ" => "TIMESTAMP",
+                        "DATETIMEOFFSET" or "TIMESTAMPTZ" or "TIMESTAMP_TZ" => "TIMESTAMP",
+                        "UUID" or "UNIQUEIDENTIFIER" => "CHAR(36)",
+                        "NUMBER" => Sized("NUMERIC", "(18,4)"),
+                        "NVARCHAR2" or "NVARCHAR" or "VARCHAR2" or "VARCHAR" => "BLOB SUB_TYPE TEXT",
+                        _ => dbType
+                    };
+
+                case DataSourceType.Presto:
+                case DataSourceType.Trino:
+                    return name switch
+                    {
+                        "BOOL" or "BIT" => "BOOLEAN",
+                        "TEXT" or "CLOB" or "NCLOB" or "LONGTEXT" or "STRING" => "VARCHAR",
+                        "BLOB" or "BYTEA" or "LONGBLOB" or "BYTES" or "BINARY" => "VARBINARY",
+                        "DOUBLE PRECISION" or "FLOAT64" => "DOUBLE",
+                        "INT64" => "BIGINT",
+                        "DATETIME2" or "TIMESTAMP_NTZ" => "TIMESTAMP",
+                        "DATETIMEOFFSET" or "TIMESTAMPTZ" or "TIMESTAMP_TZ" => "TIMESTAMP",
+                        "UNIQUEIDENTIFIER" => "UUID",
+                        "NUMBER" => Sized("DECIMAL", "(18,4)"),
+                        "NVARCHAR2" or "NVARCHAR" or "VARCHAR2" => "VARCHAR",
+                        _ => dbType
+                    };
+
+                case DataSourceType.SnowFlake:
+                    return name switch
+                    {
+                        "BOOL" or "BIT" => "BOOLEAN",
+                        "CLOB" or "NCLOB" or "LONGTEXT" or "STRING" => "VARCHAR",
+                        "BLOB" or "BYTEA" or "LONGBLOB" or "BYTES" or "VARBINARY" => "BINARY",
+                        "DOUBLE PRECISION" or "FLOAT64" => "FLOAT",
+                        "INT64" => "BIGINT",
+                        "DATETIME2" => "TIMESTAMP_NTZ",
+                        "TIMESTAMP" => "TIMESTAMP_NTZ",
+                        "DATETIMEOFFSET" or "TIMESTAMPTZ" => "TIMESTAMP_TZ",
+                        "UUID" or "UNIQUEIDENTIFIER" => "VARCHAR(36)",
+                        "NUMBER" => Sized("NUMBER", "(18,4)"),
+                        "NVARCHAR2" or "NVARCHAR" or "VARCHAR2" => "VARCHAR",
+                        _ => dbType
+                    };
+
+                case DataSourceType.Spanner:
+                    return name switch
+                    {
+                        "BOOL" or "BOOLEAN" or "BIT" => "BOOL",
+                        "TEXT" or "CLOB" or "NCLOB" or "LONGTEXT" or "VARCHAR" or "NVARCHAR" or "VARCHAR2" or "NVARCHAR2" or "STRING" => "STRING(MAX)",
+                        "BLOB" or "BYTEA" or "LONGBLOB" or "BINARY" or "VARBINARY" or "BYTES" => "BYTES(MAX)",
+                        "DOUBLE" or "DOUBLE PRECISION" or "FLOAT" => "FLOAT64",
+                        "INTEGER" or "INT" or "BIGINT" or "SMALLINT" or "TINYINT" => "INT64",
+                        "TIMESTAMP2" or "DATETIME2" or "TIMESTAMP_NTZ" or "TIMESTAMPTZ" or "TIMESTAMP_TZ" or "DATETIMEOFFSET" => "TIMESTAMP",
+                        "UUID" or "UNIQUEIDENTIFIER" => "STRING(36)",
+                        "NUMBER" or "DECIMAL" => "NUMERIC",
+                        _ => dbType
+                    };
+
+                default:
+                    // SQLite, DuckDB and anything else with permissive type-name aliasing: left as
+                    // received, same as before this method covered any provider beyond SQL Server.
+                    return dbType;
+            }
         }
 
         /// <summary>
@@ -954,8 +1125,131 @@ namespace TheTechIdea.Beep.DataBase
                         _ => "NVARCHAR2(2000)"
                     };
 
+                case DataSourceType.Cockroach:
+                    // CockroachDB is PostgreSQL wire- and type-compatible; use Postgres names rather
+                    // than falling through to SQLite's, which Cockroach does not all accept (SQLite's
+                    // bare TEXT/REAL/BLOB affinity typing is not CockroachDB's type system). BYTES is
+                    // Cockroach's own name for its binary type (BYTEA is accepted only as a
+                    // Postgres-compatibility alias).
+                    return fieldtype switch
+                    {
+                        "System.Int32" or "System.Int16" or "System.Byte" => "INTEGER",
+                        "System.Int64" => "BIGINT",
+                        "System.String" => "TEXT",
+                        "System.Decimal" => "NUMERIC(18,4)",
+                        "System.Double" or "System.Single" => "DOUBLE PRECISION",
+                        "System.Boolean" => "BOOLEAN",
+                        "System.DateTime" => "TIMESTAMP",
+                        "System.DateTimeOffset" => "TIMESTAMPTZ",
+                        "System.TimeSpan" => "INTERVAL",
+                        "System.Guid" => "UUID",
+                        "System.Byte[]" => "BYTES",
+                        _ => "TEXT"
+                    };
+
+                case DataSourceType.Hana:
+                    // SAP HANA has no bare TEXT/REAL/BLOB type names; NVARCHAR(5000) is HANA's
+                    // in-row string cap (NCLOB exists for larger values but is not needed for the
+                    // typical entity field this method is sizing). HANA has no native GUID type;
+                    // VARCHAR(36) is the conventional string-form mapping other HANA tooling uses.
+                    return fieldtype switch
+                    {
+                        "System.Int32" or "System.Int16" => "INTEGER",
+                        "System.Byte" => "TINYINT",
+                        "System.Int64" => "BIGINT",
+                        "System.String" => "NVARCHAR(5000)",
+                        "System.Decimal" => "DECIMAL(18,4)",
+                        "System.Double" or "System.Single" => "DOUBLE",
+                        "System.Boolean" => "BOOLEAN",
+                        "System.DateTime" or "System.DateTimeOffset" => "TIMESTAMP",
+                        "System.Guid" => "VARCHAR(36)",
+                        "System.Byte[]" => "VARBINARY(5000)",
+                        _ => "NVARCHAR(5000)"
+                    };
+
+                case DataSourceType.FireBird:
+                    // Firebird recognises neither a bare TEXT nor a bare BLOB-as-binary the way
+                    // SQLite does; BLOB SUB_TYPE TEXT is Firebird's own unbounded-text type, and
+                    // BLOB SUB_TYPE 0 (the default) is its binary one. Firebird added BOOLEAN in 3.0;
+                    // every driver this base class ships a config for is 3.0+.
+                    return fieldtype switch
+                    {
+                        "System.Int32" or "System.Int16" or "System.Byte" => "INTEGER",
+                        "System.Int64" => "BIGINT",
+                        "System.String" => "BLOB SUB_TYPE TEXT",
+                        "System.Decimal" => "NUMERIC(18,4)",
+                        "System.Double" or "System.Single" => "DOUBLE PRECISION",
+                        "System.Boolean" => "BOOLEAN",
+                        "System.DateTime" or "System.DateTimeOffset" => "TIMESTAMP",
+                        "System.Guid" => "CHAR(36)",
+                        "System.Byte[]" => "BLOB",
+                        _ => "BLOB SUB_TYPE TEXT"
+                    };
+
+                case DataSourceType.Presto:
+                case DataSourceType.Trino:
+                    // Presto/Trino have no TEXT, REAL-as-affinity or BLOB type names; VARCHAR with no
+                    // length is unbounded, and both have a native UUID type unlike most engines here.
+                    return fieldtype switch
+                    {
+                        "System.Int32" or "System.Int16" or "System.Byte" => "INTEGER",
+                        "System.Int64" => "BIGINT",
+                        "System.String" => "VARCHAR",
+                        "System.Decimal" => "DECIMAL(18,4)",
+                        "System.Double" or "System.Single" => "DOUBLE",
+                        "System.Boolean" => "BOOLEAN",
+                        "System.DateTime" or "System.DateTimeOffset" => "TIMESTAMP",
+                        "System.Guid" => "UUID",
+                        "System.Byte[]" => "VARBINARY",
+                        _ => "VARCHAR"
+                    };
+
+                case DataSourceType.SnowFlake:
+                    // Snowflake is unusually permissive about type-name aliases (it does accept TEXT
+                    // and REAL), but BLOB is not one of its aliases -- its binary type is BINARY.
+                    // Unqualified VARCHAR/NUMBER take Snowflake's own defaults (16 MB / 38,0), which
+                    // is more headroom than the fixed sizes other engines need here.
+                    return fieldtype switch
+                    {
+                        "System.Int32" or "System.Int16" or "System.Byte" => "INTEGER",
+                        "System.Int64" => "BIGINT",
+                        "System.String" => "VARCHAR",
+                        "System.Decimal" => "NUMBER(18,4)",
+                        "System.Double" or "System.Single" => "FLOAT",
+                        "System.Boolean" => "BOOLEAN",
+                        "System.DateTime" => "TIMESTAMP_NTZ",
+                        "System.DateTimeOffset" => "TIMESTAMP_TZ",
+                        "System.Guid" => "VARCHAR(36)",
+                        "System.Byte[]" => "BINARY",
+                        _ => "VARCHAR"
+                    };
+
+                case DataSourceType.Spanner:
+                    // Spanner's type vocabulary shares essentially no names with SQLite's affinities
+                    // (INT64/STRING/FLOAT64/BOOL/BYTES, not INTEGER/TEXT/REAL/BOOLEAN/BLOB) -- the
+                    // fallback this replaces would have produced a CREATE TABLE Spanner outright
+                    // rejects, not merely a suboptimal one. STRING/BYTES require an explicit length;
+                    // MAX is Spanner's own token for "unbounded".
+                    return fieldtype switch
+                    {
+                        "System.Int32" or "System.Int16" or "System.Byte" or "System.Int64" => "INT64",
+                        "System.String" => "STRING(MAX)",
+                        "System.Decimal" => "NUMERIC",
+                        "System.Double" or "System.Single" => "FLOAT64",
+                        "System.Boolean" => "BOOL",
+                        "System.DateTime" or "System.DateTimeOffset" => "TIMESTAMP",
+                        "System.Guid" => "STRING(36)",
+                        "System.Byte[]" => "BYTES(MAX)",
+                        _ => "STRING(MAX)"
+                    };
+
                 default:
-                    // SQLite and anything else with its permissive type affinities.
+                    // SQLite, DuckDB and anything else with permissive, SQLite-like type affinities
+                    // (DuckDB accepts TEXT/REAL/BLOB as aliases for VARCHAR/DOUBLE/BLOB natively).
+                    // Deliberately NOT extended to Firebolt or SQL Server Compact: Firebolt's exact
+                    // DDL type vocabulary was not verified against documentation with the same
+                    // confidence as the branches above, and SQL Compact has no reachable ADO.NET
+                    // provider in this environment to verify against (see the Tier 5 register).
                     return fieldtype switch
                     {
                         "System.Int32" or "System.Int16" or "System.Byte" => "INTEGER",
