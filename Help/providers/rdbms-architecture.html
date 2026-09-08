@@ -135,13 +135,62 @@
 
                 <section class="section">
                     <h2>Known Issues</h2>
+                    <p>
+                        The authoritative defect register lives with the code, at
+                        <code>DataSourcesPlugins/RDBMSDataSource/docs/10-known-issues.md</code>, where every
+                        entry carries a reproducing scenario and a fix direction. The table below is a
+                        severity summary only.
+                    </p>
                     <table>
                         <thead><tr><th>Severity</th><th>Issue</th><th>Location</th></tr></thead>
                         <tbody>
-                            <tr><td>🔴 Critical</td><td><code>UpdateEntities()</code> calls <code>InsertEntity()</code> instead of <code>UpdateEntity()</code></td><td>CRUD.cs:302</td></tr>
-                            <tr><td>🔴 Critical</td><td><code>Commit()</code> and <code>EndTransaction()</code> are empty stubs</td><td>Transaction.cs</td></tr>
-                            <tr><td>🟡 High</td><td><code>usedParameterNames</code> HashSet is not thread-safe across concurrent operations</td><td>RDBSource.cs</td></tr>
-                            <tr><td>🟡 High</td><td><code>MemoryCache</code> cannot enumerate keys — result cache stale until TTL expires</td><td>Cache.cs</td></tr>
+                            <tr><td>🔴 Critical</td><td>A null <code>Logger</code> makes <code>AddLogMessage</code> return before setting the error flag, so ~40 failure paths report success — including a <code>CREATE TABLE</code> that never ran</td><td>BeepDM <code>DMEEditor.cs:204</code></td></tr>
+                            <tr><td>🔴 Critical</td><td>UPDATE primary-key parameters are resolved by substring, so an UPDATE can target a row chosen by the wrong column's value</td><td>DMLGeneration.cs:304</td></tr>
+                            <tr><td>🔴 Critical</td><td>Zero rows affected is logged as a failure but returned as success; bulk success counters inherit this</td><td>CRUD.cs:74</td></tr>
+                            <tr><td>🔴 Critical</td><td><code>GetFieldName</code> emits a string literal rather than a quoted identifier on every driver but SQLite; reserved-word columns are never quoted at all</td><td>Utilities.cs:272</td></tr>
+                            <tr><td>🔴 Critical</td><td>SQL injection through <code>AppFilter.Operator</code> and <code>FieldName</code> — filter <em>values</em> are parameterised, these are not</td><td>BeepDM <code>DataSourceAppFilterExtensions.cs</code></td></tr>
+                            <tr><td>🔴 Critical</td><td>Bulk insert reflects on <code>typeof(T)</code>, so <code>IEnumerable&lt;object&gt;</code> input writes an all-NULL table and reports success</td><td>BulkOperations.cs:763</td></tr>
+                            <tr><td>🔴 Critical</td><td>Every SQL Server connection runs <code>ALTER LOGIN … DEFAULT_DATABASE</code>, a permanent server-wide change to the login</td><td>RDBDataConnection.cs:180</td></tr>
+                            <tr><td>🟠 High</td><td>Hana, Snowflake and Presto set <code>ParameterDelimiter = "?"</code>, so their write path cannot bind at all</td><td>driver constructors</td></tr>
+                            <tr><td>🟠 High</td><td>Bulk batches open a transaction the row commands never join — Oracle bulk insert fails by default</td><td>BulkOperations.cs:312</td></tr>
+                            <tr><td>🟠 High</td><td>Temp-table DDL emits .NET type names as SQL types, so bulk update fails on SQL Server, MySQL and PostgreSQL</td><td>BulkOperations.cs:950</td></tr>
+                            <tr><td>🟠 High</td><td>Schema and table concatenated with no <code>.</code> separator at six sites, breaking bulk and the async/paged read paths</td><td>BulkOperations.cs, Modernization.cs</td></tr>
+                            <tr><td>🟠 High</td><td>Two paging implementations with opposite defaults; AzureSQL and SqlCompact produce a syntax error on every paged read</td><td>Query.cs:797, Modernization.cs:412</td></tr>
+                            <tr><td>🟠 High</td><td><code>GetTableName</code> rewrites SQL by string surgery; an entity named <code>updates</code> throws <code>IndexOutOfRangeException</code></td><td>Utilities.cs:291</td></tr>
+                            <tr><td>🟡 Medium</td><td>The Polly resilience layer is wired to no query path, and would not fire anyway because <code>OpenConn</code> swallows exceptions internally</td><td>Resilience.cs</td></tr>
+                            <tr><td>🟡 Medium</td><td>Most of <code>Cache.cs</code> has no callers yet logs “Cache invalidated” on every write; <code>EntityStructureCache</code>, the live one, has no invalidation at all</td><td>Cache.cs, EntityStructureCache.cs</td></tr>
+                            <tr><td>🟡 Medium</td><td>Per-operation state is held in shared instance fields; the “thread-safe per-operation” comment is inverted</td><td>RDBSource.cs:32</td></tr>
+                            <tr><td>🟡 Medium</td><td><code>Dispose</code> nulls its collections and releases neither the active transaction, the retained command, nor the connection</td><td>Dispose.cs</td></tr>
+                        </tbody>
+                    </table>
+                    <p>
+                        <strong>Previously listed here and since fixed:</strong>
+                        <code>UpdateEntities()</code> calling <code>InsertEntity()</code>;
+                        <code>Commit()</code> and <code>EndTransaction()</code> as empty stubs (commit <code>c3901629</code>);
+                        the <code>MemoryCache</code> key-enumeration gap.
+                    </p>
+                </section>
+
+                <section class="section">
+                    <h2>Developer reference</h2>
+                    <p>
+                        A per-file walkthrough of all sixteen partial classes lives alongside the source, at
+                        <code>DataSourcesPlugins/RDBMSDataSource/docs/</code>.
+                    </p>
+                    <table>
+                        <thead><tr><th>Document</th><th>Covers</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>README.md</code></td><td>File map, the fourteen drivers, what a driver actually overrides</td></tr>
+                            <tr><td><code>01-error-model.md</code></td><td>How success and failure are reported — read first</td></tr>
+                            <tr><td><code>02-lifecycle.md</code></td><td>Construction, connection, shared state, disposal</td></tr>
+                            <tr><td><code>03-transactions.md</code></td><td><code>_activeTransaction</code>, and why <code>EndTransaction</code> means rollback</td></tr>
+                            <tr><td><code>04-crud-dml.md</code></td><td>The write path, parameter binding, DDL generation</td></tr>
+                            <tr><td><code>05-query-paging.md</code></td><td>The read path and its four paging routes</td></tr>
+                            <tr><td><code>06-schema-types.md</code></td><td>Structure discovery, entity types, type mapping</td></tr>
+                            <tr><td><code>07-bulk.md</code></td><td>Batching, temp tables, transaction scope</td></tr>
+                            <tr><td><code>08-cache-resilience.md</code></td><td>What is live, and what is built but not wired up</td></tr>
+                            <tr><td><code>09-extending.md</code></td><td>Writing a driver: what to override, what to avoid</td></tr>
+                            <tr><td><code>10-known-issues.md</code></td><td>The defect register with reproducing scenarios</td></tr>
                         </tbody>
                     </table>
                 </section>

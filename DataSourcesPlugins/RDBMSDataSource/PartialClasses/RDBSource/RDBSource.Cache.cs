@@ -1,290 +1,71 @@
-using Microsoft.Extensions.Caching.Memory;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using TheTechIdea.Beep.ConfigUtil;
-using TheTechIdea.Beep.Editor;
-using TheTechIdea.Beep.Report;
-using TheTechIdea.Beep.Utilities;
 
 namespace TheTechIdea.Beep.DataBase
 {
     /// <summary>
-    /// Partial class containing query and result caching infrastructure.
-    /// Provides thread-safe caching for query strings, prepared statements, and query results.
+    /// Cache invalidation for the entity-structure cache.
     /// </summary>
+    /// <remarks>
+    /// This file used to hold three caches — a compiled-query-string cache, a MemoryCache of query
+    /// results with TTL and per-entity key tracking, and a prepared-statement cache — none of which
+    /// were reachable. <c>TryGetCachedResult</c>, <c>CacheResult</c>, <c>TryGetPreparedStatement</c>
+    /// and <c>CachePreparedStatement</c> had no callers at all; the query-string cache had exactly
+    /// one, inside the dead <c>BuildQuery</c> cluster that has since been deleted from
+    /// <c>RDBSource.Query.cs</c>.
+    ///
+    /// <c>InvalidateEntityCache</c>, meanwhile, is called from ten places — after every INSERT,
+    /// UPDATE, DELETE and bulk operation — and logged "Cache invalidated for entity: X" each time
+    /// having invalidated nothing at all.
+    ///
+    /// The cache that does exist and does matter is <see cref="Helpers.EntityStructureCache"/>, and
+    /// it had no invalidation whatsoever, so a schema change stayed invisible for the lifetime of
+    /// the datasource. Those ten call sites now point at it.
+    ///
+    /// Result caching was not reinstated deliberately: <c>GetEntity</c> is an iterator that streams
+    /// rows off an open reader, so caching its return value would cache an un-enumerated sequence,
+    /// and forcing it to a list to make caching possible would throw away the streaming behaviour
+    /// that the read path is built around.
+    /// </remarks>
     public partial class RDBSource
     {
-        #region "Private Fields"
-        
         /// <summary>
-        /// Cache for compiled query strings to reduce BuildQuery overhead.
-        /// Key: hash of (originalQuery + filters), Value: compiled query string.
+        /// Retained for API compatibility. Result caching is no longer implemented — see the remarks
+        /// on this file.
         /// </summary>
-        private readonly ConcurrentDictionary<string, string> _queryCache = new();
-
-        /// <summary>
-        /// Cache for prepared statement command objects to reduce command creation overhead.
-        /// Key: query string, Value: cloned IDbCommand template.
-        /// </summary>
-        private readonly ConcurrentDictionary<string, string> _preparedStatementCache = new();
-
-        /// <summary>
-        /// Memory cache for query results with configurable TTL.
-        /// </summary>
-        private MemoryCache? _resultCache;
-
-        /// <summary>
-        /// Tracks entity→cache-key relationships for targeted result cache invalidation.
-        /// Key: entity name (lowercase), Value: set of cache keys belonging to that entity.
-        /// Solves the MemoryCache key-enumeration limitation.
-        /// </summary>
-        private readonly ConcurrentDictionary<string, HashSet<string>> _entityResultKeys = new(StringComparer.OrdinalIgnoreCase);
-
-        /// <summary>
-        /// Default time-to-live for cached results (5 minutes).
-        /// </summary>
-        private readonly TimeSpan _defaultCacheTTL = TimeSpan.FromMinutes(5);
-
-        #endregion
-
-        #region "Properties"
-
-        /// <summary>
-        /// Gets or sets whether query result caching is enabled.
-        /// Default: false (disabled to maintain backward compatibility).
-        /// </summary>
+        [Obsolete("Result caching is not implemented; this setting has no effect. It is kept so existing callers still compile.")]
         public bool EnableResultCache { get; set; } = false;
 
         /// <summary>
-        /// Gets or sets the time-to-live for cached query results.
-        /// Default: 5 minutes.
+        /// Retained for API compatibility. Result caching is no longer implemented — see the remarks
+        /// on this file.
         /// </summary>
+        [Obsolete("Result caching is not implemented; this setting has no effect. It is kept so existing callers still compile.")]
         public TimeSpan ResultCacheTTL { get; set; }
 
         /// <summary>
-        /// Lazy-initialized result cache.
+        /// Drops the cached <see cref="EntityStructure"/> for one entity, so the next lookup reads it
+        /// from the database again.
         /// </summary>
-        private MemoryCache ResultCache
-        {
-            get
-            {
-                _resultCache ??= new MemoryCache(new MemoryCacheOptions
-                {
-                    SizeLimit = 1024 // Limit to 1024 entries
-                });
-                return _resultCache;
-            }
-        }
-
-        #endregion
-
-        #region "Cache Management Methods"
-
-        /// <summary>
-        /// Generates a cache key for a query based on entity name and filters.
-        /// </summary>
-        /// <param name="entityName">The entity/table name.</param>
-        /// <param name="filters">The list of filters applied to the query.</param>
-        /// <returns>A deterministic cache key string.</returns>
-        private string GenerateQueryCacheKey(string entityName, List<AppFilter>? filters)
-        {
-            if (string.IsNullOrEmpty(entityName))
-                return string.Empty;
-
-            var key = $"{entityName.ToLowerInvariant()}";
-            
-            if (filters != null && filters.Count > 0)
-            {
-                // Sort filters to ensure consistent key generation
-                var sortedFilters = filters
-                    .Where(f => !string.IsNullOrWhiteSpace(f.FieldName) && !string.IsNullOrWhiteSpace(f.FilterValue))
-                    .OrderBy(f => f.FieldName)
-                    .ThenBy(f => f.Operator);
-
-                foreach (var filter in sortedFilters)
-                {
-                    key += $"|{filter.FieldName}:{filter.Operator}:{filter.FilterValue}";
-                }
-            }
-
-            return key;
-        }
-
-        /// <summary>
-        /// Gets a cached query string if available.
-        /// </summary>
-        /// <param name="cacheKey">The cache key.</param>
-        /// <param name="cachedQuery">The cached query string, if found.</param>
-        /// <returns>True if cached query was found, false otherwise.</returns>
-        private bool TryGetCachedQuery(string cacheKey, out string? cachedQuery)
-        {
-            return _queryCache.TryGetValue(cacheKey, out cachedQuery);
-        }
-
-        /// <summary>
-        /// Caches a compiled query string.
-        /// </summary>
-        /// <param name="cacheKey">The cache key.</param>
-        /// <param name="query">The compiled query string.</param>
-        private void CacheQuery(string cacheKey, string query)
-        {
-            if (!string.IsNullOrEmpty(cacheKey) && !string.IsNullOrEmpty(query))
-            {
-                _queryCache[cacheKey] = query;
-            }
-        }
-
-        /// <summary>
-        /// Gets a cached query result if available and caching is enabled.
-        /// </summary>
-        /// <typeparam name="T">The type of the cached result.</typeparam>
-        /// <param name="cacheKey">The cache key.</param>
-        /// <param name="result">The cached result, if found.</param>
-        /// <returns>True if cached result was found, false otherwise.</returns>
-        private bool TryGetCachedResult<T>(string cacheKey, out T? result)
-        {
-            result = default;
-            
-            if (!EnableResultCache || string.IsNullOrEmpty(cacheKey))
-                return false;
-
-            return ResultCache.TryGetValue(cacheKey, out result);
-        }
-
-        /// <summary>
-        /// Caches a query result if result caching is enabled.
-        /// </summary>
-        /// <typeparam name="T">The type of the result to cache.</typeparam>
-        /// <param name="cacheKey">The cache key.</param>
-        /// <param name="result">The result to cache.</param>
-        private void CacheResult<T>(string cacheKey, T result, string? entityName = null)
-        {
-            if (!EnableResultCache || string.IsNullOrEmpty(cacheKey) || result == null)
-                return;
-
-            var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetSize(1) // Each entry counts as 1 toward the size limit
-                .SetSlidingExpiration(ResultCacheTTL == default ? _defaultCacheTTL : ResultCacheTTL)
-                .SetPriority(CacheItemPriority.Normal);
-
-            // Register post-eviction callback to clean up the entity→key tracking
-            cacheEntryOptions.RegisterPostEvictionCallback((key, value, reason, state) =>
-            {
-                if (state is string entity && !string.IsNullOrEmpty(entity))
-                {
-                    if (_entityResultKeys.TryGetValue(entity, out var keys))
-                    {
-                        keys.Remove(key as string ?? string.Empty);
-                    }
-                }
-            }, entityName);
-
-            ResultCache.Set(cacheKey, result, cacheEntryOptions);
-
-            // Track entity→cache-key for targeted invalidation
-            if (!string.IsNullOrEmpty(entityName))
-            {
-                _entityResultKeys.AddOrUpdate(
-                    entityName.ToLowerInvariant(),
-                    _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase) { cacheKey },
-                    (_, keys) => { lock (keys) { keys.Add(cacheKey); } return keys; }
-                );
-            }
-        }
-
-        /// <summary>
-        /// Invalidates cached queries and results for a specific entity.
-        /// Called automatically on INSERT, UPDATE, DELETE operations.
-        /// </summary>
-        /// <param name="entityName">The entity name whose cache should be invalidated.</param>
+        /// <remarks>
+        /// Called after every write and after DDL. Before the structure cache gained a
+        /// <c>Remove</c>, this swept a query cache that was permanently empty and then logged
+        /// success.
+        /// </remarks>
+        /// <param name="entityName">The entity whose cached structure should be dropped.</param>
         private void InvalidateEntityCache(string entityName)
         {
-            if (string.IsNullOrEmpty(entityName))
+            if (string.IsNullOrWhiteSpace(entityName))
                 return;
 
-            var entityKey = entityName.ToLowerInvariant();
-            
-            // Remove query cache entries starting with this entity name
-            var keysToRemove = new List<string>();
-            foreach (var key in _queryCache.Keys)
-            {
-                if (key.StartsWith(entityKey, StringComparison.OrdinalIgnoreCase))
-                {
-                    keysToRemove.Add(key);
-                }
-            }
-
-            foreach (var key in keysToRemove)
-            {
-                _queryCache.TryRemove(key, out _);
-            }
-
-            // Remove result cache entries for this entity using the tracking dictionary
-            if (EnableResultCache && _entityResultKeys.TryGetValue(entityKey, out var resultKeys))
-            {
-                lock (resultKeys)
-                {
-                    foreach (var resultKey in resultKeys.ToList())
-                    {
-                        ResultCache.Remove(resultKey);
-                    }
-                    resultKeys.Clear();
-                }
-                _entityResultKeys.TryRemove(entityKey, out _);
-            }
-
-            DMEEditor?.AddLogMessage("Beep", $"Cache invalidated for entity: {entityName}", DateTime.Now, 0, null, Errors.Ok);
+            _entityCache?.Remove(entityName);
         }
 
         /// <summary>
-        /// Clears all query and result caches.
+        /// Drops every cached entity structure on this datasource.
         /// </summary>
         public void ClearAllCaches()
         {
-            _queryCache.Clear();
-            _preparedStatementCache.Clear();
-            _entityResultKeys.Clear();
-
-            if (_resultCache != null)
-            {
-                _resultCache.Dispose();
-                _resultCache = null;
-            }
-
-            DMEEditor?.AddLogMessage("Beep", "All query and result caches cleared", DateTime.Now, 0, null, Errors.Ok);
+            _entityCache?.Clear();
         }
-
-        #endregion
-
-        #region "Prepared Statement Caching"
-
-        /// <summary>
-        /// Gets a cached prepared statement command text if available.
-        /// </summary>
-        /// <param name="query">The query string.</param>
-        /// <param name="cachedCommandText">The cached command text, if found.</param>
-        /// <returns>True if cached command was found, false otherwise.</returns>
-        private bool TryGetPreparedStatement(string query, out string? cachedCommandText)
-        {
-            return _preparedStatementCache.TryGetValue(query, out cachedCommandText);
-        }
-
-        /// <summary>
-        /// Caches a prepared statement command text.
-        /// </summary>
-        /// <param name="query">The query string.</param>
-        /// <param name="commandText">The prepared command text.</param>
-        private void CachePreparedStatement(string query, string commandText)
-        {
-            if (!string.IsNullOrEmpty(query) && !string.IsNullOrEmpty(commandText))
-            {
-                _preparedStatementCache[query] = commandText;
-            }
-        }
-
-        #endregion
     }
 }

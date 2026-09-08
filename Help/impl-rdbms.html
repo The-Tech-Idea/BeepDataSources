@@ -122,6 +122,16 @@
                         <li><a href="providers/rdbms-configuration.html"><strong>Configuration</strong></a> — ConnectionProperties, driver setup, resilience settings, cache tuning, bulk operation config</li>
                         <li><a href="providers/rdbms-troubleshooting.html"><strong>Troubleshooting</strong></a> — Common errors, driver issues, Oracle specifics, known bugs and workarounds, performance tuning</li>
                     </ul>
+                    <p>
+                        For a per-file walkthrough of all sixteen partial classes — member inventories, call
+                        flow, extension points and the defect register — read the Markdown reference kept
+                        alongside the source at
+                        <code>DataSourcesPlugins/RDBMSDataSource/docs/</code>. Start with
+                        <code>docs/README.md</code>, and with <code>docs/01-error-model.md</code> before
+                        changing anything: how this class reports success and failure is unusual and explains
+                        much of the rest. The authoritative defect list is
+                        <code>docs/10-known-issues.md</code>.
+                    </p>
                 </section>
 
                 <section class="section">

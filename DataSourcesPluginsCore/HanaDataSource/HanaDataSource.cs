@@ -26,53 +26,19 @@ namespace TheTechIdea.Beep.DataBase
         public override string ColumnDelimiter { get; set; } = "'";
         public override string ParameterDelimiter { get; set; } = "?";
 
-        public virtual IErrorsInfo BeginTransaction(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-                // SAP HANA transactions are handled by RDBSource base class
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-            }
-            return DMEEditor.ErrorObject;
-        }
-
-        public virtual IErrorsInfo EndTransaction(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-                // SAP HANA transactions are handled by RDBSource base class
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Error in End Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-            }
-            return DMEEditor.ErrorObject;
-        }
-
-        public virtual IErrorsInfo Commit(PassedArgs args)
-        {
-            ErrorObject.Flag = Errors.Ok;
-            try
-            {
-                // SAP HANA transactions are handled by RDBSource base class
-            }
-            catch (Exception ex)
-            {
-                DMEEditor.AddLogMessage("Beep", $"Error in Commit Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex.Message;
-            }
-            return DMEEditor.ErrorObject;
-        }
+        // BeginTransaction / EndTransaction / Commit are intentionally NOT declared here.
+        // SAP HANA transactions are handled by RDBSource base class -- that was always the
+        // stated intent (see the comments these replaced), but the three methods previously
+        // written here as `public virtual` (not `override`) HID RDBSource's real ADO.NET
+        // transaction plumbing instead of deferring to it. Because this class re-declares
+        // IDataSource in its own inheritance list, C# rebinds the IDataSource interface slot
+        // to the most-derived member matching the signature -- the hiding stub, not the base
+        // override -- so every caller holding this datasource as IDataSource (the normal way
+        // the engine consumes a plugin) got a no-op that always reported Ok: BeginTransaction
+        // never opened a real transaction, Commit had nothing to commit, and EndTransaction
+        // (rollback) had nothing to roll back -- so writes made "inside" a transaction were
+        // never atomic and a rollback never undid them. Removing the hiding methods restores
+        // RDBSource's real, tested BeginTransaction/Commit/EndTransaction to the IDataSource slot.
 
         public override string DisableFKConstraints(EntityStructure t1)
         {

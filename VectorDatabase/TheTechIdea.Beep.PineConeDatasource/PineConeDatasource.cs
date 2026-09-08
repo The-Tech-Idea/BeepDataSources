@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Net.Http;
@@ -897,5 +897,153 @@ namespace TheTechIdea.Beep.PineConeDatasource
             GC.SuppressFinalize(this);
         }
         #endregion "IDisposable Support"
+    
+        // ---------------------------------------------------------------------------------
+        // IInMemoryDB v2 additions. PineCone implemented the pre-v2 IInMemoryDB surface
+        // (the state flags, LoadStructure/LoadData/SyncData/RefreshData/CreateStructure/
+        // SaveStructure family) but was never updated when the interface grew OpenInMemory,
+        // GetInMemoryConnectionString, ResetInMemory, LoadStructureWithData,
+        // FillFromDataSource, ExportToDataSource, IsStructureLoaded and the
+        // StructureChanged/DataChanged/StateChanged events. Missing eleven interface members is
+        // not a behavioural gap -- it is CS0535, and this project did not compile at all before
+        // this file was touched. Reuses this class's own already-working primitives
+        // (OpenDatabaseInMemory, GetConnectionString, GetEntity, InsertEntity, CreateEntityAs,
+        // CheckEntityExist) rather than inventing new engine-specific logic.
+        // ---------------------------------------------------------------------------------
+
+        public bool IsStructureLoaded { get; set; } = false;
+
+        // 2-parameter overload the interface actually requires -- the pre-existing
+        // 3-parameter LoadStructure(progress, token, copydata) has an optional third
+        // parameter, but C# does not let that satisfy an interface member declared with
+        // fewer parameters; the interface needs an exact arity match.
+        public IErrorsInfo LoadStructure(IProgress<PassedArgs> progress = null, CancellationToken token = default)
+            => LoadStructure(progress, token, copydata: false);
+
+        public event EventHandler<PassedArgs> StructureChanged;
+        public event EventHandler<PassedArgs> DataChanged;
+        public event EventHandler<PassedArgs> StateChanged;
+
+        public IErrorsInfo OpenInMemory(string databaseName) => OpenDatabaseInMemory(databaseName);
+
+        public string GetInMemoryConnectionString() => GetConnectionString() ?? "pinecone-im://" + (DatasourceName ?? "PineCone");
+
+        public IErrorsInfo ResetInMemory()
+        {
+            ErrorObject ??= new ErrorsInfo();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                Entities?.Clear();
+                EntitiesNames?.Clear();
+                InMemoryStructures = new List<EntityStructure>();
+                IsCreated = false;
+                IsLoaded = false;
+                IsSaved = false;
+                IsSynced = false;
+                IsStructureCreated = false;
+                IsStructureLoaded = false;
+                DataChanged?.Invoke(this, new PassedArgs { EventType = "ResetInMemory" });
+                StateChanged?.Invoke(this, new PassedArgs { EventType = "ResetInMemory" });
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Ex = ex;
+                DMEEditor?.AddLogMessage("Beep", $"Error in ResetInMemory for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
+        }
+
+        public IErrorsInfo LoadStructureWithData(IProgress<PassedArgs> progress = null, CancellationToken token = default)
+        {
+            var result = LoadStructure(progress, token, copydata: true);
+            IsStructureLoaded = result?.Flag == Errors.Ok;
+            if (IsStructureLoaded)
+                StructureChanged?.Invoke(this, new PassedArgs { EventType = "LoadStructureWithData" });
+            return result;
+        }
+
+        public IErrorsInfo FillFromDataSource(IDataSource source, IProgress<PassedArgs> progress = null, CancellationToken token = default)
+        {
+            ErrorObject ??= new ErrorsInfo();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (source == null) { ErrorObject.Flag = Errors.Failed; ErrorObject.Message = "Source is null."; return ErrorObject; }
+                if (source.ConnectionStatus != ConnectionState.Open && source.Openconnection() != ConnectionState.Open)
+                { ErrorObject.Flag = Errors.Failed; ErrorObject.Message = $"Could not open source '{source.DatasourceName}'."; return ErrorObject; }
+
+                foreach (var entity in (source.Entities ?? new List<EntityStructure>()).ToList())
+                {
+                    token.ThrowIfCancellationRequested();
+                    if (!CheckEntityExist(entity.EntityName))
+                    {
+                        CreateEntityAs(entity);
+                    }
+                    var rows = source.GetEntity(entity.EntityName, null);
+                    if (rows == null) continue;
+                    foreach (var row in rows)
+                    {
+                        InsertEntity(entity.EntityName, row);
+                    }
+                }
+                IsLoaded = true;
+                IsSynced = true;
+                DataChanged?.Invoke(this, new PassedArgs { EventType = "FillFromDataSource" });
+                StateChanged?.Invoke(this, new PassedArgs { EventType = "FillFromDataSource" });
+            }
+            catch (OperationCanceledException)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"FillFromDataSource cancelled for {DatasourceName}.";
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Ex = ex;
+                DMEEditor?.AddLogMessage("Beep", $"Error in FillFromDataSource for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
+        }
+
+        public IErrorsInfo ExportToDataSource(IDataSource target, IProgress<PassedArgs> progress = null, CancellationToken token = default)
+        {
+            ErrorObject ??= new ErrorsInfo();
+            ErrorObject.Flag = Errors.Ok;
+            try
+            {
+                if (target == null) { ErrorObject.Flag = Errors.Failed; ErrorObject.Message = "Target is null."; return ErrorObject; }
+                if (target.ConnectionStatus != ConnectionState.Open && target.Openconnection() != ConnectionState.Open)
+                { ErrorObject.Flag = Errors.Failed; ErrorObject.Message = $"Could not open target '{target.DatasourceName}'."; return ErrorObject; }
+
+                foreach (var entity in (Entities ?? new List<EntityStructure>()).ToList())
+                {
+                    token.ThrowIfCancellationRequested();
+                    var rows = GetEntity(entity.EntityName, null);
+                    if (rows == null) continue;
+                    foreach (var row in rows)
+                    {
+                        target.InsertEntity(entity.EntityName, row);
+                    }
+                }
+                IsSaved = true;
+                DataChanged?.Invoke(this, new PassedArgs { EventType = "ExportToDataSource" });
+                StateChanged?.Invoke(this, new PassedArgs { EventType = "ExportToDataSource" });
+            }
+            catch (OperationCanceledException)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Message = $"ExportToDataSource cancelled for {DatasourceName}.";
+            }
+            catch (Exception ex)
+            {
+                ErrorObject.Flag = Errors.Failed;
+                ErrorObject.Ex = ex;
+                DMEEditor?.AddLogMessage("Beep", $"Error in ExportToDataSource for {DatasourceName}: {ex.Message}", DateTime.Now, 0, null, Errors.Failed);
+            }
+            return ErrorObject;
+        }
+
     }
 }

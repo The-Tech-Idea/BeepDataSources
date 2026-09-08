@@ -62,7 +62,7 @@ namespace TheTechIdea.Beep.DataBase
             try
             {
                 UpdateFieldSequnce = new List<EntityField>();
-                usedParameterNames = new HashSet<string>();
+                ResetParameterAllocation();
                 string updatestring = GetUpdateString(EntityName, DataStruct);
                 
                 using (var cmd = GetDataCommand())
@@ -71,12 +71,8 @@ namespace TheTechIdea.Beep.DataBase
                     CreateUpdateCommandParameters(cmd, UploadDataRow, DataStruct);
 
                     int rowsUpdated = cmd.ExecuteNonQuery();
-                    if (rowsUpdated == 0)
-                    {
-                        string msg = $"No records updated in {EntityName}";
-                        DMEEditor.AddLogMessage("Beep", msg, DateTime.Now, 0, null, Errors.Failed);
-                    }
-                    else
+                    ReportAffectedRows(rowsUpdated, EntityName, "updated", isUpdate: true);
+                    if (rowsUpdated != 0)
                     {
                         // Invalidate cache after successful update
                         InvalidateEntityCache(EntityName);
@@ -114,7 +110,7 @@ namespace TheTechIdea.Beep.DataBase
 
             try
             {
-                usedParameterNames = new HashSet<string>();
+                ResetParameterAllocation();
                 string deleteString = GetDeleteString(EntityName, DataStruct);
                 
                 using (var cmd = GetDataCommand())
@@ -123,12 +119,8 @@ namespace TheTechIdea.Beep.DataBase
                     CreateDeleteCommandParameters(cmd, DeletedDataRow, DataStruct);
                     
                     int rowsDeleted = cmd.ExecuteNonQuery();
-                    if (rowsDeleted == 0)
-                    {
-                        string msg = $"No records deleted from {EntityName}";
-                        DMEEditor.AddLogMessage("Beep", msg, DateTime.Now, 0, null, Errors.Failed);
-                    }
-                    else
+                    ReportAffectedRows(rowsDeleted, EntityName, "deleted", isUpdate: false);
+                    if (rowsDeleted != 0)
                     {
                         // Invalidate cache after successful delete
                         InvalidateEntityCache(EntityName);
@@ -166,7 +158,7 @@ namespace TheTechIdea.Beep.DataBase
 
             try
             {
-                usedParameterNames = new HashSet<string>();
+                ResetParameterAllocation();
                 string insertString = GetInsertString(EntityName, DataStruct);
                 
                 using (var cmd = GetDataCommand())
@@ -180,8 +172,7 @@ namespace TheTechIdea.Beep.DataBase
                         // Invalidate cache after successful insert
                         InvalidateEntityCache(EntityName);
                         
-                        DMEEditor.ErrorObject.Message = $"Successfully inserted record to {EntityName}";
-                        DMEEditor.ErrorObject.Flag = Errors.Ok;
+                        SetSuccess($"Successfully inserted record to {EntityName}");
                         
                         // Fetch auto-generated identity if applicable. Gated on the primary key
                         // actually BEING an auto-increment column: SQLite's last_insert_rowid() (and
@@ -208,20 +199,18 @@ namespace TheTechIdea.Beep.DataBase
                                     Type underlyingType = Nullable.GetUnderlyingType(primaryKeyType) ?? primaryKeyType;
                                     var convertedIdentity = Convert.ChangeType(result, underlyingType);
                                     primaryKeyProperty.SetValue(InsertedData, convertedIdentity);
-                                    DMEEditor.ErrorObject.Message = $"Successfully inserted record to {EntityName} with ID {convertedIdentity}";
+                                    SetSuccess($"Successfully inserted record to {EntityName} with ID {convertedIdentity}");
                                 }
                             }
                             else
                             {
-                                DMEEditor.ErrorObject.Message = "Failed to retrieve the identity of the inserted record";
-                                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                                SetFailure("Failed to retrieve the identity of the inserted record", EntityName);
                             }
                         }
                     }
                     else
                     {
-                        DMEEditor.ErrorObject.Message = $"No records inserted to {EntityName}";
-                        DMEEditor.ErrorObject.Flag = Errors.Failed;
+                        SetFailure($"No records inserted to {EntityName}", EntityName);
                     }
                 }
             }
@@ -253,6 +242,15 @@ namespace TheTechIdea.Beep.DataBase
                 //           DMTypeBuilder.CreateNewObject(DMEEditor, null, srcentitystructure.EntityName, SourceFields);
                 if (UploadData.GetType().FullName.Contains("DataTable"))
                 {
+                    // Converting a DataTable to typed rows is the engine's job, and there is no
+                    // local fallback. Name the missing service instead of throwing
+                    // NullReferenceException from inside a bulk upload.
+                    if (DMEEditor?.Utilfunction == null)
+                    {
+                        SetFailure($"Cannot upload a DataTable to {EntityName}: the engine's Utilfunction service is not available to convert it.", EntityName);
+                        return ErrorObject;
+                    }
+
                     srcList = DMEEditor.Utilfunction.GetListByDataTable((DataTable)UploadData, DMTypeBuilder.MyType, DataStruct);
 
                 }
@@ -288,13 +286,21 @@ namespace TheTechIdea.Beep.DataBase
 
                 ErrorObject.Flag = Errors.Ok;
 
-                string str = "";
-                string errorstring = "";
                 int CurrentRecord = 0;
-                DMEEditor.ETL.CurrentScriptRecord = 0;
-                DMEEditor.ETL.ScriptCount += srcList.Count;
+
+                // The ETL script counters are progress bookkeeping for the engine's script runner.
+                // They were dereferenced unguarded, so this method -- which needs nothing else from
+                // the editor to do its actual work -- threw NullReferenceException before touching
+                // the database whenever no editor or no ETL service was attached.
+                var etl = DMEEditor?.ETL;
+                if (etl != null)
+                {
+                    etl.CurrentScriptRecord = 0;
+                    etl.ScriptCount += srcList.Count;
+                }
+
                 int highestPercentageReached = 0;
-                int numberToCompute = DMEEditor.ETL.ScriptCount;
+                int numberToCompute = etl?.ScriptCount ?? srcList.Count;
                 try
                 {
                     if (srcList != null)
@@ -308,8 +314,19 @@ namespace TheTechIdea.Beep.DataBase
                             {
                                 object r = srcList[i];
 
-                                DMEEditor.ErrorObject = UpdateEntity(EntityName, r);
+                                // Read the row's result; do not re-point DMEEditor.ErrorObject at
+                                // this datasource's error object (K38's fifth site). The result was
+                                // also never inspected, so a row that failed to update was counted
+                                // as progress and the method still reported "Finished Uploading".
+                                var rowResult = UpdateEntity(EntityName, r);
                                 CurrentRecord = i;
+
+                                if (rowResult != null && rowResult.Flag == Errors.Failed)
+                                {
+                                    DMEEditor?.AddLogMessage("Fail",
+                                        $"Record {i} of {EntityName} was not updated: {rowResult.Message}",
+                                        DateTime.Now, i, EntityName, Errors.Failed);
+                                }
 
 
                                 string msg = "";
@@ -331,26 +348,35 @@ namespace TheTechIdea.Beep.DataBase
                                 //         UpdateEvents(EntityName, msg, highestPercentageReached, CurrentRecord, numberToCompute, this);
                                 if (progress != null)
                                 {
-                                    PassedArgs ps = new PassedArgs { Messege = msg, ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = null };
+                                    PassedArgs ps = new PassedArgs { Messege = msg, ParameterInt1 = CurrentRecord, ParameterInt2 = etl?.ScriptCount ?? numberToCompute, ParameterString1 = null };
                                     progress.Report(ps);
                                 }
-                                //   PassEvent?.Invoke(this, args);
+                                // Raise it. `args` above was built on every row and thrown away
+                                // because this line was commented out, which is why PassEvent --
+                                // declared on RDBSource and part of the IDataSource surface -- was
+                                // never fired by anything in the class (CS0067).
+                                PassEvent?.Invoke(this, args);
                                 //   DMEEditor.RaiseEvent(this, args);
                             }
                             catch (Exception er)
                             {
-                                string msg = $"Fail to I/U/D  Record {i} to {EntityName} ";
+                                // The exception was caught and its message dropped (CS0168), so a
+                                // per-row failure reported the row number and nothing about why.
+                                string msg = $"Fail to I/U/D  Record {i} to {EntityName}: {er.Message}";
                                 if (progress != null)
                                 {
-                                    PassedArgs ps = new PassedArgs { ParameterInt1 = CurrentRecord, ParameterInt2 = DMEEditor.ETL.ScriptCount, ParameterString1 = msg };
+                                    PassedArgs ps = new PassedArgs { ParameterInt1 = CurrentRecord, ParameterInt2 = etl?.ScriptCount ?? numberToCompute, ParameterString1 = msg };
                                     progress.Report(ps);
                                 }
-                                DMEEditor.AddLogMessage("Fail", msg, DateTime.Now, i, EntityName, Errors.Failed);
+                                DMEEditor?.AddLogMessage("Fail", msg, DateTime.Now, i, EntityName, Errors.Failed);
                             }
                         }
-                        DMEEditor.ETL.CurrentScriptRecord = DMEEditor.ETL.ScriptCount;
+                        if (etl != null)
+                        {
+                            etl.CurrentScriptRecord = etl.ScriptCount;
+                        }
                         //command.Dispose();
-                        DMEEditor.AddLogMessage("Success", $"Finished Uploading Data to {EntityName}", DateTime.Now, 0, null, Errors.Ok);
+                        DMEEditor?.AddLogMessage("Success", $"Finished Uploading Data to {EntityName}", DateTime.Now, 0, null, Errors.Ok);
 
 
                     }
@@ -383,18 +409,20 @@ namespace TheTechIdea.Beep.DataBase
                     {
                         ErrorObject.Flag = Errors.Failed;
                         ErrorObject.Message = ex.Message;
-                        DMEEditor.AddLogMessage("Fail", $"Could not Create Entity {item.EntityName}" + ex.Message, DateTime.Now, -1, ex.Message, Errors.Failed);
+                        DMEEditor?.AddLogMessage("Fail", $"Could not Create Entity {item.EntityName}" + ex.Message, DateTime.Now, -1, ex.Message, Errors.Failed);
                     }
 
                 }
             }
             catch (Exception ex1)
             {
-                ErrorObject.Flag = Errors.Failed;
-                ErrorObject.Message = ex1.Message;
-                DMEEditor.AddLogMessage("Fail", " Could not Complete Create Entities" + ex1.Message, DateTime.Now, -1, ex1.Message, Errors.Failed);
+                HandleDatabaseError(ex1, DatasourceName, "create entities in");
             }
-            return DMEEditor.ErrorObject;
+
+            // Return the object the failure branches above actually wrote to. This used to set
+            // ErrorObject and return DMEEditor.ErrorObject, which are only the same instance by
+            // an aliasing coincidence of the standard creation path.
+            return ErrorObject;
         }
 
         #region "Async CRUD Methods"
@@ -417,7 +445,7 @@ namespace TheTechIdea.Beep.DataBase
 
             try
             {
-                usedParameterNames = new HashSet<string>();
+                ResetParameterAllocation();
                 string insertString = GetInsertString(EntityName, DataStruct);
                 
                 using (var cmd = GetDataCommand())
@@ -425,14 +453,13 @@ namespace TheTechIdea.Beep.DataBase
                     cmd.CommandText = insertString;
                     CreateCommandParameters(cmd, InsertedData, DataStruct);
 
-                    int rowsInserted = await ExecuteNonQueryAsync(cmd);
+                    int rowsInserted = await ExecuteNonQueryAsync(cmd).ConfigureAwait(false);
                     if (rowsInserted > 0)
                     {
                         // Invalidate cache after successful insert
                         InvalidateEntityCache(EntityName);
                         
-                        DMEEditor.ErrorObject.Message = $"Successfully inserted record to {EntityName}";
-                        DMEEditor.ErrorObject.Flag = Errors.Ok;
+                        SetSuccess($"Successfully inserted record to {EntityName}");
                         
                         // Fetch auto-generated identity if applicable. Gated on the primary key
                         // actually BEING an auto-increment column — see InsertEntity's identical
@@ -444,7 +471,7 @@ namespace TheTechIdea.Beep.DataBase
                         if (fetchIdentityQuery.ToUpper().Contains("SELECT") && pkField != null && pkField.IsAutoIncrement)
                         {
                             cmd.CommandText = fetchIdentityQuery;
-                            object result = await ExecuteScalarAsync(cmd);
+                            object result = await ExecuteScalarAsync(cmd).ConfigureAwait(false);
                             if (result != null && result != DBNull.Value)
                             {
                                 var pkFieldName = pkField.FieldName;
@@ -455,15 +482,14 @@ namespace TheTechIdea.Beep.DataBase
                                     Type underlyingType = Nullable.GetUnderlyingType(primaryKeyType) ?? primaryKeyType;
                                     var convertedIdentity = Convert.ChangeType(result, underlyingType);
                                     primaryKeyProperty.SetValue(InsertedData, convertedIdentity);
-                                    DMEEditor.ErrorObject.Message = $"Successfully inserted record to {EntityName} with ID {convertedIdentity}";
+                                    SetSuccess($"Successfully inserted record to {EntityName} with ID {convertedIdentity}");
                                 }
                             }
                         }
                     }
                     else
                     {
-                        DMEEditor.ErrorObject.Message = $"No records inserted to {EntityName}";
-                        DMEEditor.ErrorObject.Flag = Errors.Failed;
+                        SetFailure($"No records inserted to {EntityName}", EntityName);
                     }
                 }
             }
@@ -494,7 +520,7 @@ namespace TheTechIdea.Beep.DataBase
             try
             {
                 UpdateFieldSequnce = new List<EntityField>();
-                usedParameterNames = new HashSet<string>();
+                ResetParameterAllocation();
                 string updatestring = GetUpdateString(EntityName, DataStruct);
                 
                 using (var cmd = GetDataCommand())
@@ -502,13 +528,9 @@ namespace TheTechIdea.Beep.DataBase
                     cmd.CommandText = updatestring;
                     CreateUpdateCommandParameters(cmd, UploadDataRow, DataStruct);
 
-                    int rowsUpdated = await ExecuteNonQueryAsync(cmd);
-                    if (rowsUpdated == 0)
-                    {
-                        string msg = $"No records updated in {EntityName}";
-                        DMEEditor.AddLogMessage("Beep", msg, DateTime.Now, 0, null, Errors.Failed);
-                    }
-                    else
+                    int rowsUpdated = await ExecuteNonQueryAsync(cmd).ConfigureAwait(false);
+                    ReportAffectedRows(rowsUpdated, EntityName, "updated", isUpdate: true);
+                    if (rowsUpdated != 0)
                     {
                         // Invalidate cache after successful update
                         InvalidateEntityCache(EntityName);
@@ -541,7 +563,7 @@ namespace TheTechIdea.Beep.DataBase
 
             try
             {
-                usedParameterNames = new HashSet<string>();
+                ResetParameterAllocation();
                 string deleteString = GetDeleteString(EntityName, DataStruct);
                 
                 using (var cmd = GetDataCommand())
@@ -549,13 +571,9 @@ namespace TheTechIdea.Beep.DataBase
                     cmd.CommandText = deleteString;
                     CreateDeleteCommandParameters(cmd, DeletedDataRow, DataStruct);
                     
-                    int rowsDeleted = await ExecuteNonQueryAsync(cmd);
-                    if (rowsDeleted == 0)
-                    {
-                        string msg = $"No records deleted from {EntityName}";
-                        DMEEditor.AddLogMessage("Beep", msg, DateTime.Now, 0, null, Errors.Failed);
-                    }
-                    else
+                    int rowsDeleted = await ExecuteNonQueryAsync(cmd).ConfigureAwait(false);
+                    ReportAffectedRows(rowsDeleted, EntityName, "deleted", isUpdate: false);
+                    if (rowsDeleted != 0)
                     {
                         // Invalidate cache after successful delete
                         InvalidateEntityCache(EntityName);
@@ -577,7 +595,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             if (cmd is DbCommand dbCommand)
             {
-                return await dbCommand.ExecuteNonQueryAsync();
+                return await dbCommand.ExecuteNonQueryAsync().ConfigureAwait(false);
             }
             return cmd.ExecuteNonQuery();
         }
@@ -589,7 +607,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             if (cmd is DbCommand dbCommand)
             {
-                return await dbCommand.ExecuteScalarAsync();
+                return await dbCommand.ExecuteScalarAsync().ConfigureAwait(false);
             }
             return cmd.ExecuteScalar();
         }

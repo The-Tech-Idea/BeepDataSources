@@ -15,7 +15,7 @@
 		<UserSecretsId>0e52f958-db3c-4737-811d-afad4558ff95</UserSecretsId>
 		<Title>TheTechIdea.Beep.PostgreDataSourceCore</Title>
 		<PackageId>TheTechIdea.Beep.PostgreDataSourceCore</PackageId>
-		<Version>1.0.2</Version>
+		<Version>1.0.4</Version>
 
 	</PropertyGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
@@ -33,13 +33,8 @@
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.10" />
 	  <PackageReference Include="Npgsql" Version="10.0.3" />
-	  <!-- Project references, not packages: matches SqlServerDataSourceCore's established pattern.
-	       The local BeepDM sources carry fixes not yet published to the 3.1.1/2.0.22 NuGet packages;
-	       mixing a package copy with the project copy loads the same types twice, which breaks DI
-	       registration for any host that also references BeepDM by project (every Beep.DoitAll host
-	       does) — resolved as "No service for type 'IBeepService' has been registered." -->
-	  <ProjectReference Include="..\..\..\BeepDM\DataManagementEngineStandard\DataManagementEngine.csproj" />
-	  <ProjectReference Include="..\..\..\BeepDM\DataManagementModelsStandard\DataManagementModels.csproj" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.1.1" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="3.1.1" />
 	  <ProjectReference Include="..\..\DataSourcesPlugins\RDBMSDataSource\RDBDataSource.csproj" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">

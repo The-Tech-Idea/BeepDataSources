@@ -54,32 +54,33 @@ namespace TheTechIdea.Beep.DataBase
         /// <returns>An IErrorsInfo object indicating the success or failure of beginning the transaction.</returns>
         public virtual IErrorsInfo BeginTransaction(PassedArgs args)
         {
-            ErrorObject.Flag = Errors.Ok;
             try
             {
                 if (RDBMSConnection?.DbConn == null ||
                     RDBMSConnection.DbConn.State != ConnectionState.Open)
                 {
-                    DMEEditor.AddLogMessage("Beep",
-                        "Error in Begin Transaction: the connection is not open",
-                        DateTime.Now, 0, DatasourceName, Errors.Failed);
-                    return DMEEditor.ErrorObject;
+                    SetFailure("Error in Begin Transaction: the connection is not open");
+                    return ErrorObject;
                 }
 
                 // Reuse an already-open transaction rather than shadowing it.
                 // Most providers throw on a second concurrent local transaction,
                 // and shadowing would orphan the first one exactly as before.
                 if (ActiveTransaction != null)
-                    return DMEEditor.ErrorObject;
+                {
+                    SetSuccess("A transaction is already open on this datasource; reusing it.");
+                    return ErrorObject;
+                }
 
                 _activeTransaction = RDBMSConnection.DbConn.BeginTransaction();
+                SetSuccess();
             }
             catch (Exception ex)
             {
-                _activeTransaction = null;
-                DMEEditor.AddLogMessage("Beep", $"Error in Begin Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                DisposeActiveTransaction();
+                HandleDatabaseError(ex, DatasourceName, "begin a transaction on");
             }
-            return DMEEditor.ErrorObject;
+            return ErrorObject;
         }
 
         /// <summary>
@@ -95,20 +96,29 @@ namespace TheTechIdea.Beep.DataBase
         /// </remarks>
         public virtual IErrorsInfo EndTransaction(PassedArgs args)
         {
-            ErrorObject.Flag = Errors.Ok;
             try
             {
-                ActiveTransaction?.Rollback();
+                var tx = ActiveTransaction;
+                if (tx == null)
+                {
+                    // Was a silent no-op returning whatever flag the previous operation left.
+                    SetSuccess("EndTransaction: there was no open transaction to roll back.");
+                }
+                else
+                {
+                    tx.Rollback();
+                    SetSuccess();
+                }
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Beep", $"Error in end Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                HandleDatabaseError(ex, DatasourceName, "roll back the transaction on");
             }
             finally
             {
                 DisposeActiveTransaction();
             }
-            return DMEEditor.ErrorObject;
+            return ErrorObject;
         }
 
         /// <summary>
@@ -116,20 +126,32 @@ namespace TheTechIdea.Beep.DataBase
         /// </summary>
         public virtual IErrorsInfo Commit(PassedArgs args)
         {
-            ErrorObject.Flag = Errors.Ok;
             try
             {
-                ActiveTransaction?.Commit();
+                var tx = ActiveTransaction;
+                if (tx == null)
+                {
+                    // Was a silent no-op. UnitofWork branches on this return value, and the method
+                    // used to hand back DMEEditor.ErrorObject without ever setting it to Ok — so a
+                    // successful commit reported whatever flag an earlier, unrelated operation had
+                    // left, and a commit with no transaction reported nothing at all.
+                    SetSuccess("Commit: there was no open transaction to commit.");
+                }
+                else
+                {
+                    tx.Commit();
+                    SetSuccess();
+                }
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Beep", $"Error in Commit Transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                HandleDatabaseError(ex, DatasourceName, "commit the transaction on");
             }
             finally
             {
                 DisposeActiveTransaction();
             }
-            return DMEEditor.ErrorObject;
+            return ErrorObject;
         }
 
         /// <summary>
@@ -144,7 +166,11 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Beep", $"Error disposing transaction {ex.Message} ", DateTime.Now, 0, null, Errors.Failed);
+                // Logged, deliberately WITHOUT touching ErrorObject. This runs in the `finally` of
+                // Commit, so flagging a failure here turned a transaction that had already been
+                // committed into a reported failure — and the caller would then typically retry or
+                // roll back work the server had already durably accepted.
+                Logger?.WriteLog($"Error disposing the transaction on {DatasourceName}: {ex.Message}");
             }
             finally
             {

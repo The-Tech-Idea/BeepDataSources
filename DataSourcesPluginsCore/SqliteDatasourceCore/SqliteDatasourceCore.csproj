@@ -14,7 +14,7 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Title>TheTechIdea.Beep.SqliteDatasourceCore</Title>
 		<PackageId>TheTechIdea.Beep.SqliteDatasourceCore</PackageId>
-		<Version>1.0.58</Version>
+		<Version>1.0.59</Version>
 
 	</PropertyGroup>
 

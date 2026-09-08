@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -58,29 +58,10 @@ namespace TheTechIdea.Beep.DataBase
             return DMEEditor.ErrorObject.Message;
         }
 
-        /// <summary>
-        /// SQL Server 2012+ OFFSET/FETCH pagination helper. Adds ORDER BY (SELECT NULL) if the
-        /// original query lacks one (required for OFFSET). Pages are 1-based.
-        /// </summary>
-        private string PagedQuery(string originalquery, List<AppFilter> Filter)
-        {
-            if (Filter == null) return originalquery;
-
-            AppFilter pagesizefilter = Filter.FirstOrDefault(o => o.FieldName.Equals("Pagesize", StringComparison.OrdinalIgnoreCase));
-            AppFilter pagenumberfilter = Filter.FirstOrDefault(o => o.FieldName.Equals("pagenumber", StringComparison.OrdinalIgnoreCase));
-
-            if (pagesizefilter == null || pagenumberfilter == null) return originalquery;
-
-            if (!int.TryParse(pagesizefilter.FilterValue, out int pagesize) ||
-                !int.TryParse(pagenumberfilter.FilterValue, out int pagenumber) ||
-                pagesize <= 0 || pagenumber <= 0)
-            {
-                return originalquery;
-            }
-
-            string orderByClause = originalquery.ToUpper().Contains("ORDER BY") ? "" : " ORDER BY (SELECT NULL)";
-            int offset = (pagenumber - 1) * pagesize;
-            return $"{originalquery}{orderByClause} OFFSET {offset} ROWS FETCH NEXT {pagesize} ROWS ONLY";
-        }
+        // PagedQuery (SQL Server OFFSET/FETCH, driven by "Pagesize"/"pagenumber" filter entries) was
+        // declared here with no caller anywhere in this class -- dead code. Paging for every RDBMS
+        // driver, including SQL Server, now runs through the single dialect source RDBSource
+        // delegates to (RDBMSHelper.GetPagingSyntax); duplicating that logic here risked exactly the
+        // K11 defect this project fixed (two paging implementations disagreeing).
     }
 }

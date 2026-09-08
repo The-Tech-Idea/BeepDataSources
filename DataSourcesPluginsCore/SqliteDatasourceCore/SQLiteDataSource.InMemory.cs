@@ -14,7 +14,7 @@ namespace TheTechIdea.Beep.DataBase
 
         private const string InMemoryConnectionString = @"Data Source=:memory:;Version=3;New=True;";
 
-        public IErrorsInfo OpenDatabaseInMemory(string databasename)
+        public override IErrorsInfo OpenDatabaseInMemory(string databasename)
         {
             try
             {
@@ -60,7 +60,7 @@ namespace TheTechIdea.Beep.DataBase
             return DMEEditor.ErrorObject;
         }
 
-        public string GetConnectionString()
+        public override string GetConnectionString()
         {
             return Dataconnection.ConnectionProp.ConnectionString;
         }
@@ -99,7 +99,7 @@ namespace TheTechIdea.Beep.DataBase
             }
         }
 
-        public virtual IErrorsInfo LoadData(IProgress<PassedArgs> progress, CancellationToken token)
+        public override IErrorsInfo LoadData(IProgress<PassedArgs> progress, CancellationToken token)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
@@ -123,7 +123,7 @@ namespace TheTechIdea.Beep.DataBase
             return DMEEditor.ErrorObject;
         }
 
-        public virtual IErrorsInfo SyncData(IProgress<PassedArgs> progress, CancellationToken token)
+        public override IErrorsInfo SyncData(IProgress<PassedArgs> progress, CancellationToken token)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
@@ -156,7 +156,7 @@ namespace TheTechIdea.Beep.DataBase
             return DMEEditor.ErrorObject;
         }
 
-        public IErrorsInfo SyncData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
+        public new IErrorsInfo SyncData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
@@ -197,7 +197,7 @@ namespace TheTechIdea.Beep.DataBase
             return DMEEditor.ErrorObject;
         }
 
-        public IErrorsInfo RefreshData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
+        public new IErrorsInfo RefreshData(string entityname, IProgress<PassedArgs> progress, CancellationToken token)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             try
@@ -247,7 +247,7 @@ namespace TheTechIdea.Beep.DataBase
             return DMEEditor.ErrorObject;
         }
 
-        public IErrorsInfo RefreshData(IProgress<PassedArgs> progress, CancellationToken token)
+        public new IErrorsInfo RefreshData(IProgress<PassedArgs> progress, CancellationToken token)
         {
             DMEEditor.ErrorObject.Flag = Errors.Ok;
             bool isdeleted = false;

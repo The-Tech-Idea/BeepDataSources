@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Collections.Generic;
 using System.Linq;
@@ -216,7 +216,7 @@ namespace TheTechIdea.Beep.DataBase
                         }
                         catch (Exception ex)
                         {
-                            DMEEditor.AddLogMessage(
+                            DMEEditor?.AddLogMessage(
                               "Fail",
                               $"Error creating Field metadata for {entname}.{x.FieldName}: {ex.Message}",
                               DateTime.Now, 0, entname, Errors.Failed
@@ -234,7 +234,14 @@ namespace TheTechIdea.Beep.DataBase
                         if ((fnd.Relations.Count == 0) || refresh)
                         {
                             fnd.Relations = new List<RelationShipKeys>();
-                            fnd.Relations = (List<RelationShipKeys>)GetEntityforeignkeys(entname, Dataconnection.ConnectionProp.SchemaName);
+                            // ToList(), not a cast. GetEntityforeignkeys is declared
+                            // IEnumerable<RelationShipKeys> and is public virtual, so any driver
+                            // that overrides it to return a LINQ projection, an array or an iterator
+                            // hit an InvalidCastException here at runtime — with no compile-time
+                            // warning that its override had to return a List. This was the most
+                            // dangerous override point in the class.
+                            fnd.Relations = GetEntityforeignkeys(entname, Dataconnection.ConnectionProp.SchemaName)?.ToList()
+                                            ?? new List<RelationShipKeys>();
                         }
                     }
 
@@ -352,7 +359,16 @@ namespace TheTechIdea.Beep.DataBase
             // the call above and the read below made this method return the wrong
             // type. The returned instance is local and cannot be raced.
             // (2026-08-03)
-            var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, DatasourceName, DatasourceName, EntityName, x.Fields)?.GetType();
+            // Namespace the generated type "Beep." + DatasourceName, matching every other connector
+            // in this repository and the rule recorded in CLAUDE.md.
+            //
+            // This passed a bare DatasourceName, so RDBMS entity types landed in a different
+            // namespace root from all the other drivers. More importantly, DMTypeBuilder falls back
+            // to the shared literal "TheTechIdea.Classes" when the namespace it is given is empty —
+            // and nothing validates `datasourcename` in the constructor. Two connections with a
+            // same-named entity would then have shared one generated type, which is exactly the
+            // collision commit ea222c4b fixed everywhere else.
+            var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, x.Fields)?.GetType();
             enttype = beepEntityType;
             return beepEntityType;
         }
@@ -388,6 +404,16 @@ namespace TheTechIdea.Beep.DataBase
                 string sql = GetListofEntitiesSql;
                 if (String.IsNullOrEmpty(sql))
                 {
+                    // The engine's query catalogue is the only source of this statement when a driver
+                    // has not supplied GetListofEntitiesSql. Say which service is missing, rather
+                    // than letting the NullReferenceException fall into the catch below and be
+                    // reported as "Object reference not set" while listing tables.
+                    if (DMEEditor?.ConfigEditor == null)
+                    {
+                        SetFailure($"Cannot list the tables in {DatasourceName}: no ConfigEditor is available to supply the query, and this driver sets no GetListofEntitiesSql.");
+                        return EntitiesNames;
+                    }
+
                     sql = DMEEditor.ConfigEditor.GetSql(Sqlcommandtype.getlistoftables, null, Dataconnection.ConnectionProp.SchemaName, null, DMEEditor.ConfigEditor.QueryList, DatasourceType);
                 }
 
@@ -398,7 +424,7 @@ namespace TheTechIdea.Beep.DataBase
                 // succeeded. Logging it as a failure sets ErrorObject.Flag, and every caller that
                 // checks the flag afterwards — MigrationManager.CheckEntityExist among them — reads a
                 // failure that never happened, in Debug builds only.
-                DMEEditor.AddLogMessage("Beep", $"Get Tables List Query {sql}", DateTime.Now, 0, DatasourceName, Errors.Ok);
+                DMEEditor?.AddLogMessage("Beep", $"Get Tables List Query {sql}", DateTime.Now, 0, DatasourceName, Errors.Ok);
                 Debug.WriteLine($" -- Get Tables List Query {sql}");
 #endif
 
@@ -407,14 +433,21 @@ namespace TheTechIdea.Beep.DataBase
                 int i = 0;
                 foreach (DataRow row in tb.Rows)
                 {
-                    EntitiesNames.Add(row.Field<string>("TABLE_NAME").ToUpper());
+                    // Keep the name exactly as the catalog reports it. The .ToUpper() that used to
+                    // be here corrupts case-sensitive identifiers on PostgreSQL, Snowflake and any
+                    // quoted-identifier setup.
+                    EntitiesNames.Add(row.Field<string>("TABLE_NAME"));
 
                     i += 1;
                 }
                 List<string> EntitiesnotinEntitiesNames = new List<string>();
                 if (Entities.Count > 0)
                 {
-                    EntitiesnotinEntitiesNames = Entities.Where(p => !EntitiesNames.Contains(p.EntityName)).Select(p => p.EntityName).ToList();
+                    // Case-insensitive. With the ordinal comparison this used to do — against a list
+                    // that had just been uppercased — any cached entity whose name was not already
+                    // uppercase was judged missing and demoted from a physical table to
+                    // EntityType.InMemory below.
+                    EntitiesnotinEntitiesNames = Entities.Where(p => !EntitiesNames.Contains(p.EntityName, StringComparer.OrdinalIgnoreCase)).Select(p => p.EntityName).ToList();
                     foreach (string item in EntitiesnotinEntitiesNames)
                     {
                         int idx = Entities.FindIndex(p => p.EntityName == item);
@@ -433,9 +466,9 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-
-                DMEEditor.AddLogMessage("Fail", $"Error in getting  Table List ({ex.Message})", DateTime.Now, 0, DatasourceName, Errors.Failed);
-
+                // EntitiesNames keeps its previous contents and is returned regardless, so without
+                // the flag a caller cannot tell a refreshed list from a stale one.
+                HandleDatabaseError(ex, DatasourceName, "get the table list for");
             }
             tb = null;
             adp = null;
@@ -512,7 +545,7 @@ namespace TheTechIdea.Beep.DataBase
             // Validate entity name for security and naming conventions
             if (string.IsNullOrWhiteSpace(EntityName))
             {
-                DMEEditor.AddLogMessage("Fail", "Entity name cannot be null or empty", 
+                DMEEditor?.AddLogMessage("Fail", "Entity name cannot be null or empty", 
                     DateTime.Now, 0, null, Errors.Failed);
                 return false;
             }
@@ -520,7 +553,7 @@ namespace TheTechIdea.Beep.DataBase
             // Check for SQL injection attempts and invalid characters
             if (!DatabaseEntityNamingValidator.IsValidIdentifier(EntityName))
             {
-                DMEEditor.AddLogMessage("Fail", $"Invalid entity name '{EntityName}' - contains invalid characters", 
+                DMEEditor?.AddLogMessage("Fail", $"Invalid entity name '{EntityName}' - contains invalid characters", 
                     DateTime.Now, 0, EntityName, Errors.Failed);
                 return false;
             }
@@ -528,7 +561,7 @@ namespace TheTechIdea.Beep.DataBase
             // Check for reserved keywords
             if (DatabaseEntityReservedKeywordChecker.IsReservedKeyword(EntityName, DatasourceType))
             {
-                DMEEditor.AddLogMessage("Fail", $"Entity name '{EntityName}' is a reserved keyword in {DatasourceType}", 
+                DMEEditor?.AddLogMessage("Fail", $"Entity name '{EntityName}' is a reserved keyword in {DatasourceType}", 
                     DateTime.Now, 0, EntityName, Errors.Failed);
                 // Return false to prevent using reserved keywords without escaping
                 return false;
@@ -594,7 +627,7 @@ namespace TheTechIdea.Beep.DataBase
             // Comprehensive entity validation
             if (entity == null)
             {
-                DMEEditor.AddLogMessage("Fail", "Entity structure cannot be null", 
+                DMEEditor?.AddLogMessage("Fail", "Entity structure cannot be null", 
                     DateTime.Now, 0, null, Errors.Failed);
                 return false;
             }
@@ -610,10 +643,11 @@ namespace TheTechIdea.Beep.DataBase
             
             if (!isValid)
             {
-                string errorMessage = $"Entity validation failed for '{entity.EntityName}': {string.Join("; ", validationErrors)}";
-                DMEEditor.AddLogMessage("Fail", errorMessage, DateTime.Now, 0, entity.EntityName, Errors.Failed);
-                DMEEditor.ErrorObject.Message = errorMessage;
-                DMEEditor.ErrorObject.Flag = Errors.Failed;
+                // One call that sets this datasource's ErrorObject, the engine's, and logs -- all
+                // null-guarded. Written longhand, the two DMEEditor.ErrorObject writes threw
+                // NullReferenceException with no editor attached.
+                SetFailure($"Entity validation failed for '{entity.EntityName}': {string.Join("; ", validationErrors)}",
+                           entity.EntityName);
                 return false;
             }
 
@@ -625,15 +659,17 @@ namespace TheTechIdea.Beep.DataBase
                 // Guard against null/empty SQL - GenerateCreateEntityScript may have failed silently
                 if (string.IsNullOrWhiteSpace(createstring))
                 {
-                    string errorMsg = $"Failed to generate CREATE TABLE script for '{entity.EntityName}'. Check log for details.";
-                    DMEEditor.AddLogMessage("Fail", errorMsg, DateTime.Now, 0, entity.EntityName, Errors.Failed);
-                    DMEEditor.ErrorObject.Flag = Errors.Failed;
-                    DMEEditor.ErrorObject.Message = errorMsg;
+                    SetFailure($"Failed to generate CREATE TABLE script for '{entity.EntityName}'. Check log for details.",
+                               entity.EntityName);
                     return false;
                 }
                 
-                DMEEditor.ErrorObject = ExecuteSql(createstring);
-                if (DMEEditor.ErrorObject.Flag == Errors.Failed)
+                // Read the result; do not assign it to DMEEditor.ErrorObject. ExecuteSql returns
+                // THIS datasource's ErrorObject, so the assignment permanently aliased engine-wide
+                // state to one datasource's field -- the same defect as K38, and this was its fourth
+                // site. It also NRE'd outright when no editor was attached.
+                var createResult = ExecuteSql(createstring);
+                if (createResult == null || createResult.Flag == Errors.Failed)
                 {
                     retval = false;
                 }
@@ -642,14 +678,18 @@ namespace TheTechIdea.Beep.DataBase
                     Entities.Add(entity);
                     EntitiesNames.Add(entity.EntityName);
                     retval = true;
-                    DMEEditor.AddLogMessage("Success", $"Entity '{entity.EntityName}' created successfully", 
+                    SetSuccess($"Entity '{entity.EntityName}' created successfully");
+                    DMEEditor?.AddLogMessage("Success", $"Entity '{entity.EntityName}' created successfully", 
                         DateTime.Now, 0, entity.EntityName, Errors.Ok);
                 }
             }
             else
             {
-                DMEEditor.AddLogMessage("Fail", $"Entity '{entity.EntityName}' already exists", 
-                    DateTime.Now, 0, entity.EntityName, Errors.Failed);
+                // Reported deterministically rather than through AddLogMessage alone, which does
+                // nothing to the flag when no logger is attached. Note this is why CreateEntityAs
+                // returns false for an entity that already exists -- callers treating "false" as
+                // "not present" must check CheckEntityExist themselves.
+                SetFailure($"Entity '{entity.EntityName}' already exists", entity.EntityName);
             }
 
             return retval;
@@ -691,7 +731,11 @@ namespace TheTechIdea.Beep.DataBase
                             }
                             catch (Exception ex)
                             {
-                                ErrorObject.Flag = Errors.Failed;
+                                // A plain property read that should not throw. It previously set
+                                // Failed and stashed the exception with no message and no log, so
+                                // the method still returned a populated list while the flag said
+                                // failure and nothing said why.
+                                SetFailure($"Could not read the constraint name for a foreign key on {entityname}: {ex.Message}", entityname);
                                 ErrorObject.Ex = ex;
                             }
                             fk.Add(rfk);
@@ -701,7 +745,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Could not get forgien key  for {entityname} ({ex.Message})", DateTime.Now, 0, entityname, Errors.Failed);
+                HandleDatabaseError(ex, entityname, "get foreign keys for");
             }
             return fk;
         }
@@ -720,6 +764,12 @@ namespace TheTechIdea.Beep.DataBase
             ErrorObject.Flag = Errors.Ok;
             try
             {
+                if (DMEEditor?.ConfigEditor == null)
+                {
+                    SetFailure($"Cannot read the child tables of {tablename}: no ConfigEditor is available to supply the query.", tablename);
+                    return null;
+                }
+
                 string sql = DMEEditor.ConfigEditor.GetSql(Sqlcommandtype.getChildTable, tablename, SchemaName, Filterparamters, DMEEditor.ConfigEditor.QueryList, DatasourceType);
                 if (!string.IsNullOrEmpty(sql) && !string.IsNullOrWhiteSpace(sql))
                 {
@@ -730,7 +780,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Fail", $"Error in getting  child entities for {tablename} ({ex.Message})", DateTime.Now, 0, tablename, Errors.Failed);
+                HandleDatabaseError(ex, tablename, "get child entities for");
                 return null;
             }
         }
@@ -744,12 +794,19 @@ namespace TheTechIdea.Beep.DataBase
         /// </remarks>
         public virtual IErrorsInfo RunScript(ETLScriptDet scripts)
         {
-            var t = Task.Run<IErrorsInfo>(() => { return ExecuteSql(scripts.Ddl); });
-            t.Wait();
-            DMEEditor.ErrorObject = t.Result;
-            scripts.ErrorMessage = DMEEditor.ErrorObject.Message;
+            // Was Task.Run(() => ExecuteSql(...)) followed by .Wait(): the caller blocked regardless,
+            // so the offload bought nothing, and .Wait() rewrapped any failure in an
+            // AggregateException on its way out of a method whose whole job is to report what
+            // happened.
+            var result = ExecuteSql(scripts?.Ddl);
 
-            return DMEEditor.ErrorObject;
+            if (scripts != null)
+                scripts.ErrorMessage = result?.Message;
+
+            // Read the result; do not re-point DMEEditor.ErrorObject at it. ExecuteSql returns THIS
+            // datasource's ErrorObject, so the old assignment aliased engine-wide state to one
+            // datasource's field -- the same defect as K38 in InMemoryRDBSource, in the base class.
+            return result;
         }
         /// <summary>
         /// Generates SQL scripts for creating entities based on their structure.
@@ -795,7 +852,10 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Beep", $"Error Fetching Schema for {TableName} -{ex.Message}", DateTime.Now, 0, TableName, Errors.Failed);
+                // Returns an empty DataTable on failure, which GetEntityStructure then turns into a
+                // field-less, key-less EntityStructure — indistinguishable from a real table with no
+                // columns unless the flag says otherwise.
+                HandleDatabaseError(ex, TableName, "fetch the schema for");
             }
 
             return tb;
@@ -806,6 +866,12 @@ namespace TheTechIdea.Beep.DataBase
             DataSet ds = new DataSet();
             try
             {
+                if (DMEEditor?.ConfigEditor == null)
+                {
+                    SetFailure($"Cannot read the foreign-key columns of {tablename}: no ConfigEditor is available to supply the query.", tablename);
+                    return null;
+                }
+
                 string sql = DMEEditor.ConfigEditor.GetSql(Sqlcommandtype.getFKforTable, tablename, SchemaName, Filterparamters, DMEEditor.ConfigEditor.QueryList, DatasourceType);
                 if (!string.IsNullOrEmpty(sql) && !string.IsNullOrWhiteSpace(sql))
                 {
@@ -816,7 +882,7 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
-                DMEEditor.AddLogMessage("Beep", $"Unsuccessfully Retrieve Child tables list {ex.Message}", DateTime.Now, -1, ex.Message, Errors.Failed);
+                HandleDatabaseError(ex, tablename, "retrieve the foreign-key column list for");
                 return null;
             }
         }
@@ -887,23 +953,33 @@ namespace TheTechIdea.Beep.DataBase
 
 
             IDbCommand command = GetDataCommand();
+
+            // GetDataCommand returns null on a closed connection; this used to dereference it.
+            if (command == null)
+                return precision;
+
             try
             {
                 command.CommandText = query;
-                IDataReader reader = command.ExecuteReader();
-                if (reader.Read())
+                using (IDataReader reader = command.ExecuteReader())
                 {
-                    // Assuming the precision is not null, adjust as needed if it could be
-                    precision = reader.GetInt32(0);
+                    if (reader.Read())
+                    {
+                        // Assuming the precision is not null, adjust as needed if it could be
+                        precision = reader.GetInt32(0);
+                    }
                 }
-                reader.Close();
             }
             catch (Exception ex)
             {
-                // Handle exceptions
-                Console.WriteLine(ex.Message);
+                // Was Console.WriteLine — the only place in this class that reported anywhere but
+                // the engine's log, so an Oracle precision lookup failed invisibly.
+                HandleDatabaseError(ex, tableName, "read column precision for", query);
             }
-
+            finally
+            {
+                command.Dispose();
+            }
 
             return precision;
         }

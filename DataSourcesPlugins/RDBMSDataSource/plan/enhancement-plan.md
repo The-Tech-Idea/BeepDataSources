@@ -1,5 +1,21 @@
 # RDBMSDataSource Enhancement Plan
 
+> ## ⚠️ Superseded — do not use the defect lists or status tables below
+>
+> This document dates from 2026-07-01 and its **"Bugs & Issues Identified"** and
+> **"Implementation Roadmap"** sections no longer match the code. Several entries marked open have
+> since been fixed (`UpdateEntities` calling `InsertEntity`; the `Commit`/`EndTransaction` stubs, in
+> commit `c3901629`; the `MemoryCache` key-enumeration gap), while several marked "✅ Done" were not
+> completed. It also predates a full line-by-line audit of all sixteen partial classes, which found
+> considerably more than is listed here.
+>
+> **The authoritative defect register is [`../docs/10-known-issues.md`](../docs/10-known-issues.md)**,
+> where each entry carries a reproducing scenario and a fix direction. The per-file developer
+> reference is [`../docs/README.md`](../docs/README.md).
+>
+> The architectural discussion and the longer-term direction in this file remain useful background —
+> read them as history, not as current state.
+
 **Date:** 2026-07-01
 **Repository:** BeepDataSources
 **Package:** `TheTechIdea.Beep.RDBDataSource` v2.0.21

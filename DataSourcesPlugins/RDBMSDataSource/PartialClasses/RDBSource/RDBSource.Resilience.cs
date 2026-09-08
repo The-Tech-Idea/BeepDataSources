@@ -162,9 +162,20 @@ namespace TheTechIdea.Beep.DataBase
                 if (!EnableResilience)
                     return ResiliencePipeline.Empty;
 
+                // Retry OUTER, circuit breaker INNER.
+                //
+                // Polly executes strategies in registration order, so the previous order — breaker
+                // first — put the breaker outside the retry: one Execute performed up to four
+                // attempts but registered as a SINGLE outcome to the breaker. With
+                // MinimumThroughput at 5 over a 30-second sampling window, the breaker needed five
+                // separate top-level calls before it would even evaluate the failure ratio, so in
+                // practice it never opened.
+                //
+                // This way round, each individual attempt is seen by the breaker, and once it opens
+                // the retry stops hammering a server that is already known to be failing.
                 return new ResiliencePipelineBuilder()
-                    .AddPipeline(CircuitBreakerPipeline)
                     .AddPipeline(RetryPipeline)
+                    .AddPipeline(CircuitBreakerPipeline)
                     .Build();
             }
         }
@@ -178,55 +189,57 @@ namespace TheTechIdea.Beep.DataBase
         /// </summary>
         /// <param name="ex">The exception to check.</param>
         /// <returns>True if the exception is transient, false otherwise.</returns>
+        /// <remarks>
+        /// Deliberately does NOT treat every provider exception as transient.
+        ///
+        /// This used to end with an unconditional <c>return true</c> for any exception whose type
+        /// name contained "sqlexception" or "dbexception" — which is most provider exceptions — so
+        /// primary-key violations, syntax errors, "invalid object name" and permission-denied were
+        /// all classified transient and retried three times with 1/2/4-second delays. The error-code
+        /// table alongside it never changed the outcome and could not have: it reads
+        /// <c>DbException.ErrorCode</c>, which is <c>Exception.HResult</c>, while 4060, 40197,
+        /// 40501, 40613 and 49918-49920 are SQL Server *error numbers* exposed as
+        /// <c>SqlException.Number</c>. Those two are never equal.
+        ///
+        /// Anything unrecognised is now treated as permanent. Retrying a deterministic failure only
+        /// delays it, and retrying a non-idempotent write duplicates work.
+        ///
+        /// Note the message tests are inherently locale-dependent — a server returning localised
+        /// messages will not match them. The exception-type test is the reliable half.
+        /// </remarks>
         private bool IsTransientException(Exception ex)
         {
-            if (ex == null)
-                return false;
+            // Walk the inner-exception chain iteratively. The previous version recursed into
+            // InnerException with no depth bound and no cycle guard.
+            const int MaxDepth = 8;
 
-            // Check exception message for common transient error patterns
-            string message = ex.Message?.ToLowerInvariant() ?? string.Empty;
-
-            // Network-related errors
-            if (message.Contains("timeout") || 
-                message.Contains("timed out") ||
-                message.Contains("network") ||
-                message.Contains("connection was lost") ||
-                message.Contains("transport-level error") ||
-                message.Contains("connection reset"))
-                return true;
-
-            // Database-specific transient errors
-            if (message.Contains("deadlock") ||
-                message.Contains("lock timeout") ||
-                message.Contains("too many connections") ||
-                message.Contains("max_connections") ||
-                message.Contains("tempdb is full") ||
-                message.Contains("log file is full"))
-                return true;
-
-            // Check for specific exception types
-            var exceptionType = ex.GetType().Name.ToLowerInvariant();
-            if (exceptionType.Contains("timeout") ||
-                exceptionType.Contains("sqlexception") ||
-                exceptionType.Contains("dbexception"))
+            for (int depth = 0; ex != null && depth < MaxDepth; ex = ex.InnerException, depth++)
             {
-                // For SQL-specific exceptions, check error codes if available
-                if (ex is System.Data.Common.DbException dbEx)
-                {
-                    // Common transient SQL Server error codes
-                    // -2: Timeout, 4060: Cannot open database, 40197: Service error, etc.
-                    var errorCode = dbEx.ErrorCode;
-                    if (errorCode == -2 || errorCode == 4060 || errorCode == 40197 || 
-                        errorCode == 40501 || errorCode == 40613 || errorCode == 49918 ||
-                        errorCode == 49919 || errorCode == 49920)
-                        return true;
-                }
-                return true;
-            }
+                string message = ex.Message?.ToLowerInvariant() ?? string.Empty;
 
-            // Check inner exceptions
-            if (ex.InnerException != null)
-                return IsTransientException(ex.InnerException);
+                // Network-related errors
+                if (message.Contains("timeout") ||
+                    message.Contains("timed out") ||
+                    message.Contains("network") ||
+                    message.Contains("connection was lost") ||
+                    message.Contains("transport-level error") ||
+                    message.Contains("connection reset"))
+                    return true;
+
+                // Database-specific transient errors
+                if (message.Contains("deadlock") ||
+                    message.Contains("lock timeout") ||
+                    message.Contains("too many connections") ||
+                    message.Contains("max_connections") ||
+                    message.Contains("tempdb is full") ||
+                    message.Contains("log file is full"))
+                    return true;
+
+                // A timeout exception TYPE is transient whatever the message wording, which matters
+                // given the message tests above are locale-dependent.
+                if (ex.GetType().Name.ToLowerInvariant().Contains("timeout"))
+                    return true;
+            }
 
             return false;
         }
@@ -270,15 +283,17 @@ namespace TheTechIdea.Beep.DataBase
         public virtual async Task<ConnectionState> OpenConnectionResilientAsync(CancellationToken cancellationToken = default)
         {
             if (!EnableResilience)
-                return Openconnection();
+                return await OpenconnectionAsync(cancellationToken).ConfigureAwait(false);
 
             try
             {
+                // Was Task.Run(() => Openconnection(), ct): a pool thread parked on a blocking open,
+                // which the token could not interrupt once it had started. OpenconnectionAsync goes
+                // through DbConnection.OpenAsync where the provider supports it.
                 return await ResilientPipeline.ExecuteAsync(async ct =>
                 {
-                    // Since Openconnection is synchronous, wrap in Task.Run
-                    return await Task.Run(() => Openconnection(), ct);
-                }, cancellationToken);
+                    return await OpenconnectionAsync(ct).ConfigureAwait(false);
+                }, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -358,23 +373,25 @@ namespace TheTechIdea.Beep.DataBase
 
                         if (cmd is System.Data.Common.DbCommand dbCommand)
                         {
-                            var result = await dbCommand.ExecuteScalarAsync(cancellationToken);
+                            var result = await dbCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
                             return result != null;
                         }
                         else
                         {
-                            // Fallback to synchronous for IDbCommand
+                            // Fallback for providers whose command is not a DbCommand and so has
+                            // no async execute. Task.Run is the honest offload here -- there is no
+                            // awaitable operation to reach for.
                             return await Task.Run(() =>
                             {
                                 var result = cmd.ExecuteScalar();
                                 return result != null;
-                            }, cancellationToken);
+                            }, cancellationToken).ConfigureAwait(false);
                         }
                     }
                 }
                 else if (Dataconnection.ConnectionStatus == ConnectionState.Closed)
                 {
-                    var state = await OpenConnectionResilientAsync(cancellationToken);
+                    var state = await OpenConnectionResilientAsync(cancellationToken).ConfigureAwait(false);
                     return state == ConnectionState.Open;
                 }
                 
@@ -398,11 +415,21 @@ namespace TheTechIdea.Beep.DataBase
             return DatasourceType switch
             {
                 DataSourceType.SqlServer => "SELECT 1",
+                DataSourceType.AzureSQL => "SELECT 1",
+                DataSourceType.SqlCompact => "SELECT 1",
                 DataSourceType.Mysql => "SELECT 1",
+                DataSourceType.MariaDB => "SELECT 1",
                 DataSourceType.Postgre => "SELECT 1",
-                DataSourceType.Oracle => "SELECT 1 FROM DUAL",
                 DataSourceType.SqlLite => "SELECT 1",
+
+                // Engines that require a FROM. Firebird and Hana previously fell through to the bare
+                // "SELECT 1" default, which is a syntax error on both — so the health check reported
+                // an otherwise-healthy connection as unhealthy. Both ship as drivers here.
+                DataSourceType.Oracle => "SELECT 1 FROM DUAL",
                 DataSourceType.DB2 => "SELECT 1 FROM SYSIBM.SYSDUMMY1",
+                DataSourceType.FireBird => "SELECT 1 FROM RDB$DATABASE",
+                DataSourceType.Hana => "SELECT 1 FROM DUMMY",
+
                 _ => "SELECT 1"
             };
         }
