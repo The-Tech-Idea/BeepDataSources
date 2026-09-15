@@ -165,6 +165,7 @@ namespace TheTechIdea.Beep.DataBase
                         {
                             x.FieldName = SafeField<string>(r, "ColumnName");
                             x.Fieldtype = SafeField<Type>(r, "DataType")?.ToString() ?? "System.String";
+                            x.ColumnTypeName = SafeField<string>(r, "DataTypeName", null);
 
                             // Oracle FLOAT → .NET mapping
                             if (DatasourceType == DataSourceType.Oracle
@@ -825,8 +826,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             ErrorObject.Flag = Errors.Ok;
             DataTable tb = new DataTable();
-            IDataReader reader;
-            IDbCommand cmd = GetDataCommand();
+            using IDbCommand cmd = GetDataCommand();
             //  EntityStructure entityStructure = GetEntityStructure(TableName, false);
             try
             {
@@ -844,11 +844,19 @@ namespace TheTechIdea.Beep.DataBase
                     cmdtxt = TableName;
                 }
                 cmd.CommandText = cmdtxt;
-                reader = cmd.ExecuteReader(CommandBehavior.KeyInfo);
+                using var reader = cmd.ExecuteReader(CommandBehavior.KeyInfo);
 
                 tb = reader.GetSchemaTable();
-                reader.Close();
-                cmd.Dispose();
+                if (tb != null && !tb.Columns.Contains("DataTypeName"))
+                {
+                    tb.Columns.Add("DataTypeName", typeof(string));
+                    foreach (DataRow row in tb.Rows)
+                    {
+                        var ordinal = Convert.ToInt32(row["ColumnOrdinal"]);
+                        if (ordinal >= 0 && ordinal < reader.FieldCount)
+                            row["DataTypeName"] = reader.GetDataTypeName(ordinal);
+                    }
+                }
             }
             catch (Exception ex)
             {
