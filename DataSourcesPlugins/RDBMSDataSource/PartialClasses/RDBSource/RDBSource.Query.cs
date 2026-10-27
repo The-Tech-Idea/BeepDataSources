@@ -296,25 +296,29 @@ namespace TheTechIdea.Beep.DataBase
                 }
             }
 
-            // Allow custom query from metadata
-            try
+            // Resolve metadata/type before opening the reader. Public metadata refresh shares
+            // this gate; neither a read nor a metadata lookup may overwrite cached DML type state.
+            Type entityType = null;
+            PropertyInfo[] entityProperties = null;
+            AppFilterQueryDefinition streamQueryDefinition;
+            lock (_entityMetadataGate)
             {
-                var ent = GetEntityStructure(inname);
-                if (ent != null && !string.IsNullOrEmpty(ent.CustomBuildQuery))
+                try
                 {
-                    qrystr = ent.CustomBuildQuery;
+                    var ent = GetEntityStructure(inname);
+                    if (ent != null && !string.IsNullOrEmpty(ent.CustomBuildQuery)) qrystr = ent.CustomBuildQuery;
+                    entityType = GetEntityType(inname);
+                    entityProperties = entityType?.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                    if (_entityReadContext.Value != null && (ent?.Fields?.Count == 0 || entityType == null))
+                        throw new InvalidOperationException("Entity read metadata/type was not acknowledged.");
                 }
+                catch (Exception ex)
+                {
+                    if (_entityReadContext.Value != null) throw;
+                    Logger?.WriteLog($"Could not resolve metadata for '{inname}' on {DatasourceName}; using the legacy dictionary fallback. {ex.Message}");
+                }
+                streamQueryDefinition = this.BuildSelectQueryDefinition(qrystr, Filter);
             }
-            catch (Exception ex)
-            {
-                // Non-fatal: a missing or unreadable structure only costs the CustomBuildQuery
-                // override, and the plain SELECT below still works. But it used to be discarded
-                // entirely, so a broken structure looked identical to an entity that simply has no
-                // custom query.
-                Logger?.WriteLog($"Could not read the structure of '{inname}' while starting a streaming read on {DatasourceName}; using the default query. {ex.Message}");
-            }
-
-            var streamQueryDefinition = this.BuildSelectQueryDefinition(qrystr, Filter);
 
             if (Dataconnection.ConnectionStatus != ConnectionState.Open)
                 Openconnection();
@@ -335,6 +339,14 @@ namespace TheTechIdea.Beep.DataBase
             }
             catch (Exception ex)
             {
+                if (_entityReadContext.Value != null)
+                {
+                    Exception failure = ex;
+                    try { reader?.Dispose(); } catch (Exception cleanup) { failure = new AggregateException(failure, cleanup); }
+                    try { cmd?.Dispose(); } catch (Exception cleanup) { failure = new AggregateException(failure, cleanup); }
+                    // The owned operation records the combined failure and publishes no partial data.
+                    throw new InvalidOperationException("Entity read preparation failed.", failure);
+                }
                 ErrorObject.Flag = Errors.Failed;
                 ErrorObject.Message = ex.Message;
                 // Include the SQL and the parameter delimiter actually used. Without them a dialect
@@ -347,25 +359,6 @@ namespace TheTechIdea.Beep.DataBase
                 if (reader != null) { try { reader.Close(); } catch { } }
                 cmd?.Dispose();
                 yield break;
-            }
-
-            // Resolve entity type for converting dictionary rows to typed objects
-            Type entityType = null;
-            PropertyInfo[] entityProperties = null;
-            try
-            {
-                entityType = GetEntityType(inname);
-                if (entityType != null)
-                {
-                    entityProperties = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-                }
-            }
-            catch (Exception ex)
-            {
-                // The fallback is real -- the loop below yields dictionaries when entityType is
-                // null -- but callers expecting typed rows got them silently swapped for
-                // dictionaries with nothing logged.
-                Logger?.WriteLog($"Could not resolve an entity type for '{inname}' on {DatasourceName}; streaming rows as dictionaries instead. {ex.Message}");
             }
 
             // One entry per column that failed conversion during this read, so the log records the
@@ -386,24 +379,37 @@ namespace TheTechIdea.Beep.DataBase
                             if (!prop.CanWrite) continue;
 
                             // Dictionary uses OrdinalIgnoreCase comparer, so TryGetValue handles case
-                            if (row.TryGetValue(prop.Name, out var value) && value != null)
+                            if (row.TryGetValue(prop.Name, out var value) && value == null &&
+                                _entityReadContext.Value != null && prop.PropertyType.IsValueType && Nullable.GetUnderlyingType(prop.PropertyType) == null)
+                                throw new InvalidOperationException($"Null column '{prop.Name}' cannot be decoded as '{prop.PropertyType.Name}' for an acknowledged entity read.");
+                            if (value != null)
                             {
                                 try
                                 {
                                     Type targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
                                     object convertedValue;
 
-                                    if (targetType == value.GetType())
+                                    if (targetType == typeof(DateTime) && DatasourceType == DataSourceType.SqlLite)
+                                    {
+                                        convertedValue = DateTime.Parse(reader.GetString(reader.GetOrdinal(prop.Name)), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind);
+                                    }
+                                    else if (targetType == value.GetType())
                                     {
                                         convertedValue = value;
                                     }
                                     else if (targetType == typeof(DateTime) && value is string dateStr)
                                     {
-                                        convertedValue = DateTime.TryParse(dateStr, out var dt) ? dt : default(DateTime);
+                                        // Preserve explicit UTC markers on SQLite so a read/update round trip keeps the observed instant.
+                                        convertedValue = DatasourceType == DataSourceType.SqlLite
+                                            ? DateTime.Parse(dateStr, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind)
+                                            : _entityReadContext.Value != null
+                                                ? DateTime.Parse(dateStr, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind)
+                                                : DateTime.TryParse(dateStr, out var dt) ? dt : default(DateTime);
                                     }
                                     else if (targetType == typeof(Guid) && value is string guidStr)
                                     {
-                                        convertedValue = Guid.TryParse(guidStr, out var g) ? g : Guid.Empty;
+                                        convertedValue = _entityReadContext.Value != null ? Guid.Parse(guidStr)
+                                            : Guid.TryParse(guidStr, out var g) ? g : Guid.Empty;
                                     }
                                     else if (targetType.IsEnum)
                                     {
@@ -418,6 +424,8 @@ namespace TheTechIdea.Beep.DataBase
                                 }
                                 catch (Exception convEx)
                                 {
+                                    if (_entityReadContext.Value != null)
+                                        throw new InvalidOperationException($"Column '{prop.Name}' could not be decoded for an acknowledged entity read.", convEx);
                                     // Report each problem column once per read, not once per row.
                                     //
                                     // This was a completely empty catch, so a column whose value
@@ -610,10 +618,15 @@ namespace TheTechIdea.Beep.DataBase
                                     Type targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
                                     object convertedValue;
 
-                                    if (targetType == value.GetType())
+                                    if (targetType == typeof(DateTime) && DatasourceType == DataSourceType.SqlLite)
+                                        convertedValue = DateTime.Parse(reader.GetString(reader.GetOrdinal(prop.Name)), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind);
+                                    else if (targetType == value.GetType())
                                         convertedValue = value;
                                     else if (targetType == typeof(DateTime) && value is string dateStr)
-                                        convertedValue = DateTime.TryParse(dateStr, out var dt) ? dt : default(DateTime);
+                                        // Preserve explicit UTC markers on SQLite so a read/update round trip keeps the observed instant.
+                                        convertedValue = DatasourceType == DataSourceType.SqlLite
+                                            ? DateTime.Parse(dateStr, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind)
+                                            : DateTime.TryParse(dateStr, out var dt) ? dt : default(DateTime);
                                     else if (targetType == typeof(Guid) && value is string guidStr)
                                         convertedValue = Guid.TryParse(guidStr, out var g) ? g : Guid.Empty;
                                     else if (targetType.IsEnum)

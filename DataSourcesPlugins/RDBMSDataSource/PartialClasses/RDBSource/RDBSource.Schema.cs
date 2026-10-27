@@ -26,7 +26,7 @@ namespace TheTechIdea.Beep.DataBase
         public virtual EntityStructure GetEntityStructure(string EntityName, bool refresh = false)
         {
             // Use thread-safe cache for entity structures
-            return EntityCache.Get(EntityName, refresh);
+            lock (_entityMetadataGate) return EntityCache.Get(EntityName, refresh);
         }
 
         /// <summary>
@@ -109,6 +109,11 @@ namespace TheTechIdea.Beep.DataBase
         }
 
         public virtual EntityStructure GetEntityStructure(EntityStructure fnd, bool refresh = false)
+        {
+            lock (_entityMetadataGate) return ReadEntityStructureCore(fnd, refresh);
+        }
+
+        private EntityStructure ReadEntityStructureCore(EntityStructure fnd, bool refresh)
         {
             DataTable tb = new DataTable();
             string entname = fnd.EntityName;
@@ -353,6 +358,11 @@ namespace TheTechIdea.Beep.DataBase
 
         public virtual Type GetEntityType(string EntityName)
         {
+            lock (_entityMetadataGate) return ReadEntityTypeCore(EntityName);
+        }
+
+        private Type ReadEntityTypeCore(string EntityName)
+        {
             EntityStructure x = GetEntityStructure(EntityName);
             // Take the type from the OBJECT this call returns, not from
             // DMTypeBuilder.MyType, a mutable static holding the LAST type
@@ -370,7 +380,6 @@ namespace TheTechIdea.Beep.DataBase
             // same-named entity would then have shared one generated type, which is exactly the
             // collision commit ea222c4b fixed everywhere else.
             var beepEntityType = DMTypeBuilder.CreateNewObject(DMEEditor, "Beep." + DatasourceName, EntityName, x.Fields)?.GetType();
-            enttype = beepEntityType;
             return beepEntityType;
         }
         /// <summary>

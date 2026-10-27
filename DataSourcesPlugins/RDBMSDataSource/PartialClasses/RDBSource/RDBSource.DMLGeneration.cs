@@ -107,7 +107,7 @@ namespace TheTechIdea.Beep.DataBase
                     parameter.DbType = GetDbType(field.Fieldtype);
                     if (value != DBNull.Value && value.GetType() != typeof(DBNull))
                     {
-                        parameter.Value = ConvertToDbTypeValue(value, field.Fieldtype);
+                        RdbParameters.Bind(parameter, ConvertToDbTypeValue(value, field.Fieldtype));
                     }
                     else
                     {
@@ -169,7 +169,7 @@ namespace TheTechIdea.Beep.DataBase
                     parameter.DbType = GetDbType(field.Fieldtype);
                     if (value != DBNull.Value && value.GetType() != typeof(DBNull))
                     {
-                        parameter.Value = ConvertToDbTypeValue(value, field.Fieldtype);
+                        RdbParameters.Bind(parameter, ConvertToDbTypeValue(value, field.Fieldtype));
                     }
                     else
                     {
@@ -220,7 +220,7 @@ namespace TheTechIdea.Beep.DataBase
                     parameter.DbType = GetDbType(field.Fieldtype);
                     if (value != DBNull.Value && value.GetType() != typeof(DBNull))
                     {
-                        parameter.Value = ConvertToDbTypeValue(value, field.Fieldtype);
+                        RdbParameters.Bind(parameter, ConvertToDbTypeValue(value, field.Fieldtype));
                     }
                     else
                     {

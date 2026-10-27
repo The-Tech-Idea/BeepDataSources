@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
@@ -17,7 +17,7 @@
     <PackageIcon>SimpleODM.png</PackageIcon>
     <RepositoryUrl>https://github.com/The-Tech-Idea/BeepDataSources</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Version>2.1.1</Version>
+    <Version>2.2.2</Version>
   </PropertyGroup>
 
   <ItemGroup>

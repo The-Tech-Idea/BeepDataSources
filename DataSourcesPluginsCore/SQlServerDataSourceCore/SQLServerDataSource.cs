@@ -17,7 +17,7 @@ namespace TheTechIdea.Beep.DataBase
     /// RDBSource. Only dialect-specific FK-toggle SQL and a paging helper are overridden.
     /// </summary>
     [AddinAttribute(Category = DatasourceCategory.RDBMS, DatasourceType = DataSourceType.SqlServer)]
-    public class SQLServerDataSource : RDBSource, IDataSource
+    public partial class SQLServerDataSource : RDBSource, IDataSource
     {
         public SQLServerDataSource(string datasourcename, IDMLogger logger, IDMEEditor DMEEditor, DataSourceType databasetype, IErrorsInfo per)
             : base(datasourcename, logger, DMEEditor, databasetype, per)

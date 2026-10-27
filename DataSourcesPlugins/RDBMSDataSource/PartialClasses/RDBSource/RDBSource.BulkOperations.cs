@@ -75,6 +75,10 @@ namespace TheTechIdea.Beep.DataBase
         /// </remarks>
         private IDbTransaction BeginPublishedBulkTransaction()
         {
+            lock (_transactionOwnerGate)
+            {
+                CheckBulkTransactionOwner();
+
             if (!UseBulkTransactions)
                 return null;
 
@@ -88,6 +92,8 @@ namespace TheTechIdea.Beep.DataBase
             var transaction = RDBMSConnection.DbConn.BeginTransaction();
             _activeTransaction = transaction;
             return transaction;
+
+            }
         }
 
         /// <summary>
@@ -96,6 +102,10 @@ namespace TheTechIdea.Beep.DataBase
         /// </summary>
         private void EndPublishedBulkTransaction(IDbTransaction transaction, bool commit)
         {
+            lock (_transactionOwnerGate)
+            {
+                CheckBulkTransactionOwner();
+
             if (transaction == null)
                 return;
 
@@ -113,6 +123,8 @@ namespace TheTechIdea.Beep.DataBase
                     _activeTransaction = null;
 
                 transaction.Dispose();
+            }
+
             }
         }
 

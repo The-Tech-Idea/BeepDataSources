@@ -134,3 +134,9 @@ Two parts of the class create or use commands without going through `GetDataComm
 One further interaction worth knowing: `InMemoryRDBSource.GetDeleteAllSql` returns **TRUNCATE**,
 which is DDL on Oracle and MySQL and performs an implicit commit — silently ending any transaction
 opened by `BeginTransaction`.
+
+## Isolated conditional batches (2.1.3)
+
+RDBSource.ConditionalMutationBatch implements the optional IConditionalMutationBatchDataSource capability through a new serializable ADO.NET connection and transaction. It uses declared cached metadata, full primary keys, parameterized observed rows/cohort counts and database UTC expiry, requires exactly one affected row per operation, and rechecks stable authority immediately before commit. A late mismatch/error rolls back earlier operations; unknown commit/rollback acknowledgement returns Unconfirmed with null ChangedRows. No ordinary-write fallback or automatic retry is provided.
+
+The [shared UnitofWork contract](../../../../BeepDM/DataManagementEngineStandard/Editor/UOW/CONDITIONAL-BATCH.md) describes bounds and outcome semantics. Physical SQLite qualification and the adopting DoitAll approval engine are recorded in [Doc32](../../../../Beep.DoitAll/docs/plan/odoo-saas-review/32-atomic-approval-decisions.md). SQL Server/Azure SQL/PostgreSQL dialect generation is exercised, but deployed/provider/schema/restart qualification remains open.

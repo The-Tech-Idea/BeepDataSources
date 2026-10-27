@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using TheTechIdea.Beep.Editor;
+using TheTechIdea.Beep.Utilities;
 using TheTechIdea.Beep.DataBase.Helpers;
 
 namespace TheTechIdea.Beep.DataBase
@@ -54,8 +55,12 @@ namespace TheTechIdea.Beep.DataBase
             // Pattern matching approach (C# 7+) - more concise and performant
             return fieldType switch
             {
-                "System.DateTime" when value is DateTime dt => dt,
-                "System.DateTime" when DateTime.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt) => dt,
+                // SQLite stores Local DateTime parameters without their offset. Normalize that
+                // known instant to UTC while retaining existing UTC/unmarked storage and guard formats.
+                "System.DateTime" when value is DateTime dt => DatasourceType == DataSourceType.SqlLite && dt.Kind == DateTimeKind.Local ? dt.ToUniversalTime() : dt,
+                "System.DateTime" when DateTime.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), CultureInfo.InvariantCulture,
+                    DatasourceType == DataSourceType.SqlLite ? DateTimeStyles.RoundtripKind : DateTimeStyles.None, out var dt)
+                    => DatasourceType == DataSourceType.SqlLite && dt.Kind == DateTimeKind.Local ? dt.ToUniversalTime() : dt,
                 
                 "System.Int32" when value is int i => i,
                 "System.Int32" when int.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out var i) => i,

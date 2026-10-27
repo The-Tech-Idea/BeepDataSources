@@ -37,14 +37,25 @@ namespace TheTechIdea.Beep.DataBase
         /// never showed it. Found by the SQL Server example in Beep.Desktop.
         /// (2026-08-03)
         /// </remarks>
-        private IDbTransaction _activeTransaction;
+        private IDbTransaction? _activeTransaction;
 
         /// <summary>
         /// The transaction currently open on this source, or null when there is
         /// none. A transaction whose Connection has gone null has already been
         /// completed and is not returned.
         /// </summary>
-        public IDbTransaction ActiveTransaction =>
+        public IDbTransaction? ActiveTransaction
+        {
+            get
+            {
+                if (_entityReadContext.Value is { } read) return read.Transaction?.Connection != null ? read.Transaction : null;
+                lock (_transactionOwnerGate)
+                    return _ownedTransactionOwner != null && !ReferenceEquals(_ownedTransactionOwner, _ownedTransactionFlow.Value)
+                        ? null : OpenPhysicalTransaction();
+            }
+        }
+
+        private IDbTransaction? OpenPhysicalTransaction() =>
             _activeTransaction?.Connection != null ? _activeTransaction : null;
 
         /// <summary>
@@ -54,6 +65,13 @@ namespace TheTechIdea.Beep.DataBase
         /// <returns>An IErrorsInfo object indicating the success or failure of beginning the transaction.</returns>
         public virtual IErrorsInfo BeginTransaction(PassedArgs args)
         {
+            if (_entityReadContext.Value != null) return RefuseTransactionOwner("An entity reader cannot start an independent transaction.");
+            if (CanOwnLegacyTransaction) return BeginLegacyOwnedTransaction();
+            lock (_transactionOwnerGate)
+            {
+                if (_ownedTransactionOwner != null)
+                    return RefuseTransactionOwner("An owned transaction cannot be controlled through the legacy transaction API.");
+
             try
             {
                 if (RDBMSConnection?.DbConn == null ||
@@ -81,6 +99,8 @@ namespace TheTechIdea.Beep.DataBase
                 HandleDatabaseError(ex, DatasourceName, "begin a transaction on");
             }
             return ErrorObject;
+
+            }
         }
 
         /// <summary>
@@ -96,6 +116,12 @@ namespace TheTechIdea.Beep.DataBase
         /// </remarks>
         public virtual IErrorsInfo EndTransaction(PassedArgs args)
         {
+            if (CanOwnLegacyTransaction && FinishLegacyOwnedTransaction(false) is { } ownedResult) return ownedResult;
+            lock (_transactionOwnerGate)
+            {
+                if (_ownedTransactionOwner != null)
+                    return RefuseTransactionOwner("An owned transaction cannot be controlled through the legacy transaction API.");
+
             try
             {
                 var tx = ActiveTransaction;
@@ -119,6 +145,8 @@ namespace TheTechIdea.Beep.DataBase
                 DisposeActiveTransaction();
             }
             return ErrorObject;
+
+            }
         }
 
         /// <summary>
@@ -126,6 +154,12 @@ namespace TheTechIdea.Beep.DataBase
         /// </summary>
         public virtual IErrorsInfo Commit(PassedArgs args)
         {
+            if (CanOwnLegacyTransaction && FinishLegacyOwnedTransaction(true) is { } ownedResult) return ownedResult;
+            lock (_transactionOwnerGate)
+            {
+                if (_ownedTransactionOwner != null)
+                    return RefuseTransactionOwner("An owned transaction cannot be controlled through the legacy transaction API.");
+
             try
             {
                 var tx = ActiveTransaction;
@@ -152,6 +186,8 @@ namespace TheTechIdea.Beep.DataBase
                 DisposeActiveTransaction();
             }
             return ErrorObject;
+
+            }
         }
 
         /// <summary>

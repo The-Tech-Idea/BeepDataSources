@@ -102,7 +102,14 @@ namespace TheTechIdea.Beep.DataBase
         /// <summary>
         /// Object to handle error information.
         /// </summary>
-        public IErrorsInfo ErrorObject { get; set; }
+        private IErrorsInfo _sharedErrors = new ErrorsInfo();
+        public IErrorsInfo ErrorObject
+        {
+            get => _entityReadContext.Value?.Outcome ??
+                (_ownedTransactionOwner != null && ReferenceEquals(_ownedTransactionOwner, _ownedTransactionFlow.Value)
+                    ? _ownedTransactionErrors : null) ?? _sharedErrors;
+            set => _sharedErrors = value;
+        }
 
         /// <summary>
         /// Logger instance for logging activities and events.
@@ -127,7 +134,8 @@ namespace TheTechIdea.Beep.DataBase
         /// <summary>
         /// Connection object to interact with the database.
         /// </summary>
-        public IDataConnection Dataconnection { get; set; }
+        private IDataConnection _sharedConnection = null!; // Assigned by the constructor before publication.
+        public IDataConnection Dataconnection { get => _entityReadContext.Value?.Connection ?? _sharedConnection; set => _sharedConnection = value; }
 
         /// <summary>
         /// Specialized connection object for relational databases.
