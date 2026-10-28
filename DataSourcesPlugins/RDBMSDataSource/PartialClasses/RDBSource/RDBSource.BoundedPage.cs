@@ -14,7 +14,7 @@ using TheTechIdea.Beep.Utilities;
 
 namespace TheTechIdea.Beep.DataBase
 {
-    public partial class RDBSource : IBoundedComparedRelatedPagedDataSource, IBoundedGroupedRelatedPagedDataSource, IBoundedSnapshotPagedDataSource
+    public partial class RDBSource : IBoundedComparedRelatedPagedDataSource, IBoundedGroupedRelatedPagedDataSource, IBoundedSnapshotPagedDataSource, IBoundedStoredProjectionDataSource
     {
         /// <summary>A dedicated read connection owns one coherent count/page snapshot.
         /// The awaited worker also covers synchronous ADO.NET drivers; cancellation never detaches it.</summary>
@@ -32,8 +32,18 @@ namespace TheTechIdea.Beep.DataBase
                 ?? throw new InvalidOperationException("Snapshot traversal was not acknowledged.");
         }
 
+        /// <summary>Count/page the selected stored columns in the same owned snapshot; never materialize unused fields.</summary>
+        public async Task<BoundedPageResponse> ReadStoredProjectionPageAsync(string entityName,BoundedPageRequest request,
+            IReadOnlyList<string> fields,CancellationToken cancellationToken=default)
+        {
+            ArgumentNullException.ThrowIfNull(fields);
+            var copied=fields.ToArray();
+            if(copied.Length is <1 or >128||copied.Any(string.IsNullOrWhiteSpace)||copied.Distinct(StringComparer.OrdinalIgnoreCase).Count()!=copied.Length)
+                throw new ArgumentException("A stored projection requires one through128 unique declared fields.");
+            return (await ReadBoundedPagesCoreAsync(entityName,request,null,cancellationToken,Array.AsReadOnly(copied)).ConfigureAwait(false)).Page;
+        }
         private async Task<(BoundedPageResponse Page,SnapshotReadCompletion? Completion)> ReadBoundedPagesCoreAsync(
-            string entityName,BoundedPageRequest request,Action<BoundedPageResponse>? consume,CancellationToken cancellationToken)
+            string entityName,BoundedPageRequest request,Action<BoundedPageResponse>? consume,CancellationToken cancellationToken,IReadOnlyList<string>? projectedFields=null)
         {
             try
             {
@@ -44,7 +54,8 @@ namespace TheTechIdea.Beep.DataBase
                         ? IsolationLevel.Serializable : throw new NotSupportedException("Strict paging is not qualified for this provider.");
                 var entity = Entities?.SingleOrDefault(item => string.Equals(item.EntityName, entityName, StringComparison.OrdinalIgnoreCase))
                     ?? throw new NotSupportedException("Strict paging requires cached declared entity metadata.");
-                var fields = entity.Fields?.ToArray() ?? throw new NotSupportedException("Page fields are not declared.");
+                var allFields = entity.Fields?.ToArray() ?? throw new NotSupportedException("Page fields are not declared.");
+                var fields=allFields;
                 var names = fields.Select(field => field.FieldName).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 if (fields.Length == 0 || names.Count != fields.Length || names.Any(string.IsNullOrWhiteSpace))
                     throw new NotSupportedException("Page fields must be unique and nonempty.");
@@ -55,6 +66,15 @@ namespace TheTechIdea.Beep.DataBase
                     throw new ArgumentException("Page order must use declared fields and the complete primary key.");
                 if (request.CopyFilters().Concat(request.CopyAnyFilters()).Any(filter => !names.Contains(filter.FieldName)))
                     throw new ArgumentException("Page filters must use declared field names.");
+                if(projectedFields is not null)
+                {
+                    if(request.ValidateReadOnlyScalars)throw new ArgumentException("A stored projection does not evaluate calculated entity getters.");
+                    fields=projectedFields.Select(name=>allFields.SingleOrDefault(field=>string.Equals(field.FieldName,name,StringComparison.OrdinalIgnoreCase))
+                        ??throw new ArgumentException("Projection fields must be declared columns, never expressions.")).ToArray();
+                    if(allFields.Where(field=>field.IsKey).Any(key=>!fields.Any(field=>field.FieldName==key.FieldName))||
+                        request.Order.Any(order=>!fields.Any(field=>string.Equals(field.FieldName,order.FieldName,StringComparison.OrdinalIgnoreCase))))
+                        throw new ArgumentException("A stored projection must select every key and order field.");
+                }
                 if (RDBMSConnection.DbConn is not DbConnection template || string.IsNullOrWhiteSpace(template.ConnectionString))
                     throw new NotSupportedException("A configured ADO.NET connection is required for strict paging.");
                 var connectionString = DMEEditor != null ? RDBMSConnection.ReplaceValueFromConnectionString() : template.ConnectionString;
@@ -63,7 +83,7 @@ namespace TheTechIdea.Beep.DataBase
                 var factory = DbProviderFactories.GetFactory(template) ?? throw new NotSupportedException("Provider has no connection factory.");
                 var qualifiedEntity = DatasourceType == DataSourceType.SqlLite ? entity.EntityName : QualifyWithSchema(entity.EntityName);
                 var quotedEntity = DataSourceAppFilterExtensions.QuoteQueryIdentifier(qualifiedEntity, DatasourceType);
-                var physicalNames = fields.ToDictionary(field => field.FieldName, field => field.FieldName, StringComparer.OrdinalIgnoreCase);
+                var physicalNames = allFields.ToDictionary(field => field.FieldName, field => field.FieldName, StringComparer.OrdinalIgnoreCase);
                 var requiredFilters = request.CopyFilters();
                 var anyFilters = request.CopyAnyFilters();
                 foreach (var filter in requiredFilters.Concat(anyFilters)) filter.FieldName = physicalNames[filter.FieldName];
