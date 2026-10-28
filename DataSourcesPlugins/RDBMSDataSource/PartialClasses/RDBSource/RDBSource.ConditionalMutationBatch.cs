@@ -12,7 +12,7 @@ using TheTechIdea.Beep.Helpers.RDBMSHelpers.DMLHelpers;
 
 namespace TheTechIdea.Beep.DataBase
 {
-    public partial class RDBSource : IConditionalMutationBatchDataSource, IDateRangeGuardedMutationBatchDataSource, IOrdinalIgnoreCaseTextDataSource, IProjectionGuardedMutationBatchDataSource
+    public partial class RDBSource : IConditionalMutationBatchDataSource, IDateRangeGuardedMutationBatchDataSource, IOrdinalIgnoreCaseTextDataSource, IComparedCohortMutationBatchDataSource
     {
         /// <summary>Physical date-range cohorts are enforced by the qualified conditional batch providers.</summary>
         public bool SupportsDateRangeGuards => DatasourceType is DataSourceType.SqlServer or DataSourceType.AzureSQL or DataSourceType.Postgre or DataSourceType.SqlLite;
@@ -20,21 +20,22 @@ namespace TheTechIdea.Beep.DataBase
         public bool SupportsOrdinalIgnoreCaseText => DatasourceType is DataSourceType.SqlServer or DataSourceType.AzureSQL or DataSourceType.SqlLite;
         /// <summary>One isolated serializable transaction for the complete guarded batch.</summary>
         public async Task<ConditionalMutationBatchResponse> MutateBatchConditionallyAsync(ConditionalMutationBatchRequest request, CancellationToken cancellationToken = default)
-            => await MutateBatchCoreAsync(request,Array.Empty<ConditionalStoredProjectionGuard>(),cancellationToken).ConfigureAwait(false);
+            => await MutateBatchCoreAsync(request,Array.Empty<ConditionalStoredProjectionGuard>(),Array.Empty<ConditionalCohortComparison>(),cancellationToken).ConfigureAwait(false);
 
         /// <summary>Provider families with an implemented serializable bounded projection path; qualify each deployment separately.</summary>
         public bool SupportsProjectionGuardedBatches => DatasourceType is DataSourceType.SqlServer or DataSourceType.AzureSQL or DataSourceType.Postgre or DataSourceType.SqlLite;
+        /// <summary>Complete count comparisons execute inside the same serializable mutation transaction.</summary>
+        public bool SupportsCohortComparisons => SupportsProjectionGuardedBatches;
         /// <summary>Reuse the batch owner and check complete source projections before writes and commit.</summary>
         public async Task<ConditionalMutationBatchResponse> MutateProjectionGuardedBatchAsync(ProjectionGuardedMutationBatchRequest request,CancellationToken cancellationToken=default)
         {
             ArgumentNullException.ThrowIfNull(request);
-            if (request.CohortComparisons.Count > 0)
-                throw new NotSupportedException("Complete cohort comparisons are not implemented by this provider.");
-            return await MutateBatchCoreAsync(request.Batch,request.ProjectionGuards,cancellationToken).ConfigureAwait(false);
+            return await MutateBatchCoreAsync(request.Batch,request.ProjectionGuards,request.CohortComparisons,cancellationToken).ConfigureAwait(false);
         }
 
         private async Task<ConditionalMutationBatchResponse> MutateBatchCoreAsync(ConditionalMutationBatchRequest? request,
-            System.Collections.Generic.IReadOnlyList<ConditionalStoredProjectionGuard> projectionGuards,CancellationToken cancellationToken)
+            System.Collections.Generic.IReadOnlyList<ConditionalStoredProjectionGuard> projectionGuards,
+            System.Collections.Generic.IReadOnlyList<ConditionalCohortComparison> comparisons,CancellationToken cancellationToken)
         {
             var dispatched = false; var commitAttempted = false; var committed = false; var rolledBack = false; var operationCount = 0;
             try
@@ -87,6 +88,7 @@ namespace TheTechIdea.Beep.DataBase
                 var finalCheck = DatabaseDMLParameterizedQueries.GenerateConditionalBatchGuardQueries(DatasourceType, request, Table, Field, true);
                 var queries = request.Mutations.Select(op => DatabaseDMLParameterizedQueries.GenerateConditionalMutationQuery(DatasourceType, op, Table, Field)).ToArray();
                 var projectionPlans=projectionGuards.Select(PrepareProjectionGuardPlan).ToArray();
+                var comparisonPlans=comparisons.Select(value=>(Left:PrepareCohortCountPlan(value.Left),Right:PrepareCohortCountPlan(value.Right))).ToArray();
                 if (RDBMSConnection.DbConn is not DbConnection template || string.IsNullOrWhiteSpace(template.ConnectionString)) throw new NotSupportedException("A configured ADO.NET connection is required.");
                 var connectionString = DMEEditor != null ? RDBMSConnection.ReplaceValueFromConnectionString() : template.ConnectionString;
                 if (DatasourceType == DataSourceType.SqlLite && connectionString.Contains(":memory:", StringComparison.OrdinalIgnoreCase)) throw new NotSupportedException("Atomic SQLite batches require a file or named shared-memory database.");
@@ -113,6 +115,8 @@ namespace TheTechIdea.Beep.DataBase
                         { await using var check = Command(observation); if (await check.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) == null) return await NoMatch("preflight").ConfigureAwait(false); }
                         foreach(var plan in projectionPlans)
                         { if(!await CheckProjectionGuardAsync(plan,connection,transaction,cancellationToken).ConfigureAwait(false))return await NoMatch("source projection").ConfigureAwait(false); }
+                        foreach(var plan in comparisonPlans)
+                        { if(await ReadCohortCountAsync(plan.Left,connection,transaction,cancellationToken).ConfigureAwait(false)!=await ReadCohortCountAsync(plan.Right,connection,transaction,cancellationToken).ConfigureAwait(false))return await NoMatch("source cohort comparison").ConfigureAwait(false); }
                         foreach (var query in queries)
                         {
                             await using var command = Command(query); dispatched = true;
@@ -124,6 +128,8 @@ namespace TheTechIdea.Beep.DataBase
                         { await using var check = Command(observation); if (await check.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) == null) return await NoMatch("commit authority").ConfigureAwait(false); }
                         foreach(var plan in projectionPlans)
                         { if(!await CheckProjectionGuardAsync(plan,connection,transaction,cancellationToken).ConfigureAwait(false))return await NoMatch("commit source projection").ConfigureAwait(false); }
+                        foreach(var plan in comparisonPlans)
+                        { if(await ReadCohortCountAsync(plan.Left,connection,transaction,cancellationToken).ConfigureAwait(false)!=await ReadCohortCountAsync(plan.Right,connection,transaction,cancellationToken).ConfigureAwait(false))return await NoMatch("commit cohort comparison").ConfigureAwait(false); }
                         cancellationToken.ThrowIfCancellationRequested(); commitAttempted = true;
                         await transaction.CommitAsync(CancellationToken.None).ConfigureAwait(false); committed = true;
                         foreach (var name in request.Mutations.Select(op => op.EntityName).Distinct(StringComparer.OrdinalIgnoreCase)) InvalidateEntityCache(name);
