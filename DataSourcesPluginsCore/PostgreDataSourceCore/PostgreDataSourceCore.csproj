@@ -31,7 +31,7 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.10" />
+	  <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.14" />
 	  <PackageReference Include="Npgsql" Version="10.0.3" />
 	  <!-- Keep the shared page/UoW contracts on the same local owner as RDBSource. -->
       <ProjectReference Include="..\..\..\BeepDM\DataManagementEngineStandard\DataManagementEngine.csproj" />

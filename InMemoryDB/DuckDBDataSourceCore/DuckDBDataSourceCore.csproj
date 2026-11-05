@@ -30,11 +30,12 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="1.5.5" />
-	  <PackageReference Include="DuckDB.NET.Data.Full" Version="1.5.5" />
-	  <PackageReference Include="System.Data.Odbc" Version="10.0.10" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.1.1" />
-	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="3.1.1" />
+	  <PackageReference Include="DuckDB.NET.Bindings.Full" Version="1.5.6.1" />
+	  <PackageReference Include="DuckDB.NET.Data.Full" Version="1.5.6.1" />
+	  <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+	  <PackageReference Include="System.Data.Odbc" Version="10.0.14" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementEngine" Version="3.2.2" />
+	  <PackageReference Include="TheTechIdea.Beep.DataManagementModels" Version="3.2.2" />
 	  <PackageReference Include="TheTechIdea.Beep.Vis.Modules" Version="2.0.44" />
 	</ItemGroup>
 	<ItemGroup>
