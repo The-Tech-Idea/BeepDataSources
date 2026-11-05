@@ -2,6 +2,12 @@ namespace TheTechIdea.Beep.DataBase
 {
     public partial class SQLiteDataSource
     {
+        /// <summary>
+        /// File databases have no in-memory entities: a name missing from the catalog is missing.
+        /// The in-memory mode still falls back to its structure cache.
+        /// </summary>
+        protected override bool CachedInMemoryEntitiesCountAsExisting => Dataconnection?.InMemory == true;
+
         public override IEnumerable<string> GetEntitesList()
         {
             var names = base.GetEntitesList();

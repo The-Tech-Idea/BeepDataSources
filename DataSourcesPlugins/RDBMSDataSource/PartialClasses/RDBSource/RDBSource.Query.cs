@@ -336,6 +336,13 @@ namespace TheTechIdea.Beep.DataBase
                 cmd.ApplyFilterQueryDefinition(streamQueryDefinition, this);
 
                 reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+                if (_entityReadContext.Value?.RequiredProjection is { } projection)
+                {
+                    var names = Enumerable.Range(0, reader.FieldCount).Select(reader.GetName).ToArray();
+                    if (names.Distinct(StringComparer.OrdinalIgnoreCase).Count() != names.Length ||
+                        projection.Any(required => names.Count(name => string.Equals(name, required, StringComparison.OrdinalIgnoreCase)) != 1))
+                        throw new InvalidOperationException("The provider did not return the required unique projection columns.");
+                }
             }
             catch (Exception ex)
             {
@@ -370,6 +377,25 @@ namespace TheTechIdea.Beep.DataBase
             {
                 foreach (var row in DataBase.Helpers.DataStreamer.Stream(reader))
                 {
+                    if (_entityReadContext.Value?.RequiredProjection != null)
+                    {
+                        // SQLite's provider may materialize a declared date column as a
+                        // DateTime without its stored offset. Read the original text, as
+                        // the typed path below does, so projection evidence keeps its kind.
+                        if (DatasourceType == DataSourceType.SqlLite && entityProperties != null)
+                        {
+                            var requested = _entityReadContext.Value.RequiredProjection;
+                            foreach (var prop in entityProperties.Where(p => (Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType) == typeof(DateTime) &&
+                                requested.Contains(p.Name, StringComparer.OrdinalIgnoreCase)))
+                            {
+                                if (row.TryGetValue(prop.Name, out var value) && value != null)
+                                    row[prop.Name] = DateTime.Parse(reader.GetString(reader.GetOrdinal(prop.Name)),
+                                        System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind);
+                            }
+                        }
+                        yield return row;
+                        continue;
+                    }
                     if (entityType != null && entityProperties != null)
                     {
                         // Create typed object and populate from dictionary

@@ -21,7 +21,7 @@
 		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName).dll" DestinationFolder="$(ProjectDir)..\..\..\outputDLL\DataSources\$(MSBuildProjectName)\$(TargetFramework)" SkipUnchangedFiles="false" />
 	</Target>
 	<Target Name="CopyPackage" AfterTargets="Pack">
-		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\LocalNugetFiles\DataSources" />
+		<Copy Condition="'$(SkipLocalPackageCopy)' != 'true'" SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="..\..\..\..\LocalNugetFiles\DataSources" />
 	</Target>
 	<ItemGroup>
 		<None Include="..\..\..\InstallationScripts\LogoGFx\128\SimpleODM.png">

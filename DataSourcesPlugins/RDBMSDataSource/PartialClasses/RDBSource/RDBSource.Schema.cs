@@ -393,6 +393,8 @@ namespace TheTechIdea.Beep.DataBase
         public virtual IEnumerable<string> GetEntitesList()
         {
             ErrorObject.Flag = Errors.Ok;
+            EntitiesListLoaded = false;
+            PhysicalEntitiesNames = new List<string>();
             DataSet ds = new DataSet();
             IDbDataAdapter adp;
             DataTable tb = new DataTable();
@@ -429,6 +431,7 @@ namespace TheTechIdea.Beep.DataBase
 
                 adp = GetDataAdapter(sql, null);
                 adp.Fill(ds);
+                EntitiesListLoaded = true;
 #if DEBUG
                 // Errors.Ok, not Errors.Failed: this is a diagnostic trace of a query that just
                 // succeeded. Logging it as a failure sets ErrorObject.Flag, and every caller that
@@ -450,6 +453,7 @@ namespace TheTechIdea.Beep.DataBase
 
                     i += 1;
                 }
+                PhysicalEntitiesNames = new List<string>(EntitiesNames);
                 List<string> EntitiesnotinEntitiesNames = new List<string>();
                 if (Entities.Count > 0)
                 {
@@ -590,21 +594,31 @@ namespace TheTechIdea.Beep.DataBase
             // structure cache. The cache is populated lazily and is empty in a fresh process, so
             // testing it reports "does not exist" for tables that are really there — and migration
             // then tries to re-create every one of them.
-            bool retval = EntitiesNames != null &&
-                          EntitiesNames.Any(n => string.Equals(n, EntityName, StringComparison.OrdinalIgnoreCase));
+            bool retval = EntitiesListLoaded &&
+                          PhysicalEntitiesNames.Any(n => string.Equals(n, EntityName, StringComparison.OrdinalIgnoreCase));
 
-            // Fall back to the structure cache only when the name list yielded nothing, so
+            // Fall back to the structure cache when the catalog could not be read, so
             // in-memory-only entities are still discoverable.
-            if (!retval && Entities != null && Entities.Count > 0)
+            if (!retval && !EntitiesListLoaded && Entities != null && Entities.Count > 0)
             {
-                retval = Entities.Any(p =>
-                    string.Equals(p.EntityName, EntityName, StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(p.OriginalEntityName, EntityName, StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(p.DatasourceEntityName, EntityName, StringComparison.OrdinalIgnoreCase));
+                retval = MatchesCachedEntity(EntityName);
+            }
+            // Providers that genuinely keep entities without a physical table keep the historical
+            // fallback. SQLite overrides this: a name missing from a successfully read catalog is
+            // missing, so a dropped table is recreated instead of staying UpToDate forever.
+            else if (!retval && CachedInMemoryEntitiesCountAsExisting && Entities != null && Entities.Count > 0)
+            {
+                retval = MatchesCachedEntity(EntityName);
             }
 
             return retval;
         }
+
+        private bool MatchesCachedEntity(string entityName)
+            => Entities.Any(p =>
+                string.Equals(p.EntityName, entityName, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(p.OriginalEntityName, entityName, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(p.DatasourceEntityName, entityName, StringComparison.OrdinalIgnoreCase));
         /// <summary>
         /// Retrieves the index of a specific entity in the Entities collection.
         /// </summary>

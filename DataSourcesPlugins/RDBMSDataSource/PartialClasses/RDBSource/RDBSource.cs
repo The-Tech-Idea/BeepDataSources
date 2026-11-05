@@ -122,6 +122,22 @@ namespace TheTechIdea.Beep.DataBase
         public List<string> EntitiesNames { get; set; } = new List<string>();
 
         /// <summary>
+        /// Table names as the catalog reported them, before cached entities that are no longer
+        /// physical are re-added for discovery. Existence checks use this list.
+        /// </summary>
+        public List<string> PhysicalEntitiesNames { get; private set; } = new List<string>();
+
+        /// <summary>True when the most recent <c>GetEntitesList</c> filled from the catalog.</summary>
+        public bool EntitiesListLoaded { get; private set; }
+
+        /// <summary>
+        /// Whether a cached entity with no physical table still counts as existing for
+        /// <see cref="CheckEntityExist(string)"/>. Providers with genuine in-memory entities keep
+        /// the historical behavior; SQLite overrides it because every entity is a real table.
+        /// </summary>
+        protected virtual bool CachedInMemoryEntitiesCountAsExisting => true;
+
+        /// <summary>
         /// Editor instance for managing various database operations.
         /// </summary>
         public IDMEEditor DMEEditor { get; set; }

@@ -21,8 +21,9 @@ namespace TheTechIdea.Beep.DataBase
             public RDBDataConnection Connection { get; }
             public IDbTransaction? Transaction { get; }
             public ErrorsInfo Outcome { get; }
-            public NativeEntityReadScope(RDBDataConnection connection, IDbTransaction? transaction, ErrorsInfo outcome)
-            { Connection = connection; Transaction = transaction; Outcome = outcome; }
+            public IReadOnlyList<string>? RequiredProjection { get; }
+            public NativeEntityReadScope(RDBDataConnection connection, IDbTransaction? transaction, ErrorsInfo outcome, IReadOnlyList<string>? requiredProjection)
+            { Connection = connection; Transaction = transaction; Outcome = outcome; RequiredProjection = requiredProjection; }
         }
         protected bool HasDefaultNativeReadHooks =>
             GetType().GetMethod(nameof(GetEntityAsync), new[] { typeof(string), typeof(List<AppFilter>) })?.DeclaringType == typeof(RDBSource) &&
@@ -31,8 +32,9 @@ namespace TheTechIdea.Beep.DataBase
             DMEEditor is IScopedEditorErrors;
 
         protected Task<EntityReadResult> ReadOwnedEntityAsync(string entityName, List<AppFilter> filters,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken, IReadOnlyList<string>? requiredProjection = null)
         {
+            var projection = requiredProjection?.ToArray();
             // No early-cancellation task abandonment: completion means reader/command/owned
             // connection cleanup has physically finished. The UoW decides whether to publish.
             return Task.Run(() =>
@@ -58,6 +60,9 @@ namespace TheTechIdea.Beep.DataBase
                 try
                 {
                     cancellationToken.ThrowIfCancellationRequested();
+                    if (projection != null && (projection.Length == 0 || projection.Any(string.IsNullOrWhiteSpace) ||
+                        projection.Distinct(StringComparer.OrdinalIgnoreCase).Count() != projection.Length))
+                        throw new ArgumentException("A projection requires unique, nonempty column names.");
                     var editor = DMEEditor ?? throw new NotSupportedException("Owned entity reads require an editor outcome owner.");
                     editorScope = (editor as IScopedEditorErrors)?.BeginOperationErrors(outcome)
                         ?? throw new NotSupportedException("The editor cannot isolate an entity read outcome.");
@@ -93,7 +98,7 @@ namespace TheTechIdea.Beep.DataBase
                             ConnectionStatus = ConnectionState.Open, ConnectionProp = template.ConnectionProp,
                             DataSourceDriver = template.DataSourceDriver, Logger = Logger, ErrorObject = outcome };
                     }
-                    _entityReadContext.Value = new NativeEntityReadScope(connection, transaction, outcome);
+                    _entityReadContext.Value = new NativeEntityReadScope(connection, transaction, outcome, projection);
                     // Call the virtual provider stream: adapters/instrumentation retain their semantics.
                     var stream = GetEntity(entityName, filters)
                         ?? throw new InvalidOperationException("The provider returned no entity stream.");

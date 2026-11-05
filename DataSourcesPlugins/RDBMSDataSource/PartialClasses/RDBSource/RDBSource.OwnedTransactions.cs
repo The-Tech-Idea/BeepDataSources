@@ -31,7 +31,7 @@ namespace TheTechIdea.Beep.DataBase
         {
             lock (_transactionOwnerGate) return owner != null && ReferenceEquals(owner, _ownedTransactionOwner);
         }
-        protected IErrorsInfo BeginTransactionForOwner(object owner)
+        protected IErrorsInfo BeginTransactionForOwner(object owner, IsolationLevel isolation = IsolationLevel.Unspecified)
         {
             if (_entityReadContext.Value != null) return RefuseTransactionOwner("An entity reader cannot start an independent transaction.");
             if (owner == null) return RefuseTransactionOwner("An explicit transaction owner is required.");
@@ -39,8 +39,12 @@ namespace TheTechIdea.Beep.DataBase
             {
                 if (_ownedTransactionOwner != null)
                 {
-                    if (ReferenceEquals(owner, _ownedTransactionOwner) && !_ownedTransactionUnresolved && OpenPhysicalTransaction() != null)
-                    { _ownedTransactionFlow.Value = owner; return AcknowledgeOwnedTransaction("This owner already has an open transaction."); }
+                    if (ReferenceEquals(owner, _ownedTransactionOwner) && !_ownedTransactionUnresolved && OpenPhysicalTransaction() is { } existing)
+                    {
+                        if (isolation != IsolationLevel.Unspecified && existing.IsolationLevel != isolation)
+                            return RefuseTransactionOwner("The existing owned transaction has a different isolation level.");
+                        _ownedTransactionFlow.Value = owner; return AcknowledgeOwnedTransaction("This owner already has an open transaction.");
+                    }
                     return RefuseTransactionOwner("Another transaction owner or unresolved outcome controls this datasource.");
                 }
                 if (_activeTransaction != null)
@@ -49,7 +53,9 @@ namespace TheTechIdea.Beep.DataBase
                     return RefuseTransactionOwner("The native connection is not open.");
                 try
                 {
-                    _activeTransaction = RDBMSConnection.DbConn.BeginTransaction();
+                    _activeTransaction = isolation == IsolationLevel.Unspecified
+                        ? RDBMSConnection.DbConn.BeginTransaction()
+                        : RDBMSConnection.DbConn.BeginTransaction(isolation);
                     _ownedTransactionErrors = new ErrorsInfo { Flag = Errors.Ok };
                     _ownedTransactionOwner = owner; _ownedTransactionFlow.Value = owner; _ownedTransactionUnresolved = false;
                     _ownedTransactionEditorScope = (DMEEditor as IScopedEditorErrors)?.BeginOperationErrors(_ownedTransactionErrors);

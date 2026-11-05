@@ -306,6 +306,10 @@ namespace TheTechIdea.Beep.DataBase
 
                 // create an instance:
                 adp = (IDbDataAdapter)adpActivator(Sql, RDBMSConnection.DbConn);
+                // Adapter-created commands bypass GetDataCommand, but must participate in
+                // the same local transaction when metadata is read during an owned operation.
+                if (ActiveTransaction is { } transaction)
+                    adp.SelectCommand.Transaction = transaction;
                 try
                 {
                     DbCommandBuilder cmdBuilder = cmdbuilderActivator(adp);

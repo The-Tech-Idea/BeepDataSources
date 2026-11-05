@@ -15,7 +15,7 @@ namespace TheTechIdea.Beep.DataBase
             // DMEEditor.OpenDataSource(ds.DatasourceName);
             if (Dataconnection.ConnectionStatus == ConnectionState.Open)
             {
-                List<T> t = RDBMSConnection.DbConn.Query<T>(sql).AsList<T>();
+                List<T> t = RDBMSConnection.DbConn.Query<T>(sql, transaction: ActiveTransaction).AsList<T>();
 
                 return t;
             }
